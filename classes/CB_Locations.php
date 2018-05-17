@@ -46,10 +46,9 @@ class CB_Locations  {
 	}
 	/**
 	* Return Lat/Long
-	* @param int $location_id
 	* @return array geocoords
   */
-	public function get_latlong( $location_id ) {
+	public function get_lat_long( ) {
 
 		$geocoords = array (
 			'long'=> get_post_meta( $this->location_id, 'location-address-longitude', true ),
