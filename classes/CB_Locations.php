@@ -57,6 +57,17 @@ class CB_Locations  {
 		return $geocoords;
 	}
 	/**
+	 * Return Address formatted
+	 * @uses CB_Settings
+	 * @return string $adress_formatted address formatted according to plugin settings
+	 */
+	public function get_address_formatted( ) {
+
+		// @TODO:
+
+		return $adress_formatted;
+	}
+	/**
 	* Return an array of open days & times
 	* @param int $location_id
 	* @return array $opening_times
