@@ -38,8 +38,11 @@ class CB_Enqueue_Admin {
 		// Load admin style sheet and JavaScript.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
-		// @TODO not working
 		add_filter( 'cmb2_sanitize_toggle', array( $this, 'cmb2_sanitize_checkbox' ), 20, 2 );
+
+		add_action( 'save_post', array( $this, 'cb2_add_hook_post_updated' ), 10, 3 );
+
+
 	}
 
 		/**
@@ -198,6 +201,15 @@ function cmb2_sanitize_checkbox( $override_value, $value ) {
     // Return 0 instead of false if null value given. This hack for
 		// checkbox or checkbox-like can be setting true as default value.
     return is_null( $value ) ? 0 : $value;
+	}
+	public function cb2_add_hook_post_updated( $post_ID, $before, $after ) {
+		global $post;
+		echo ("HELLOss");
+		do_action( 'cb2_cpt_updated', 10, 1 );
+		if (( $post->post_type == 'cb_item' ) or ( $post->post_type == 'cb_location' ) ) { // a cb2 custom post type was updated
+		} else {
+			return;
+		}
 	}
 }
 $cb_enqueue_admin = new CB_Enqueue_Admin();
