@@ -1,0 +1,124 @@
+label {
+  cursor:pointer;
+}
+
+.cb2-calendar {
+  width:100%;
+  border-collapse:collapse;
+}
+.cb2-hidden {
+  display:none;
+}
+.cb2-debug-control span {
+  position:absolute;
+	top:0px;
+	left:40px;
+	z-index:40;
+}
+.cb2-debug-control {
+	font-size:10px;
+  color:#777;
+  cursor:pointer;
+}
+.cb2-dangerous {
+  color:red;
+}
+.cb2-debug {
+  font-family: Sans;
+  color: #777;
+  font-size:10px;
+}
+.cb2-notice {
+  background-color:#fac83f;
+  border:1px solid #888;
+}
+
+/* ---------------------- layout */
+.cb2-calendar > tbody  > tr {
+  padding:5px;
+  margin:2px;
+  overflow-y:hidden;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td.cb2-empty-pre-cell {
+  border:none;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts {
+  position:relative;
+  height:200px;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts > tbody > tr {
+  /* position:absolute; */
+  background-color:#fff;
+  border:1px solid #d7d7d7;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts > tbody > tr > td {
+  position:relative;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td {
+  border:1px solid #d7d7d7;
+  vertical-align: top;
+  overflow:hidden;
+  padding:5px;
+}
+
+/* ---------------------- indicators */
+.cb2-indicators ul {
+  list-style:none;
+	padding:0px;
+}
+.cb2-indicators ul li {
+  float:left;
+}
+.cb2-indicator-no-collect {
+  background-color:#88ff88;
+}
+.cb2-indicator-no-return {
+  background-color:#ff8888;
+}
+.cb2-indicator-no-use {
+  background-color:#ff0000;
+}
+
+/* ---------------------- fields */
+.type-day > .entry-header > .entry-title {
+  color:#888;
+	margin:0px;
+}
+.cb2-calendar .cb2-today > .entry-header > .entry-title {
+  color:#111;
+  font-weight:bold;
+  background-color:#c7c7c7;
+}
+.cb2-time {
+  margin-right:4px;
+  color:#444444;
+}
+.cb2-period-status-type-name span {
+  color:#fff;
+  background-color:#000;
+  font-size:10px;
+  padding:1px 4px;
+}
+
+/* ---------------------- Real World Object types */
+.cb2-period-group-type {
+  font-size: 10px;
+  font-weight:bold;
+  color:#fff;
+  background-color:#000;
+  margin-right:2px;
+}
+.cb2-period-group-type-A .cb2-period-group-type {
+}
+.cb2-period-group-type-G .cb2-period-group-type {
+  background-color:#ff8888;
+}
+.cb2-period-group-type-L .cb2-period-group-type {
+  background-color:#88ff88;
+}
+.cb2-period-group-type-I .cb2-period-group-type {
+  background-color:#8888ff;
+}
+.cb2-period-group-type-U .cb2-period-group-type {
+  background-color:#ffff88;
+}

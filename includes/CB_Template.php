@@ -25,6 +25,7 @@ if ( !function_exists( 'cb_get_template_part' ) ) {
 			$template = '';
 			$plugin_slug = $plugin_slug . '/';
 			$path = WP_PLUGIN_DIR . '/'. $plugin_slug . 'templates/';
+			if ( is_array( $slug ) ) $slug = implode( '-', $slug );
 
 			// Look in yourtheme/slug-name.php and yourtheme/plugin-name/slug-name.php
 			if ( $name ) {

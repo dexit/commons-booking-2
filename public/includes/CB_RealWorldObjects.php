@@ -5,14 +5,21 @@
 class CB_User extends CB_PostNavigator implements JsonSerializable {
   public static $all    = array();
   public static $schema = 'with-periods'; //this-only, with-periods
+  static $static_post_type     = 'user';
+
+  function post_type() {return self::$static_post_type;}
 
   protected function __construct( &$location, &$item, $ID, $user_login = NULL ) {
     $this->periods    = array();
     parent::__construct( $this->periods );
     $this->location   = &$location;
     $this->item       = &$item;
+
+    // WP_Post values
     $this->ID         = $ID;
     $this->user_login = $user_login;
+    $this->post_title = $user_login;
+    $this->post_type  = self::$static_post_type;
   }
 
   static function factory( &$location, &$item, $ID, $user_login = NULL ) {
@@ -30,10 +37,6 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
 
   function add_period( &$period ) {
     array_push( $this->periods, $period );
-  }
-
-  function get_the_content( $more_link_text = null, $strip_teaser = false ) {
-    return "<span>$this->user_login</span>";
   }
 
   function jsonSerialize() {
@@ -56,12 +59,10 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
   protected function __construct( $ID, $post_title = NULL ) {
     $this->periods = array();
     parent::__construct( $this->periods );
+
+    // WP_Post values
     $this->ID         = $ID;
     $this->post_title = $post_title;
-  }
-
-  function get_the_content( $more_link_text = null, $strip_teaser = false ) {
-    return "<span>$this->post_title</span>";
   }
 
   function add_period( &$period ) {
@@ -84,10 +85,14 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
 // --------------------------------------------------------------------
 class CB_Location extends CB_Post implements JsonSerializable {
   public static $all = array();
+  static $static_post_type  = 'location';
+
+  function post_type() {return self::$static_post_type;}
 
   protected function __construct( $ID, $post_title = NULL ) {
     parent::__construct( $ID, $post_title );
     $this->items = array();
+    $this->post_type     = self::$static_post_type;
   }
 
   static function factory( $ID, $post_title = NULL ) {
@@ -121,6 +126,9 @@ class CB_Location extends CB_Post implements JsonSerializable {
 // --------------------------------------------------------------------
 class CB_Item extends CB_Post implements JsonSerializable {
   public  static $all = array();
+  static $static_post_type   = 'item';
+
+  function post_type() {return self::$static_post_type;}
 
   protected function __construct( &$location, $ID, $post_title = NULL ) {
     parent::__construct( $ID, $post_title );
@@ -128,6 +136,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
       $this->location = &$location;
       $this->location->add_item( $this );
     }
+    $this->post_type     = self::$static_post_type;
   }
 
   static function factory( &$location, $ID, $post_title = NULL ) {
