@@ -9,6 +9,7 @@
   <head>
     <title>Manual Calendar page</title>
     <link rel="stylesheet" type="text/css" href="calendar.css" />
+    <link rel="stylesheet" type="text/css" href="../public/assets/css/debug.css" />
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <style>
       .cb2-help {
@@ -160,17 +161,17 @@
 
     $args = array(
       'author'         => $user_ID,
-      'post_status'    => $post_status, // auto-draft indicates the pseudo Period A created for each day
+      'post_status'    => $post_status,   // auto-draft indicates the pseudo Period A created for each day
       'post_type'      => CB_PeriodItem::$all_post_types,
-      'posts_per_page' => -1,           // Not supported with CB_Query (always current month response)
-      'order'          => 'ASC',        // defaults to post_date
+      'posts_per_page' => -1,             // Not supported with CB_Query (always current month response)
+      'order'          => 'ASC',          // defaults to post_date
       'show_overridden_periods' => 'yes', // TODO: doesnt work yet: use the query string
       'date_query'     => array(
-        'after'   => $startdate_string, // TODO: Needs to compare enddate > after
-        'before'  => $enddate_string,   // TODO: Needs to compare startdate < before
+        'after'   => $startdate_string,   // TODO: Needs to compare enddate > after
+        'before'  => $enddate_string,     // TODO: Needs to compare startdate < before
         'compare' => $schema_type,
       ),
-      'meta_query' => $meta_query,      // Location, Item, User
+      'meta_query' => $meta_query,        // Location, Item, User
     );
     $query = new WP_Query( $args );
     var_dump( $query->query_vars );
