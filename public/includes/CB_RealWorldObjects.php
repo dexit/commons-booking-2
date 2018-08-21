@@ -41,6 +41,10 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     array_push( $this->periods, $period );
   }
 
+	function is( $user ) {
+		return ( $user instanceof CB_User && $user->ID == $this->ID );
+	}
+
   function jsonSerialize() {
     $array = array(
       'ID' => $this->ID,
@@ -88,6 +92,10 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
 
 	function get_the_content() {
 		return property_exists( $this, 'post_content' ) ? $this->post_content : '';
+	}
+
+	function is( $post ) {
+		return ( $post instanceof CB_Post && $post->ID == $this->ID );
 	}
 
   function jsonSerialize() {

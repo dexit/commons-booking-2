@@ -126,6 +126,10 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
   }
 
   function overlaps( $period ) {
+		return $this->overlaps_time( $period );
+  }
+
+  function overlaps_time( $period ) {
 		return ( $this->datetime_period_item_start >= $period->datetime_period_item_start
 			    && $this->datetime_period_item_start <= $period->datetime_period_item_end )
 			||   ( $this->datetime_period_item_end   >= $period->datetime_period_item_start
@@ -528,6 +532,15 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     }
 
     return $object;
+  }
+
+	function overlaps( $period ) {
+		$locations_not_different = (
+			 ! property_exists( $period, 'location' )
+			|| is_null( $this->location )
+			|| $this->location->is( $period->location )
+		);
+		return $locations_not_different && $this->overlaps_time( $period );
   }
 
   function name_field() {
