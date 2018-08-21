@@ -1,11 +1,11 @@
 <?php
-require( 'CB_Database.php' );
-require( 'CB_PostNavigator.php' );
-require( 'CB_PeriodItem.php' );
-require( 'CB_RealWorldObjects.php' );
-require( 'the_template_functions.php' );
-require( 'CB_Time_Classes.php' );
-require( 'WP_Query_integration.php' );
+require_once( 'CB_Database.php' );
+require_once( 'CB_PostNavigator.php' );
+require_once( 'CB_PeriodItem.php' );
+require_once( 'CB_RealWorldObjects.php' );
+require_once( 'the_template_functions.php' );
+require_once( 'CB_Time_Classes.php' );
+require_once( 'WP_Query_integration.php' );
 
 // System PERIOD_STATUS_TYPEs
 define( 'PERIOD_STATUS_TYPE_AVAILABLE', 1 );
@@ -24,65 +24,6 @@ class CB_Query {
 		'value'   => 'NOT_USED',
 		'compare' => 'NOT EXISTS',
 	);
-
-  // -------------------------------------------------------------------- Form helpers
-  // TODO: move these functions in to a separate class
-  static function location_options() {
-    return CB_Query::get_options( 'posts', 'ID', 'post_title', "post_type = 'location' AND post_status = 'publish'" );
-  }
-
-  static function item_options() {
-    return CB_Query::get_options( 'posts', 'ID', 'post_title', "post_type = 'item' AND post_status = 'publish'" );
-  }
-
-  static function user_options() {
-    return CB_Query::get_options( 'users', 'ID', 'user_login' );
-  }
-
-  static function period_status_type_options() {
-    return CB_Query::get_options( 'cb2_period_status_types', 'period_status_type_id', 'name' );
-  }
-
-  static function get_options( $table, $id_field = 'ID', $name_field = 'post_title', $condition = '1=1' ) {
-    //TODO: cache this
-    global $wpdb;
-    return $wpdb->get_results( "select $id_field as ID, $name_field as name from $wpdb->prefix$table where $condition", OBJECT_K );
-  }
-
-  static function select_options( $records, $current_value = NULL, $add_none = TRUE, $by_name = FALSE ) {
-    $html = '';
-    if ( $add_none ) $html .= "<option value=''>--none--</option>";
-    foreach ( $records as $value => $name ) {
-      if ( is_object( $name ) ) $name  = $name->name;
-      if ( $by_name )           $value = $name;
-      $selected = ( $current_value == $value ? 'selected="1"' : '' );
-      $html .= "<option value='$value' $selected>$name</option>";
-    }
-    return $html;
-  }
-
-  static function schema_options() {
-		$post_types = array();
-		$classes    = CB_Query::schema_types();
-		foreach ( $classes as $post_type => $Class )
-			$post_types[ $post_type ] = $post_type;
-    return $post_types;
-  }
-
-  static function reset_data( $pass ) {
-    global $wpdb;
-
-    if ( WP_DEBUG && $pass == 'fryace4' ) {
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_options', 'option_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_global_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_user_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_location_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_period_group_period', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_periods', 'period_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_period_groups', 'period_group_id' )->run();
-    }
-  }
 
   // -------------------------------------------------------------------- Reflection
   // post_type to Class lookups
@@ -113,7 +54,7 @@ class CB_Query {
   // -------------------------------------------------------------------- WordPress integration
   // Complementary to WordPress
   // With CB Object understanding
-	static function get_post_type( $post_type, $post = null, $output = OBJECT, $filter = 'raw' ) {
+	static function get_post_type( $post_type, $post_id = NULL, $output = OBJECT, $filter = 'raw' ) {
 		// get_post() with table switch
 		// This will use standard WP cacheing
 		global $wpdb;
@@ -131,11 +72,11 @@ class CB_Query {
 			}
 		}
 
-		$post = get_post( $post, $output, $filter );
+		$post = get_post( $post_id, $output, $filter );
 
 		if ( $Class ) {
 			if ( is_null( $post ) )
-				throw new Exception( "[$Class/$post_type] not found in [$wpdb->posts] for [$post]" );
+				throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
 			if ( $old_wpdb_posts )
 				$wpdb->posts = $old_wpdb_posts;
 			if ( method_exists( $Class, 'factory_from_wp_post' ) )
@@ -178,34 +119,52 @@ class CB_Query {
 		return $record;
 	}
 
+	private static function get_post_types() {
+		global $wpdb;
+		$post_types = wp_cache_get( 'cb2-post-types' );
+		if ( ! $post_types ) {
+			$post_types = $wpdb->get_results( "SELECT post_type, ID_multiplier, ID_Base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC", OBJECT_K );
+			wp_cache_set( 'cb2-post-types', $post_types );
+		}
+		return $post_types;
+	}
 
 	static function post_type_from_ID( $ID ) {
-		global $wpdb;
-		// TODO: Cache this post_type_from_ID
-		return $wpdb->get_var( $wpdb->prepare(
-			"SELECT post_type FROM {$wpdb->prefix}cb2_post_types
-			  WHERE ID_base <= %d
-			  ORDER BY ID_base DESC LIMIT 1", array( $ID ) )
-		);
+		$post_types = self::get_post_types();
+		$post_type  = NULL;
+
+		foreach ( $post_types as $post_type_check => $details ) {
+			$post_type_ID_base = $details->ID_Base;
+			if ( $post_type_ID_base <= $ID ) {
+				$post_type = $post_type_check;
+				if ( WP_DEBUG && FALSE ) print( " <i>$ID =&gt; $post_type</i> " );
+				break;
+			}
+		}
+		return $post_type;
 	}
 
 	static function ID_from_id_post_type( $id, $post_type ) {
-		global $wpdb;
-		// TODO: Cache this ID_from_id()
-		return $wpdb->get_var( $wpdb->prepare( "SELECT %d * ID_multiplier + ID_Base
-			FROM {$wpdb->prefix}cb2_post_types
-			WHERE post_type = %s", array( $id, $post_type ) )
-		);
+		$ID         = $id;
+		$post_types = self::get_post_types();
+		if ( isset( $post_types[$post_type] ) ) {
+			$details = $post_types[$post_type];
+			$ID      = $id * $details['ID_multiplier'] + $details['ID_Base'];
+		} else throw new Exception( "[$post_type] is not governed by CB2" );
+
+		return $ID;
 	}
 
 	static function id_from_ID( $ID ) {
-		global $wpdb;
-		// TODO: Cache this id_from_ID()
-		return $wpdb->get_var( $wpdb->prepare( "SELECT (%d - ID_Base) / ID_multiplier
-			FROM {$wpdb->prefix}cb2_post_types
-			WHERE ID_base <= %d
-			ORDER BY ID_base DESC LIMIT 1", array( $ID, $ID ) )
-		);
+		$id         = $ID;
+		$post_types = self::get_post_types();
+		$post_type  = self::post_type_from_ID( $ID );
+		if ( isset( $post_types[$post_type] ) ) {
+			$details = $post_types[$post_type];
+			$id      = ( $ID - $details->ID_Base ) / $details->ID_multiplier;
+		} else throw new Exception( "[$post_type] is not governed by CB2" );
+
+		return $id;
 	}
 
 	static function class_from_SELECT( $query ) {
@@ -276,13 +235,14 @@ class CB_Query {
 			if ( ! $post->ID )        throw new Exception( 'get_metadata_assign: $post->ID required' );
 			if ( ! $post->post_type ) throw new Exception( 'get_metadata_assign: $post->post_type required' );
 
+			$post_type = $post->post_type;
 			if ( ! property_exists( $post, '_get_metadata_assign' ) ) {
-				if ( $Class = self::schema_type_class( $post->post_type ) ) {
+				if ( $Class = self::schema_type_class( $post_type ) ) {
 					// get_metadata( $meta_type, ... )
 					//   meta.php has _get_meta_table( $meta_type );
 					//   $table_name = $meta_type . 'meta';
 					if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
-						$post_type_stub         = CB_Query::substring_before( $post->post_type );
+						$post_type_stub         = CB_Query::substring_before( $post_type );
 						$meta_type              = $post_type_stub;
 						$meta_table_stub        = "{$meta_type}meta";
 						$meta_table             = "cb2_view_{$meta_table_stub}";
@@ -290,16 +250,18 @@ class CB_Query {
 							$meta_table = $Class::$posts_table;
 						$wpdb->$meta_table_stub = "$wpdb->prefix$meta_table";
 					}
-				}
 
-				$metadata = get_metadata( $meta_type, $post->ID );
+					$metadata = get_metadata( $meta_type, $post->ID );
+					if ( ! is_array( $metadata ) || ! count( $metadata ) )
+						throw new Exception( "[$post_type] [$post->ID] returned no metadata" );
 
-				// Populate object
-				foreach ( $metadata as $this_meta_key => $meta_value )
-					$post->$this_meta_key = $meta_value[0];
-				$post->_get_metadata_assign = TRUE;
+					// Populate object
+					foreach ( $metadata as $this_meta_key => $meta_value )
+						$post->$this_meta_key = $meta_value[0];
+					$post->_get_metadata_assign = TRUE;
+				} else throw new Exception( "Cannot get_metadata_assign() to [$post_type] not governed by CB2" );
 			}
-		}
+		} else throw new Exception( 'get_metadata_assign() post required' );
   }
 
   // -------------------------------------------------------------------- Class, Function and parameter utilities
