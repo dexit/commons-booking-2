@@ -9,13 +9,17 @@ label {
 .cb2-hidden {
   display:none;
 }
+/* ---------------------- debug */
 .cb2-debug-control span {
   position:absolute;
-	top:0px;
+	top:-3px;
 	left:40px;
 	z-index:40;
+	border:1px dotted #000;
+	background-color:#fff;
 }
 .cb2-debug-control {
+	position:relative;
 	font-size:10px;
   color:#777;
   cursor:pointer;

@@ -12,7 +12,6 @@
 " <?php post_class(); ?>>
 		<?php the_title( '<h4 class="entry-title">', '</h4>' ); ?>
 	<div><input type="checkbox" id="perioditem-<?php the_ID(); ?>" name="booked-perioditems" value="<?php the_ID(); ?>"/></div>
-	<!-- ?php if ( WP_DEBUG ) the_debug(); ? -->
 	<!-- ?php the_fields( CB_PeriodItem::$standard_fields ); ? -->
 
 	<!-- td><footer class="entry-footer">

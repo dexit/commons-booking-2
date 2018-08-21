@@ -3,6 +3,7 @@
 add_filter( 'query',            'cb2_wpdb_mend_broken_date_selector' );
 add_filter( 'posts_where',      'cb2_posts_where_allow_NULL_meta_query' );
 add_filter( 'pre_get_posts',    'cb2_pre_get_posts_query_string_extensions');
+add_filter( 'query_vars',       'cb2_query_vars' );
 
 // --------------------------------------------- SQL rewrite for custom posts
 // All SQL redirect to the wp_cb2_post* views for the custom posts
@@ -144,6 +145,7 @@ function cb2_pre_post_update( $ID, $data ) {
 				// Fields and values assembly
 				$data          = CB_Query::sanitize_data_for_table( $class_database_table, $data );
 				$id = CB_Query::id_from_ID( $ID );
+
 				if ( is_null( $id ) ) {
 					$post = get_post( $ID );
 					if ( $post ) { //&&  ) ) {
@@ -177,7 +179,6 @@ function cb2_pre_post_update( $ID, $data ) {
 							wp_redirect( "/wp-admin/post.php?post=$ID&action=edit" );
 							exit();
 						}
-
 					} else throw new Exception( "Trying to update a [$post->post_status] CB2 post [$post_type] with an invalid ID [$ID]" );
 				} else {
 					// The post has a normal ID
@@ -487,7 +488,6 @@ function cb2_wpdb_query_select( $query ) {
 	// ALL database queries come through this filter
 	// including insert and updates
 	global $wpdb;
-
 	if ( $Class = CB_Query::class_from_SELECT( $query ) ) {
 		// perioditem-global => perioditem
 		$post_type_stub = CB_Query::substring_before( $Class::$static_post_type );
@@ -580,6 +580,7 @@ function cb2_pre_get_posts_query_string_extensions() {
 
   if ( isset( $_GET[ 'meta_key' ] ) )   set_query_var( 'meta_key',   $_GET[ 'meta_key' ] );
   if ( isset( $_GET[ 'meta_value' ] ) ) set_query_var( 'meta_value', $_GET[ 'meta_value' ] );
+  if ( isset( $_GET[ 'show_overridden_periods' ] ) ) set_query_var( 'show_overridden_periods', $_GET[ 'show_overridden_periods' ] );
 
   $meta_query_items = array();
 	if ( isset( $_GET[ 'location_ID' ] ) )             $meta_query_items[ 'location_clause' ]    = array( 'key' => 'location_ID', 'value' => $_GET[ 'location_ID' ] );
@@ -596,5 +597,16 @@ function cb2_pre_get_posts_query_string_extensions() {
 		set_query_var( 'meta_query', $meta_query );
 	}
 }
+
+function cb2_query_vars( $qvars ) {
+	$qvars[] = 'show_overridden_periods';
+	$qvars[] = 'location_ID';
+	$qvars[] = 'item_ID';
+	$qvars[] = 'period_status_type_id';
+	$qvars[] = 'period_status_type_name';
+
+	return $qvars;
+}
+
 
 

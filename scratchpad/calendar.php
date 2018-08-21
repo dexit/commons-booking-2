@@ -1,8 +1,9 @@
 <?php
   /** Loads the WordPress Environment and Template */
-  require_once( $_SERVER['DOCUMENT_ROOT'] . 'cb_02_framework' . '/wp-blog-header.php' );
-  require_once( $_SERVER['DOCUMENT_ROOT'] . 'cb_02_framework'. '/wp-content/plugins/commons-booking-2/includes/CB_Template.php' );
-  require_once( $_SERVER['DOCUMENT_ROOT'] . 'cb_02_framework'. '/wp-content/plugins/commons-booking-2/public/includes/CB_Query.php' );
+  require_once( $_SERVER['DOCUMENT_ROOT'] . '/wp-blog-header.php' );
+  require_once( dirname( dirname( __FILE__ ) ) . '/includes/CB_Template.php' );
+  require_once( dirname( dirname( __FILE__ ) ) . '/public/includes/CB_Query.php' );
+  require_once( dirname( dirname( __FILE__ ) ) . '/public/includes/CB_Forms.php' );
 ?>
 <html>
   <head>
@@ -137,7 +138,7 @@
     $output_type      = ( isset( $_GET['output_type'] ) ? $_GET['output_type'] : 'HTML' );
 
     if ( WP_DEBUG && isset( $_POST['reset_data'] ) ) {
-      CB_Query::reset_data( $_POST['reset_data'] );
+      CB_Forms::reset_data( $_POST['reset_data'] );
     }
 
     // --------------------------------------- Query
@@ -163,6 +164,7 @@
       'post_type'      => CB_PeriodItem::$all_post_types,
       'posts_per_page' => -1,           // Not supported with CB_Query (always current month response)
       'order'          => 'ASC',        // defaults to post_date
+      'show_overridden_periods' => 'yes', // TODO: doesnt work yet: use the query string
       'date_query'     => array(
         'after'   => $startdate_string, // TODO: Needs to compare enddate > after
         'before'  => $enddate_string,   // TODO: Needs to compare startdate < before
@@ -170,8 +172,8 @@
       ),
       'meta_query' => $meta_query,      // Location, Item, User
     );
-    var_dump( $args );
     $query = new WP_Query( $args );
+    var_dump( $query->query_vars );
 		print( "<div class='cb2-debug'>$query->request</div>" );
     print( '</div>' ); // .SQL
 
@@ -180,9 +182,9 @@
     print( '<h2>create new period <a href="#" onclick="this.parentNode.nextSibling.style=0">show</a></h2><form style="display:none;" method="POST">' );
     print( '<i>type</i><br/>' );
     print( "Name: <input name='period_group_name'/><br/>" );
-    print( 'Location: <select name="location_ID">' . CB_Query::select_options( CB_Query::location_options(), $post_location_ID ) . '</select>' );
-    print( 'Item: <select name="item_ID">'         . CB_Query::select_options( CB_Query::item_options(), $post_item_ID ) . '</select>' );
-    print( 'User: <select name="user_ID">'         . CB_Query::select_options( CB_Query::user_options(), $post_user_ID ) . '</select>' );
+    print( 'Location: <select name="location_ID">' . CB_Forms::select_options( CB_Forms::location_options(), $post_location_ID ) . '</select>' );
+    print( 'Item: <select name="item_ID">'         . CB_Forms::select_options( CB_Forms::item_options(), $post_item_ID ) . '</select>' );
+    print( 'User: <select name="user_ID">'         . CB_Forms::select_options( CB_Forms::user_options(), $post_user_ID ) . '</select>' );
     ?><p class="cb2-help">
       No selection (G Global) = national holidays, general opening times</br>
       Location (L) = opening / closing times, Location specific holidays, discounts, events</br>
@@ -192,12 +194,12 @@
     </p><?php
 
     print( '<hr/><i>period definition</i><br/>' );
-    print( 'Status: <select name="period_status_type_id">' . CB_Query::select_options( CB_Query::period_status_type_options(), $post_period_status_type_id, FALSE ) . '</select>' );
+    print( 'Status: <select name="period_status_type_id">' . CB_Forms::select_options( CB_Forms::period_status_type_options(), $post_period_status_type_id, FALSE ) . '</select>' );
     print( "Time Part Start: <input name='datetime_part_period_start' value='$post_datetime_part_period_start'/>" );
     print( "Time Part End: <input name='datetime_part_period_end' value='$post_datetime_part_period_end'/>" );
     print( '<br/>' );
 
-    print( 'Recurrence: <select name="recurrence_type">' . CB_Query::select_options( array( 'D' => 'daily', 'W' => 'weekly', 'M' => 'monthly', 'Y' => 'yearly' ), $post_recurrence_type ) . '</select>' );
+    print( 'Recurrence: <select name="recurrence_type">' . CB_Forms::select_options( array( 'D' => 'daily', 'W' => 'weekly', 'M' => 'monthly', 'Y' => 'yearly' ), $post_recurrence_type ) . '</select>' );
     ?><p class="cb2-help">
       No recurrence = one-off event on specific day. all of Time Parts and can span any time period.</br>
       daily = only the time portion of Time Parts are used</br>
@@ -230,16 +232,16 @@
     print( '<h2>filter view <a href="#" onclick="this.parentNode.nextSibling.style=0">show</a></h2><form style="display:none;">' );
     print( "<input name='startdate' value='$startdate_string'/>" );
     print( "<input name='enddate' value='$enddate_string'/><br/>" );
-    print( 'Location: <select name="location_ID">' . CB_Query::select_options( CB_Query::location_options(), $location_ID ) . '</select>' );
-    print( 'Item: <select name="item_ID">'     . CB_Query::select_options( CB_Query::item_options(), $item_ID ) . '</select>' );
-    print( 'User: <select name="user_ID">'          . CB_Query::select_options( CB_Query::user_options(), $user_ID ) . '</select>' );
+    print( 'Location: <select name="location_ID">'  . CB_Forms::select_options( CB_Forms::location_options(), $location_ID ) . '</select>' );
+    print( 'Item: <select name="item_ID">'          . CB_Forms::select_options( CB_Forms::item_options(), $item_ID ) . '</select>' );
+    print( 'User: <select name="user_ID">'          . CB_Forms::select_options( CB_Forms::user_options(), $user_ID ) . '</select>' );
     print( '<br/>' );
-    print( 'Period Status: <select name="period_status_type_id">' . CB_Query::select_options( CB_Query::period_status_type_options(), $period_status_type_id, TRUE ) . '</select>' );
+    print( 'Period Status: <select name="period_status_type_id">' . CB_Forms::select_options( CB_Forms::period_status_type_options(), $period_status_type_id, TRUE ) . '</select>' );
     print( "<input id='no_auto_draft' type='checkbox' name='no_auto_draft'/> <label for='no_auto_draft'>Exclude pseudo-periods (A)</label>" );
     print( '<br/>' );
-    print( 'Output type:<select name="output_type">' . CB_Query::select_options( array( 'HTML' => 'HTML', 'JSON' => 'JSON' ), $output_type ) . '</select>' );
-    print( 'Post Type:<select name="schema_type">' . CB_Query::select_options( CB_Query::schema_options(), $schema_type ) . '</select>' );
-    print( 'Template Part:<select name="template_part">' . CB_Query::select_options( array( 'available' => 'available' ), $template_part ) . '</select>' );
+    print( 'Output type:<select name="output_type">'     . CB_Forms::select_options( array( 'HTML' => 'HTML', 'JSON' => 'JSON' ), $output_type ) . '</select>' );
+    print( 'Post Type:<select name="schema_type">'       . CB_Forms::select_options( CB_Forms::schema_options(), $schema_type ) . '</select>' );
+    print( 'Template Part:<select name="template_part">' . CB_Forms::select_options( array( 'available' => 'available' ), $template_part ) . '</select>' );
     print( '<br/>' );
     print( '<input class="cb2-submit" type="submit" value="Filter"/>' );
     print( '</form>' );
@@ -266,6 +268,8 @@
         print( '</pre>' );
         break;
       case 'HTML':
+				// print( 'HTML templorarily disabled because of performance problems' );
+				// exit();
 				?><div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">calendar</h1></header>
 					<div class="entry-content">
 						<table class="cb2-subposts"><tbody>

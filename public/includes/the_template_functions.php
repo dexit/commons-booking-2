@@ -3,20 +3,23 @@
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
-	
 	global $post;
+
+	if ( $context == 'single' )
+		throw new Exception( 'the_inner_loop() should never be called with context [single]' );
+
 	if ( ! $post_navigator ) $post_navigator = $post;
 	if ( $post_navigator instanceof CB_PostNavigator || $post_navigator instanceof WP_Query ) {
-		$outer_post = $post;
+		$outer_post  = $post;
 		while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 			print( $before );
 			cb_get_template_part( CB_TEXTDOMAIN, $post->templates( $context, $template_type ) );
 			print( $after );
 		endwhile;
-		$post = &$outer_post;
+		$post     = &$outer_post;
 	} else {
 		throw new Exception( 'the_inner_loop() only available for CB_PostNavigator' );
-	} 
+	}
 }
 
 function is_current() {
@@ -100,7 +103,7 @@ function the_fields( $field_names, $before = '<td>', $after = '</td>', $class = 
 	}
 }
 
-function the_debug( $before = '<td>', $afer = '</td>' ) {
+function the_debug( $before = '', $afer = '' ) {
 	global $post;
 	if ( WP_DEBUG && is_object( $post ) && method_exists( $post, 'get_the_debug' ) ) {
 		echo $post->get_the_debug( $before, $afer );
@@ -224,20 +227,20 @@ function cb2_template_include_custom_plugin_templates( $content ) {
 
 
 
-		
+
 	}
 
 	if ($current_template_path) {
-		ob_start (); 
+		ob_start ();
         include $current_template_path;
-        $template = ob_get_contents (); 
-        ob_end_clean (); 
+        $template = ob_get_contents ();
+        ob_end_clean ();
         $content .= $template;
-		
+
 	}
 	return $content;
 
-	
+
 }
 
 /*

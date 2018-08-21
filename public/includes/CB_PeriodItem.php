@@ -1,10 +1,11 @@
 <?php
-require('CB_Period.php');
+require_once( 'CB_Period.php' );
 
 class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
-  public  static $all = array();
+  public  static $all              = array();
   public  static $static_post_type = 'perioditem';
-  public  static $standard_fields = array(
+  public  static $postmeta_table   = FALSE;
+  public  static $standard_fields  = array(
 		'period_group_type',
 		'time_start',
 		'name',
@@ -40,13 +41,12 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 		// Add the period to all the days it appears in
 		// CB_Day::factory() will lazy create singleton CB_Day's
 		if ( $this->datetime_period_item_start ) {
-			$date     = clone $this->datetime_period_item_start;
-			$date_end = clone $this->datetime_period_item_end;
+			$date = clone $this->datetime_period_item_start;
 			do {
-				$day = CB_Day::factory( $date );
+				$day = CB_Day::factory( clone $date );
 				$day->add_period( $this );
 				$date->add( new DateInterval( 'P1D' ) );
-			} while ( $date < $date_end );
+			} while ( $date < $this->datetime_period_item_end );
 
 			// Overlapping periods
 			// Might partially overlap many different non-overlapping periods
@@ -249,7 +249,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     return $html;
   }
 
-  function get_the_debug( $before = '<td>', $after = '</td>' ) {
+  function get_the_debug( $before = '', $after = '' ) {
     $onclick = "this.firstElementChild.style = (this.firstElementChild.style.length ? '' : 'display:block;');";
     $debug  = $before;
     $debug .= '<div class="cb2-debug-control" onclick="' . $onclick . '">';

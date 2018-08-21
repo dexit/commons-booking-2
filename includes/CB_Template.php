@@ -26,11 +26,7 @@ if ( !function_exists( 'cb_get_template_part' ) ) {
 			$plugin_slug = $plugin_slug . '/';
 			$path        = WP_PLUGIN_DIR . '/'. $plugin_slug . 'templates/';
 			$slug        = $slugs;
-			if ( is_array( $slugs ) ) {
-				// TODO: these templates do not necessarily exist
-				// Check through them to see if we have overrides etc.
-				$slug = $slugs[0];
-			}
+			if ( is_array( $slugs ) ) $slug = $slugs[0];
 
 			// Look in yourtheme/slug-name.php and yourtheme/plugin-name/slug-name.php
 			if ( $name ) {
@@ -44,7 +40,7 @@ if ( !function_exists( 'cb_get_template_part' ) ) {
 				if ( empty( $name ) ) {
 					if ( file_exists( $path . "{$slug}.php" ) ) {
 							$template = $path . "{$slug}.php";
-							}
+					}
 				} else if ( file_exists( $path . "{$slug}-{$name}.php" ) ) {
 					$template = $path . "{$slug}-{$name}.php";
 				}
@@ -59,14 +55,8 @@ if ( !function_exists( 'cb_get_template_part' ) ) {
 			$template = apply_filters( 'cb_get_template_part', $template, $slug, $name, $plugin_slug );
 
 			// Template existence check
-			if ( empty( $template ) ) {
-				$plugin_slug_full = $plugin_slug . 'templates';
-				$name_string      = ( $name ? ", $name" : '' );
-				$slugs_string     = $slugs;
-				if ( is_array( $slugs_string ) ) $slugs_string = '(' . implode( '|', $slugs_string ) . ')';
-				if ( empty( $slugs_string ) || $slugs_string == '()' ) $slugs_string = '(no template name)';
-				throw new Exception( "Template does not exist [$plugin_slug_full/$slugs_string.php, $name_string]" );
-			}
+			if ( empty( $template ) )
+				throw new Exception( "Template does not exist [$path$slug.php] [$name]" );
 
 			// Parse submitted args
 			$template_args = wp_parse_args( $template_args );

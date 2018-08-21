@@ -145,24 +145,26 @@ class CB_Query {
 	}
 
 	static function ID_from_id_post_type( $id, $post_type ) {
-		$ID         = $id;
+		// NULL return indicates that this post_type is not governed by CB2
+		$ID         = NULL;
 		$post_types = self::get_post_types();
 		if ( isset( $post_types[$post_type] ) ) {
 			$details = $post_types[$post_type];
-			$ID      = $id * $details['ID_multiplier'] + $details['ID_Base'];
-		} else throw new Exception( "[$post_type] is not governed by CB2" );
+			$ID      = $id * $details->ID_multiplier + $details->ID_Base;
+		}
 
 		return $ID;
 	}
 
 	static function id_from_ID( $ID ) {
-		$id         = $ID;
+		// NULL return indicates that this post_type is not governed by CB2
+		$id         = NULL;
 		$post_types = self::get_post_types();
 		$post_type  = self::post_type_from_ID( $ID );
 		if ( isset( $post_types[$post_type] ) ) {
 			$details = $post_types[$post_type];
 			$id      = ( $ID - $details->ID_Base ) / $details->ID_multiplier;
-		} else throw new Exception( "[$post_type] is not governed by CB2" );
+		}
 
 		return $id;
 	}

@@ -1,6 +1,6 @@
 <?php
-require('CB_PeriodStatusType.php');
-require('CB_PeriodGroup.php');
+require_once( 'CB_PeriodStatusType.php' );
+require_once( 'CB_PeriodGroup.php' );
 
 class CB_Period extends CB_PostNavigator implements JsonSerializable {
 	// TODO: use this generic period class
