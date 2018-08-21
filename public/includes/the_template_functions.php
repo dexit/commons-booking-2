@@ -3,19 +3,20 @@
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
+	
 	global $post;
 	if ( ! $post_navigator ) $post_navigator = $post;
 	if ( $post_navigator instanceof CB_PostNavigator || $post_navigator instanceof WP_Query ) {
 		$outer_post = $post;
 		while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 			print( $before );
-			// We can also require( 'template-loader.php' ); instead
-			// MELTODO : commons-booking-2 shouldn't be hardcoded
-			cb_get_template_part( 'commons-booking-2', $post->templates( $context, $template_type ) );
+			cb_get_template_part( CB_TEXTDOMAIN, $post->templates( $context, $template_type ) );
 			print( $after );
 		endwhile;
 		$post = &$outer_post;
-	} else throw new Exception( 'the_inner_loop() only available for CB_PostNavigator' );
+	} else {
+		throw new Exception( 'the_inner_loop() only available for CB_PostNavigator' );
+	} 
 }
 
 function is_current() {
@@ -174,14 +175,14 @@ function cb2_template_path() {
 	return dirname( dirname( dirname( __FILE__ ) ) ) . '/templates';
 }
 
-function cb2_template_include_custom_plugin_templates( $current_template_path = NULL ) {
-	// Plugin provided default templates
-	// Maintain theme override
+function cb2_template_include_custom_plugin_templates( $content ) {
+	// Plugin provided default template partials
 	// CB_Class->templates() should provide templates in priority order
-	// e.g. $template = single.php (from theme or wordpress)
+	// e.g. $template = single-item.php (from theme or wordpress)
 	// $post->templates( wp_query ) = array( single-location.php, single.php )
 	// TODO: cache template dir listing
 	global $post;
+	$current_template_path = false;
 
 	if ( $post instanceof CB_PostNavigator ) {
 		if ( $current_template_path ) {
@@ -194,10 +195,7 @@ function cb2_template_include_custom_plugin_templates( $current_template_path = 
 		$post_type                 = $post->post_type;
 		$context                   = CB_Query::template_loader_context();
 
-		echo $context;
 		$post_template_suggestions = $post->templates( $context );
-
-		print_r($post_template_suggestions);
 
 		// Read the plugin templates directory
 		// TODO: lazy cache this and check for contents:
@@ -224,8 +222,20 @@ function cb2_template_include_custom_plugin_templates( $current_template_path = 
 			// 3) Check for next priority
 		}
 
-		include $current_template_path;
+
+
+		
 	}
+
+	if ($current_template_path) {
+		ob_start (); 
+        include $current_template_path;
+        $template = ob_get_contents (); 
+        ob_end_clean (); 
+        $content .= $template;
+		
+	}
+	return $content;
 
 	
 }

@@ -54,7 +54,9 @@ require_once( CB_PLUGIN_ROOT . 'includes/CB_PostTypes_Metaboxes.php' );
 require_once( CB_PLUGIN_ROOT . 'includes/CB_Helpers.php' );
 require_once( CB_PLUGIN_ROOT . 'includes/CB_Gui.php' );
 require_once( CB_PLUGIN_ROOT . 'includes/CB_Settings.php' );
+*/
 require_once( CB_PLUGIN_ROOT . 'public/Commons_Booking.php' );
+/*
 require_once( CB_PLUGIN_ROOT . 'classes/CB_Object.php' );
 require_once( CB_PLUGIN_ROOT . 'classes/CB_Timeframes.php' );
 require_once( CB_PLUGIN_ROOT . 'classes/CB_Timeframe_Options.php' );

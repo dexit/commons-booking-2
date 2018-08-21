@@ -1,3 +1,5 @@
+<?php echo "template : list-item.php <br>"; ?>
+
 <?php
 /**
  * Items in archives, list timeframes below item excerpt.

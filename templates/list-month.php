@@ -1,5 +1,7 @@
+<?php echo "template : list-month.php <br>"; ?>
+
 <tr id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
-	<?php the_content(); ?>
+	<?php//the_content(); ?>
 
 	<?php
 		// Empty day cells before the startdate in the week starts

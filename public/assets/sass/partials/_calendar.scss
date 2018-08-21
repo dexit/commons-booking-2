@@ -56,41 +56,34 @@ span.cb-item-dot { // dot representing the items
 }
 
   /* Calendar */
-  ul.cb-calendar {
+  table.cb-calendar {
 
-    list-style: none;
-    clear: both;
-    overflow: hidden;
     margin: 1em 0 1em 0;
     padding: 0;
     background: $light-grey;
-    // background: $light-grey;
 
     &:first-child {
       @include border-radiuses($radius, $radius, $radius, $radius );
     }
 
-    li, li ul, li ul li {
-      margin: 0;
-      padding: 0;
+    th {
+      text-align: center;
+      border:none;
     }
 
-    li.cb-date { // 1 date
+
+    td.day { // 1 date
+          width: 14.285%;
+          vertical-align: top;
           background: white;
           border-right: 1px solid $light-grey;
           border-top: 1px solid $light-grey;
 
-          margin: 0;
-          padding: 0;
-          -webkit-box-sizing: border-box;
-          -moz-box-sizing: border-box;
-          box-sizing: border-box;
-          width: $cellwidth;
-          height: $cellheight;
           position: relative;
           overflow: hidden;
-          float: left;
           text-align: center;
+
+          word-break:break-word;
 
           &[data-tippy] {
             cursor: pointer;
@@ -111,6 +104,14 @@ span.cb-item-dot { // dot representing the items
           .cb-M, .cb-D { /* day name (mon, tue, ...) */
             @extend .cb-small;
             color: $grey;
+          }
+
+          .cb2-field-name {
+            display: none;
+          }
+
+          .cb2-perioditem-has-overlap {
+            opacity: .5;
           }
 
 

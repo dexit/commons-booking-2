@@ -43,9 +43,9 @@ class Commons_Booking {
 	 */
 	public static function initialize() {
 			require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Enqueue.php' );
-			require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Extras.php' );
-			require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Template.php' );
-			require_once( CB_PLUGIN_ROOT . 'public/widgets/sample.php' );
+			//require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Extras.php' );
+			//require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Template.php' );
+			//require_once( CB_PLUGIN_ROOT . 'public/widgets/sample.php' );
 		}
 		/**
 	 * Return the cpts

@@ -1,18 +1,20 @@
-<tr id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
-	<!-- td><header class="entry-header">
-		<?php the_title( '<h4 class="entry-title">', '</h4>' ); ?>
-	</header></td -->
-	<?php the_content(); ?>
-	<?php the_debug(); ?>
-	<?php the_fields( CB_PeriodItem::$standard_fields ); ?>
+<?php // echo "template : list-perioditem.php <br>"; ?>
 
-	<td><footer class="entry-footer">
-		<?php
-			edit_post_link(
-				__( 'Edit', 'twentysixteen' ),
-				'<span class="edit-link">',
-				'</span>'
-			);
-		?>
-	</footer><!-- .entry-footer --></td>
-</tr>
+<?php 
+global $post;
+	if ($post->is_top_priority()) { ?>
+
+		<div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+			<?php if (get_the_title() == 'available') {
+
+				the_title();
+			} ?>
+		<?php // the_title( '<h4 class="entry-title">', '</h4>' ); ?>
+		<?php echo 'type: ' . get_the_field('period_group_type'); ?>
+	<?php // the_fields( CB_PeriodItem::$standard_fields, '<div>', '</div>' ); ?>
+
+	
+</div>
+
+
+<?php } ?>

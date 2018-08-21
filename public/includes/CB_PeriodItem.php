@@ -50,6 +50,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
 			// Overlapping periods
 			// Might partially overlap many different non-overlapping periods
+			// TO DO: location-location doesn't overlap, item-item doesn't overlap
 			foreach ( self::$all as $existing_period ) {
 				if ( $this->overlaps( $existing_period ) ) {
 					$existing_period->add_new_overlap( $this );
@@ -182,6 +183,10 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     $classes .= ' cb2-period-group-type-' . $this->post_type();
     $classes .= ( $this->top_priority_overlap_period ? ' cb2-perioditem-has-overlap' : ' cb2-perioditem-no-overlap' );
     return $classes;
+  }
+
+  function is_top_priority() {
+  	return !$this->top_priority_overlap_period;
   }
 
   function styles() {

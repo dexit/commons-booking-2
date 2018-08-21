@@ -347,7 +347,7 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 // Framework integration
 function cb2_init_temp_debug_enqueue() {
 	// TODO: move to main
-	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles', plugins_url( 'scratchpad/calendar.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
+//	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles', plugins_url( 'scratchpad/calendar.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {
