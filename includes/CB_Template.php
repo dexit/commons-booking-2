@@ -22,10 +22,10 @@ if ( !function_exists( 'cb_get_template_part' ) ) {
      * @return string
      */
     function cb_get_template_part( $plugin_slug, $slugs, $name = '', $template_args = array(), $return = false, $cache_args = array() ) {
-			$template = '';
+			$template    = '';
 			$plugin_slug = $plugin_slug . '/';
-			$path = WP_PLUGIN_DIR . '/'. $plugin_slug . 'templates/';
-			$slug = $slugs;
+			$path        = WP_PLUGIN_DIR . '/'. $plugin_slug . 'templates/';
+			$slug        = $slugs;
 			if ( is_array( $slugs ) ) {
 				// TODO: these templates do not necessarily exist
 				// Check through them to see if we have overrides etc.
@@ -64,6 +64,7 @@ if ( !function_exists( 'cb_get_template_part' ) ) {
 				$name_string      = ( $name ? ", $name" : '' );
 				$slugs_string     = $slugs;
 				if ( is_array( $slugs_string ) ) $slugs_string = '(' . implode( '|', $slugs_string ) . ')';
+				if ( empty( $slugs_string ) || $slugs_string == '()' ) $slugs_string = '(no template name)';
 				throw new Exception( "Template does not exist [$plugin_slug_full/$slugs_string.php, $name_string]" );
 			}
 

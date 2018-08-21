@@ -2,11 +2,19 @@
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-abstract class CB_TimePostNavigator extends CB_PostNavigator implements JsonSerializable {
+class CB_TimePostNavigator extends CB_PostNavigator implements JsonSerializable {
+  public static $posts_table    = FALSE;
+  public static $postmeta_table = FALSE;
+  public static $database_table = FALSE;
+
   function classes() {
     $classes = '';
     if ( $this->is_current ) $classes .= 'cb2-current';
     return $classes;
+	}
+
+	function jsonSerialize() {
+		throw new Exception( 'CB_TimePostNavigator::jsonSerialize() is a pure abstract method' );
 	}
 }
 
@@ -14,9 +22,9 @@ abstract class CB_TimePostNavigator extends CB_PostNavigator implements JsonSeri
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 class CB_Year extends CB_TimePostNavigator {
-  static $all = array();
-  static $static_post_type = 'year';
-  public $is_current = FALSE;
+  static $all                   = array();
+  static $static_post_type      = 'year';
+  public $is_current            = FALSE;
   public static $post_type_args = array(
 		'public' => FALSE,
   );

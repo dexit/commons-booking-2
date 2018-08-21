@@ -141,26 +141,34 @@ class CB_PostNavigator {
 	}
 
   function templates( $context = NULL, $type = NULL ) {
-		$templates = array();
-		$post_type = $this->post_type;
-    echo 'post tpye: ' . $post_type;
-		do {
-			if ( $context && $type ) array_push( $templates, "$context-$post_type-$type" );
-			if ( $context )          array_push( $templates, "$context-$post_type" );
-			if ( $type )             array_push( $templates, "$post_type-$type" );
-			array_push( $templates, $post_type );
+		$templates     = array();
+		$post_type     = $this->post_type;
 
-			if ( strpos( $post_type, '-' ) === FALSE ) $post_type = NULL;
-			else $post_type = CB_Query::substring_before( $post_type );
-		} while ( $post_type );
+		// Gather possible combinations for this post_type
+		// with sub-types
+		$post_sub_type = $post_type;
+		do {
+			if ( $context && $type ) array_push( $templates, "$context-$post_sub_type-$type" );
+			if ( $context )          array_push( $templates, "$context-$post_sub_type" );
+			if ( $type )             array_push( $templates, "$post_sub_type-$type" );
+			array_push( $templates, $post_sub_type );
+
+			if ( strpos( $post_sub_type, '-' ) === FALSE ) $post_sub_type = NULL;
+			else $post_sub_type = CB_Query::substring_before( $post_sub_type );
+		} while ( $post_sub_type );
 
 		// Sanitize
-		// TODO: lazy cache this templates() file_exists()
-		$templates_valid = array();
+		$templates_valid   = array();
+		$cb2_template_path = cb2_template_path();
 		foreach ( $templates as $template ) {
-			$template_path = cb2_template_path() . "/$template.php";
+			$template_path = "$cb2_template_path/$template.php";
 			if ( file_exists( $template_path ) )
 				array_push( $templates_valid, $template );
+		}
+
+		if ( ! count( $templates_valid) ) {
+			$templates_tried = implode( ',', $templates );
+			throw new Exception( "No valid templates found for [$post_type] in [$cb2_template_path].\nTried: $templates_tried" );
 		}
 
 		return $templates_valid;

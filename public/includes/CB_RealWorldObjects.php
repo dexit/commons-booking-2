@@ -121,8 +121,6 @@ class CB_Location extends CB_Post implements JsonSerializable {
   }
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-
 		$object = self::factory(
 			$post->ID
 		);
@@ -178,8 +176,6 @@ class CB_Item extends CB_Post implements JsonSerializable {
   }
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-
 		$object = self::factory(
 			$post->ID
 		);

@@ -9,13 +9,11 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		'menu_icon' => 'dashicons-admin-settings',
 		'label'     => 'Period Groups',
   );
-  private $periods = array();
+  public $periods = array();
 
   function post_type() {return self::$static_post_type;}
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post );
-
 		$object = self::factory(
 			$post->ID,
 			$post->period_group_id,

@@ -322,11 +322,10 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
   }
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ),
-			CB_Query::get_post_type( 'period', $post->period_ID ),
+			NULL, // periodgroup
+			NULL, // period
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end
@@ -395,6 +394,8 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
 
   static function &factory_from_wp_post( $post ) {
 		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_group_ID ) throw new Exception( 'CB_PeriodItem_Global requires a period_group_ID' );
+		if ( ! $post->period_ID )       throw new Exception( 'CB_PeriodItem_Global requires a period_ID' );
 
 		$object = self::factory(
 			$post->ID,
@@ -481,6 +482,9 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
 
   static function &factory_from_wp_post( $post ) {
 		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_group_ID ) throw new Exception( 'CB_PeriodItem_Location requires a period_group_ID' );
+		if ( ! $post->period_ID )       throw new Exception( 'CB_PeriodItem_Location requires a period_ID' );
+		if ( ! $post->location_ID )     throw new Exception( 'CB_PeriodItem_Location requires a location_ID' );
 
 		$object = self::factory(
 			$post->ID,
@@ -581,6 +585,10 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 
   static function &factory_from_wp_post( $post ) {
 		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_group_ID ) throw new Exception( 'CB_PeriodItem_Timeframe requires a period_group_ID' );
+		if ( ! $post->period_ID )       throw new Exception( 'CB_PeriodItem_Timeframe requires a period_ID' );
+		if ( ! $post->location_ID )     throw new Exception( 'CB_PeriodItem_Timeframe requires a location_ID' );
+		if ( ! $post->item_ID )         throw new Exception( 'CB_PeriodItem_Timeframe requires a item_ID' );
 
 		$object = self::factory(
 			$post->ID,
@@ -705,6 +713,11 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 
   static function &factory_from_wp_post( $post ) {
 		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_group_ID ) throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_group_ID' );
+		if ( ! $post->period_ID )       throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_ID' );
+		if ( ! $post->location_ID )     throw new Exception( 'CB_PeriodItem_Timeframe_User requires a location_ID' );
+		if ( ! $post->item_ID )         throw new Exception( 'CB_PeriodItem_Timeframe_User requires a item_ID' );
+		if ( ! $post->user_ID )         throw new Exception( 'CB_PeriodItem_Timeframe_User requires a user_ID' );
 
 		$object = self::factory(
 			$post->ID,
