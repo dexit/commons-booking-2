@@ -2,11 +2,12 @@
 
 <?php
 	global $post, $wp_query;
-	if ( $post->is_top_priority() || (
+	$show_overridden_periods = (
 		isset( $wp_query->query_vars['show_overridden_periods'] ) &&
 		$wp_query->query_vars['show_overridden_periods'] != 'no'
-	) ) { ?>
+	);
 
+	if ( $post->is_top_priority() || $show_overridden_periods ) { ?>
 		<div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 			<?php the_debug(); ?>
 			<?php if (get_the_title() == 'available') {
