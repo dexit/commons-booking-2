@@ -535,12 +535,15 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
   }
 
 	function overlaps( $period ) {
-		$locations_not_different = (
+		$parent_overlaps = parent::overlaps( $period );
+
+		$not_different = (
 			 ! property_exists( $period, 'location' )
 			|| is_null( $this->location )
 			|| $this->location->is( $period->location )
 		);
-		return $locations_not_different && $this->overlaps_time( $period );
+
+		return $not_different && $parent_overlaps;
   }
 
   function name_field() {
@@ -648,6 +651,18 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     return $object;
   }
 
+	function overlaps( $period ) {
+		$parent_overlaps = parent::overlaps( $period );
+
+		$not_different = (
+			 ! property_exists( $period, 'item' )
+			|| is_null( $this->item )
+			|| $this->item->is( $period->item )
+		);
+
+		return $not_different && $parent_overlaps;
+  }
+
   function name_field() {
     return self::$name_field;
   }
@@ -684,8 +699,8 @@ CB_Query::register_schema_type( 'CB_PeriodItem_Timeframe' );
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
-  static $name_field = array( 'location', 'item', 'user' );
-  static $database_table = 'cb2_timeframe_user_period_groups';
+  static $name_field             = array( 'location', 'item', 'user' );
+  static $database_table         = 'cb2_timeframe_user_period_groups';
   public  static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-page',
 		'label'     => 'User Periods',
@@ -777,6 +792,18 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     }
 
     return $object;
+  }
+
+	function overlaps( $period ) {
+		$parent_overlaps = parent::overlaps( $period );
+
+		$not_different = (
+			 ! property_exists( $period, 'user' )
+			|| is_null( $this->user )
+			|| $this->user->is( $period->user )
+		);
+
+		return $not_different && $parent_overlaps;
   }
 
   function name_field() {
