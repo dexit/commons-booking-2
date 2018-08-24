@@ -84,13 +84,9 @@ if ( is_admin() ) {
 		require_once( CB_PLUGIN_ROOT . 'admin/Commons_Booking_Admin.php' );
 	}
 }
-
 */
 
-// Annesley new stuffs
-// add_action( 'plugins_loaded', 'cb2_plugins_loaded' );
-require_once( CB_PLUGIN_ROOT . 'includes/CB_Template.php' );
-require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Query.php' ); // register_post_types()
+
 
 /*
 function cb2_plugins_loaded() {
@@ -112,94 +108,8 @@ function cb2_plugins_loaded() {
 }
 */
 
-function cb2_notification_bubble_in_admin_menu() {
-  global $menu, $submenu;
-
-  foreach ($menu as &$amenuitem) {
-    if ( is_array($amenuitem) ) {
-      $menuitem = &$amenuitem[0];
-      if ( substr( $menuitem, -1 ) == ')' ) {
-        $menuitem = preg_replace( '/\(([0-9]+)\)$/', '<span class="update-plugins count-$1"><span class="update-count">$1</span></span>', $menuitem );
-      }
-      else if ( substr( $menuitem, -1 ) == ']' ) {
-        $menuitem = preg_replace( '/\[([0-9]+)\]$/', '<span class="menu-item-number count-$1">$1</span>', $menuitem );
-      }
-    }
-  }
-
-  foreach ($submenu as $menu_name => &$menuitems) {
-    $first = TRUE;
-    foreach ($menuitems as &$amenuitem) {
-      if ( is_array($amenuitem) ) {
-        $menuitem = &$amenuitem[0];
-        if ( $first ) {
-          $menuitem = preg_replace( '/\(([0-9]+)\)$|\[([0-9]+)\]$/', '', $menuitem );
-        } else {
-          if ( substr( $menuitem, -1 ) == ')' ) {
-            $menuitem = preg_replace( '/\(([0-9]+)\)$/', '<span class="update-plugins count-$1"><span class="update-count">$1</span></span>', $menuitem );
-          }
-          else if ( substr( $menuitem, -1 ) == ']' ) {
-            $menuitem = preg_replace( '/\[([0-9]+)\]$/', '<span class="menu-item-number count-$1">$1</span>', $menuitem );
-          }
-        }
-      }
-      $first = FALSE;
-    }
-  }
-}
-add_action('admin_menu', 'cb2_notification_bubble_in_admin_menu', 110 );
-
-function cb2_admin_init_menus() {
-	global $wpdb;
-
-	$notifications_string = ' (3)';
-  add_menu_page( 'CB2', "CB2$notifications_string", 'manage_options', 'cb2', 'cb2_options_page', 'dashicons-video-alt' );
-
-	$pages = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}cb2_admin_pages", OBJECT_K );
-	foreach ( $pages as $menu_slug => $details ) {
-		$capability = $details->capability;
-		if ( ! $capability ) $capability = 'manage_options';
-		$parent_slug = $details->parent_slug;
-		if ( ! $parent_slug ) $parent_slug = 'cb2';
-
-		add_submenu_page( $parent_slug, $details->page_title, $details->menu_title, $capability, $menu_slug, 'cb2_settings_auto_page' );
-	}
-}
-add_action( 'admin_menu', 'cb2_admin_init_menus' );
-
-function cb2_options_page() {
-	print('hello');
-}
-
-function cb2_settings_auto_page() {
-	global $wpdb;
-
-	if ( isset( $_GET[ 'page' ] ) ) {
-		$page    = $_GET[ 'page' ];
-		$typenow = NULL;
-
-		// Bring stored parameters on to the query-string
-		$details = $wpdb->get_results( $wpdb->prepare(
-			"SELECT * FROM {$wpdb->prefix}cb2_admin_pages WHERE menu_slug = %s LIMIT 1",
-			array( $page )
-		), OBJECT_K );
-		if ( count( $details ) ) {
-			$details_page  = $details[$page];
-			$wp_query_args = $details_page->wp_query_args;
-			foreach ( explode( ',', $wp_query_args ) as $arg_detail_string ) {
-				$arg_details   = explode( '=', $arg_detail_string, 2 );
-				$name          = $arg_details[0];
-				$value         = ( count( $arg_details ) > 1 ? $arg_details[1] : '' );
-				$_GET[ $name ] = $value;
-				if ( $name == 'post_type' ) $typenow = $value;
-			}
-
-			$screen = WP_Screen::get( $typenow );
-			set_current_screen( $screen );
-			require_once( get_home_path() . 'wp-admin/edit.php' );
-		} else throw new Exception( 'CB2 admin page cannot find its location in the db' );
-	} else throw new Exception( 'CB2 admin page does not understand its location. A querystring ?page= parameter is needed' );
-
-	return TRUE;
-}
-
+// Annesley new stuffs
+// add_action( 'plugins_loaded', 'cb2_plugins_loaded' );
+require_once( CB_PLUGIN_ROOT . 'includes/CB_Template.php' );
+require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Query.php' );      // register_post_types()
+require_once( CB_PLUGIN_ROOT . 'wp-admin/WP_admin_integration.php' ); // admin screens

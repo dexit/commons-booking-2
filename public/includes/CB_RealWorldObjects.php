@@ -117,6 +117,26 @@ class CB_Location extends CB_Post implements JsonSerializable {
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-tools',
   );
+  public static $supports = array(
+		'title',
+		'editor',
+		'holidays',
+		'thumbnail',
+		'custom-fields',
+		'post-formats',
+	);
+
+  function render_location_summary(
+		CMB2_Field $field,
+			$field_escaped_value,
+			$object_id,
+			$object_type,
+			CMB2_Types $field_type_object
+	) {
+		// location-summary widget supports
+		exit();
+		return "<div>test</div>";
+  }
 
   function post_type() {return self::$static_post_type;}
 

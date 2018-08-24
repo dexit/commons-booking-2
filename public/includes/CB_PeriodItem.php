@@ -5,6 +5,16 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
   public  static $all              = array();
   public  static $static_post_type = 'perioditem';
   public  static $postmeta_table   = FALSE;
+  public  static $supports         = array(
+		'title',
+		'editor',
+		'period-sequence',
+		'period-recurrence',
+		'custom-fields',
+    'post-formats',
+    'thumbnail',
+		'color',
+  );
   public  static $standard_fields  = array(
 		'period_group_type',
 		'time_start',
@@ -458,6 +468,15 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
   public  static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-page',
 		'label'     => 'Location Periods',
+  );
+  public  static $supports         = array(
+		'title',
+		'editor',
+		'period_sequence',
+		'period_recurrence',
+		'thumbnail',
+		'color',
+		'location_summary'
   );
 
 	static public $static_post_type = 'perioditem-location';

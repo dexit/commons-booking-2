@@ -29,6 +29,12 @@ class CB_Query {
   // post_type to Class lookups
   static function register_schema_type( $Class ) {
 		self::$schema_types[ $Class::$static_post_type ] = $Class;
+		if ( property_exists( $Class, 'supports_widgets' ) ) {
+			foreach ( $Class::$supports_widgets as $support_name ) {
+				$support_method      = "render_$support_name";
+				add_filter( "cmb2_render_$support_name", array( $Class, $support_method ), 10, 5 );
+			}
+		}
   }
 
   static function &schema_types() {
@@ -275,6 +281,10 @@ class CB_Query {
 
   static function substring_before( $string, $delimiter = '-' ) {
 		return ( strpos( $string, $delimiter ) === FALSE ? $string : substr( $string, 0, strpos( $string, $delimiter ) ) );
+	}
+
+  static function substring_after( $string, $delimiter = '-' ) {
+		return ( strrpos( $string, $delimiter ) === FALSE ? $string : substr( $string, strrpos( $string, $delimiter ) + 1 ) );
 	}
 
 	static function ensure_datetime( $object ) {

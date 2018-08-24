@@ -361,6 +361,17 @@ function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {
 function cb2_init_register_post_types() {
 	foreach ( CB_Query::schema_types() as $post_type => $Class ) {
 		if ( ! property_exists( $Class, 'register_post_type' ) || $Class::$register_post_type ) {
+			$supports = ( property_exists( $Class, 'supports' ) ? $Class::$supports : array(
+				'title',
+				//'editor'
+				//'period-sequence',
+				//'period-recurrence',
+				//'thumbnail',
+				//'color',
+				//'holidays',
+				//'calendar',
+			) );
+
 			$args = array(
 				'label'  => ucfirst($post_type) . 's',
 				'labels' => array(
@@ -373,17 +384,14 @@ function cb2_init_register_post_types() {
 
 				'has_archive'        => TRUE,
 				'show_in_rest'       => TRUE,
-				'supports' => array(
-					'custom-fields',
-					'title',
-					'editor',
-					'author',
-					'thumbnail',
-				),
+				'supports'           => $supports,
 			);
 			if ( property_exists( $Class, 'post_type_args' ) )
 				$args = array_merge( $args, $Class::$post_type_args );
-			// if ( WP_DEBUG ) print( "<div class='cb2-debug'>register_post_type([$post_type])</div>" );
+			if ( WP_DEBUG && FALSE ) {
+				print( "<div class='cb2-debug'>register_post_type([$post_type])</div>" );
+				var_dump($args);
+			}
 			register_post_type( $post_type, $args );
 		}
 	}
