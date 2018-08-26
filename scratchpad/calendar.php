@@ -61,19 +61,30 @@
     print( '<div style="font-weight:bold;">tables</div>' );
     var_dump( CB_Database::tables() );
     print( '<div style="font-weight:bold;">registered PHP objects</div>' );
+		$post_types = CB_Query::get_post_types();
     foreach ( CB_Query::schema_types() as $Class ) {
 			$post_type      = $Class::$static_post_type;
 			$post_type_stub = CB_Query::substring_before( $post_type );
+			$post_details   = $post_types[$post_type];
 			print( "<div style='font-weight:bold;'>$Class($post_type):</div><ul>" );
+
+			foreach ($post_details as $name => $value )
+				print( "<li>$name = $value</li>" );
 
 			if ( CB_Database::has_table( "cb2_view_{$post_type_stub}_posts" ) )
 				print( "<li>has posts table cb2_view_{$post_type_stub}_posts</li>" );
 			if ( CB_Database::has_table( "cb2_view_{$post_type_stub}meta" ) )
 				print( "<li>has post meta table cb2_view_{$post_type_stub}meta</li>" );
-			if ( property_exists( $Class, 'database_table' ) && CB_Database::has_table( $Class::$database_table ) )
-				print( "<li>database_table [" . $Class::$database_table . "] exists</li>" );
+			if ( property_exists( $Class, 'database_table' ) && $Class::$database_table ) {
+				if ( CB_Database::has_table( $Class::$database_table ) )
+					print( "<li>database_table [" . $Class::$database_table . "] exists</li>" );
+				else
+					print( "<li class='cb2-error'>database_table [" . $Class::$database_table . "] NOT exists</li>" );
+			}
 			if ( CB_Database::has_procedure( "cb2_{$post_type}_update" ) )
 				print( "<li>UPDATE procedure exists</li>" );
+			if ( property_exists( $Class, 'all' ) )
+				print( '<li>$all collection exists</li>' );
 
 			print( '</ul>' );
     }

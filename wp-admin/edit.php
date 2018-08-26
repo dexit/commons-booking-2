@@ -11,7 +11,7 @@
  */
 
 /** WordPress Administration Bootstrap */
-require_once( ABSPATH . 'wp-admin/admin.php' ); // CB2/Annesley: changed from dirname( __FILE__ )
+// require_once( ABSPATH . 'wp-admin/admin.php' ); // CB2/Annesley: embedded
 
 if ( ! $typenow )
 	wp_die( __( 'Invalid post type.' ) );
@@ -379,4 +379,4 @@ if ( $wp_list_table->has_items() )
 </div>
 
 <?php
-include( ABSPATH . 'wp-admin/admin-footer.php' );
+// include( ABSPATH . 'wp-admin/admin-footer.php' ); // CB2/Annesley: embedded

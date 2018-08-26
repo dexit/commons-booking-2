@@ -2,7 +2,8 @@
 require_once( 'CB_Database.php' );
 require_once( 'CB_PostNavigator.php' );
 require_once( 'CB_PeriodItem.php' );
-require_once( 'CB_RealWorldObjects.php' );
+require_once( 'CB_Entities.php' );
+require_once( 'CB_PeriodEntity.php' );
 require_once( 'the_template_functions.php' );
 require_once( 'CB_Time_Classes.php' );
 require_once( 'WP_Query_integration.php' );
@@ -28,6 +29,11 @@ class CB_Query {
   // -------------------------------------------------------------------- Reflection
   // post_type to Class lookups
   static function register_schema_type( $Class ) {
+		if ( ! property_exists( $Class, 'static_post_type' ) )
+			throw new Exception( "[$Class] requires a static static_post_type" );
+		if ( strlen( $Class::$static_post_type ) > 20 )
+			throw new Exception( 'post_type [' . $Class::$static_post_type . '] is longer than the WordPress maximum of 20 characters' );
+
 		self::$schema_types[ $Class::$static_post_type ] = $Class;
 		if ( property_exists( $Class, 'supports_widgets' ) ) {
 			foreach ( $Class::$supports_widgets as $support_name ) {
@@ -125,7 +131,7 @@ class CB_Query {
 		return $record;
 	}
 
-	private static function get_post_types() {
+	static function get_post_types() {
 		global $wpdb;
 		$post_types = wp_cache_get( 'cb2-post-types' );
 		if ( ! $post_types ) {

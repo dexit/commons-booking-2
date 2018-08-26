@@ -13,9 +13,6 @@
 	color:#777;
 	cursor:pointer;
 }
-.cb2-dangerous {
-	color:red;
-}
 .cb2-debug {
 	background-color:#fac83f;
 	border:1px solid #888;
@@ -35,5 +32,9 @@ body .cb2-low-debug {
 .cb2-notice {
 	background-color:#fac83f;
 	border:1px solid #888;
+}
+.cb2-dangerous,
+.cb2-error {
+	color:red;
 }
 

@@ -54,7 +54,6 @@ add_filter( 'loop_start',       'cb2_loop_start' );
 // --------------------------------------------- Custom post types and templates
 add_action( 'init',             'cb2_init_register_post_types' );
 add_action( 'init',             'cb2_init_temp_debug_enqueue' );
-add_filter( 'post_row_actions', 'cb2_post_row_actions', 10, 2 );
 
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
@@ -363,7 +362,8 @@ function cb2_init_register_post_types() {
 		if ( ! property_exists( $Class, 'register_post_type' ) || $Class::$register_post_type ) {
 			$supports = ( property_exists( $Class, 'supports' ) ? $Class::$supports : array(
 				'title',
-				//'editor'
+				// 'editor',
+				'custom-fields',
 				//'period-sequence',
 				//'period-recurrence',
 				//'thumbnail',
@@ -395,34 +395,6 @@ function cb2_init_register_post_types() {
 			register_post_type( $post_type, $args );
 		}
 	}
-}
-
-function cb2_post_row_actions( $actions, $post ) {
-	global $wpdb;
-
-	$post = CB_Query::ensure_correct_class( $post );
-	if ( $post instanceof CB_PostNavigator && method_exists( $post, 'add_actions' ) )
-		$post->add_actions( $actions );
-
-	if ( basename( $_SERVER['PHP_SELF'] ) == 'admin.php' && isset( $_GET[ 'page' ] ) ) {
-		$page          = $_GET[ 'page' ];
-		$action_string = $wpdb->get_var( $wpdb->prepare(
-			"SELECT actions FROM {$wpdb->prefix}cb2_admin_pages WHERE menu_slug = %s LIMIT 1",
-			array( $page )
-		) );
-		if ( $action_string ) {
-			$new_actions = explode( ',', $action_string );
-			foreach ( $new_actions as $new_action ) {
-				foreach ( $post as $name => $value ) {
-					if ( strstr( $new_action, "%$name%" ) !== FALSE )
-						$new_action = str_replace( "%$name%", $value, $new_action );
-				}
-				array_push( $actions, $new_action );
-			}
-		}
-	}
-
-	return $actions;
 }
 
 function cb2_query_show( $sql ) {
@@ -593,6 +565,8 @@ function cb2_pre_get_posts_query_string_extensions() {
   $meta_query_items = array();
 	if ( isset( $_GET[ 'location_ID' ] ) )             $meta_query_items[ 'location_clause' ]    = array( 'key' => 'location_ID', 'value' => $_GET[ 'location_ID' ] );
 	if ( isset( $_GET[ 'item_ID' ] ) )                 $meta_query_items[ 'item_clause' ]        = array( 'key' => 'item_ID',     'value' => $_GET[ 'item_ID' ] );
+	if ( isset( $_GET[ 'user_ID' ] ) )                 $meta_query_items[ 'user_clause' ]        = array( 'key' => 'user_ID',     'value' => $_GET[ 'user_ID' ] );
+	if ( isset( $_GET[ 'period_status_type_ID' ] ) )   $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_ID', 'value' => $_GET[ 'period_status_type_ID' ] );
 	if ( isset( $_GET[ 'period_status_type_id' ] ) )   $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_id', 'value' => $_GET[ 'period_status_type_id' ] );
 	if ( isset( $_GET[ 'period_status_type_name' ] ) ) $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_name', 'value' => $_GET[ 'period_status_type_name' ] );
 
@@ -611,6 +585,7 @@ function cb2_query_vars( $qvars ) {
 	$qvars[] = 'location_ID';
 	$qvars[] = 'item_ID';
 	$qvars[] = 'period_status_type_id';
+	$qvars[] = 'period_status_type_ID';
 	$qvars[] = 'period_status_type_name';
 
 	return $qvars;

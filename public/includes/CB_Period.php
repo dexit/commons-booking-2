@@ -96,3 +96,4 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 }
 
 CB_Query::register_schema_type( 'CB_Period' );
+

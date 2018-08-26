@@ -2,7 +2,6 @@
 class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 	// TODO: use this generic period class
   public static $database_table = 'cb2_period_groups';
-	public static $postmeta_table = FALSE;
 	public static $all = array();
   static $static_post_type = 'periodgroup';
   public static $post_type_args = array(
@@ -14,11 +13,18 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   function post_type() {return self::$static_post_type;}
 
   static function &factory_from_wp_post( $post ) {
+		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_IDs ) throw new Exception( 'CB_PeriodGroup requires period_IDs list, which can be empty' );
+
 		$object = self::factory(
 			$post->ID,
 			$post->period_group_id,
 			$post->post_title
 		);
+		foreach ( explode( ',', $post->period_IDs) as $period_id ) {
+			$period = CB_Query::get_post_type( 'period', $period_id );
+			$object->add_period( $period );
+		}
 
 		CB_Query::copy_all_properties( $post, $object );
 
