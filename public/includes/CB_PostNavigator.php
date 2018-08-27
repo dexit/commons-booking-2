@@ -249,7 +249,15 @@ class CB_PostNavigator {
 		return $args;
   }
 
-  function save_posts_linkage() {
+  function pre_save_post() {
+		// These should be child posts
+		// Thus should be saved before the main post
+		foreach ( $this->posts as $post )
+			if ( $post instanceof CB_PostNavigator ) $post->save();
+  }
+
+  function post_save_post() {
+		// e.g. 1-many Relationships between this and child posts can be saved here
   }
 
   function save( $save_posts_links = FALSE ) {
@@ -259,6 +267,7 @@ class CB_PostNavigator {
 		$args  = $this->post_args();
 		if ( WP_DEBUG && FALSE ) var_dump( $args );
 
+		// wp_insert_post_data => cb2_save_post_pre_save_post() => this->pre_save_post()
 		if ( isset( $args [ 'ID' ] ) ) {
 			// Direct existing update
 			// wp_update_post() triggers the hooks below
@@ -292,17 +301,28 @@ class CB_PostNavigator {
 				}
 			}
 		}
+		// save_post => cb2_save_post_post_save_post() => this->post_save_post()
 
 		if ( $error ) {
 			print( "<div id='error-page'><p>$error</p></div>" );
 			exit();
-		} else {
-			// save_posts_linkage() is for writing other records in the DB
-			// e.g. CB_PeriodItem writes a period_group as well as its own record
-			if ( $save_posts_links ) $this->save_posts_linkage();
 		}
 
 		return $this;
   }
+}
+add_action( 'wp_insert_post_data', 'cb2_save_post_pre_save_post',  10, 2 );
+add_action( 'save_post',           'cb2_save_post_post_save_post', 10, 3 );
+
+function cb2_save_post_pre_save_post( $data, $postarr ) {
+	$post = (object) $data;
+	var_dump($data);
+	$post = CB_Query::ensure_correct_class( $post );
+	if ( $post instanceof CB_PostNavigator ) $post->pre_save_post();
+}
+
+function cb2_save_post_post_save_post( $ID, $post, $update ) {
+	$post = CB_Query::ensure_correct_class( $post );
+	if ( $post instanceof CB_PostNavigator ) $post->post_save_post();
 }
 

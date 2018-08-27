@@ -1,4 +1,44 @@
 <?php
+// --------------------------------------------- Database model integration
+/*
+ * ---- Database schema
+ * Normal tables have 2 associated views:
+ *   wp_cb2_<table name> e.g. wp_cb2_periods
+ *     => wp_cb2_view_<table name>_posts: equivalent of wp_posts
+ *     => wp_cb2_view_<table name>meta:   equivalent of wp_postmeta
+ * <table name> MUST == associated <post_type>
+ * during queries for custom registered <post_type>,
+ * the global $wpdb->prefix is changed to wp_cb2_view_<post_type>
+ * thus redirecting the generated SQL query temporarily to the custom views.
+ *
+ * ---- Class Handlers
+ * A special registered Class MUST handle the resultant posts
+ * registering itself using CB_Query::register_schema_type( <Class name> )
+ * which will cause the global $post iterator
+ * with have_posts(), the_post() and global $post
+ * to iterate through <Class name>s instead of WP_Posts
+ * This can also be achieved manually with
+ *      CB_Query::get_post_type( $post_ID )
+ *   or CB_Query::ensure_correct_classes( $posts )
+ *
+ * ---- Generated Fake Posts
+ * Generated custom posts have post ID ranges to avoid conflict with normal WordPress posts
+ * These are controlled by wp_cb2_post_types
+ * Each post_type has a start ID, for example: period post_type starts at 1000000000
+ * Every Class Handler has an id and an ID:
+ *   id: the native identifier in the native table, e.g. the period_id 1
+ *   ID: the generated fake post identifier, e.g. $post->ID 1000000001
+ *
+ * ---- Performace tuning with triggers
+ * Some of the views can be slow when returing normalised meta-data
+ * for millions of generated PeriodItems, which are then filtered.
+ * So PeriodItems DO NOT use a wp_cb2_view_perioditemmeta view directly.
+ * Instead triggers on the native tables sync the metadata in to wp_postmeta
+ * so that normal WordPress metadata queries work.
+ * The triggers use wp_cb2_view_perioditemmeta to sync the metadata during post saves()
+ * of periods or entities.
+ */
+
 // --------------------------------------------- Misc
 add_filter( 'query',            'cb2_wpdb_mend_broken_date_selector' );
 add_filter( 'posts_where',      'cb2_posts_where_allow_NULL_meta_query' );
@@ -12,9 +52,8 @@ add_filter( 'query_vars',       'cb2_query_vars' );
 // TODO: make a static plugin setting
 // TODO: analyse potential conflicts with other installed post_id fake plugins
 //   based on this plugin
-define( 'CB2_WP_DEBUG',                       WP_DEBUG && FALSE );
-define( 'CB2_WP_DEBUG_CUTOFF',                300 );
-//add_filter( 'query',            'cb2_query_show' );
+define( 'CB2_WP_DEBUG',        WP_DEBUG && FALSE );
+define( 'CB2_WP_DEBUG_CUTOFF', 300 );
 add_filter( 'query',             'cb2_wpdb_query_select' );
 add_filter( 'get_post_metadata', 'cb2_get_post_metadata', 10, 4 );
 
@@ -160,6 +199,9 @@ function cb2_pre_post_update( $ID, $data ) {
 						$insert_data = array_merge( $data, $metadata );
 
 						// Allow for tables with no actual needed columns beyond the id
+						print("cb2_pre_post_update(): $wpdb->prefix$class_database_table");
+						print("need to create post linkage first...");
+						exit();
 						$result = NULL;
 						if ( count( $insert_data ) )
 							$result = $wpdb->insert( "$wpdb->prefix$class_database_table", $insert_data );
@@ -347,7 +389,8 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 // Framework integration
 function cb2_init_temp_debug_enqueue() {
 	// TODO: move to main
-//	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles', plugins_url( 'scratchpad/calendar.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
+	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-scratchpad', plugins_url( 'scratchpad/calendar.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
+	if ( WP_DEBUG ) wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-debug', plugins_url( 'public/assets/css/debug.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {
@@ -395,11 +438,6 @@ function cb2_init_register_post_types() {
 			register_post_type( $post_type, $args );
 		}
 	}
-}
-
-function cb2_query_show( $sql ) {
-	if ( WP_DEBUG ) print( "<div class='cb2-debug'>$sql</div>" );
-	return $sql;
 }
 
 // ------------------------------------------------------------------------------------------

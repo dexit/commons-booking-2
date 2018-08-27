@@ -1,5 +1,9 @@
 <?php
 /**
+ * NOTE: CB2/<author> has made changes to this file
+ * from the original from WordPress 4.9.7.
+ * All changes are marked with "CB2".
+ *
  * Edit post administration panel.
  *
  * Manage Post actions: post, edit, delete, etc.

@@ -66,15 +66,15 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		return '';
   }
 
-  function save_posts_linkage() {
+  function post_save_post() {
 		global $wpdb;
 
-		$table = "{$wpdb->prefix}cb2_period_group_period";
+		parent::post_save_post();
 
+		$table = "{$wpdb->prefix}cb2_period_group_period";
 		$wpdb->delete( $table, array(
 			'period_group_id' => $this->id
 		) );
-
 		foreach ( $this->posts as $post ) {
 			$wpdb->insert( $table, array(
 				'period_group_id' => $this->id,
