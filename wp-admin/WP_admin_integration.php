@@ -38,6 +38,17 @@ function cb2_admin_pages() {
 			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}posts where post_type='item' and post_status='publish'",
 		),
+		'cb2-repairs'       => (object) array(
+			'parent_slug' => '',
+			'indent'      => 1,
+			'page_title' => 'Repairs %(for)% %location_ID% %item_ID%',
+			'menu_title' => 'repairs',
+			'capability' => NULL,
+			'function'   => NULL,
+			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000005',
+			'actions'    => NULL,
+			'post_new_page' => NULL,
+		),
 		'cb2-locations'     => (object) array(
 			'parent_slug' => '',
 			'page_title' => 'Locations',
@@ -51,6 +62,7 @@ function cb2_admin_pages() {
 		),
 		'cb2-opening-hours' => (object) array(
 			'parent_slug' => '',
+			'indent'      => 1,
 			'page_title' => 'Opening Hours %(for)% %location_ID%',
 			'menu_title' => 'opening hours',
 			'capability' => NULL,
@@ -59,18 +71,9 @@ function cb2_admin_pages() {
 			'actions'    => NULL,
 			'post_new_page' => NULL,
 		),
-		'cb2-repairs'       => (object) array(
-			'parent_slug' => '',
-			'page_title' => 'Repairs %(for)% %location_ID% %item_ID%',
-			'menu_title' => 'repairs',
-			'capability' => NULL,
-			'function'   => NULL,
-			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000005',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
-		),
 		'cb2-timeframes'    => (object) array(
 			'parent_slug' => '',
+			'indent'      => 1,
 			'page_title' => 'Item timeframes %(for)% %location_ID%',
 			'menu_title' => 'item timeframes',
 			'capability' => NULL,
@@ -95,18 +98,20 @@ function cb2_admin_pages() {
 		),
 
 		'cb2-period-globals' => (object) array(
-			'parent_slug' => '',
-			'page_title' => 'Period Globals',
-			'menu_title' => 'period globals',
-			'capability' => NULL,
-			'function'   => NULL,
+			'parent_slug'   => '',
+			'indent'        => 1,
+			'page_title'    => 'Period Globals',
+			'menu_title'    => 'period globals',
+			'capability'    => NULL,
+			'function'      => NULL,
 			'wp_query_args' => 'post_type=periodent-global',
-			'actions'    => NULL,
+			'actions'       => NULL,
 			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups",
 		),
 		'cb2-period-locations' => (object) array(
 			'parent_slug' => '',
+			'indent'        => 1,
 			'page_title' => 'Period Locations',
 			'menu_title' => 'period locations',
 			'capability' => NULL,
@@ -118,6 +123,7 @@ function cb2_admin_pages() {
 		),
 		'cb2-period-timeframes' => (object) array(
 			'parent_slug' => '',
+			'indent'        => 1,
 			'page_title' => 'Period Timeframes',
 			'menu_title' => 'period timeframes',
 			'capability' => NULL,
@@ -129,6 +135,7 @@ function cb2_admin_pages() {
 		),
 		'cb2-period-users' => (object) array(
 			'parent_slug' => '',
+			'indent'        => 1,
 			'page_title' => 'Period Users',
 			'menu_title' => 'period users',
 			'capability' => NULL,
@@ -180,8 +187,12 @@ function cb2_admin_pages() {
 			$count = $wpdb->get_var( $menu_item->count );
 			$menu_item->menu_title .= " ($count)";
 		}
+		if ( property_exists( $menu_item, 'indent' ) )
+			$menu_item->menu_title = str_repeat( '&nbsp;&nbsp;', $menu_item->indent ) . $menu_item->menu_title;
 		if ( property_exists( $menu_item, 'advanced' ) )
 			$menu_item->menu_title = "<span class='cb2-advanced-menu-item $menu_item->first'>$menu_item->menu_title</span>";
+		if ( property_exists( $menu_item, 'description' ) )
+			$menu_item->menu_title = "<span title='$menu_item->description'>$menu_item->menu_title</span>";
 	}
 
 	return $menu_interface;
@@ -190,12 +201,13 @@ function cb2_admin_pages() {
 function cb2_post_row_actions( $actions, $post ) {
 	global $wpdb;
 
+	// Move all edit actions to our custom screens
 	if ( isset( $actions['edit'] ) )
 		$actions['edit'] = "<a href='admin.php?page=cb-post-edit&post=$post->ID&post_type=$post->post_type&action=edit' aria-label='Edit &#8220;$post->post_title&#8221;'>Edit</a>";
 
 	$post = CB_Query::ensure_correct_class( $post );
 	if ( $post instanceof CB_PostNavigator && method_exists( $post, 'add_actions' ) )
-		$post->add_actions( $actions );
+		$post->add_actions( $actions, $post );
 
 	if ( basename( $_SERVER['PHP_SELF'] ) == 'admin.php' && isset( $_GET[ 'page' ] ) ) {
 		$page          = $_GET[ 'page' ];

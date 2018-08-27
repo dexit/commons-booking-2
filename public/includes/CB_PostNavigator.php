@@ -53,7 +53,7 @@ class CB_PostNavigator {
   function is_single()  {return FALSE;}
   function get( $name ) {return NULL;}
 
-  function add_actions( &$actions ) {}
+  function add_actions( &$actions, $post ) {}
 
   function setup_postdata( $post ) {
 		global $id, $authordata, $currentday, $currentmonth, $page, $pages, $multipage, $more, $numpages;

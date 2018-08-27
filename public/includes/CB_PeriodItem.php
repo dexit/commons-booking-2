@@ -215,7 +215,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     return $styles;
   }
 
-  function add_actions( &$actions ) {
+  function add_actions( &$actions, $post ) {
 		$period_ID = $this->period->ID;
 		$actions[ 'edit-definition' ] = "<a href='/wp-admin/post.php?post=$period_ID&action=edit'>Edit definition</a>";
 		$actions[ 'trash occurence' ] = '<a href="#" class="submitdelete">Trash Occurence</a>';

@@ -270,7 +270,7 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 		$period_group       = CB_Query::get_post_type( 'periodgroup',      $post->period_group_ID );
 		$location           = CB_Query::get_post_type( 'location',         $post->location_ID );
 		$item               = CB_Query::get_post_type( 'item',             $post->item_ID );
-		$user               = CB_Query::get_post_type( 'user',             $post->user_ID );
+		$user               = CB_Query::get_user( $post->user_ID );
 
 		$object = self::factory(
 			$post->ID,

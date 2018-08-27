@@ -72,6 +72,8 @@ class CB_Query {
 		global $wpdb;
 		$old_wpdb_posts = NULL;
 
+		if ( $post_type == 'user' ) throw new Exception( 'Use CB_Query::get_user() for users.' );
+
 		$wpdb->posts = "{$wpdb->prefix}posts";
 
 		if ( $Class = self::schema_type_class($post_type) ) {

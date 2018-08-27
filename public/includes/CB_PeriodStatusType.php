@@ -23,10 +23,12 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
     $priority = NULL,
     $return   = NULL,
     $collect  = NULL,
-    $use      = NULL
+    $use      = NULL,
+    $system   = NULL
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
-		$this->id = $period_status_type_id;
+		$this->id         = $period_status_type_id;
+		$this->system     = $system;
 
     // WP_Post values
     $this->post_title = $name;
@@ -49,7 +51,8 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 			$post->priority,
 			( $post->return  != '0' ),
 			( $post->collect != '0' ),
-			( $post->use     != '0' )
+			( $post->use     != '0' ),
+			$post->system
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -67,7 +70,8 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
     $priority = NULL,
     $return   = NULL,
     $collect  = NULL,
-    $use      = NULL
+    $use      = NULL,
+    $system   = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
     if ( ! is_null( $ID ) &&  isset( self::$all[$ID] ) )
@@ -98,6 +102,13 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
     if ( $this->opacity && $this->opacity != 100 ) $styles .= 'opacity:' . $this->opacity / 100    . ';';
     return $styles;
   }
+
+  function add_actions( &$actions, $post ) {
+		if ( property_exists( $post, 'system' ) && $post->system ) {
+			array_unshift( $actions, '<b style="color:#000;">System Status Type</b>' );
+			unset( $actions['trash'] );
+		}
+	}
 
   function classes() {
     return '';

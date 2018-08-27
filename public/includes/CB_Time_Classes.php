@@ -259,7 +259,7 @@ class CB_Day extends CB_TimePostNavigator {
 
 
 
-  function add_actions( &$actions ) {
+  function add_actions( &$actions, $post ) {
 		$actions[ 'view-periods' ] = '<a href="#">View Periods</a>';
 	}
 
