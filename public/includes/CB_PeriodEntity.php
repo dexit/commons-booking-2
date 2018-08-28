@@ -122,11 +122,10 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 
   static function &factory(
 		$ID,
-    $name,
+    	$name,
 		$period_group,
 		$period_status_type,
-
-		$location
+		$location = null
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -201,12 +200,11 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 
   static function &factory(
 		$ID,
-    $name,
+    	$name,
 		$period_group,
 		$period_status_type,
-
-		$location,
-		$item
+		$location = null,
+		$item = null
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -290,13 +288,13 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 
   static function &factory(
 		$ID,
-    $name,
+    	$name,
 		$period_group,
 		$period_status_type,
 
-		$location,
-		$item,
-		$user
+		$location = null,
+		$item = null,
+		$user = null
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {

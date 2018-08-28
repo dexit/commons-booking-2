@@ -155,7 +155,7 @@ function is_list( $post = '' ) {
 // -------------------------------------------------------------------------------------
 // TODO: move functions to CB_Templates utilities files
 add_filter( 'the_content', 'cb2_template_include_ensure_correct_class', 1 );
-add_filter( 'the_content', 'cb2_template_include_custom_plugin_templates' );
+//add_filter( 'the_content', 'cb2_template_include_custom_plugin_templates' );
 
 /*
 add_filter( "get_template_part_{$slug}", $slug, $name )
@@ -196,8 +196,16 @@ function cb2_template_include_custom_plugin_templates( $content ) {
 		// Get class templates and the current template suggestion
 		$post_template_suggestions = NULL;
 		$post_type                 = $post->post_type;
+		
 		$context                   = CB_Query::template_loader_context();
 
+		if (is_single()) {
+			$context = "single";
+		} else {
+			$context = "list";
+		}
+
+			echo "context: " . $context;
 		$post_template_suggestions = $post->templates( $context );
 
 		// Read the plugin templates directory
