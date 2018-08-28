@@ -14,7 +14,7 @@
 				the_title();
 			} ?>
 			<?php // the_title( '<h4 class="entry-title">', '</h4>' ); ?>
-			<?php echo 'type: ' . get_the_field('period_group_type'); ?>
-			<?php // the_fields( CB_PeriodItem::$standard_fields, '<div>', '</div>' ); ?>
+			<?php echo 'type: ' . cb2_get_field('period_group_type'); ?>
+			<?php // cb2_the_fields( CB_PeriodItem::$standard_fields, '<div>', '</div>' ); ?>
 		</div>
 <?php } ?>

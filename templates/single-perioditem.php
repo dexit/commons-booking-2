@@ -3,7 +3,7 @@
 	<!-- td><header class="entry-header">
 		<?php the_title( '<h4 class="entry-title">', '</h4>' ); ?>
 	</header></td -->
-	<?php the_fields( CB_PeriodItem::$standard_fields ); ?>
+	<?php cb2_the_fields( CB_PeriodItem::$standard_fields ); ?>
 
 	<td><footer class="entry-footer">
 		<?php

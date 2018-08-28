@@ -29,7 +29,7 @@ function is_current() {
 	return is_object( $post ) && property_exists( $post, 'is_current' ) && $post->is_current;
 }
 
-function get_the_field( $field_name, $class = '', $date_format = 'H:i' ) {
+function cb2_get_field( $field_name, $class = '', $date_format = 'H:i' ) {
 	global $post;
 	$object  = $post;
 	$value   = NULL;
@@ -80,11 +80,11 @@ function get_the_field( $field_name, $class = '', $date_format = 'H:i' ) {
 	return $value;
 }
 
-function the_field( $field_name, $class = '', $date_format = 'H:i' ) {
-	echo get_the_field( $field_name, $class, $date_format );
+function cb2_the_field( $field_name, $class = '', $date_format = 'H:i' ) {
+	echo cb2_get_field( $field_name, $class, $date_format );
 }
 
-function the_fields( $field_names, $before = '<td>', $after = '</td>', $class = '', $date_format = 'H:i' ) {
+function cb2_the_fields( $field_names, $before = '<td>', $after = '</td>', $class = '', $date_format = 'H:i' ) {
 	global $post;
 
 	if ( is_object( $post ) ) {
@@ -97,7 +97,7 @@ function the_fields( $field_names, $before = '<td>', $after = '</td>', $class = 
 			echo "<span class='cb2-field-name'>$field_name";
 			echo '<span class="cb2-colon">:</span></span>';
 			echo '<span class="cb2-field-value">';
-			the_field( $field_name, $class, $date_format );
+			cb2_the_field( $field_name, $class, $date_format );
 			echo '</span>', $after;
 		}
 	}

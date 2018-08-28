@@ -241,7 +241,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 			$name_value = '';
 			foreach ( $name_field_names as $name_field_name ) {
 				if ( $name_value ) $name_value .= ' ';
-				$name_value .= get_the_field( $name_field_name, $class, $date_format );
+				$name_value .= cb2_get_field( $name_field_name, $class, $date_format );
 			}
 		} else if ( property_exists( $object, $name_field_names ) ) {
 			$name_value = $object->$name_field_names;
