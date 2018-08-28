@@ -242,7 +242,7 @@ function cb2_template_include_custom_plugin_templates( $content ) {
 		ob_start ();
         include $current_template_path;
         $template = ob_get_contents ();
-        ob_end_clean ();
+        ob_end_clean();
         $content .= $template;
 
 	}

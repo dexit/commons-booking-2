@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Shortcodes
+ * Plugin Shortcodes (OLD)
  *
  *
  * @package   Commons_Booking
