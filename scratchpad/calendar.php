@@ -101,12 +101,13 @@
 				$post_datetime_part_period_end,
 				$post_datetime_from,
 				$post_datetime_to,
-				CB_PeriodStatusType::factory( NULL, $post_period_status_type_id ),
 				$post_recurrence_type,
 				$post_recurrence_frequency,
 				$post_recurrence_sequence
 			);
 			$period->save(); // Will populate ID and id
+			var_dump($period);
+			exit();
 
 			$period_group = CB_PeriodGroup::factory(
 				NULL, // $ID,
@@ -117,11 +118,11 @@
 			$period_group->save( TRUE ); // Will save the period link also in the secondary table
 
 			// Assign period group to timeframe
-			// TODO: We are ASSUMMING a timeframe here, i.e. a Location and an Item
-      $perioditem = CB_PeriodItem::factory_subclass(
+      $perioditem = CB_PeriodEntity::factory_subclass(
 				NULL, // $ID
+				NULL, // $name
 				$period_group,
-				$period,
+				CB_PeriodStatusType::factory( NULL, $post_period_status_type_id ),
 				NULL, // $recurrence_index
 				NULL, // $datetime_period_item_start
 				NULL, // $datetime_period_item_end
@@ -131,8 +132,8 @@
         CB_Item::factory(     $post_item_ID ),
         CB_User::factory(     $post_user_ID )
 			);
-			if ( WP_DEBUG ) var_dump( $perioditem );
       $perioditem->save();
+			if ( WP_DEBUG ) var_dump( $perioditem );
     }
 
     // --------------------------------------- Query Parameters

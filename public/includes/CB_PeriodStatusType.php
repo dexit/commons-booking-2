@@ -38,7 +38,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
   }
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 
 		if ( is_null( $post->priority ) ) throw new Exception( "post_status_type has no priority" );
 
@@ -110,7 +110,33 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 		}
 	}
 
-  function classes() {
+  function manage_columns( $columns ) {
+		$columns['collect']  = 'Collect';
+		$columns['use']      = 'Use';
+		$columns['return']   = 'Return';
+		$columns['priority'] = 'Priority';
+		$this->move_column_to_end( $columns, 'date' );
+		return $columns;
+	}
+
+	function custom_columns( $column ) {
+		$html = '';
+		switch ( $column ) {
+			case 'collect':
+			case 'use':
+			case 'return':
+				$html .= "<input type='checkbox' checked='$this->$column' />";
+				break;
+			case 'priority':
+				$html .= "<select>
+					<option>$this->priority</option>
+				</select>";
+				break;
+		}
+		return $html;
+	}
+
+	function classes() {
     return '';
   }
 

@@ -5,16 +5,6 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
   public  static $all              = array();
   public  static $static_post_type = 'perioditem';
   public  static $postmeta_table   = FALSE;
-  public  static $supports         = array(
-		'title',
-		'editor',
-		'period-sequence',
-		'period-recurrence',
-		'custom-fields',
-    'post-formats',
-    'thumbnail',
-		'color',
-  );
   public  static $standard_fields  = array(
 		'period_group_type',
 		'time_start',
@@ -36,7 +26,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
   protected function __construct(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,
     $recurrence_index,
     $datetime_period_item_start,
@@ -54,17 +44,17 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 			$date = clone $this->datetime_period_item_start;
 			do {
 				$day = CB_Day::factory( clone $date );
-				$day->add_period( $this );
+				$day->add_perioditem( $this );
 				$date->add( new DateInterval( 'P1D' ) );
 			} while ( $date < $this->datetime_period_item_end );
 
 			// Overlapping periods
 			// Might partially overlap many different non-overlapping periods
 			// TO DO: location-location doesn't overlap, item-item doesn't overlap
-			foreach ( self::$all as $existing_period ) {
-				if ( $this->overlaps( $existing_period ) ) {
-					$existing_period->add_new_overlap( $this );
-					$this->add_new_overlap( $existing_period );
+			foreach ( self::$all as $existing_perioditem ) {
+				if ( $this->overlaps( $existing_perioditem ) ) {
+					$existing_perioditem->add_new_overlap( $this );
+					$this->add_new_overlap( $existing_perioditem );
 				}
 			}
 		}
@@ -76,55 +66,45 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
   static function factory_subclass(
 		$ID,
-		$period_group, // CB_PeriodGroup
-    $period,       // CB_Period
+		$period_entity, // CB_PeriodEntity
+    $period,        // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end,
-
-    $timeframe_id,
-    $location = NULL,   // CB_Location
-    $item     = NULL,   // CB_Item
-    $user     = NULL    // CB_User
+    $timeframe_id
   ) {
 		// provides appropriate sub-class based on final object parameters
 		$object = NULL;
-		if      ( $user )     $object = new CB_PeriodItem_Timeframe_User(
+		if      ( $user )     $object = CB_PeriodItem_Timeframe_User::factory(
 				$ID,
-				$period_group,
+				$period_entity,
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
 				$datetime_period_item_end,
-				$timeframe_id,
-				$location,
-				$item,
-				$user
+				$timeframe_id
 			);
-		else if ( $item )     $object = new CB_PeriodItem_Timeframe(
+		else if ( $item )     $object = CB_PeriodItem_Timeframe::factory(
 				$ID,
-				$period_group,
+				$period_entity,
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
 				$datetime_period_item_end,
-				$timeframe_id,
-				$location,
-				$item
+				$timeframe_id
 			);
-		else if ( $location ) $object = new CB_PeriodItem_Location(
+		else if ( $location ) $object = CB_PeriodItem_Location::factory(
 				$ID,
-				$period_group,
+				$period_entity,
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
 				$datetime_period_item_end,
-				$timeframe_id,
-				$location
+				$timeframe_id
 			);
-		else                  $object = new CB_PeriodItem_Global(
+		else                  $object = CB_PeriodItem_Global::factory(
 				$ID,
-				$period_group,
+				$period_entity,
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
@@ -147,20 +127,20 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
   }
 
   function priority() {
-		$priority = $this->period->period_status_type->priority;
+		$priority = $this->period_entity->period_status_type->priority;
 		return (int) $priority;
   }
 
-  function add_new_overlap( $new_period ) {
+  function add_new_overlap( $new_perioditem ) {
 		// A Linked list of overlapping periods is not logical
 		// Just because A overlaps B and B overlaps C
 		//   does not mean that A overlaps C
-		if ( $new_period->priority() > $this->priority() ) {
-			$this->priority_overlap_periods[ $new_period->priority() ] = $new_period;
+		if ( $new_perioditem->priority() > $this->priority() ) {
+			$this->priority_overlap_periods[ $new_perioditem->priority() ] = $new_perioditem;
 			if ( is_null( $this->top_priority_overlap_period )
-				|| $new_period->priority() > $this->top_priority_overlap_period->priority()
+				|| $new_perioditem->priority() > $this->top_priority_overlap_period->priority()
 			)
-				$this->top_priority_overlap_period = $new_period;
+				$this->top_priority_overlap_period = $new_perioditem;
 		}
   }
 
@@ -193,7 +173,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
   function classes() {
     $classes = '';
-    if ( $this->period ) $classes .= $this->period->period_status_type->classes();
+    if ( $this->period_entity ) $classes .= $this->period_entity->period_status_type->classes();
     $classes .= ' cb2-period-group-type-' . $this->post_type();
     $classes .= ( $this->top_priority_overlap_period ? ' cb2-perioditem-has-overlap' : ' cb2-perioditem-no-overlap' );
     return $classes;
@@ -210,7 +190,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     $styles .= "top:$day_percent_position[start_percent]%;";
     $styles .= "height:$day_percent_position[diff_percent]%;";
 
-    $styles .= $this->period->period_status_type->styles();
+    $styles .= $this->period_entity->period_status_type->styles();
 
     return $styles;
   }
@@ -223,7 +203,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
   function indicators() {
     $indicators = array();
-    if ( $this->period ) $indicators = $this->period->period_status_type->indicators();
+    if ( $this->period_entity ) $indicators = $this->period_entity->period_status_type->indicators();
     return $indicators;
   }
 
@@ -296,7 +276,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
       'datetime_part_period_end' => $this->datetime_part_period_end->format( CB_Query::$javascript_date_format ),
       'datetime_from' => $this->datetime_from->format( CB_Query::$javascript_date_format ),
       'datetime_to' => ( $this->datetime_to ? $this->datetime_to->format( CB_Query::$javascript_date_format ) : '' ),
-      'period_status_type' => $this->period->period_status_type,
+      'period_status_type' => $this->period_entity->period_status_type,
       'recurrence_type' => $this->recurrence_type,
       'recurrence_frequency' => $this->recurrence_frequency,
       'recurrence_sequence' => $this->recurrence_sequence,
@@ -322,7 +302,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
 
   function __construct(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
@@ -332,7 +312,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
 
     parent::__construct(
 			$ID,
-			$period_group,
+			$period_entity,
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
@@ -343,7 +323,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
   static function &factory_from_wp_post( $post ) {
 		$object = self::factory(
 			$post->ID,
-			NULL, // periodgroup
+			NULL, // period_entity
 			NULL, // period
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
@@ -357,7 +337,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
 
   static function &factory(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,     // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
@@ -393,7 +373,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
 
   function __construct(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
@@ -403,7 +383,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
   ) {
     parent::__construct(
 			$ID,
-			$period_group,
+			$period_entity,
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
@@ -412,14 +392,14 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
   }
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_group_ID ) throw new Exception( 'CB_PeriodItem_Global requires a period_group_ID' );
-		if ( ! $post->period_ID )       throw new Exception( 'CB_PeriodItem_Global requires a period_ID' );
+		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Global requires a period_entity_ID' );
+		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Global requires a period_ID' );
 
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ),
-			CB_Query::get_post_type( 'period', $post->period_ID ),
+			CB_Query::get_post_type( CB_PeriodEntity_Global::$static_post_type, $post->period_entity_ID ),
+			CB_Query::get_post_type( CB_Period::$static_post_type,              $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end,
@@ -434,7 +414,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
 
   static function &factory(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,     // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
@@ -465,65 +445,50 @@ CB_Query::register_schema_type( 'CB_PeriodItem_Global' );
 class CB_PeriodItem_Location extends CB_PeriodItem {
   static $name_field = 'location';
   static $database_table = 'cb2_location_period_groups';
-  public  static $post_type_args = array(
+	static public $static_post_type = 'perioditem-location';
+  static public $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-page',
 		'label'     => 'Location Periods',
   );
-  public  static $supports         = array(
-		'title',
-		'editor',
-		'period_sequence',
-		'period_recurrence',
-		'thumbnail',
-		'color',
-		'location_summary'
-  );
-
-	static public $static_post_type = 'perioditem-location';
 
   function post_type() {return self::$static_post_type;}
 
   function __construct(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
 		$datetime_period_item_end,
 
-		$timeframe_id,
-		$location // CB_Location
+		$timeframe_id
 	) {
     parent::__construct(
 			$ID,
-			$period_group,
+			$period_entity,
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
 			$datetime_period_item_end
     );
 		$this->id = $timeframe_id;
-		$this->location = $location;
-    $this->location->add_period( $this );
-    array_push( $this->posts, $this->location );
+    $this->period_entity->location->add_perioditem( $this );
+    array_push( $this->posts, $this->period_entity->location );
   }
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_group_ID ) throw new Exception( 'CB_PeriodItem_Location requires a period_group_ID' );
-		if ( ! $post->period_ID )       throw new Exception( 'CB_PeriodItem_Location requires a period_ID' );
-		if ( ! $post->location_ID )     throw new Exception( 'CB_PeriodItem_Location requires a location_ID' );
+		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Location requires a period_entity_ID' );
+		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Location requires a period_ID' );
 
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ),
-			CB_Query::get_post_type( 'period', $post->period_ID ),
+			CB_Query::get_post_type( CB_PeriodEntity_Location::$static_post_type, $post->period_entity_ID ),
+			CB_Query::get_post_type( CB_Period::$static_post_type,                $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end,
-
-			$post->timeframe_id,
-			CB_Query::get_post_type( 'location',         $post->location_ID )
+			$post->timeframe_id
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -533,14 +498,12 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
 
   static function &factory(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,     // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end,
-
-    $timeframe_id,
-    $location    // CB_Location
+    $timeframe_id
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -553,13 +516,13 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     return $object;
   }
 
-	function overlaps( $period ) {
-		$parent_overlaps = parent::overlaps( $period );
+	function overlaps( $existing_perioditem ) {
+		$parent_overlaps = parent::overlaps( $existing_perioditem );
 
 		$not_different = (
-			 ! property_exists( $period, 'location' )
+			 ! property_exists( $existing_perioditem, 'location' )
 			|| is_null( $this->location )
-			|| $this->location->is( $period->location )
+			|| $this->location->is( $existing_perioditem->period_entity->location )
 		);
 
 		return $not_different && $parent_overlaps;
@@ -595,52 +558,40 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 
   function __construct(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
 		$datetime_period_item_end,
-
-		$timeframe_id,
-		$location, // CB_Location
-		$item      // CB_Item
+		$timeframe_id
   ) {
     parent::__construct(
 			$ID,
-			$period_group,
+			$period_entity,
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
 			$datetime_period_item_end
     );
     $this->timeframe_id = $timeframe_id;
-
-    $this->location = $location;
-    array_push( $this->posts, $this->location );
-
-    $this->item = $item;
-    array_push( $this->posts, $this->item );
-    $this->item->add_period( $this );
+    array_push( $this->posts, $this->period_entity->location );
+    array_push( $this->posts, $this->period_entity->item );
+    $this->period_entity->item->add_perioditem( $this );
   }
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_group_ID ) throw new Exception( 'CB_PeriodItem_Timeframe requires a period_group_ID' );
-		if ( ! $post->period_ID )       throw new Exception( 'CB_PeriodItem_Timeframe requires a period_ID' );
-		if ( ! $post->location_ID )     throw new Exception( 'CB_PeriodItem_Timeframe requires a location_ID' );
-		if ( ! $post->item_ID )         throw new Exception( 'CB_PeriodItem_Timeframe requires a item_ID' );
+		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Timeframe requires a period_entity_ID' );
+		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Timeframe requires a period_ID' );
 
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ),
-			CB_Query::get_post_type( 'period', $post->period_ID ),
+			CB_Query::get_post_type( CB_PeriodEntity_Timeframe::$static_post_type, $post->period_entity_ID ),
+			CB_Query::get_post_type( CB_Period::$static_post_type,                 $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end,
-
-			$post->timeframe_id,
-			CB_Query::get_post_type( 'location',         $post->location_ID ),
-			CB_Query::get_post_type( 'item',             $post->item_ID )
+			$post->timeframe_id
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -650,14 +601,12 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 
   static function &factory(
 		$ID,
-    $period,     // CB_Period
+		$period_entity, // CB_PeriodEntity
+    $period,        // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end,
-
-    $timeframe_id,
-    $location,   // CB_Location
-    $item        // CB_Item
+    $timeframe_id
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -670,13 +619,13 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     return $object;
   }
 
-	function overlaps( $period ) {
-		$parent_overlaps = parent::overlaps( $period );
+	function overlaps( $existing_perioditem ) {
+		$parent_overlaps = parent::overlaps( $existing_perioditem );
 
 		$not_different = (
-			 ! property_exists( $period, 'item' )
+			 ! property_exists( $existing_perioditem, 'item' )
 			|| is_null( $this->item )
-			|| $this->item->is( $period->item )
+			|| $this->item->is( $existing_perioditem->period_entity->item )
 		);
 
 		return $not_different && $parent_overlaps;
@@ -731,20 +680,16 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 
   function __construct(
 		$ID,
-		$period_group,
+		$period_entity,
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
 		$datetime_period_item_end,
-
-		$timeframe_id,
-		$location, // CB_Location
-		$item,     // CB_Item
-		$user      // CB_User
+		$timeframe_id
   ) {
     parent::__construct(
 			$ID,
-			$period_group,
+			$period_entity,
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
@@ -752,37 +697,25 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 		);
     $this->timeframe_id = $timeframe_id;
 
-    $this->location = $location;
-    array_push( $this->posts, $this->location );
-
-    $this->item = $item;
-    array_push( $this->posts, $this->item );
-
-    $this->user = $user;
-    array_push( $this->posts, $this->user );
-    $this->user->add_period( $this );
+    array_push( $this->posts, $this->period_entity->location );
+    array_push( $this->posts, $this->period_entity->item );
+    array_push( $this->posts, $this->period_entity->user );
+    $this->period_entity->user->add_perioditem( $this );
   }
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_group_ID ) throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_group_ID' );
-		if ( ! $post->period_ID )       throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_ID' );
-		if ( ! $post->location_ID )     throw new Exception( 'CB_PeriodItem_Timeframe_User requires a location_ID' );
-		if ( ! $post->item_ID )         throw new Exception( 'CB_PeriodItem_Timeframe_User requires a item_ID' );
-		if ( ! $post->user_ID )         throw new Exception( 'CB_PeriodItem_Timeframe_User requires a user_ID' );
+		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_entity_ID' );
+		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_ID' );
 
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ),
-			CB_Query::get_post_type( 'period', $post->period_ID ),
+			CB_Query::get_post_type( CB_PeriodEntity_Timeframe_User::$static_post_type, $post->period_entity_ID ),
+			CB_Query::get_post_type( CB_Period::$static_post_type,                      $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end,
-
-			$post->timeframe_id,
-			CB_Query::get_post_type( 'location',         $post->location_ID ),
-			CB_Query::get_post_type( 'item',             $post->item_ID ),
-			CB_Query::get_user( $post->user_ID )
+			$post->timeframe_id
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -792,15 +725,12 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 
   static function &factory(
 		$ID,
-    $period,     // CB_Period
+		$period_entity, // CB_PeriodEntity
+    $period,        // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end,
-
-    $timeframe_id,
-    $location,   // CB_Location
-    $item,       // CB_Item
-    $user        // CB_User
+    $timeframe_id
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -813,13 +743,13 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     return $object;
   }
 
-	function overlaps( $period ) {
-		$parent_overlaps = parent::overlaps( $period );
+	function overlaps( $existing_perioditem ) {
+		$parent_overlaps = parent::overlaps( $existing_perioditem );
 
 		$not_different = (
-			 ! property_exists( $period, 'user' )
+			 ! property_exists( $existing_perioditem, 'user' )
 			|| is_null( $this->user )
-			|| $this->user->is( $period->user )
+			|| $this->user->is( $existing_perioditem->period_entity->user )
 		);
 
 		return $not_different && $parent_overlaps;

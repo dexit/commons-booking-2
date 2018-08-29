@@ -11,6 +11,23 @@ body .cb2-description {
 	margin:0px 8px;
 	color:#888;
 }
+.cb2-usage-count {
+	vertical-align: super;
+	font-size: 80%;
+
+	display: inline-block;
+	vertical-align: top;
+	margin: 1px 0 0 2px;
+	padding: 0 5px;
+	min-width: 7px;
+	height: 17px;
+	border-radius: 11px;
+	background-color: #ca4a1f;
+	color: #fff;
+	font-size: 9px;
+	line-height: 17px;
+	text-align: center;
+}
 
 /* ---------------------- debug */
 .cb2-debug-control span {

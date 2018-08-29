@@ -16,6 +16,10 @@ class CB_Forms {
     return self::get_options( 'cb2_period_status_types', 'period_status_type_id', 'name' );
   }
 
+  static function period_group_options() {
+    return self::get_options( 'cb2_period_groups', 'period_group_id', 'name' );
+  }
+
   static function get_options( $table, $id_field = 'ID', $name_field = 'post_title', $condition = '1=1' ) {
 		global $wpdb;
 
@@ -23,6 +27,7 @@ class CB_Forms {
 		$options    = wp_cache_get( $cache_name );
 		if ( ! $options ) {
 			$options = $wpdb->get_results( "select $id_field as ID, $name_field as name from $wpdb->prefix$table where $condition", OBJECT_K );
+			foreach ( $options as &$option ) $option = $option->name;
 			wp_cache_set( $cache_name, $options );
 		}
 		return $options;

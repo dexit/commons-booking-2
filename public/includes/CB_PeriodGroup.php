@@ -8,23 +8,43 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		'menu_icon' => 'dashicons-admin-settings',
 		'label'     => 'Period Groups',
   );
-  public $periods = array();
+  public $periods  = array();
+	static function selector_metabox() {
+		return array(
+			'title'      => __( 'Existing Period Group', 'commons-booking-2' ),
+			'show_names' => FALSE,
+			'context'    => 'side',
+			'fields'     => array(
+				array(
+					'name'    => __( 'PeriodGroup', 'commons-booking-2' ),
+					'id'      => 'commons-booking-2' . '_user_ID',
+					'type'    => 'select',
+					'show_option_none' => TRUE,
+					'default' => $_GET['period_group_ID'],
+					'options' => CB_Forms::period_group_options(),
+				),
+			),
+		);
+	}
 
   function post_type() {return self::$static_post_type;}
 
   static function &factory_from_wp_post( $post ) {
-		CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
+		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 		if ( ! $post->period_IDs ) throw new Exception( 'CB_PeriodGroup requires period_IDs list, which can be empty' );
+
+		$periods = array();
+		foreach ( explode( ',', $post->period_IDs) as $period_id ) {
+			$period = CB_Query::get_post_type( 'period', $period_id );
+			array_push( $periods, $period );
+		}
 
 		$object = self::factory(
 			$post->ID,
 			$post->period_group_id,
-			$post->post_title
+			$post->post_title,
+			$periods
 		);
-		foreach ( explode( ',', $post->period_IDs) as $period_id ) {
-			$period = CB_Query::get_post_type( 'period', $period_id );
-			$object->add_period( $period );
-		}
 
 		CB_Query::copy_all_properties( $post, $object );
 
@@ -34,7 +54,8 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   static function &factory(
 		$ID              = NULL,
 		$period_group_id = NULL,
-		$name            = NULL
+		$name            = NULL,
+		$periods         = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -50,10 +71,12 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   public function __construct(
 		$ID              = NULL,
 		$period_group_id = NULL,
-		$name            = NULL
+		$name            = NULL,
+		$periods         = NULL
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
-		$this->id = $period_group_id;
+		$this->id      = $period_group_id;
+		$this->periods = $periods;
 		parent::__construct( $this->periods );
 		if ( ! is_null( $ID ) ) self::$all[$ID] = $this;
   }
@@ -62,11 +85,52 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		array_push( $this->periods, $period );
   }
 
+  function add_actions( &$actions, $post ) {
+		unset( $actions['edit'] );
+		unset( $actions['view'] );
+	}
+
+  function manage_columns( $columns ) {
+		$columns['periods'] = 'Periods';
+		$this->move_column_to_end( $columns, 'date' );
+		return $columns;
+	}
+
+	function custom_columns( $column ) {
+		$html = '';
+		switch ( $column ) {
+			case 'periods':
+				$html .= ( '<ul class="cb2-period-list">' );
+				$count = count( $this->periods );
+				foreach ( $this->periods as $period ) {
+					$edit_link   = "<a href='?page=cb-post-edit&post=$period->ID&post_type=period&action=edit'>edit</a>";
+
+					$detach_link = '';
+					if ( $count > 1 ) {
+						$detach_text = 'detach';
+						$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=periodgroup&action=detach";
+						if ( $period->usage_once() ) {
+							$detach_text = 'delete';
+							$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=period&action=delete";
+						}
+						$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";
+					}
+
+					$summary     = $period->summary();
+					$html       .= "<li>$summary $edit_link $detach_link</li>";
+				}
+				$html .= ( '</ul>' );
+				$html .= ( '<a href="?">add new period</a> | <a href="?">attach existing period</a>' );
+				break;
+		}
+		return $html;
+	}
+
   function classes() {
 		return '';
   }
 
-  function post_save_post() {
+  function post_post_update() {
 		global $wpdb;
 
 		parent::post_save_post();

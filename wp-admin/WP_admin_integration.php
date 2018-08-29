@@ -22,7 +22,7 @@ function cb2_admin_pages() {
 			'menu_title'    => 'holidays',
 			'capability'    => NULL,
 			'function'      => NULL,
-			'wp_query_args' => 'post_type=periodent-global&period_status_type_ID=100000009&post_title=Holidays',
+			'wp_query_args' => 'post_type=periodent-global&period_status_type_ID=100000006&post_title=Holidays',
 			'actions'       => NULL,
 			'post_new_page' => NULL,
 			'description'   => 'Edit the global holidays, and holidays for specific locations.',
@@ -50,15 +50,15 @@ function cb2_admin_pages() {
 			'post_new_page' => NULL,
 		),
 		'cb2-locations'     => (object) array(
-			'parent_slug' => '',
-			'page_title' => 'Locations',
-			'menu_title' => 'locations',
-			'capability' => NULL,
-			'function'   => NULL,
-			'wp_query_args' => 'post_type=location',
-			'actions'    => '<a href="?page=cb2-opening-hours&location_ID=%ID%">Manage Opening Times</a>, <a href="?page=cb2-timeframes&location_ID=%ID%">Manage Item Availability</a>',
-			'post_new_page' => NULL,
-			'count'         => "select count(*) from {$wpdb->prefix}posts where post_type='location' and post_status='publish'",
+			'parent_slug'    => '',
+			'page_title'     => 'Locations',
+			'menu_title'     => 'locations',
+			'capability'     => NULL,
+			'function'       => NULL,
+			'wp_query_args'  => 'post_type=location',
+			'actions'        => '<a href="?page=cb2-opening-hours&location_ID=%ID%">Manage Opening Times</a>, <a href="?page=cb2-timeframes&location_ID=%ID%">Manage Item Availability</a>',
+			'post_new_page'  => NULL,
+			'count'          => "select count(*) from {$wpdb->prefix}posts where post_type='location' and post_status='publish'",
 		),
 		'cb2-opening-hours' => (object) array(
 			'parent_slug' => '',
@@ -74,8 +74,8 @@ function cb2_admin_pages() {
 		'cb2-timeframes'    => (object) array(
 			'parent_slug' => '',
 			'indent'      => 1,
-			'page_title' => 'Item timeframes %(for)% %location_ID%',
-			'menu_title' => 'item timeframes',
+			'page_title' => 'Item availibility %(for)% %location_ID%',
+			'menu_title' => 'item availibility',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-timeframe',
@@ -159,8 +159,8 @@ function cb2_admin_pages() {
 		),
 		'cb2-periodstatustypes' => (object) array(
 			'parent_slug' => '',
-			'page_title' => 'Period Types',
-			'menu_title' => 'period types',
+			'page_title' => 'Period Status Types',
+			'menu_title' => 'period status types',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodstatustype',
@@ -197,6 +197,21 @@ function cb2_admin_pages() {
 
 	return $menu_interface;
 }
+
+require_once( 'CMB2-field-Icon/cmb-field-icon.php' );
+
+function cb2_metaboxes() {
+	foreach ( CB_Query::schema_types() as $post_type => $Class ) {
+		if ( method_exists( $Class, 'metaboxes' ) ) {
+			foreach ( $Class::metaboxes() as $i => $metabox ) {
+				$metabox['id']           = "{$Class}_metabox_{$i}";
+				$metabox['object_types'] = array( $post_type );
+				new_cmb2_box( $metabox );
+			}
+		}
+	}
+}
+add_action( 'cmb2_admin_init', 'cb2_metaboxes', 1 );
 
 function cb2_post_row_actions( $actions, $post ) {
 	global $wpdb;
@@ -257,11 +272,26 @@ function cb2_notification_bubble_in_admin_menu() {
 }
 add_action('admin_menu', 'cb2_notification_bubble_in_admin_menu', 110 );
 
+function cb2_custom_columns( $column ) {
+	global $post;
+	$post = CB_Query::ensure_correct_class( $post );
+	if ( $post && method_exists( $post, 'custom_columns' ) ) print( $post->custom_columns( $column ) );
+}
+// Action added by WP_Query_integration
+
+function cb2_manage_columns( $columns ) {
+	global $post;
+	$post = CB_Query::ensure_correct_class( $post );
+	return ( $post && method_exists( $post, 'manage_columns' ) ? $post->manage_columns( $columns ) : $columns );
+}
+// Action added by WP_Query_integration
+
 function cb2_admin_init_menus() {
 	global $wpdb;
 
 	$capability_default   = 'manage_options';
-	$notifications_string = ' (3)';
+	$bookings_count       = $wpdb->get_var( "select count(*) from {$wpdb->prefix}cb2_view_future_bookings" );
+	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
   add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, 'cb2', 'cb2_options_page', 'dashicons-video-alt' );
 
 	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
@@ -434,7 +464,7 @@ function cb2_settings_post_edit() {
 	// post.php
 	$title = 'Edit Post';
 	if ( isset( $_GET[ 'add_new_label' ] ) ) $title = $_GET[ 'add_new_label' ];
-	else {print($post_id);
+	else {
 		// e.g. Add New Location Holiday for Cargonomia
 		if ( isset( $_GET[ 'post_type' ] ) )               $title .= ' ' . ucfirst( CB_Query::substring_after( ucfirst( $_GET[ 'post_type' ] ) ) );
 		if ( isset( $_GET[ 'period_status_type_name' ] ) ) $title .= ' ' . ucfirst( $_GET[ 'period_status_type_name' ] );

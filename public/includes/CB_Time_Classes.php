@@ -216,7 +216,7 @@ class CB_Day extends CB_TimePostNavigator {
   public function __toString() {return $this->post_title;}
 
   protected function __construct( $date, $title_format = 'D, M-d' ) {
-    $this->periods     = array();
+    $this->perioditems  = array();
 
     $this->date         = $date;
     $this->year         = (int) $date->format( 'Y' );
@@ -242,7 +242,7 @@ class CB_Day extends CB_TimePostNavigator {
     $this->post_title    = $date->format( $title_format );
     $this->ID            = $this->dayofyear;
     $this->post_type     = self::$static_post_type;
-    parent::__construct( $this->periods );
+    parent::__construct( $this->perioditems );
   }
 
   static function &factory( $date, $title_format = 'D, M-d' ) {
@@ -266,16 +266,16 @@ class CB_Day extends CB_TimePostNavigator {
   function classes() {
     $classes = parent::classes();
 
-    foreach ( $this->periods as $period ) {
-      $classes .= $period->classes_for_day( $this );
+    foreach ( $this->perioditems as $perioditem ) {
+      $classes .= $perioditem->classes_for_day( $this );
     }
 
     return $classes;
   }
 
-  function add_period( $period ) {
-    array_push( $this->periods, $period );
-    return $period;
+  function add_perioditem( $perioditem ) {
+    array_push( $this->perioditems, $perioditem );
+    return $perioditem;
   }
 
   function jsonSerialize() {

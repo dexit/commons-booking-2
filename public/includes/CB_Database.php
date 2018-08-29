@@ -115,6 +115,77 @@ class CB_Database {
 		global $wpdb;
 		return $wpdb->get_col( 'show function status', 0 );
   }
+
+	// -------------------------------------------------------------------- Classes
+  static function database_table( $Class ) {
+		$class_database_table = NULL;
+
+		if ( property_exists( $Class, 'database_table' ) ) $class_database_table = $Class::$database_table;
+		else if ( property_exists( $Class, 'static_post_type' ) ) {
+			$post_type_stub       = CB_Query::substring_before( $Class::$static_post_type );
+			$class_database_table = "cb2_{$post_type_stub}_posts";
+		}
+		if ( $class_database_table && ! CB_Database::has_table( $class_database_table ) )
+			throw new Exception( "[$wpdb->prefix$class_database_table] does not exist" );
+
+		return $class_database_table;
+  }
+
+  static function posts_table( $Class ) {
+		$posts_table = FALSE;
+
+		if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
+			$post_type_stub = CB_Query::substring_before( $Class::$static_post_type );
+			$posts_table    = "cb2_view_{$post_type_stub}_posts";
+			if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
+				$posts_table = $Class::$posts_table;
+		}
+		return $posts_table;
+	}
+
+  static function postmeta_table( $Class, &$meta_type = NULL, &$meta_table_stub = NULL, $ID = NULL ) {
+		$postmeta_table = FALSE;
+
+		if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
+			if ( property_exists( $Class, 'static_post_type' ) ) {
+				$meta_type       = CB_Query::substring_before( $Class::$static_post_type );
+				$meta_table_stub = "{$meta_type}meta";
+
+				if ( $ID && CB_Query::is_wp_post_ID( $ID ) ) {
+					// NOTE: if the sent $ID is a wp_posts id
+					// Then the postmeta_table will be set to wp_postmeta
+					// This happens when the post is still in the normal WP tables
+					// not been moved yet to the native structures and views
+					$meta_type       = 'post';
+					$meta_table_stub = 'postmeta';
+					$postmeta_table  = 'postmeta';
+				} else if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) ) {
+					$postmeta_table  = $Class::$postmeta_table;
+				} else {
+					$postmeta_table  = "cb2_view_{$meta_table_stub}";
+				}
+			}
+		}
+
+		return $postmeta_table;
+  }
+
+  static function id_field( $Class ) {
+		$id_field             = NULL;
+
+		if ( $class_database_table = self::database_table( $Class ) ) {
+			if ( property_exists( $Class, 'database_id_field' ) ) $id_field = $Class::$database_id_field;
+			else {
+				$id_field  = str_replace( 'cb2_', '', $class_database_table );
+				$id_field  = substr( $id_field, 0, -1 );
+				$id_field .= '_id';
+			}
+			if ( ! CB_Database::has_column( $class_database_table, $id_field ) )
+				throw new Exception( "[$wpdb->prefix$class_database_table] does not have column [$id_field] during native table update attempt" );
+		}
+
+		return $id_field;
+	}
 }
 
 // --------------------------------------------------------------------

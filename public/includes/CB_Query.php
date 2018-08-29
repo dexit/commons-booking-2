@@ -7,6 +7,7 @@ require_once( 'CB_PeriodEntity.php' );
 require_once( 'the_template_functions.php' );
 require_once( 'CB_Time_Classes.php' );
 require_once( 'WP_Query_integration.php' );
+require_once( 'CB_Forms.php' );
 
 // System PERIOD_STATUS_TYPEs
 define( 'PERIOD_STATUS_TYPE_AVAILABLE', 1 );
@@ -35,12 +36,6 @@ class CB_Query {
 			throw new Exception( 'post_type [' . $Class::$static_post_type . '] is longer than the WordPress maximum of 20 characters' );
 
 		self::$schema_types[ $Class::$static_post_type ] = $Class;
-		if ( property_exists( $Class, 'supports_widgets' ) ) {
-			foreach ( $Class::$supports_widgets as $support_name ) {
-				$support_method      = "render_$support_name";
-				add_filter( "cmb2_render_$support_name", array( $Class, $support_method ), 10, 5 );
-			}
-		}
   }
 
   static function &schema_types() {
@@ -77,10 +72,7 @@ class CB_Query {
 		$wpdb->posts = "{$wpdb->prefix}posts";
 
 		if ( $Class = self::schema_type_class($post_type) ) {
-			if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
-				$posts_table = "cb2_view_{$Class::$static_post_type}_posts";
-				if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
-					$posts_table    = $Class::$posts_table;
+			if ( $posts_table = CB_Database::posts_table( $Class ) ) {
 				$old_wpdb_posts = $wpdb->posts;
 				$wpdb->posts    = "$wpdb->prefix$posts_table";
 			}
@@ -143,6 +135,8 @@ class CB_Query {
 		return $post_types;
 	}
 
+
+
 	static function post_type_from_ID( $ID ) {
 		$post_types = self::get_post_types();
 		$post_type  = NULL;
@@ -158,6 +152,19 @@ class CB_Query {
 		return $post_type;
 	}
 
+	static function is_custom_post_type_ID( $ID ) {
+		return self::post_type_from_ID( $ID );
+	}
+
+	static function is_wp_post_ID( $ID ) {
+		return ! self::is_custom_post_type_ID( $ID );
+	}
+
+	static function is_wp_auto_draft( $post ) {
+		return $post && property_exists( $post, 'ID' )
+			&& in_array( $post->post_status, array( 'draft',  'auto-draft' ) );
+	}
+
 	static function ID_from_id_post_type( $id, $post_type ) {
 		// NULL return indicates that this post_type is not governed by CB2
 		$ID         = NULL;
@@ -170,11 +177,10 @@ class CB_Query {
 		return $ID;
 	}
 
-	static function id_from_ID( $ID ) {
+	static function id_from_ID_with_post_type( $ID, $post_type ) {
 		// NULL return indicates that this post_type is not governed by CB2
 		$id         = NULL;
 		$post_types = self::get_post_types();
-		$post_type  = self::post_type_from_ID( $ID );
 		if ( isset( $post_types[$post_type] ) ) {
 			$details = $post_types[$post_type];
 			$id      = ( $ID - $details->ID_Base ) / $details->ID_multiplier;
@@ -251,25 +257,23 @@ class CB_Query {
 			if ( ! $post->ID )        throw new Exception( 'get_metadata_assign: $post->ID required' );
 			if ( ! $post->post_type ) throw new Exception( 'get_metadata_assign: $post->post_type required' );
 
+			$ID        = $post->ID;
 			$post_type = $post->post_type;
 			if ( ! property_exists( $post, '_get_metadata_assign' ) ) {
 				if ( $Class = self::schema_type_class( $post_type ) ) {
+					// NOTE: if the sent $ID is a wp_posts id
+					// Then the postmeta_table will be set to wp_postmeta
+					// This happens when the post is still in the normal WP tables
+					// not been moved yet to the native structures and views
+					if ( $postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub, $ID ) )
+						$wpdb->$meta_table_stub = "$wpdb->prefix$postmeta_table";
+
 					// get_metadata( $meta_type, ... )
 					//   meta.php has _get_meta_table( $meta_type );
 					//   $table_name = $meta_type . 'meta';
-					if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
-						$post_type_stub         = CB_Query::substring_before( $post_type );
-						$meta_type              = $post_type_stub;
-						$meta_table_stub        = "{$meta_type}meta";
-						$meta_table             = "cb2_view_{$meta_table_stub}";
-						if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) )
-							$meta_table = $Class::$posts_table;
-						$wpdb->$meta_table_stub = "$wpdb->prefix$meta_table";
-					}
-
-					$metadata = get_metadata( $meta_type, $post->ID );
+					$metadata = get_metadata( $meta_type, $ID );
 					if ( ! is_array( $metadata ) || ! count( $metadata ) )
-						throw new Exception( "[$post_type] [$post->ID] returned no metadata" );
+						throw new Exception( "[$post_type] [$ID] returned no metadata" );
 
 					// Populate object
 					foreach ( $metadata as $this_meta_key => $meta_value )
@@ -365,25 +369,41 @@ class CB_Query {
 		$columns    = CB_Database::columns( $table, TRUE );
 
 		foreach ( $data as $field_name => $field_value ) {
-			// Standard mappings
-			$native_field_name = $field_name;
-			switch ( $field_name ) {
-				case 'post_title':   $native_field_name = 'name';        break;
-				case 'post_content': $native_field_name = 'description'; break;
+			// Meta data queries use arrays
+			if ( is_array( $field_value ) ) $field_value = $field_value[0];
+
+			if ( ! isset( $columns[$field_name] ) ) {
+				// Standard mappings
+				switch ( $field_name ) {
+					case 'post_title':   $field_name = 'name';        break;
+					case 'post_content': $field_name = 'description'; break;
+				}
+
+				// ID => id mappings
+				if ( substr( $field_name, -3 ) == '_ID' ) {
+					$field_stub  = substr( $field_name, 0, -3 );
+					$post_type   = str_replace( '_', '', $field_stub );
+					$field_name  = "{$field_stub}_id";
+					$field_value = CB_Query::id_from_ID_with_post_type( $field_value, $post_type );
+				}
+
+				// period_group => (object) period_group->period_group_id
+				if ( is_object( $field_value ) && property_exists( $field_value, "{$field_name}_id" ) ) {
+					$field_name  = "{$field_name}_id";
+					$field_value = $field_value->$field_name;
+				}
 			}
 
 			// Check table
-			if ( isset( $columns[$native_field_name] ) ) {
-				// Meta data queries use arrays
-				if ( is_array( $field_value ) ) $field_value = $field_value[0];
+			if ( isset( $columns[$field_name] ) ) {
 				// Data conversion
-				$column_definition = $columns[$native_field_name];
+				$column_definition = $columns[$field_name];
 				switch ( self::substring_before( $column_definition->Type, '(' ) ) {
 					case 'bit':
 						$field_value = CB_Database::int_to_bitstring( $field_value );
 						break;
 				}
-				$new_data[ $native_field_name ] = $field_value;
+				$new_data[ $field_name ] = $field_value;
 			}
 		}
 

@@ -4,14 +4,29 @@
 // --------------------------------------------------------------------
 class CB_User extends CB_PostNavigator implements JsonSerializable {
   public static $all    = array();
-  public static $schema = 'with-periods'; //this-only, with-periods
+  public static $schema = 'with-perioditems'; //this-only, with-perioditems
   public function __toString() {return $this->ID;}
   static $static_post_type     = 'user';
+	static function selector_metabox() {
+		return array(
+			'title' => __( 'User', 'commons-booking-2' ),
+			'show_names' => FALSE,
+			'fields' => array(
+				array(
+					'name'    => __( 'User', 'commons-booking-2' ),
+					'id'      => 'commons-booking-2' . '_user_ID',
+					'type'    => 'select',
+					'default' => $_GET['user_ID'],
+					'options' => CB_Forms::user_options(),
+				),
+			),
+		);
+	}
 
   function post_type() {return self::$static_post_type;}
 
   protected function __construct( $ID, $user_login = NULL ) {
-    $this->periods    = array();
+    $this->perioditems    = array();
 		$this->id         = $ID;
 
     // WP_Post values
@@ -20,7 +35,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     $this->post_title = $user_login;
     $this->post_type  = self::$static_post_type;
 
-    parent::__construct( $this->periods );
+    parent::__construct( $this->perioditems );
 
     self::$all[$ID] = $this;
   }
@@ -37,8 +52,8 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     return $object;
   }
 
-  function add_period( &$period ) {
-    array_push( $this->periods, $period );
+  function add_perioditem( &$perioditem ) {
+    array_push( $this->perioditems, $perioditem );
   }
 
 	function is( $user ) {
@@ -50,7 +65,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
       'ID' => $this->ID,
       'user_login' => $this->user_login,
     );
-    if ( self::$schema == 'with-periods' ) $array[ 'periods' ] = &$this->periods;
+    if ( self::$schema == 'with-perioditems' ) $array[ 'periods' ] = &$this->perioditems;
 
     return $array;
   }
@@ -62,7 +77,7 @@ CB_Query::register_schema_type( 'CB_User' );
 // --------------------------------------------------------------------
 class CB_Post extends CB_PostNavigator implements JsonSerializable {
   public static $all = array();
-  public static $schema         = 'with-periods'; //this-only, with-periods
+  public static $schema         = 'with-perioditems'; //this-only, with-perioditems
   public static $posts_table    = FALSE;
   public static $postmeta_table = FALSE;
   public static $database_table = FALSE;
@@ -70,19 +85,19 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
   public function __toString() {return (string) $this->ID;}
 
   protected function __construct( $ID ) {
-    $this->periods = array();
+    $this->perioditems = array();
 		$this->id = $ID;
 
     // WP_Post values
     $this->ID = $ID;
 
-    parent::__construct( $this->periods );
+    parent::__construct( $this->perioditems );
 
     self::$all[$ID] = $this;
   }
 
-  function add_period( &$period ) {
-    array_push( $this->periods, $period );
+  function add_perioditem( &$perioditem ) {
+    array_push( $this->perioditems, $perioditem );
   }
 
   function get_field_this( $class = '', $date_format = 'H:i' ) {
@@ -103,7 +118,7 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
       'ID' => $this->ID,
       'post_title' => $this->post_title,
     );
-    if ( self::$schema == 'with-periods' ) $array[ 'periods' ] = &$this->periods;
+    if ( self::$schema == 'with-perioditems' ) $array[ 'periods' ] = &$this->perioditems;
 
     return $array;
   }
@@ -120,11 +135,47 @@ class CB_Location extends CB_Post implements JsonSerializable {
   public static $supports = array(
 		'title',
 		'editor',
-		'holidays',
 		'thumbnail',
-		'custom-fields',
-		'post-formats',
 	);
+
+	static function selector_metabox() {
+		return array(
+			'title' => __( 'Location', 'commons-booking-2' ),
+			'show_names' => FALSE,
+			'fields' => array(
+				array(
+					'name'    => __( 'Location', 'commons-booking-2' ),
+					'id'      => 'commons-booking-2' . '_location_ID',
+					'type'    => 'select',
+					'default' => $_GET['location_ID'],
+					'options' => CB_Forms::location_options(),
+				),
+			),
+		);
+	}
+
+	static function metaboxes() {
+		return array(
+			array(
+				'title'      => __( 'Icon', 'commons-booking-2' ),
+				'context'    => 'side',
+				'show_names' => FALSE,
+				'fields'     => array(
+					array(
+						'name' => __( 'Icon', 'commons-booking-2' ),
+						'id'   => 'commons-booking-2' . '_location_icon',
+						'type' => 'icon',
+						'desc' => 'Used in Maps.',
+						'options' => array(
+							'paths' => array(
+								'http://www.flaticon.com/packs/holiday-travelling-3',
+							),
+						),
+					),
+				),
+			),
+		);
+	}
 
   function render_location_summary(
 		CMB2_Field $field,
@@ -171,7 +222,30 @@ class CB_Location extends CB_Post implements JsonSerializable {
     return $object;
   }
 
-  function add_item( &$item ) {
+  function manage_columns( $columns ) {
+		$columns['items'] = 'Item Availability';
+		$this->move_column_to_end( $columns, 'date' );
+		return $columns;
+	}
+
+	function custom_columns( $column ) {
+		$html = '';
+		switch ( $column ) {
+			case 'items':
+				if ( count( $this->items ) ) {
+					$html .= ( '<ul>' );
+					foreach ( $this->items as $item ) {
+						$edit_link = "?page=cb-post-edit&post=$item->ID&post_type=item&action=edit";
+						$html     .= "<li><a href='$edit_link'>" . $item->post_title . '</a></li>';
+					}
+					$html .= ( '</ul>' );
+				} else $html .= ( 'No Items' );
+				break;
+		}
+		return $html;
+	}
+
+	function add_item( &$item ) {
     array_push( $this->items, $item );
     return $this;
   }
@@ -193,6 +267,21 @@ class CB_Item extends CB_Post implements JsonSerializable {
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-video-alt',
   );
+	static function selector_metabox() {
+		return array(
+			'title' => __( 'Item', 'commons-booking-2' ),
+			'show_names' => FALSE,
+			'fields' => array(
+				array(
+					'name'    => __( 'Item', 'commons-booking-2' ),
+					'id'      => 'commons-booking-2' . '_item_ID',
+					'type'    => 'select',
+					'default' => $_GET['item_ID'],
+					'options' => CB_Forms::item_options(),
+				),
+			),
+		);
+	}
 
   function post_type() {return self::$static_post_type;}
 

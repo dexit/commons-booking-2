@@ -175,6 +175,14 @@ class CB_PostNavigator {
 	}
 
   // ------------------------------------------------- Output
+	function move_column_to_end( &$columns, $column ) {
+		if ( isset( $columns[$column] ) ) {
+			$title = $columns[$column];
+			unset( $columns[$column] );
+			$columns[$column] = $title;
+		}
+	}
+
   function the_json_content( $options = NULL ) {
     print( $this->get_the_json_content( $options ) );
   }
@@ -249,25 +257,22 @@ class CB_PostNavigator {
 		return $args;
   }
 
-  function pre_save_post() {
-		// These should be child posts
-		// Thus should be saved before the main post
-		foreach ( $this->posts as $post )
-			if ( $post instanceof CB_PostNavigator ) $post->save();
+  function pre_post_update() {
+		// e.g. [re-]creating dependent objects
+		// like a period group and period
   }
 
-  function post_save_post() {
+  function post_post_update() {
 		// e.g. 1-many Relationships between this and child posts can be saved here
   }
 
-  function save( $save_posts_links = FALSE ) {
+  function save() {
 		global $wpdb;
 
 		$error = NULL;
 		$args  = $this->post_args();
 		if ( WP_DEBUG && FALSE ) var_dump( $args );
 
-		// wp_insert_post_data => cb2_save_post_pre_save_post() => this->pre_save_post()
 		if ( isset( $args [ 'ID' ] ) ) {
 			// Direct existing update
 			// wp_update_post() triggers the hooks below
@@ -281,12 +286,16 @@ class CB_PostNavigator {
 			// wp_insert_post() will not trigger any hooks in this intergration
 			// wp_update_post() triggers the hooks below
 			// (int|WP_Error) The post ID on success. The value 0 or WP_Error on failure.
+			// wp_insert_post() => cb2_save_post_pre_save_post() => this->pre_save_post()
+			$args = array( 'post_status' => 'auto-draft' );
 			$id   = wp_insert_post( $args );
 			if ( is_wp_error( $id ) ) {
 				$error = $wpdb->last_error;
 			} else {
 				$args = array( 'ID' => $id );
+				$args = array( 'post_status' => 'publish' );
 				// Run the update action to move it to the custom DB structure
+				// save_post => cb2_save_post_post_save_post() => this->post_save_post()
 				$result = wp_update_post( $args );
 				if ( is_wp_error( $result ) ) {
 					$error = $wpdb->last_error;
@@ -301,7 +310,6 @@ class CB_PostNavigator {
 				}
 			}
 		}
-		// save_post => cb2_save_post_post_save_post() => this->post_save_post()
 
 		if ( $error ) {
 			print( "<div id='error-page'><p>$error</p></div>" );
@@ -311,18 +319,17 @@ class CB_PostNavigator {
 		return $this;
   }
 }
-add_action( 'wp_insert_post_data', 'cb2_save_post_pre_save_post',  10, 2 );
-add_action( 'save_post',           'cb2_save_post_post_save_post', 10, 3 );
-
-function cb2_save_post_pre_save_post( $data, $postarr ) {
-	$post = (object) $data;
-	var_dump($data);
-	$post = CB_Query::ensure_correct_class( $post );
-	if ( $post instanceof CB_PostNavigator ) $post->pre_save_post();
-}
 
 function cb2_save_post_post_save_post( $ID, $post, $update ) {
-	$post = CB_Query::ensure_correct_class( $post );
-	if ( $post instanceof CB_PostNavigator ) $post->post_save_post();
+	// Initially a WP_Post auto-draft is created in wp_posts
+	// Updates move the data in to the custom structure
+	// Which is when we create the remaining database entries
+	if ( ! CB_Query::is_wp_auto_draft( $post )
+		&& CB_Query::is_custom_post_type_ID( $post->ID )
+	) {
+		$post = CB_Query::ensure_correct_class( $post );
+		if ( method_exists( $post, 'post_save_post' ) ) $post->post_save_post();
+	}
 }
+add_action( 'save_post', 'cb2_save_post_post_save_post', 10, 3 );
 
