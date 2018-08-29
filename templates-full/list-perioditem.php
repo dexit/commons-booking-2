@@ -4,7 +4,7 @@
 	</header></td -->
 	<?php the_content(); ?>
 	<?php the_debug(); ?>
-	<?php the_fields( CB_PeriodItem::$standard_fields ); ?>
+	<?php cb2_the_fields( CB_PeriodItem::$standard_fields ); ?>
 
 	<td><footer class="entry-footer">
 		<?php

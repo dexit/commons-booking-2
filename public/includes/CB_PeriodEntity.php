@@ -236,10 +236,9 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 
   static function &factory(
 		$ID,
-    $name,
+		$name,
 		$period_group,
 		$period_status_type,
-
 		$location = NULL,
 		$item     = NULL,
 		$user     = NULL
@@ -323,10 +322,9 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 
   static function &factory(
 		$ID,
-    $name,
+		$name,
 		$period_group,
 		$period_status_type,
-
 		$location = NULL,
 		$item     = NULL,
 		$user     = NULL
@@ -420,7 +418,7 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 
   static function &factory(
 		$ID,
-    $name,
+		$name,
 		$period_group,
 		$period_status_type,
 

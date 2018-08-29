@@ -16,7 +16,7 @@
 
 	<?php the_content(); ?>
 	<!-- ?php if ( WP_DEBUG ) the_debug(); ? -->
-	<!-- ?php the_fields( CB_PeriodItem::$standard_fields ); ? -->
+	<!-- ?php cb2_the_fields( CB_PeriodItem::$standard_fields ); ? -->
 
 	<!-- td><footer class="entry-footer">
 		<?php

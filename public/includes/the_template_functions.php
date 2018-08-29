@@ -29,7 +29,7 @@ function is_current() {
 	return is_object( $post ) && property_exists( $post, 'is_current' ) && $post->is_current;
 }
 
-function get_the_field( $field_name, $class = '', $date_format = 'H:i' ) {
+function cb2_get_field( $field_name, $class = '', $date_format = 'H:i' ) {
 	global $post;
 	$object  = $post;
 	$value   = NULL;
@@ -80,11 +80,11 @@ function get_the_field( $field_name, $class = '', $date_format = 'H:i' ) {
 	return $value;
 }
 
-function the_field( $field_name, $class = '', $date_format = 'H:i' ) {
-	echo get_the_field( $field_name, $class, $date_format );
+function cb2_the_field( $field_name, $class = '', $date_format = 'H:i' ) {
+	echo cb2_get_field( $field_name, $class, $date_format );
 }
 
-function the_fields( $field_names, $before = '<td>', $after = '</td>', $class = '', $date_format = 'H:i' ) {
+function cb2_the_fields( $field_names, $before = '<td>', $after = '</td>', $class = '', $date_format = 'H:i' ) {
 	global $post;
 
 	if ( is_object( $post ) ) {
@@ -97,7 +97,7 @@ function the_fields( $field_names, $before = '<td>', $after = '</td>', $class = 
 			echo "<span class='cb2-field-name'>$field_name";
 			echo '<span class="cb2-colon">:</span></span>';
 			echo '<span class="cb2-field-value">';
-			the_field( $field_name, $class, $date_format );
+			cb2_the_field( $field_name, $class, $date_format );
 			echo '</span>', $after;
 		}
 	}
@@ -155,7 +155,7 @@ function is_list( $post = '' ) {
 // -------------------------------------------------------------------------------------
 // TODO: move functions to CB_Templates utilities files
 add_filter( 'the_content', 'cb2_template_include_ensure_correct_class', 1 );
-add_filter( 'the_content', 'cb2_template_include_custom_plugin_templates' );
+//add_filter( 'the_content', 'cb2_template_include_custom_plugin_templates' );
 
 /*
 add_filter( "get_template_part_{$slug}", $slug, $name )
@@ -196,8 +196,16 @@ function cb2_template_include_custom_plugin_templates( $content ) {
 		// Get class templates and the current template suggestion
 		$post_template_suggestions = NULL;
 		$post_type                 = $post->post_type;
+		
 		$context                   = CB_Query::template_loader_context();
 
+		if (is_single()) {
+			$context = "single";
+		} else {
+			$context = "list";
+		}
+
+			echo "context: " . $context;
 		$post_template_suggestions = $post->templates( $context );
 
 		// Read the plugin templates directory
@@ -234,7 +242,7 @@ function cb2_template_include_custom_plugin_templates( $content ) {
 		ob_start ();
         include $current_template_path;
         $template = ob_get_contents ();
-        ob_end_clean ();
+        ob_end_clean();
         $content .= $template;
 
 	}

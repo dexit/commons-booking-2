@@ -110,5 +110,6 @@ function cb2_plugins_loaded() {
 // add_action( 'plugins_loaded', 'cb2_plugins_loaded' );
 require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_CMB.php' );
 require_once( CB_PLUGIN_ROOT . 'includes/CB_Template.php' );
+require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Shortcodes.php' );
 require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Query.php' );      // register_post_types()
 require_once( CB_PLUGIN_ROOT . 'wp-admin/WP_admin_integration.php' ); // admin screens
