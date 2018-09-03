@@ -70,8 +70,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     $period,        // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end,
-    $timeframe_id
+    $datetime_period_item_end
   ) {
 		// provides appropriate sub-class based on final object parameters
 		$object = NULL;
@@ -81,8 +80,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
-				$datetime_period_item_end,
-				$timeframe_id
+				$datetime_period_item_end
 			);
 		else if ( $item )     $object = CB_PeriodItem_Timeframe::factory(
 				$ID,
@@ -90,8 +88,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
-				$datetime_period_item_end,
-				$timeframe_id
+				$datetime_period_item_end
 			);
 		else if ( $location ) $object = CB_PeriodItem_Location::factory(
 				$ID,
@@ -99,8 +96,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
-				$datetime_period_item_end,
-				$timeframe_id
+				$datetime_period_item_end
 			);
 		else                  $object = CB_PeriodItem_Global::factory(
 				$ID,
@@ -108,8 +104,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
-				$datetime_period_item_end,
-				$timeframe_id
+				$datetime_period_item_end
 			);
 
 		return $object;
@@ -377,9 +372,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end,
-
-		$timeframe_id
+		$datetime_period_item_end
   ) {
     parent::__construct(
 			$ID,
@@ -402,9 +395,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
 			CB_Query::get_post_type( CB_Period::$static_post_type,              $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
-			$post->datetime_period_item_end,
-
-			$post->timeframe_id
+			$post->datetime_period_item_end
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -418,9 +409,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
     $period,     // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end,
-
-    $timeframe_id
+    $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) &&  isset( self::$all[$ID] ) ) {
@@ -471,7 +460,6 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
 			$datetime_period_item_start,
 			$datetime_period_item_end
     );
-		$this->id = $timeframe_id;
     $this->period_entity->location->add_perioditem( $this );
     array_push( $this->posts, $this->period_entity->location );
   }
@@ -487,8 +475,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
 			CB_Query::get_post_type( CB_Period::$static_post_type,                $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
-			$post->datetime_period_item_end,
-			$post->timeframe_id
+			$post->datetime_period_item_end
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -502,8 +489,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     $period,     // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end,
-    $timeframe_id
+    $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -562,8 +548,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end,
-		$timeframe_id
+		$datetime_period_item_end
   ) {
     parent::__construct(
 			$ID,
@@ -573,7 +558,6 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 			$datetime_period_item_start,
 			$datetime_period_item_end
     );
-    $this->timeframe_id = $timeframe_id;
     array_push( $this->posts, $this->period_entity->location );
     array_push( $this->posts, $this->period_entity->item );
     $this->period_entity->item->add_perioditem( $this );
@@ -590,8 +574,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 			CB_Query::get_post_type( CB_Period::$static_post_type,                 $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
-			$post->datetime_period_item_end,
-			$post->timeframe_id
+			$post->datetime_period_item_end
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -605,8 +588,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     $period,        // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end,
-    $timeframe_id
+    $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -647,7 +629,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     $update = CB_Database_UpdateInsert::factory( self::$database_options_table );
     $update->add_field(     'option_name',  $option );
     $update->add_field(     'option_value', $new_value );
-    $update->add_condition( 'timeframe_id', $timeframe_id );
+    $update->add_condition( 'timeframe_id', $this->id() );
     $update->run();
 
     return $this;
@@ -684,8 +666,7 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end,
-		$timeframe_id
+		$datetime_period_item_end
   ) {
     parent::__construct(
 			$ID,
@@ -695,8 +676,6 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 			$datetime_period_item_start,
 			$datetime_period_item_end
 		);
-    $this->timeframe_id = $timeframe_id;
-
     array_push( $this->posts, $this->period_entity->location );
     array_push( $this->posts, $this->period_entity->item );
     array_push( $this->posts, $this->period_entity->user );
@@ -714,8 +693,7 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 			CB_Query::get_post_type( CB_Period::$static_post_type,                      $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
-			$post->datetime_period_item_end,
-			$post->timeframe_id
+			$post->datetime_period_item_end
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -729,8 +707,7 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     $period,        // CB_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end,
-    $timeframe_id
+    $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {

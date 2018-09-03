@@ -11,23 +11,92 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 		'menu_icon' => 'dashicons-admin-settings',
 		'label'     => 'Period Status Types',
   );
+	static function selector_metabox() {
+		return array(
+			'title'      => __( 'Period Status Type', 'commons-booking-2' ),
+			'show_names' => FALSE,
+			'context'    => 'side',
+			'fields'     => array(
+				array(
+					'name'    => __( 'PeriodStatusType', 'commons-booking-2' ),
+					'id'      => 'period_status_type_ID',
+					'type'    => 'select',
+					'default' => $_GET['period_status_type_ID'],
+					'options' => CB_Forms::period_status_type_options(),
+				),
+				array(
+					'name' => __( '<a href="#">add new</a>', 'commons-booking-2' ),
+					'id' => 'exceptions',
+					'type' => 'title',
+				),
+			),
+		);
+	}
 
   function post_type() {return self::$static_post_type;}
+	static function metaboxes() {
+		return array(
+			array(
+				'title' => __( 'Colour', 'commons-booking-2' ),
+				'context' => 'side',
+				'fields' => array(
+					array(
+						'name' => __( 'Colour', 'commons-booking-2' ),
+						'id' => 'colour',
+						'type' => 'colorpicker',
+						'default' => '#000000',
+					),
+					array(
+						'name' => __( 'Opacity', 'commons-booking-2' ),
+						'id' => 'opacity',
+						'type' => 'select',
+						'options' => array(
+							'1.0' => '1.0',
+							'0.9' => '0.9',
+							'0.8' => '0.8',
+							'0.7' => '0.7',
+							'0.6' => '0.6',
+							'0.5' => '0.5',
+						),
+					),
+				),
+			),
+
+			array(
+				'title' => __( 'Item interaction', 'commons-booking-2' ),
+				'fields' => array(
+					array(
+						'name' => __( 'Collect', 'commons-booking-2' ),
+						'id' => 'collect',
+						'type' => 'checkbox',
+					),
+					array(
+						'name' => __( 'Use', 'commons-booking-2' ),
+						'id' => 'use',
+						'type' => 'checkbox',
+					),
+					array(
+						'name' => __( 'Return', 'commons-booking-2' ),
+						'id' => 'return',
+						'type' => 'checkbox',
+					),
+				),
+			),
+		);
+	}
 
   public function __construct(
 		$ID,
-    $period_status_type_id = NULL,
-    $name     = NULL,
-    $colour   = NULL,
-    $opacity  = NULL,
-    $priority = NULL,
-    $return   = NULL,
-    $collect  = NULL,
-    $use      = NULL,
-    $system   = NULL
+    $name,
+    $colour,
+    $opacity,
+    $priority,
+    $return,
+    $collect,
+    $use,
+    $system
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
-		$this->id         = $period_status_type_id;
 		$this->system     = $system;
 
     // WP_Post values
@@ -44,7 +113,6 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 
 		$object = self::factory(
 			$post->ID,
-		  $post->period_status_type_id,
 			$post->post_title,
 			$post->colour,
 			$post->opacity,
@@ -63,29 +131,29 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 
   static function &factory(
 		$ID,
-    $period_status_type_id,
-    $name     = NULL,
-    $colour   = NULL,
-    $opacity  = NULL,
-    $priority = NULL,
-    $return   = NULL,
-    $collect  = NULL,
-    $use      = NULL,
-    $system   = NULL
+    $name,
+    $colour,
+    $opacity,
+    $priority,
+    $return,
+    $collect,
+    $use,
+    $system
   ) {
     // Design Patterns: Factory Singleton with Multiton
     if ( ! is_null( $ID ) &&  isset( self::$all[$ID] ) )
 			$object = self::$all[$ID];
     else {
       $Class = 'CB_PeriodStatusType';
+      $id    = CB_Query::id_from_ID_with_post_type( CB_PeriodStatusType::$static_post_type, $ID );
       // Hardcoded system status types
-      // TODO: create a trigger preventing deletion of these
-      switch ( $period_status_type_id ) {
-        case PERIOD_STATUS_TYPE_AVAILABLE: $Class = 'CB_PeriodStatusType_Available'; break;
-        case PERIOD_STATUS_TYPE_BOOKED:    $Class = 'CB_PeriodStatusType_Booked';    break;
-        case PERIOD_STATUS_TYPE_CLOSED:    $Class = 'CB_PeriodStatusType_Closed';    break;
-        case PERIOD_STATUS_TYPE_OPEN:      $Class = 'CB_PeriodStatusType_Open';      break;
-        case PERIOD_STATUS_TYPE_REPAIR:    $Class = 'CB_PeriodStatusType_Repair';    break;
+      switch ( $id ) {
+        case CB2_PERIOD_STATUS_TYPE_AVAILABLE: $Class = 'CB_PeriodStatusType_Available'; break;
+        case CB2_PERIOD_STATUS_TYPE_BOOKED:    $Class = 'CB_PeriodStatusType_Booked';    break;
+        case CB2_PERIOD_STATUS_TYPE_CLOSED:    $Class = 'CB_PeriodStatusType_Closed';    break;
+        case CB2_PERIOD_STATUS_TYPE_OPEN:      $Class = 'CB_PeriodStatusType_Open';      break;
+        case CB2_PERIOD_STATUS_TYPE_REPAIR:    $Class = 'CB_PeriodStatusType_Repair';    break;
+        case CB2_PERIOD_STATUS_TYPE_HOLIDAY:   $Class = 'CB_PeriodStatusType_Holiday';   break;
       }
 
 			$reflection = new ReflectionClass( $Class );
@@ -115,6 +183,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 		$columns['use']      = 'Use';
 		$columns['return']   = 'Return';
 		$columns['priority'] = 'Priority';
+		$columns['colour']   = 'Colour';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
@@ -131,6 +200,9 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 				$html .= "<select>
 					<option>$this->priority</option>
 				</select>";
+				break;
+			case 'colour':
+				$html .= "<input value='$this->colour'/>";
 				break;
 		}
 		return $html;
@@ -184,6 +256,11 @@ class CB_PeriodStatusType_Open      extends CB_PeriodStatusType {
 	}
 }
 class CB_PeriodStatusType_Repair    extends CB_PeriodStatusType {
+	public function __construct() {
+		call_user_func_array( array( get_parent_class(), '__construct' ), func_get_args() );
+	}
+}
+class CB_PeriodStatusType_Holiday   extends CB_PeriodStatusType {
 	public function __construct() {
 		call_user_func_array( array( get_parent_class(), '__construct' ), func_get_args() );
 	}

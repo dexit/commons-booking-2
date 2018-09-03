@@ -3,7 +3,8 @@
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 class CB_Database {
-  static $database_date_format = 'Y-m-d H:i:s';
+  static $database_date_format = 'Y-m-d';
+  static $database_datetime_format = 'Y-m-d H:i:s';
 
   protected function __construct( $table = NULL, $alias = NULL ) {
     if ( $table ) $this->set_table( $table, $alias );
@@ -19,27 +20,33 @@ class CB_Database {
 
   // -------------------------------- Utilities
   static function to_string( &$name, $value ) {
-    if ( is_object( $value ) ) {
-			// TODO: Refactor this in to the objects
-			if ( $value instanceof CB_Post ) {
-				if ( property_exists( $value, 'ID' ) ) {
-					$name .= '_ID';
-					$value = $value->ID;
-				} else throw new Exception( "This CB_Post object should have a native ID [$name] property" );
-			} else if ( $value instanceof CB_PostNavigator ) {
-				if ( property_exists( $value, 'id' ) ) {
-					$name .= '_id';
-					$value = $value->id;
-				} else throw new Exception( "This CB_PostNavigator object should have a native id [$name] property" );
-			} else {
-				switch ( get_class( $value ) ) {
-					case 'DateTime':
-						$value = $value->format( self::$database_date_format );
-						break;
-					default:
-						$value = (string) $value;
-				}
+		// TODO: Refactor this in to the objects
+    if ( is_array( $value ) ) {
+			// periods = array(period, period) => period_IDs = 200000238, 200000239
+			$string_value = '';
+			$sub_name = $name;
+			if ( substr( $sub_name, -1 ) == 's' ) $sub_name = substr( $sub_name, 0, -1 );
+			foreach ( $value as $sub_value ) {
+				if ( $string_value ) $string_value .= ',';
+				$string_value .= self::to_string( $sub_name, $sub_value );
 			}
+			if ( substr( $sub_name, -1 ) != 's' ) $sub_name .= 's';
+			$name  = $sub_name;
+			$value = $string_value;
+    } else if ( is_object( $value ) && $value instanceof CB_PostNavigator ) {
+			// period = period object => period_ID = 200000238
+			if ( property_exists( $value, 'ID' ) ) {
+				$name .= '_ID';
+				$value = $value->ID;
+				if ( ! is_numeric( $value ) ) throw new Exception( "[$name] value [$value] is not numeric" );
+			} else throw new Exception( "This CB_Post / CB_PostNavigator object should have an ID for [$name] property" );
+		} else if ( is_object( $value ) && $value instanceof DateTime ) {
+			// DateTime => 2018-06-10 12:34:23
+			$date_string = $value->format( self::$database_datetime_format );
+			if ( $value < new DateTime( '1970-01-01' ) ) throw new Exception( "Dodgy date [$date_string]" );
+			$value = $date_string;
+		} else {
+			$value = (string) $value;
     }
     return $value;
   }
@@ -115,6 +122,59 @@ class CB_Database {
 		global $wpdb;
 		return $wpdb->get_col( 'show function status', 0 );
   }
+
+	static function sanitize_data_for_table( $table, $data ) {
+		$new_data   = array();
+		$columns    = self::columns( $table, TRUE );
+
+		foreach ( $data as $field_name => $field_value ) {
+			if ( is_null( $field_value ) || empty( $field_value ) ) {
+				// Allow Database default values to take precedence
+			} else {
+				// Meta data queries use arrays
+				if ( is_array( $field_value ) ) $field_value = $field_value[0];
+
+				if ( ! isset( $columns[$field_name] ) ) {
+					// Standard mappings
+					switch ( $field_name ) {
+						case 'post_title':   $field_name = 'name';        break;
+						case 'post_content': $field_name = 'description'; break;
+					}
+
+					// ID => id mappings
+					if ( substr( $field_name, -3 ) == '_ID' ) {
+						$field_stub  = substr( $field_name, 0, -3 );
+						$post_type   = str_replace( '_', '', $field_stub );
+						$field_name  = "{$field_stub}_id";
+						$field_value = CB_Query::id_from_ID_with_post_type( $field_value, $post_type );
+					}
+
+					// period_group => (object) period_group->period_group_id
+					if ( is_object( $field_value ) && property_exists( $field_value, "{$field_name}_id" ) ) {
+						$field_name  = "{$field_name}_id";
+						$field_value = $field_value->$field_name;
+					}
+				}
+
+				// Check table
+				if ( isset( $columns[$field_name] ) ) {
+					// Data conversion
+					$column_definition = $columns[$field_name];
+					switch ( CB_Query::substring_before( $column_definition->Type, '(' ) ) {
+						case 'bit':
+							$field_value = self::int_to_bitstring( $field_value );
+							break;
+					}
+					$field_value = CB_Query::cast_parameter( $field_name, $field_value );
+					$field_value = self::to_string( $field_name, $field_value );
+
+					$new_data[ $field_name ] = $field_value;
+				}
+			}
+		}
+
+		return $new_data;
+	}
 
 	// -------------------------------------------------------------------- Classes
   static function database_table( $Class ) {
@@ -220,11 +280,21 @@ class CB_Database_Delete extends CB_Database {
     return new self( $table );
   }
 
-  function add_condition( $field, $value, $allow_nulls = FALSE, $comparison = '=', $prepare = TRUE ) {
+  function add_condition( $field, $value, $allow_nulls = FALSE, $comparison = '=', $prepare = TRUE, $NOT = FALSE ) {
     global $wpdb;
-    $condition = ( $prepare ? $wpdb->prepare( "$field $comparison %s", $value ) : "$field $comparison $value" );
-    if ( $allow_nulls ) $condition = "(isnull($field) or $condition)";
-    array_push( $this->conditions, $condition );
+    $comparison_sql = "$comparison ";
+    $comparison_requires_brakets = ( $comparison == 'IN' || $comparison == 'LIKE' );
+    if ( $comparison_requires_brakets ) $comparison_sql .= '(';
+    $comparison_sql .= ( $prepare ? '%s' : $value );
+    if ( $comparison_requires_brakets ) $comparison_sql .= ')';
+		$comparison_sql = "$field $comparison_sql";
+    if ( $NOT ) $comparison_sql = "NOT $comparison_sql";
+
+    if ( $prepare ) $comparison_sql = $wpdb->prepare( $comparison_sql, $value );
+    if ( $allow_nulls ) $comparison_sql = "(isnull($field) or $comparison_sql)";
+
+    array_push( $this->conditions, $comparison_sql );
+
     return $this;
   }
 
@@ -247,7 +317,8 @@ class CB_Database_Delete extends CB_Database {
   function run( $arg1 = NULL, $arg2 = NULL, $arg3 = NULL, $arg4 = NULL, $arg5 = NULL, $arg6 = NULL ) {
     global $wpdb;
     if ( WP_DEBUG ) print( "<div class='cb2-debug cb2-sql'><pre>deleting from $this->table</pre></div>" );
-    return $wpdb->query( $this->prepare( $arg1, $arg2, $arg3, $arg4, $arg5, $arg6 ) );
+    $sql = $this->prepare( $arg1, $arg2, $arg3, $arg4, $arg5, $arg6 );
+    return $wpdb->query( $sql );
   }
 }
 

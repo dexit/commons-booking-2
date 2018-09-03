@@ -10,12 +10,13 @@ require_once( 'WP_Query_integration.php' );
 require_once( 'CB_Forms.php' );
 
 // System PERIOD_STATUS_TYPEs
-define( 'PERIOD_STATUS_TYPE_AVAILABLE', 1 );
-define( 'PERIOD_STATUS_TYPE_BOOKED', 2 );
-define( 'PERIOD_STATUS_TYPE_CLOSED', 3 );
-define( 'PERIOD_STATUS_TYPE_OPEN', 4 );
-define( 'PERIOD_STATUS_TYPE_REPAIR', 5 );
-
+define( 'CB2_PERIOD_STATUS_TYPE_AVAILABLE', 1 );
+define( 'CB2_PERIOD_STATUS_TYPE_BOOKED',    2 );
+define( 'CB2_PERIOD_STATUS_TYPE_CLOSED',    3 );
+define( 'CB2_PERIOD_STATUS_TYPE_OPEN',      4 );
+define( 'CB2_PERIOD_STATUS_TYPE_REPAIR',    5 );
+define( 'CB2_PERIOD_STATUS_TYPE_HOLIDAY',   6 );
+define( 'CB2_CREATE_NEW', '-- create new --' );
 class CB_Query {
 	private static $schema_types = array();
 
@@ -165,6 +166,16 @@ class CB_Query {
 			&& in_array( $post->post_status, array( 'draft',  'auto-draft' ) );
 	}
 
+	static function publishing_post( $post ) {
+		// Indicates that we need to move the post in to our native structures
+		//   post_status = publish
+		//   ID          = wp_posts id (NOT the eventual created native_id)
+		// all metadata is saved before the save_post action
+		return property_exists( $post, 'ID' )
+			&& ! CB_Query::is_wp_auto_draft( $post )
+			&& CB_Query::is_wp_post_ID( $post->ID );
+	}
+
 	static function ID_from_id_post_type( $id, $post_type ) {
 		// NULL return indicates that this post_type is not governed by CB2
 		$ID         = NULL;
@@ -247,7 +258,7 @@ class CB_Query {
 		return $context;
 	}
 
-	static function get_metadata_assign( $post ) {
+	static function get_metadata_assign( &$post ) {
 		// Switch base tables to our views
 		// Load all associated metadata and assign to the post object
 		global $wpdb;
@@ -272,8 +283,16 @@ class CB_Query {
 					//   meta.php has _get_meta_table( $meta_type );
 					//   $table_name = $meta_type . 'meta';
 					$metadata = get_metadata( $meta_type, $ID );
-					if ( ! is_array( $metadata ) || ! count( $metadata ) )
-						throw new Exception( "[$post_type] [$ID] returned no metadata" );
+					// Remove pseudo meta like _edit_lock
+					foreach ( $metadata as $name => $value )
+						if ( substr( $name, 0, 1 ) == '_' ) unset( $metadata[$name] );
+					// Check that some meta data is returned
+					if ( ! CB_Query::is_wp_auto_draft( $post ) ) {
+						if ( ! is_array( $metadata ) || ! count( $metadata ) )
+							throw new Exception( "[$post_type] [$ID] returned no metadata" );
+					}
+					if ( WP_DEBUG && FALSE )
+						var_dump( $ID, $post_type, $post->post_status, $meta_type, $postmeta_table, $metadata );
 
 					// Populate object
 					foreach ( $metadata as $this_meta_key => $meta_value )
@@ -282,10 +301,12 @@ class CB_Query {
 				} else throw new Exception( "Cannot get_metadata_assign() to [$post_type] not governed by CB2" );
 			}
 		} else throw new Exception( 'get_metadata_assign() post required' );
+
+		//return $post; // Passed by reference, so no need to check result
   }
 
   // -------------------------------------------------------------------- Class, Function and parameter utilities
-  static function ensure_bitarray( $object ) {
+  static function ensure_bitarray( $name, $object ) {
 		if ( is_array( $object ) )
 			$object = CB_Database::bitarray_to_int( $object );
 		return $object;
@@ -299,21 +320,34 @@ class CB_Query {
 		return ( strrpos( $string, $delimiter ) === FALSE ? $string : substr( $string, strrpos( $string, $delimiter ) + 1 ) );
 	}
 
-	static function ensure_datetime( $object ) {
+	static function ensure_datetime( $name, $object ) {
 		// Maintains NULLs
-		$datetime = NULL;
+		$datetime     = NULL;
+		$now          = new DateTime();
+		$epoch_min    = 20000000; // Thursday, 20 August 1970
 
 		if      ( $object instanceof DateTime ) $datetime = &$object;
+		else if ( is_numeric( $object ) && $object > $epoch_min )
+																						$datetime = $now->setTimestamp( (int) $object );
 		else if ( is_string( $object ) )        $datetime = new DateTime( $object );
 		else if ( is_null( $object ) )          $datetime = NULL;
-		else throw new Exception( 'unhandled datetime type' );
+		else throw new Exception( "[$name] has unhandled datetime type" );
 
 		return $datetime;
 	}
 
-	static function ensure_time( $object ) {
+	static function ensure_time( $name, $object ) {
 		// TODO: ensure_time()
 		return $object;
+	}
+
+	static function ensure_int( $name, $object ) {
+		$int = NULL;
+		if ( ! is_null( $object ) ) {
+			if ( is_numeric( $object ) ) $int = (int) $object;
+			else throw new Exception( "[$name] is not numeric [$object]" );
+		}
+		return $int;
 	}
 
 	static function assign_all_parameters( $object, $parameter_values, $class_name = NULL, $method = '__construct' ) {
@@ -324,13 +358,27 @@ class CB_Query {
 		if ( ! $class_name ) $class_name = get_class( $object );
 		$reflection            = new ReflectionMethod( $class_name, $method ); // PHP 5, PHP 7
 		$parameters            = $reflection->getParameters();
+
+		// Match raw values to given parameters OR defaults
 		$parameter_value_count = count( $parameter_values );
 		foreach ( $parameters as $i => &$parameter ) {
+			$name = $parameter->name;
+			$parameter->value = ( $i >= $parameter_value_count ? $parameter->getDefaultValue() : $parameter_values[$i] );
+		}
+
+		// Assign to object
+		foreach ( $parameters as $i => &$parameter ) {
 			$name  = $parameter->name;
-			$value = ( $i >= $parameter_value_count ? $parameter->getDefaultValue() : $parameter_values[$i] );
-			$value = self::cast_parameter( $name, $value );
+			$value = $parameter->value;
+			try {
+				$value = self::cast_parameter( $name, $value );
+			} catch ( Exception $ex ) {
+				var_dump( $parameters );
+				throw $ex;
+			}
 
 			$object->$name = $value;
+
 			if ( WP_DEBUG && FALSE ) {
 				print( "<i>$class_name->$name</i>: <b>" );
 				if      ( $value instanceof DateTime ) print( $value->format( 'c' ) );
@@ -343,70 +391,43 @@ class CB_Query {
 	}
 
 	static function copy_all_properties( $from, $to, $overwrite = TRUE ) {
-		foreach ( $from as $name => $value ) {
+		// Important to overwrite
+		// because these objects are CACHED
+		foreach ( $from as $name => $from_value ) {
+			try {
+				$new_value = self::cast_parameter( $name, $from_value );
+			} catch ( Exception $ex ) {
+				var_dump( $from );
+				throw $ex;
+			}
 			if ( $overwrite || ! property_exists( $to, $name ) ) {
-				$to->$name = self::cast_parameter( $name, $value );
+				if ( WP_DEBUG && FALSE ) {
+					if ( property_exists( $to, $name ) ) {
+						$old_value = $to->$name;
+						if ( ! is_null( $old_value ) && $old_value != $new_value )
+							var_dump( "[$old_value] => [$new_value]" );
+					}
+				}
+				$to->$name = $new_value;
 			}
 		}
 	}
 
 	static function cast_parameter( $name, $value ) {
 		if ( ! is_null( $value ) ) {
-			if      ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $value );
-			else if ( $name == 'date' )                      $value = self::ensure_datetime( $value );
-			else if ( substr( $name, 0, 5 ) == 'time_' )     $value = $value;
-			else if ( substr( $name, -3 ) == '_id' )         $value = (int) $value;
-			else if ( substr( $name, -6 ) == '_index' )      $value = (int) $value;
-			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_bitarray( $value );
-			else if ( $name == 'ID' )                        $value = (int) $value;
+			if      ( substr( $name, -3 ) == '_ID' && $value == CB2_CREATE_NEW ) {
+				// Special value indicating that the ID object should be created
+			}
+			else if ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
+			else if ( $name == 'date' )                      $value = self::ensure_datetime( $name, $value );
+			else if ( substr( $name, 0, 5 ) == 'time_' )     $value = self::ensure_time( $name, $value );
+			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_bitarray( $name, $value );
+			else if ( substr( $name, -3 ) == '_id' )         $value = self::ensure_int( $name, $value );
+			else if ( substr( $name, -3 ) == '_ID' )         $value = self::ensure_int( $name, $value );
+			else if ( substr( $name, -6 ) == '_index' )      $value = self::ensure_int( $name, $value );
+			else if ( $name == 'ID' )                        $value = self::ensure_int( $name, $value );
 		}
 
 		return $value;
-	}
-
-	static function sanitize_data_for_table( $table, $data ) {
-		$new_data   = array();
-		$columns    = CB_Database::columns( $table, TRUE );
-
-		foreach ( $data as $field_name => $field_value ) {
-			// Meta data queries use arrays
-			if ( is_array( $field_value ) ) $field_value = $field_value[0];
-
-			if ( ! isset( $columns[$field_name] ) ) {
-				// Standard mappings
-				switch ( $field_name ) {
-					case 'post_title':   $field_name = 'name';        break;
-					case 'post_content': $field_name = 'description'; break;
-				}
-
-				// ID => id mappings
-				if ( substr( $field_name, -3 ) == '_ID' ) {
-					$field_stub  = substr( $field_name, 0, -3 );
-					$post_type   = str_replace( '_', '', $field_stub );
-					$field_name  = "{$field_stub}_id";
-					$field_value = CB_Query::id_from_ID_with_post_type( $field_value, $post_type );
-				}
-
-				// period_group => (object) period_group->period_group_id
-				if ( is_object( $field_value ) && property_exists( $field_value, "{$field_name}_id" ) ) {
-					$field_name  = "{$field_name}_id";
-					$field_value = $field_value->$field_name;
-				}
-			}
-
-			// Check table
-			if ( isset( $columns[$field_name] ) ) {
-				// Data conversion
-				$column_definition = $columns[$field_name];
-				switch ( self::substring_before( $column_definition->Type, '(' ) ) {
-					case 'bit':
-						$field_value = CB_Database::int_to_bitstring( $field_value );
-						break;
-				}
-				$new_data[ $field_name ] = $field_value;
-			}
-		}
-
-		return $new_data;
 	}
 }

@@ -219,7 +219,7 @@ class CB_PostNavigator {
 		$meta = array();
 
 		foreach ( $this as $name => $value ) {
-			if ( ! is_null( $value ) && ! is_array( $value ) )
+			if ( ! is_null( $value ) )
 				$meta[ $name ] = CB_Database::to_string( $name, $value );
 		}
 
@@ -257,56 +257,73 @@ class CB_PostNavigator {
 		return $args;
   }
 
-  function pre_post_update() {
-		// e.g. [re-]creating dependent objects
-		// like a period group and period
-  }
-
-  function post_post_update() {
-		// e.g. 1-many Relationships between this and child posts can be saved here
+  function id() {
+		return CB_Query::id_from_ID_with_post_type( $this->post_type(), $this->ID );
   }
 
   function save() {
+		// Mimmick the Wordpress saving process
+		// Create an "auto-draft" in wp_posts (avoids hooks)
+		// Create all relevant required metadata
+		// Update post_status to "publish"
+		// Trigger "publish" hooks:
+		//   CB_*->pre_post_update()
+		//   cb2_save_post_move_to_native()
+		//   cb2_save_post_delete_auto_draft()
+		//   CB_*->post_post_update()
 		global $wpdb;
 
 		$error = NULL;
 		$args  = $this->post_args();
 		if ( WP_DEBUG && FALSE ) var_dump( $args );
 
+		if ( ! isset( $args['post_type'] ) ) throw new Exception( 'save() request without valid post_type' );
+
+		$post_type = $args['post_type'];
 		if ( isset( $args [ 'ID' ] ) ) {
-			// Direct existing update
-			// wp_update_post() triggers the hooks below
-			if ( $args [ 'ID' ] == 0 ) throw new Exception( "Attempt to update post 0" );
+			// ------------------------------------------ Direct existing update
+			$ID = $args ['ID'];
+			if ( $ID == 0 )             throw new Exception( "Attempt to update post 0 [$post_type]" );
+			if ( is_wp_post_ID( $ID ) ) throw new Exception( "post->ID [$ID] is not a custom post [$post_type]" );
+
+			// wp_update_post() triggers hooks
 			$result = wp_update_post( $args );
 			if ( is_wp_error( $result ) ) {
 				$error = $wpdb->last_error;
 			}
 		} else {
-			// Create new post in wp_posts
+			// ------------------------------------------ Create new post in wp_posts
 			// wp_insert_post() will not trigger any hooks in this intergration
 			// wp_update_post() triggers the hooks below
 			// (int|WP_Error) The post ID on success. The value 0 or WP_Error on failure.
-			// wp_insert_post() => cb2_save_post_pre_save_post() => this->pre_save_post()
-			$args = array( 'post_status' => 'auto-draft' );
-			$id   = wp_insert_post( $args );
+			$args['post_status'] = 'auto-draft';
+			$id = wp_insert_post( $args );
 			if ( is_wp_error( $id ) ) {
 				$error = $wpdb->last_error;
+			} else if ( $id == 0 ) {
+				$error = "[$post_type] post insert failed without error";
 			} else {
-				$args = array( 'ID' => $id );
-				$args = array( 'post_status' => 'publish' );
 				// Run the update action to move it to the custom DB structure
-				// save_post => cb2_save_post_post_save_post() => this->post_save_post()
+				$args['ID']          = $id; // Normal wp_post at the moment
+				$args['post_status'] = 'publish';
+
+				// Disable the admin screen redirect
+				remove_filter( 'save_post', 'cb2_save_post_redirect_to_native_post', 130 );
 				$result = wp_update_post( $args );
+				add_filter(    'save_post', 'cb2_save_post_redirect_to_native_post', 130, 3 );
+
 				if ( is_wp_error( $result ) ) {
 					$error = $wpdb->last_error;
 				} else {
 					// Everything worked
 					// Store the ID and id for further updates
 					// Other saving objects can now use the id to write their records:
-					//   e.g. ->period->id
-					$id       = $wpdb->insert_id;
-					$this->ID = CB_Query::ID_from_id_post_type( $id, $this->post_type() );
-					$this->id = $id;
+					//   e.g. $period->id
+					// $wpdb->insert_id might not be the native id
+					// cb2_save_post_move_to_native() will have populated the native_id
+					$native_id = get_post_meta( $id, 'native_id', TRUE );
+					$this->ID  = CB_Query::ID_from_id_post_type( $native_id, $this->post_type() );
+					$this->id  = $native_id;
 				}
 			}
 		}
@@ -319,17 +336,4 @@ class CB_PostNavigator {
 		return $this;
   }
 }
-
-function cb2_save_post_post_save_post( $ID, $post, $update ) {
-	// Initially a WP_Post auto-draft is created in wp_posts
-	// Updates move the data in to the custom structure
-	// Which is when we create the remaining database entries
-	if ( ! CB_Query::is_wp_auto_draft( $post )
-		&& CB_Query::is_custom_post_type_ID( $post->ID )
-	) {
-		$post = CB_Query::ensure_correct_class( $post );
-		if ( method_exists( $post, 'post_save_post' ) ) $post->post_save_post();
-	}
-}
-add_action( 'save_post', 'cb2_save_post_post_save_post', 10, 3 );
 

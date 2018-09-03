@@ -1,6 +1,5 @@
 <?php
 class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
-	// TODO: use this generic period class
   public static $database_table = 'cb2_period_groups';
 	public static $all = array();
   static $static_post_type = 'periodgroup';
@@ -9,19 +8,23 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		'label'     => 'Period Groups',
   );
   public $periods  = array();
-	static function selector_metabox() {
+
+  static function selector_metabox() {
+		$period_group_options = CB_Forms::period_group_options( CB2_CREATE_NEW );
+		$period_groups_count  = count( $period_group_options ) - 1;
 		return array(
-			'title'      => __( 'Existing Period Group', 'commons-booking-2' ),
+			'title'      => __( 'Existing Period Group', 'commons-booking-2' ) .
+												" <span class='cb2-usage-count'>$period_groups_count</span>",
 			'show_names' => FALSE,
 			'context'    => 'side',
 			'fields'     => array(
 				array(
 					'name'    => __( 'PeriodGroup', 'commons-booking-2' ),
-					'id'      => 'commons-booking-2' . '_user_ID',
+					'id'      => 'period_group_ID',
 					'type'    => 'select',
-					'show_option_none' => TRUE,
+					//'show_option_none' => TRUE,
 					'default' => $_GET['period_group_ID'],
-					'options' => CB_Forms::period_group_options(),
+					'options' => $period_group_options,
 				),
 			),
 		);
@@ -31,17 +34,20 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 
   static function &factory_from_wp_post( $post ) {
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_IDs ) throw new Exception( 'CB_PeriodGroup requires period_IDs list, which can be empty' );
 
+		// Retrieve all Periods
+		// 1-many
+		// This may not be present during post creation
 		$periods = array();
-		foreach ( explode( ',', $post->period_IDs) as $period_id ) {
-			$period = CB_Query::get_post_type( 'period', $period_id );
-			array_push( $periods, $period );
+		if ( property_exists( $post, 'period_IDs' ) && $post->period_IDs ) {
+			foreach ( explode( ',', $post->period_IDs) as $period_id ) {
+				$period = CB_Query::get_post_type( 'period', $period_id );
+				array_push( $periods, $period );
+			}
 		}
 
 		$object = self::factory(
 			$post->ID,
-			$post->period_group_id,
 			$post->post_title,
 			$periods
 		);
@@ -52,10 +58,9 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 	}
 
   static function &factory(
-		$ID              = NULL,
-		$period_group_id = NULL,
-		$name            = NULL,
-		$periods         = NULL
+		$ID,
+		$name,
+		$periods = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -69,14 +74,11 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   }
 
   public function __construct(
-		$ID              = NULL,
-		$period_group_id = NULL,
-		$name            = NULL,
-		$periods         = NULL
+		$ID,
+		$name,
+		$periods = array()
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
-		$this->id      = $period_group_id;
-		$this->periods = $periods;
 		parent::__construct( $this->periods );
 		if ( ! is_null( $ID ) ) self::$all[$ID] = $this;
   }
@@ -133,16 +135,14 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   function post_post_update() {
 		global $wpdb;
 
-		parent::post_save_post();
-
 		$table = "{$wpdb->prefix}cb2_period_group_period";
 		$wpdb->delete( $table, array(
-			'period_group_id' => $this->id
+			'period_group_id' => $this->id()
 		) );
-		foreach ( $this->posts as $post ) {
+		foreach ( $this->periods as $period ) {
 			$wpdb->insert( $table, array(
-				'period_group_id' => $this->id,
-				'period_id'       => $post->id,
+				'period_group_id' => $this->id(),
+				'period_id'       => $period->id(),
 			) );
 		}
   }

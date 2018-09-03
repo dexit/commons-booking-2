@@ -14,7 +14,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
 			'fields' => array(
 				array(
 					'name'    => __( 'User', 'commons-booking-2' ),
-					'id'      => 'commons-booking-2' . '_user_ID',
+					'id'      => 'user_ID',
 					'type'    => 'select',
 					'default' => $_GET['user_ID'],
 					'options' => CB_Forms::user_options(),
@@ -145,10 +145,47 @@ class CB_Location extends CB_Post implements JsonSerializable {
 			'fields' => array(
 				array(
 					'name'    => __( 'Location', 'commons-booking-2' ),
-					'id'      => 'commons-booking-2' . '_location_ID',
+					'id'      => 'location_ID',
 					'type'    => 'select',
 					'default' => $_GET['location_ID'],
 					'options' => CB_Forms::location_options(),
+				),
+			),
+		);
+	}
+
+	static function summary_metabox() {
+		// TODO: CB_Location::summary_metabox()
+		return array(
+			'title' => __( 'Location Summary', 'commons-booking-2' ),
+			'context' => 'side',
+			'show_names' => FALSE,
+			'fields' => array(
+				array(
+					'name'    => __( 'Location', 'commons-booking-2' ),
+					'id'      => 'location_ID',
+					'type'    => 'select',
+					'default' => $_GET['location_ID'],
+					'options' => CB_Forms::location_options(),
+				),
+				array(
+					'name'    => __( 'Holidays', 'commons-booking-2' ),
+					'id'      => 'holidays',
+					'type'    => 'select',
+					'default' => $_GET['location_ID'],
+					'options' => array(),
+				),
+				array(
+					'name'    => __( 'Opening Hours', 'commons-booking-2' ),
+					'id'      => 'opening_hours',
+					'type'    => 'select',
+					'default' => $_GET['location_ID'],
+					'options' => array(),
+				),
+				array(
+					'name'    => __( '<a href="#">edit</a>', 'commons-booking-2' ),
+					'id'      => 'edit',
+					'type'    => 'title',
 				),
 			),
 		);
@@ -163,7 +200,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 				'fields'     => array(
 					array(
 						'name' => __( 'Icon', 'commons-booking-2' ),
-						'id'   => 'commons-booking-2' . '_location_icon',
+						'id'   => 'location_icon',
 						'type' => 'icon',
 						'desc' => 'Used in Maps.',
 						'options' => array(
@@ -274,7 +311,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 			'fields' => array(
 				array(
 					'name'    => __( 'Item', 'commons-booking-2' ),
-					'id'      => 'commons-booking-2' . '_item_ID',
+					'id'      => 'item_ID',
 					'type'    => 'select',
 					'default' => $_GET['item_ID'],
 					'options' => CB_Forms::item_options(),

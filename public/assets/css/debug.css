@@ -28,6 +28,12 @@ body .cb2-description {
 	line-height: 17px;
 	text-align: center;
 }
+.ui-widget {
+	background-color:#fff;
+	padding:4px;
+	border:1px solid #ddd;
+	box-shadow: 3px 3px #ddd;
+}
 
 /* ---------------------- debug */
 .cb2-debug-control span {

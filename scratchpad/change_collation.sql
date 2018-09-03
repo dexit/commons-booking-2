@@ -1,8 +1,9 @@
-SET collation_connection = 'utf8mb4_general_ci';
+SET collation_connection = 'utf8mb4_unicode_520_ci';
 # otherwise zeros in datetime defaults will crash
 SET sql_mode = ''; 
 # current collation setup
 show variables like 'char%';
+show variables like 'coll%';
 
 # to view the collation on a column
 show full columns from wp_post;

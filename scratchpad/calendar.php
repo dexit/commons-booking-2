@@ -90,7 +90,7 @@
     }
     print( '</div>' ); // .Reflection
 
-    // --------------------------------------- SQL
+    // --------------------------------------- Create
     print( '<h2>SQL <a href="#" onclick="this.parentNode.nextSibling.style=0">show</a></h2><div style="display:none;">' );
     if ( count( $_POST ) && isset( $_POST['datetime_part_period_start'] ) ) {
       $period = CB_Period::factory(
@@ -106,8 +106,6 @@
 				$post_recurrence_sequence
 			);
 			$period->save(); // Will populate ID and id
-			var_dump($period);
-			exit();
 
 			$period_group = CB_PeriodGroup::factory(
 				NULL, // $ID,
@@ -115,7 +113,9 @@
 				$post_name
 			);
 			$period_group->add_period( $period );
-			$period_group->save( TRUE ); // Will save the period link also in the secondary table
+			$period_group->save();
+			var_dump($period_group);
+			exit();
 
 			// Assign period group to timeframe
       $perioditem = CB_PeriodEntity::factory_subclass(
@@ -137,8 +137,8 @@
     }
 
     // --------------------------------------- Query Parameters
-    $startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : '2018-07-01 00:00:00' );
-    $enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : '2018-08-01 00:00:00' );
+    $startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : '2018-09-01 00:00:00' );
+    $enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : '2018-10-01 00:00:00' );
     $location_ID      = ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL );
     $item_ID          = ( isset( $_GET['item_ID'] )     ? $_GET['item_ID']     : NULL );
     $user_ID          = ( isset( $_GET['user_ID'] )     ? $_GET['user_ID']          : NULL );

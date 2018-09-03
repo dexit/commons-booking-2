@@ -59,23 +59,30 @@ add_filter( 'get_post_metadata', 'cb2_get_post_metadata', 10, 4 );
 // We let auto-drafts be added to wp_posts in the normal way
 // causing the usual INSERT
 // Then we move them to the custom DB
-// when they are UPDATEed using update_post_meta
-
+// when they are UPDATEed using update_post() => save_post hook
+//
 // --------------------------------------------- Updating posts
 // UPDATE queries not trapped: save_post used instead
-//add_filter( 'query',            'cb2_wpdb_query_update' );
-// save_post fires after saving
-// and has only the old post data because it failed to save it
-// cb2_add_post_type_actions( 'save_post', 10, 3 );
-add_action( 'pre_post_update',      'cb2_pre_post_update_actions', 100, 2 );
-add_action( 'pre_post_update',      'cb2_pre_post_update_values',  110, 2 );
+//   add_filter( 'query', 'cb2_wpdb_query_update' );
+// save_post fires after saving wp_posts AND wp_postmeta
+//
+// CMB2 MetaBoxes DO NOT use meta-data!
+// instead, they hook in to the save_post and write the meta-data manually
+// so there will be no meta-data available at pre_post_update stage
+add_action( 'save_post', 'cb2_save_post_move_to_native',          110, 3 ); // Create $native_id, and $ID
+add_action( 'save_post', 'cb2_save_post_post_actions',            120, 3 ); // $CB_object->post_post_update()
+add_action( 'save_post', 'cb2_save_post_delete_auto_draft',       130, 3 ); // original wp_posts $post and $ID
+add_action( 'save_post', 'cb2_save_post_redirect_to_native_post', 140, 3 ); // new $ID
+
+// Direct metadata updates
+// CMB2 MetaBoxes DO NOT use meta-data!
+// instead, they hook in to the save_post and write the meta-data manually
+// so there will be no meta-data available at pre_post_update stage
+// they also DO NOT use AJAX writing of values to meta-data
 add_filter( 'add_post_metadata',    'cb2_add_post_metadata',       10, 5 );
 add_filter( 'update_post_metadata', 'cb2_update_post_metadata',    10, 5 );
 add_action( 'add_post_meta',        'cb2_add_post_meta',           10, 3 );
 add_action( 'update_post_meta',     'cb2_update_post_meta',        10, 4 );
-add_action( 'save_post',            'cb2_save_post_move_to_native',    100, 3 );
-add_action( 'save_post',            'cb2_save_post_delete_auto_draft', 110, 3 );
-add_action( 'save_post',            'cb2_save_post_actions',           120, 3 );
 
 // --------------------------------------------- Deleting posts
 add_action( 'delete_post',          'cb2_delete_post' );
@@ -118,64 +125,20 @@ function cb2_delete_post( $ID ) {
 	}
 }
 
-function cb2_save_post_delete_auto_draft( $ID, $post, $update ) {
-	global $wpdb;
-
-	if ( $post && property_exists( $post, 'post_type' ) ) {
-		$post_type = $post->post_type;
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
-				$id = CB_Query::id_from_ID_with_post_type( $ID, $post_type );
-				if ( is_null( $id ) ) {
-					$post = get_post( $id );
-					if ( $post && $post->post_status == 'auto-draft' ) {
-						// Remove the auto-draft
-						// TODO: this will cause the initial Add New -> further edits process to fail
-						// because it passes through the wrong id
-						// $wpdb->delete( "{$wpdb->prefix}posts", array( 'ID' => $ID ) );
-					}
-				}
-			}
-		}
-	}
-}
-
-function cb2_pre_post_update_actions(  $ID, $intended_post_data ) {
-	// Triggers BEFORE cb2_save_post_move_to_native()
-	$action = ( isset( $_POST['action'] ) ? $_POST['action'] : NULL );
-	switch ( $action ) {
-		case 'editpost':
-			$post     = (object) $intended_post_data;
-			$post->ID = $ID;
-			if ( $Class = CB_Query::schema_type_class( $post->post_type ) ) {
-				if ( ! CB_Query::is_wp_auto_draft( $post ) ) {
-					$post = CB_Query::ensure_correct_class( $post );
-					if ( method_exists( $post, 'pre_post_update' ) ) $post->pre_post_update();
-				}
-			}
-			break;
-	}
-}
-
-function cb2_save_post_actions( $ID, $post, $update ) {
-	// Triggers AFTER cb2_save_post_move_to_native()
-	if ( $Class = CB_Query::schema_type_class( $post->post_type ) ) {
-		if ( ! CB_Query::is_wp_auto_draft( $post ) ) {
-			$post = CB_Query::ensure_correct_class( $post );
-			if ( method_exists( $post, 'post_post_update' ) ) $post->post_post_update();
-		}
-	}
-}
-
 function cb2_save_post_move_to_native( $ID, $post, $update ) {
 	// Triggers AFTER cb2_pre_post_update_action()
+	// All metadata is already saved in to wp_postmeta
+	// This happens in a loop during the post saving procedure:
+	//	 post.php:wp_insert_post( array( ..., 'meta_input' => array(...) )
+	//		 foreach ( $postarr['meta_input'] as $field => $value ) {
+	//	 	 	 update_post_meta( $post_ID, $field, $value );
+	//		 }
 	global $wpdb;
 
 	$post_type = $post->post_type;
 	if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-		if ( ! CB_Query::is_wp_auto_draft( $post ) && CB_Query::is_wp_post_ID( $ID ) ) {
+		if ( CB_Query::publishing_post( $post ) ) {
 			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
-				// ----------------------------------------------- WP_Post
 				// This post is currently a normal post in wp_posts
 				// with one of our post_types, but a small ID
 				// not an auto-draft anymore so all its meta-data is saved and ready
@@ -183,10 +146,13 @@ function cb2_save_post_move_to_native( $ID, $post, $update ) {
 				// because we have not hooked in to the insert_post process
 				$post = CB_Query::ensure_correct_class( $post );
 
+				// Create dependent objects before moving in to the native tables
+				if ( method_exists( $post, 'pre_post_create' ) ) $post->pre_post_create();
+
 				// Move this post into our structure
 				// Allow for main Class tables with no actual needed columns beyond the id
 				$result      = NULL;
-				$insert_data = CB_Query::sanitize_data_for_table( $class_database_table, (array) $post );
+				$insert_data = CB_Database::sanitize_data_for_table( $class_database_table, (array) $post );
 				if ( count( $insert_data ) )
 					$result = $wpdb->insert( "$wpdb->prefix$class_database_table", $insert_data );
 				else
@@ -195,85 +161,83 @@ function cb2_save_post_move_to_native( $ID, $post, $update ) {
 					print( "<div id='error-page'><p>$wpdb->last_error</p></div>" );
 					exit();
 				}
-				$id = $wpdb->insert_id;
-				$ID = CB_Query::ID_from_id_post_type( $id, $post_type );
-				if ( WP_DEBUG && FALSE )
-					print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>($Class/$post_type) = INSERTED new [$ID/$id] post($native_fields_string)</div>" );
 
-				// Run post_post_update() directly
-				// because we are redirecting and exit()
-				if ( method_exists( $post, 'post_post_update' ) ) $post->post_post_update();
-
-				// We need to reset the ID for further edit screens
-				// to start using the native data post now
-				$page   = 'cb-post-edit';
-				$action = 'edit';
-				$URL    = admin_url( "admin.php?page=$page&post=$ID&post_type=$post_type&action=$action" );
-				wp_redirect( $URL );
-				print( "redirecting to <a href='$URL'>$URL</a>..." );
-				exit();
+				// Pass the newly created native_id to the postmeta in wp_postmeta
+				// NOTE: this is set agaist the wp_posts ID, not the new one
+				// and the remaining save_post calls will be passed this native_id
+				$native_id = $wpdb->insert_id;
+				update_post_meta( $ID, 'native_id', $native_id );
 			}
 		}
 	}
 }
 
-function cb2_pre_post_update_values( $ID, $intended_post_data ) {
-	// The post has not been updated yet
-	// $data represents the intended new values
-	// meta-data values are available in the $_POST
-	// MAYBE still a WP_Post
+function cb2_save_post_delete_auto_draft( $ID, $post, $update ) {
 	global $wpdb;
 
-	$action = ( isset( $_POST['action'] ) ? $_POST['action'] : NULL );
-	switch ( $action ) {
-		case 'editpost':
-			if ( $intended_post_data && isset( $intended_post_data['post_type'] ) ) {
-				$post_type = $intended_post_data[ 'post_type' ];
-				if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-					if ( $class_database_table = CB_Database::database_table( $Class ) ) {
-						if ( $id = CB_Query::id_from_ID_with_post_type( $ID, $post_type ) ) {
-							// ----------------------------------------------- Published CB_*
-							// The post has a normal CB2 ID
-							// It exists and came from one of the views - native CB2 tables
-							// So update it in its native table(s)
-							// Note that the normal UPDATE SQL produced by WP will have no effect
-							// because the post does not exist in the wp_posts table
-							// Meta-data not needed here because it will be updated separately
-							$intended_post_data = CB_Query::sanitize_data_for_table( $class_database_table, $intended_post_data );
-							$native_fields      = array();
-							$values             = array();
-							foreach ( $intended_post_data as $field_name => $field_value ) {
-								array_push( $native_fields, "`$field_name` = %s" );
-								array_push( $values, $field_value );
-							}
-
-							// Assemble and Run SQL
-							if ( $id_field = CB_Database::id_field( $Class ) ) {
-								if ( count( $native_fields ) ) {
-									$native_fields_string = implode( ',', $native_fields );
-									array_push( $values, $id );
-									$query = $wpdb->prepare(
-										"UPDATE `$wpdb->prefix$class_database_table` SET $native_fields_string
-											WHERE `$id_field` = %d",
-										$values
-									);
-									$result = $wpdb->query( $query );
-									if ( $result === FALSE ) {
-										print( "<div id='error-page'><p>$wpdb->last_error</p></div>" );
-										exit();
-									}
-									if ( WP_DEBUG && FALSE ) print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>($Class/$post_type) = $query</div>" );
-								} // else leave because maybe all values are metadata, e.g. no name and description etc.
-							} else throw new Exception( "Cannot update [$Class] because no id field or database table" );
-						}
-					}
-				}
+	if ( $post && property_exists( $post, 'post_type' ) ) {
+		$post_type = $post->post_type;
+		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+			if ( $native_id = get_post_meta( $ID, 'native_id', TRUE ) ) {
+				// Remove the auto-draft
+				// TODO: this will cause the initial Add New -> further edits process to fail
+				// because it passes through the wrong id
+				// $wpdb->delete( "{$wpdb->prefix}posts", array( 'ID' => $ID ) );
 			}
-			break;
-		case 'addmeta':
-			// AJAX Add Custom Field during post-new screen
-			// Allow it to happen, meta-data will be moved during editpost action
-			break;
+		}
+	}
+}
+
+function cb2_save_post_post_actions( $post_id, $post, $update ) {
+	// Triggers AFTER cb2_save_post_move_to_native()
+	// $post_id can still be the wp_post ID
+	$post_type = $post->post_type;
+	if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+		if ( ! CB_Query::is_wp_auto_draft( $post ) ) {
+			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+				if ( CB_Query::publishing_post( $post ) ) {
+					$native_id = get_post_meta( $post_id, 'native_id', TRUE );
+					if ( ! $native_id )
+						throw new Exception( "post [$post_type/$post_id] is publishing but had no native_id meta for the post_post_update() action" );
+
+					$ID   = CB_Query::ID_from_id_post_type( $native_id, $post_type );
+					$post = CB_Query::get_post_type( $post_type, $ID );
+				} else {
+					$post = CB_Query::ensure_correct_class( $post );
+				}
+				if ( method_exists( $post, 'post_post_update' ) ) $post->post_post_update();
+			}
+		}
+	}
+}
+
+function cb2_save_post_redirect_to_native_post( $post_id, $post, $update ) {
+	// Triggers AFTER cb2_save_post_move_to_native()
+	// Page reload!
+	global $wpdb;
+
+	$post_type = $post->post_type;
+	if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+		if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+			if ( CB_Query::publishing_post( $post ) ) {
+				// We need to reset the ID for further edit screens
+				// to start using the native data post now as
+				// native post data has been created already by
+				// cb2_save_post_move_to_native()
+				$native_id = get_post_meta( $post_id, 'native_id', TRUE );
+				if ( ! $native_id )
+					throw new Exception( "post [$post_type/$post_id] is publishing but had no native_id meta for the admin screen redirect" );
+
+				$ID        = CB_Query::ID_from_id_post_type( $native_id, $post_type );
+				$page      = 'cb-post-edit';
+				$action    = 'edit';
+				$URL       = admin_url( "admin.php?page=$page&post=$ID&post_type=$post_type&action=$action" );
+
+				wp_redirect( $URL );
+				print( "redirecting to <a href='$URL'>$URL</a>..." );
+				exit();
+			}
+		}
 	}
 }
 
@@ -288,13 +252,8 @@ function cb2_get_post_metadata( $type, $ID, $meta_key, $single ) {
 		if ( $post && property_exists( $post, 'post_type' ) ) {
 			$post_type = $post->post_type;
 			if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-				$id             = CB_Query::id_from_ID_with_post_type( $ID, $post_type );
-				$post_type_stub = CB_Query::substring_before( $post_type );
-
-				if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
-					$postmeta_table = "cb2_view_{$post_type_stub}meta";
-					if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) )
-						$postmeta_table = $Class::$postmeta_table;
+				if ( $postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub, $ID ) ) {
+					$id    = CB_Query::id_from_ID_with_post_type( $ID, $post_type );
 					$query = $wpdb->prepare(
 						"SELECT `meta_value` FROM `$wpdb->prefix$postmeta_table` WHERE `meta_key` = %s AND `post_id` = %d",
 						array( $meta_key, $id )
@@ -302,12 +261,13 @@ function cb2_get_post_metadata( $type, $ID, $meta_key, $single ) {
 
 					// Run
 					// and prevent normal by returning a value
-					$value = $wpdb->get_col( $query, 0);
+					$value = $wpdb->get_var( $query );
 					// The caller calculates the single logic
 					//   if ( $single ) $value = $value[0];
 					// However, it has a bug
 					// so we make it choose an empty string if it cannot be found
-					if ( $single && is_array( $value ) && count( $value ) == 0 ) $value = array( '' );
+					if ( $single && is_array( $value ) && count( $value ) == 0 )
+						$value = array( '' );
 				}
 			}
 		}
@@ -337,6 +297,11 @@ function cb2_add_post_metadata( $allowing, $ID, $meta_key, $meta_value, $unique 
 function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev_value = NULL ) {
 	// Calls cb2_get_post_metadata() first to check for existence
 	// Only calls here if it does not already exist
+	// These also happen in a loop during the post saving procedure:
+	//	 post.php:wp_insert_post()
+	//		 foreach ( $postarr['meta_input'] as $field => $value ) {
+	//	 	 	 update_post_meta( $post_ID, $field, $value );
+	//		 }
 	global $wpdb;
 
 	$prevent = FALSE;
@@ -345,44 +310,47 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 	if ( $meta_key && $meta_key[0] != '_' ) {
 		if ( $post = get_post( $ID ) ) {
 			$post_type = $post->post_type;
-			if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-				if ( $class_database_table = CB_Database::database_table( $Class ) ) {
-					if ( $id_field = CB_Database::id_field( $Class ) ) {
-						$post = CB_Query::ensure_correct_class( $post );
-						$data = array( $meta_key => $meta_value );
-						if ( method_exists( $post, 'sanitize_data_for_table' ) )
-							$data = $post->sanitize_data_for_table( $data );
-						$data = CB_Query::sanitize_data_for_table( $class_database_table, $data );
-						if ( WP_DEBUG && FALSE && ! count( $data ) )
-							print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>($Class/$post_type) = column [$meta_key] update on [$class_database_table] IGNORED because not present</div>" );
+			if ( ! CB_Query::is_wp_auto_draft( $post ) && CB_Query::is_custom_post_type_ID( $ID ) ) {
+				if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+					if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+						if ( $id_field = CB_Database::id_field( $Class ) ) {
+							$post = CB_Query::ensure_correct_class( $post );
+							$data = array( $meta_key => $meta_value );
 
-						foreach ( $data as $meta_key => $meta_value ) {
-							// Custom query
-							$query   = NULL;
-							$id      = CB_Query::id_from_ID_with_post_type( $ID, $post_type );
-							if ( empty( $meta_value ) )
-								$query = $wpdb->prepare(
-									"UPDATE `$wpdb->prefix$class_database_table` set `$meta_key` = NULL where `$id_field` = %d",
-									array( $id )
-								);
-							else
-								$query = $wpdb->prepare(
-									"UPDATE `$wpdb->prefix$class_database_table` set `$meta_key` = %s where `$id_field` = %d",
-									array( $meta_value, $id )
-								);
+							if ( method_exists( $post, 'sanitize_data_for_table' ) )
+								$data = $post->sanitize_data_for_table( $data );
+							$data = CB_Database::sanitize_data_for_table( $class_database_table, $data );
+							if ( WP_DEBUG && FALSE && ! count( $data ) )
+								print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>($Class/$post_type) = column [$meta_key] update on [$class_database_table] IGNORED because not present</div>" );
 
-							// Run
-							if ( WP_DEBUG && FALSE ) print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>($Class/$post_type) = $query</div>" );
-							$result = $wpdb->query( $query );
-							if ( $result === FALSE ) {
-								print( "<div id='error-page'><p>$wpdb->last_error</p></div>" );
-								exit();
+							foreach ( $data as $meta_key => $meta_value ) {
+								// Custom query
+								$query   = NULL;
+								$id      = CB_Query::id_from_ID_with_post_type( $ID, $post_type );
+								if ( empty( $meta_value ) )
+									$query = $wpdb->prepare(
+										"UPDATE `$wpdb->prefix$class_database_table` set `$meta_key` = NULL where `$id_field` = %d",
+										array( $id )
+									);
+								else
+									$query = $wpdb->prepare(
+										"UPDATE `$wpdb->prefix$class_database_table` set `$meta_key` = %s where `$id_field` = %d",
+										array( $meta_value, $id )
+									);
+
+								// Run
+								if ( WP_DEBUG && FALSE ) print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>($Class/$post_type) = $query</div>" );
+								$result = $wpdb->query( $query );
+								if ( $result === FALSE ) {
+									print( "<div id='error-page'><p>$wpdb->last_error</p></div>" );
+									exit();
+								}
 							}
-						}
-					} else throw new Exception( "Cannot update meta for [$Class] because no id field or database table" );
-					// We DO NOT prevent normal
-					// because it prevents other meta data from being updated
-					$prevent = FALSE;
+						} else throw new Exception( "Cannot update meta for [$Class] because no id field or database table" );
+						// We DO NOT prevent normal
+						// because it prevents other meta data from being updated
+						$prevent = FALSE;
+					}
 				}
 			}
 		}

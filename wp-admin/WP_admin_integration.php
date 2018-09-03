@@ -9,6 +9,8 @@
  * For example: when a timeframe is created, its period_group and period must be created first
  * and, after creation, the period(s) must be 1-many linked to the relevant period_group
  */
+require_once( 'CMB2-field-Icon/cmb-field-icon.php' );
+
 function cb2_admin_pages() {
 	// %token% replacement happens on ALL parameters.
 	// If any tokens are replaced then %(x)% => x texts are included.
@@ -78,7 +80,7 @@ function cb2_admin_pages() {
 			'menu_title' => 'item availibility',
 			'capability' => NULL,
 			'function'   => NULL,
-			'wp_query_args' => 'post_type=periodent-timeframe',
+			'wp_query_args' => 'post_type=periodent-timeframe&period_status_type_ID=100000001',
 			'actions'    => NULL,
 			'post_new_page' => NULL,
 		),
@@ -198,14 +200,28 @@ function cb2_admin_pages() {
 	return $menu_interface;
 }
 
-require_once( 'CMB2-field-Icon/cmb-field-icon.php' );
-
 function cb2_metaboxes() {
 	foreach ( CB_Query::schema_types() as $post_type => $Class ) {
 		if ( method_exists( $Class, 'metaboxes' ) ) {
 			foreach ( $Class::metaboxes() as $i => $metabox ) {
 				$metabox['id']           = "{$Class}_metabox_{$i}";
 				$metabox['object_types'] = array( $post_type );
+				$metabox['priority']     = 'low'; // Under the standard boxes
+
+				if ( WP_DEBUG ) {
+					// Extended checks
+					foreach ( $metabox['fields'] as $field ) {
+						$name = $field['name'];
+						switch ( $field['type'] ) {
+							case 'text_date':
+							case 'text_datetime_timestamp':
+								if ( $field['date_format'] != CB_Database::$database_date_format )
+									throw new Exception( "[$name] metabox field needs the CB_Database::\$database_date_format" );
+								break;
+						}
+					}
+				}
+
 				new_cmb2_box( $metabox );
 			}
 		}
@@ -303,6 +319,7 @@ function cb2_admin_init_menus() {
 		$title = preg_replace( '/\%.+\%/', '', $details->page_title );
 		add_submenu_page( $parent_slug, $title, $details->menu_title, $capability, $menu_slug, 'cb2_settings_list_page' );
 	}
+	add_submenu_page( 'cb2', 'Admin', "<span class='cb2-advanced-menu-item'>admin</span>", $capability_default, 'cb2-admin', 'cb2_admin_page' );
 
 	// post-new.php (setup) => edit-form-advanced.php (form)
 	// The following line directly accesses the plugin post-new.php
@@ -336,6 +353,7 @@ function cb2_options_page() {
 		if ( ! $parent_slug ) $parent_slug = 'cb2';
 
 		$title = preg_replace( '/\%.+\%/', '', $menu_item->page_title );
+		$class .= " $menu_item->first";
 		if ( $menu_item->advanced ) $class .= ' cb2-advanced-menu-item';
 		if ( current_user_can( $capability ) ) {
 			print( "<li><a class='$class' href='admin.php?page=$menu_slug'>$title</a>" );
@@ -346,6 +364,28 @@ function cb2_options_page() {
 		  print( "<li class='$class'>$title</li>" );
 	}
 	print( '</ul>' );
+}
+
+function cb2_admin_page() {
+	// Admin data controls
+	print( '<h1>Super Admin Section</h1>' );
+	print( '<p>There be dragons</p>' );
+
+	// --------------------------- reset data form
+	$and_posts = isset( $_POST['and_posts'] ); // Checkbox
+	if ( isset( $_POST['reset_data'] ) ) {
+		$password  = $_POST['reset_data'];
+		if ( CB_Forms::reset_data( $password, $and_posts ) ) {
+			print( '<div>Data reset successful' . ( $and_posts ? ', with posts and postmeta': '' ) . '</div>' );
+		}
+	}
+	$and_posts_checked = ( $and_posts ? 'checked="1"' : '' );
+	$disabled          = ( isset( $_POST['reset_data'] ) ? 'disabled="1"' : '' );
+	print( "<form action='?page=cb2-admin' method='POST'>
+			<input type='hidden' name='reset_data' value='fryace4'/>
+			<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>And all non-post/page/location/item data</label>
+			<input $disabled class='cb2-submit cb2-dangerous' type='submit' value='Clear All Data'/>
+		</form>" );
 }
 
 function cb2_settings_list_page() {

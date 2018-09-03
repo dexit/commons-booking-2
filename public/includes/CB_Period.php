@@ -3,7 +3,6 @@ require_once( 'CB_PeriodStatusType.php' );
 require_once( 'CB_PeriodGroup.php' );
 
 class CB_Period extends CB_PostNavigator implements JsonSerializable {
-	// TODO: use this generic period class
   public static $database_table = 'cb2_periods';
   public static $all = array();
   static $static_post_type = 'period';
@@ -21,14 +20,16 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				'fields' => array(
 					array(
 						'name' => __( 'Start Date', 'commons-booking-2' ),
-						'id' => 'commons-booking-2' . '_start_date',
-						'type' => 'text_date',
+						'id' => 'datetime_part_period_start',
+						'type' => 'text_datetime_timestamp',
+						'date_format' => CB_Database::$database_date_format,
 						'default' => date( $format_date ),
 					),
 					array(
 						'name' => __( 'End Date', 'commons-booking-2' ),
-						'id' => 'commons-booking-2' . '_end_date',
-						'type' => 'text_date',
+						'id' => 'datetime_part_period_end',
+						'type' => 'text_datetime_timestamp',
+						'date_format' => CB_Database::$database_date_format,
 						'default' => (new DateTime())->add( new DateInterval( 'P1D' ) )->format( $format_date ),
 					),
 				),
@@ -41,7 +42,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				'fields' => array(
 					array(
 						'name' => __( 'Type', 'commons-booking-2' ),
-						'id' => 'commons-booking-2' . '_recurrence_type',
+						'id' => 'recurrence_type',
 						'type' => 'select',
 						'show_option_none' => TRUE,
 						'options'          => array(
@@ -61,16 +62,16 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				'fields' => array(
 					array(
 						'name' => __( 'Sequence', 'commons-booking-2' ),
-						'id' => 'commons-booking-2' . '_sequence',
+						'id' => 'recurrence_sequence',
 						'type' => 'multicheck',
 						'options'          => array(
-							'1'  => __( 'Monday', 'commons-booking-2' ),
-							'2'  => __( 'Tuesday', 'commons-booking-2' ),
-							'4'  => __( 'Wednesday', 'commons-booking-2' ),
-							'8'  => __( 'Thursday', 'commons-booking-2' ),
-							'16' => __( 'Friday', 'commons-booking-2' ),
-							'32' => __( 'Saturday', 'commons-booking-2' ),
-							'64' => __( 'Sunday', 'commons-booking-2' ),
+							'1'  => __( 'Sunday', 'commons-booking-2' ),
+							'2'  => __( 'Monday', 'commons-booking-2' ),
+							'4'  => __( 'Tuesday', 'commons-booking-2' ),
+							'8'  => __( 'Wednesday', 'commons-booking-2' ),
+							'16' => __( 'Thursday', 'commons-booking-2' ),
+							'32' => __( 'Friday', 'commons-booking-2' ),
+							'64' => __( 'Saturday', 'commons-booking-2' ),
 						),
 					),
 				),
@@ -82,14 +83,16 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				'fields' => array(
 					array(
 						'name' => __( 'From Date', 'commons-booking-2' ),
-						'id' => 'commons-booking-2' . '_start_date',
-						'type' => 'text_date',
+						'id' => 'datetime_from',
+						'type' => 'text_datetime_timestamp',
+						'date_format' => CB_Database::$database_date_format,
 						'default' => date( $format_date ),
 					),
 					array(
 						'name' => __( 'To Date (optional)', 'commons-booking-2' ),
-						'id' => 'commons-booking-2' . '_end_date',
-						'type' => 'text_date',
+						'id' => 'datetime_to',
+						'type' => 'text_datetime_timestamp',
+						'date_format' => CB_Database::$database_date_format,
 					),
 				),
 			),
@@ -101,7 +104,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				'fields' => array(
 					array(
 						'name' => __( '<a href="#">add new</a>', 'commons-booking-2' ),
-						'id' => 'commons-booking-2' . '_exceptions',
+						'id' => 'exceptions',
 						'type' => 'title',
 					),
 				),
@@ -111,14 +114,39 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		);
 	}
 
+  static function selector_metabox() {
+		$period_options       = CB_Forms::period_options( CB2_CREATE_NEW );
+		$periods_count        = count( $period_options ) - 1;
+		return array(
+			'title'      => __( 'Existing Period', 'commons-booking-2' ) .
+												" <span class='cb2-usage-count'>$periods_count</span>",
+			'show_names' => FALSE,
+			'context'    => 'side',
+			'fields'     => array(
+				array(
+					'name'    => __( 'Period', 'commons-booking-2' ),
+					'id'      => 'period_ID',
+					'type'    => 'select',
+					//'show_option_none' => TRUE,
+					'default' => $_GET['period_ID'],
+					'options' => $period_options,
+				),
+			),
+		);
+	}
+
 	static function &factory_from_wp_post( $post ) {
 		// The WP_Post may have all its metadata loaded already
 		// as the wordpress system adds all fields to the WP_Post dynamically
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
 
+		// This may not exist in post creation
+		$period_group_IDs = array();
+		if ( property_exists( $post, 'period_group_IDs' ) && $post->period_group_IDs )
+			$period_group_IDs = explode( ',', $post->period_group_IDs );
+
 		$object = self::factory(
 			$post->ID,
-			$post->period_id,
 			$post->post_title,
 			$post->datetime_part_period_start,
 			$post->datetime_part_period_end,
@@ -127,7 +155,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			$post->recurrence_type,
 			$post->recurrence_frequency,
 			$post->recurrence_sequence,
-			$post->usage_count
+			$period_group_IDs
 		);
 
 		CB_Query::copy_all_properties( $post, $object );
@@ -137,7 +165,6 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 
   static function &factory(
 		$ID,
-		$period_id,
     $name,
 		$datetime_part_period_start,
 		$datetime_part_period_end,
@@ -146,7 +173,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		$recurrence_type,
 		$recurrence_frequency,
 		$recurrence_sequence,
-		$usage_count = 1
+		$period_group_IDs = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
@@ -161,7 +188,6 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 
   public function __construct(
 		$ID,
-		$period_id,
     $name,
     $datetime_part_period_start, // DateTime
     $datetime_part_period_end,   // DateTime
@@ -170,10 +196,9 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
     $recurrence_type,
     $recurrence_frequency,
     $recurrence_sequence,
-    $usage_count = 1
+    $period_group_IDs = array()
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
-		$this->id = $period_id;
 
     $this->fullday = ( $this->datetime_part_period_start && $this->datetime_part_period_end )
 			&& ( 	 $this->datetime_part_period_start->format( 'H:i:s' ) == '00:00:00'
@@ -185,9 +210,27 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			&& ( 	 $this->datetime_part_period_start->format( 'H:i:s' ) == '00:09:00'
 					&& $this->datetime_part_period_end->format(   'H:i:s' ) == '18:00:00'
 				 );
+
     if ( ! is_null( $ID ) ) self::$all[$ID] = $this;
   }
 
+  function not_used() {
+		return $this->usage_count() == 0;
+  }
+
+  function used() {
+		return $this->usage_count() > 0;
+  }
+
+  function usage_once() {
+		return $this->usage_count() == 1;
+  }
+
+  function usage_count() {
+		return count( $this->period_group_IDs );
+	}
+
+  // ------------------------------------- Output
   function summary( $format = NULL ) {
     $now      = new DateTime();
     $summary  = '';
@@ -198,7 +241,11 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		}
 		$summary .= $this->summary_recurrence_type();
 		$summary .= ' ' . $this->summary_date_period();
-		$summary .= ( $this->usage_once() ? '' : " <span class='cb2-usage-count' title='Used in several Period Groups'>$this->usage_count</span>" );
+
+		if ( ! $this->usage_once() )
+			$summary .= " <span class='cb2-usage-count' title='Used in several Period Groups'>" .
+				$this->usage_count() .
+				"</span>";
 
 		return $summary;
   }
@@ -248,11 +295,39 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		return $summary;
 	}
 
-  function usage_once() {
-		return $this->usage_count == 1;
-  }
+  function add_actions( &$actions, $post ) {
+		if ( $this->used() ) unset( $actions['trash'] );
+	}
 
-  function classes() {
+  function manage_columns( $columns ) {
+		$columns['periodgroups'] = 'Period Groups';
+		$this->move_column_to_end( $columns, 'date' );
+		return $columns;
+	}
+
+	function custom_columns( $column ) {
+		$html = '';
+		switch ( $column ) {
+			case 'periodgroups':
+				$usage_count = $this->usage_count();
+				switch ( $usage_count ) {
+					case 0:
+						$html .= 'No Period Group!';
+						break;
+					case 1:
+						$html .= implode( ',', $this->period_group_IDs );
+						break;
+					default:
+						$html .= "<span class='cb2-usage-count' title='Used in several Period Groups'>$usage_count</span> ";
+						$html .= implode( ',', $this->period_group_IDs );
+						break;
+				}
+				break;
+		}
+		return $html;
+	}
+
+	function classes() {
 		return '';
   }
 
