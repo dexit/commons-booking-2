@@ -1,4 +1,6 @@
-SET collation_connection = 'utf8mb4_unicode_520_ci';
+SET character_set_client = 'utf8mb4';
+SET collation_connection = 'utf8mb4_unicode_ci';
+ALTER DATABASE commonsbooking_2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 # otherwise zeros in datetime defaults will crash
 SET sql_mode = ''; 
 # current collation setup
@@ -6,7 +8,7 @@ show variables like 'char%';
 show variables like 'coll%';
 
 # to view the collation on a column
-show full columns from wp_post;
+show full columns from wp_posts;
 
 # getting the view definition without collation issues
 select VIEW_DEFINITION from INFORMATION_SCHEMA.VIEWS where TABLE_NAME = 'wp_cb2_view_periodentmeta' limit 1;

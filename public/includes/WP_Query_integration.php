@@ -69,10 +69,11 @@ add_filter( 'get_post_metadata', 'cb2_get_post_metadata', 10, 4 );
 // CMB2 MetaBoxes DO NOT use meta-data!
 // instead, they hook in to the save_post and write the meta-data manually
 // so there will be no meta-data available at pre_post_update stage
+define( 'CB2_MTN_PRIORITY', 140 );
 add_action( 'save_post', 'cb2_save_post_move_to_native',          110, 3 ); // Create $native_id, and $ID
 add_action( 'save_post', 'cb2_save_post_post_actions',            120, 3 ); // $CB_object->post_post_update()
 add_action( 'save_post', 'cb2_save_post_delete_auto_draft',       130, 3 ); // original wp_posts $post and $ID
-add_action( 'save_post', 'cb2_save_post_redirect_to_native_post', 140, 3 ); // new $ID
+add_action( 'save_post', 'cb2_save_post_redirect_to_native_post', CB2_MTN_PRIORITY, 3 ); // new $ID
 
 // Direct metadata updates
 // CMB2 MetaBoxes DO NOT use meta-data!
@@ -149,10 +150,17 @@ function cb2_save_post_move_to_native( $ID, $post, $update ) {
 				// Create dependent objects before moving in to the native tables
 				if ( method_exists( $post, 'pre_post_create' ) ) $post->pre_post_create();
 
+				// Create the new data for the Database
+				// leave $new_post->ID so that create is triggered
+				// leave $new_post->post_status = CB2_PUBLISH because not relevant to insert
+				$new_post = new WP_Post( $post->extra_processing_properties );
+				$new_post->post_title  = $post->post_title;
+				$new_post->post_type   = $post_type;
+
 				// Move this post into our structure
 				// Allow for main Class tables with no actual needed columns beyond the id
-				$result      = NULL;
-				$insert_data = CB_Database::sanitize_data_for_table( $class_database_table, (array) $post );
+				$result   = NULL;
+				$insert_data = CB_Database::sanitize_data_for_table( $class_database_table, (array) $new_post );
 				if ( count( $insert_data ) )
 					$result = $wpdb->insert( "$wpdb->prefix$class_database_table", $insert_data );
 				else
@@ -233,8 +241,9 @@ function cb2_save_post_redirect_to_native_post( $post_id, $post, $update ) {
 				$action    = 'edit';
 				$URL       = admin_url( "admin.php?page=$page&post=$ID&post_type=$post_type&action=$action" );
 
-				wp_redirect( $URL );
-				print( "redirecting to <a href='$URL'>$URL</a>..." );
+				if ( WP_DEBUG && TRUE ) print( '<div>WP_DEBUG mode, no auto-redirect</div>' );
+				else wp_redirect( $URL );
+				print( "<div>redirecting to <a href='$URL'>$URL</a>...</div>" );
 				exit();
 			}
 		}
@@ -429,7 +438,7 @@ function cb2_query_wrangler_date_filter_callback( $args, $filter ) {
 		'compare' => 'week',
 	);
 	// Multiple post_status not available in QW yet
-	$args[ 'post_status' ] = array( 'publish', 'auto-draft' );
+	$args[ 'post_status' ] = array( 'publish', CB2_AUTODRAFT );
 	// perioditem-automatic will be missed unless we do this
 	$args[ 'post_type'   ] = CB_PeriodItem::$all_post_types;
 	return $args;

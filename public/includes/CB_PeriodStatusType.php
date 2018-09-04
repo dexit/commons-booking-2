@@ -123,7 +123,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 			$post->system
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
 	}

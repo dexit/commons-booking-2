@@ -241,7 +241,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 			$post->ID
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
   }
@@ -334,7 +334,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 			$post->ID
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
   }

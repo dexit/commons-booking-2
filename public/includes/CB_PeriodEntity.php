@@ -27,7 +27,7 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 			$period_status_type
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
 	}
@@ -126,34 +126,8 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		return $this->period_group->custom_columns( $column );
 	}
 
-  function pre_post_create() {
-		// TODO: generic
-		foreach ( $this as $name => $value ) {
-			if ( $value == CB2_CREATE_NEW && substr( $name, -3 ) == '_ID' ) {
-				$object_pointer = substr( $name, 0, -3 );
-				$post_type      = str_replace( '_', '', $object_pointer );
-				if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-					if ( method_exists( $Class, 'factory_from_wp_post' ) ) {
-						// Create from this
-						$post = clone $this;
-						unset( $post->ID );
-						unset( $post->$name );
-						$object = $Class::factory_from_wp_post( $post );
-						$object->save();
-
-						// Set values
-						$this->$name           = $object->ID;
-						$this->$object_pointer = $object;
-					} else throw new Exception( "Cannot create a new [$Class] from post because no factory_from_wp_post()" );
-				} else throw new Exception( "Cannot create a new [$post_type] for [$name] because cannot find the Class handler" );
-			}
-		}
-  }
-
   function post_post_update() {
-		// Link the Period to the PeriodGroup
-		var_dump('post_post_update', $this);
-		exit();
+		return $this->period_group->post_post_update();
   }
 
 	function jsonSerialize() {
@@ -190,7 +164,7 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
 			$period_status_type
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
 	}
@@ -270,7 +244,7 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 			$location
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
 	}
@@ -355,7 +329,7 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 			$item
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
 	}
@@ -449,7 +423,7 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 			$user
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
 	}

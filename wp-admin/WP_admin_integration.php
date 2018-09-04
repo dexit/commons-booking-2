@@ -310,6 +310,7 @@ function cb2_admin_init_menus() {
 	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
   add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, 'cb2', 'cb2_options_page', 'dashicons-video-alt' );
 
+	add_submenu_page( 'cb2', 'Admin', "<span class='cb2-advanced-menu-item'>admin</span>", $capability_default, 'cb2-admin', 'cb2_admin_page' );
 	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
 		$capability = $details->capability;
 		if ( ! $capability ) $capability = $capability_default;
@@ -319,7 +320,6 @@ function cb2_admin_init_menus() {
 		$title = preg_replace( '/\%.+\%/', '', $details->page_title );
 		add_submenu_page( $parent_slug, $title, $details->menu_title, $capability, $menu_slug, 'cb2_settings_list_page' );
 	}
-	add_submenu_page( 'cb2', 'Admin', "<span class='cb2-advanced-menu-item'>admin</span>", $capability_default, 'cb2-admin', 'cb2_admin_page' );
 
 	// post-new.php (setup) => edit-form-advanced.php (form)
 	// The following line directly accesses the plugin post-new.php
@@ -345,6 +345,7 @@ function cb2_options_page() {
 	print( '<h1>Commons Booking 2</h1>' );
 	print( '<ul>' );
 	$capability_default = 'manage_options';
+
 	foreach ( cb2_admin_pages() as $menu_slug => $menu_item ) {
 		$class = '';
 		$capability = $menu_item->capability;
@@ -363,6 +364,8 @@ function cb2_options_page() {
 		} else
 		  print( "<li class='$class'>$title</li>" );
 	}
+	if ( current_user_can( $capability_default ) )
+		print( "<li><a class='cb2-advanced-menu-item' href='admin.php?page=cb2-admin'>Admin</a></li>" );
 	print( '</ul>' );
 }
 

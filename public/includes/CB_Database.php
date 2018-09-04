@@ -33,19 +33,36 @@ class CB_Database {
 			if ( substr( $sub_name, -1 ) != 's' ) $sub_name .= 's';
 			$name  = $sub_name;
 			$value = $string_value;
-    } else if ( is_object( $value ) && $value instanceof CB_PostNavigator ) {
+    }
+
+    else if ( is_object( $value ) && $value instanceof CB_PostNavigator ) {
 			// period = period object => period_ID = 200000238
 			if ( property_exists( $value, 'ID' ) ) {
+				if ( $value->ID === CB2_CREATE_NEW ) throw new Exception( "[$name] WP_Post->ID value [CB2_CREATE_NEW] value should have been resolved" );
+				if ( ! is_numeric( $value->ID ) )    throw new Exception( "[$name] WP_Post->ID value [$value->ID] is not numeric" );
 				$name .= '_ID';
-				$value = $value->ID;
-				if ( ! is_numeric( $value ) ) throw new Exception( "[$name] value [$value] is not numeric" );
+				$value = (int) $value->ID;
 			} else throw new Exception( "This CB_Post / CB_PostNavigator object should have an ID for [$name] property" );
-		} else if ( is_object( $value ) && $value instanceof DateTime ) {
+		}
+
+		else if ( is_object( $value ) && $value instanceof DateTime ) {
 			// DateTime => 2018-06-10 12:34:23
 			$date_string = $value->format( self::$database_datetime_format );
 			if ( $value < new DateTime( '1970-01-01' ) ) throw new Exception( "Dodgy date [$date_string]" );
 			$value = $date_string;
-		} else {
+		}
+
+		else if ( is_object( $value ) && $value instanceof WP_Post ) {
+			if ( $value->ID === CB2_CREATE_NEW ) throw new Exception( "[$name] WP_Post->ID value [CB2_CREATE_NEW] value should have been resolved" );
+			if ( ! is_numeric( $value->ID ) )    throw new Exception( "[$name] WP_Post->ID value [$value->ID] is not numeric" );
+			$value = (int) $value->ID;
+		}
+
+		else if ( is_object( $value ) && method_exists( $value, '__toString' ) ) {
+			$value = (string) $value;
+		}
+
+		else {
 			$value = (string) $value;
     }
     return $value;

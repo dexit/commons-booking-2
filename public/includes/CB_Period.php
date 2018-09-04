@@ -158,7 +158,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			$period_group_IDs
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
 	}
@@ -329,6 +329,25 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 
 	function classes() {
 		return '';
+  }
+
+  function post_post_update() {
+		global $wpdb;
+
+		var_dump($this);
+
+		// Link the Period to the PeriodGroup(s)
+		$table = "{$wpdb->prefix}cb2_period_group_period";
+		$wpdb->delete( $table, array(
+			'period_id' => $this->id()
+		) );
+		foreach ( $this->$period_group_IDs as $period_group_ID ) {
+			$period_group_id = CB_Query::id_from_ID_post_type( CB_PeriodGroup::$static_post_type, $period_group_ID );
+			$wpdb->insert( $table, array(
+				'period_group_id' => $period_group_id,
+				'period_id'       => $this->id(),
+			) );
+		}
   }
 
   function jsonSerialize() {

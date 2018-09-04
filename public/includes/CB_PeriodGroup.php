@@ -52,7 +52,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 			$periods
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
 	}
@@ -135,6 +135,9 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   function post_post_update() {
 		global $wpdb;
 
+		var_dump($this);
+
+		// Link the Period to the PeriodGroup
 		$table = "{$wpdb->prefix}cb2_period_group_period";
 		$wpdb->delete( $table, array(
 			'period_group_id' => $this->id()

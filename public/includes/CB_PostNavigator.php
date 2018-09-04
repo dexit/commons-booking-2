@@ -219,7 +219,9 @@ class CB_PostNavigator {
 		$meta = array();
 
 		foreach ( $this as $name => $value ) {
-			if ( ! is_null( $value ) )
+			if ( ! is_null( $value )
+				&& $name != 'extra_processing_properties'
+			)
 				$meta[ $name ] = CB_Database::to_string( $name, $value );
 		}
 
@@ -261,6 +263,58 @@ class CB_PostNavigator {
 		return CB_Query::id_from_ID_with_post_type( $this->post_type(), $this->ID );
   }
 
+  function pre_post_create() {
+		// Automatic creation of all dependent objects
+		// indicated by property = CB2_CREATE_NEW
+		// using the properties attached to this post
+		// this-><object_name>_ID == CB2_CREATE_NEW:
+		//   <object_name>    => new CB_<Class>(this)
+		//   <object_name>_ID => object->ID
+		// TODO: plural collections: CB2_CREATE_NEW_COLLECTION? e.g. period_IDs
+		// TODO: change the CB2_CREATE_NEW to be independent from the text in the select box!!!!
+		// Linking of 1-many sub-dependencies, e.g. PeriodGroup => Period,
+		// should be done in post_post_update()
+		if ( ! property_exists( $this, 'extra_processing_properties' ) )
+			throw new Exception( '[' . __class__ . '] object has no extra_processing_properties array' );
+
+		foreach ( $this->extra_processing_properties as $name => $value ) {
+			if ( $value == CB2_CREATE_NEW && substr( $name, -3 ) == '_ID' ) {
+				$object_pointer = substr( $name, 0, -3 );
+				$post_type      = str_replace( '_', '', $object_pointer );
+				if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+					if ( method_exists( $Class, 'factory_from_wp_post' ) ) {
+						if ( WP_DEBUG && FALSE )
+							var_dump( "pre_post_create() [$name]: $object_pointer => $Class", $this->extra_processing_properties );
+
+						// Create the new data for the Database
+						// leave $new_post->ID so that create is triggered
+						// leave $new_post->post_status = CB2_PUBLISH because save() manages that
+						$new_post = new WP_Post( $this->extra_processing_properties );
+						$new_post->post_title  = $this->post_title;
+						$new_post->post_type   = $post_type;
+
+						// The required instantiation properties should be all in the extra_processing_properties
+						// the Class::__construct() will complain / adjust if not
+						$object   = $Class::factory_from_wp_post( $new_post );
+						// save() will trigger pre_post_create() on this dependent object also
+						// however, its extra_processing_properties have not been assigned
+						// TODO: thus it cannot additionally create its own dependencies
+						$object->save();
+						if ( WP_DEBUG && FALSE ) var_dump( $object );
+
+						// Set values
+						// And on the extra_processing_properties
+						// for subsequent creation usage. ORDER is important!
+						$this->$name           = $object->ID;
+						$this->$object_pointer = $object;
+						$this->extra_processing_properties->$name = $object->ID;
+					} else throw new Exception( "Cannot create a new [$Class] from post because no factory_from_wp_post()" );
+				} else throw new Exception( "Cannot create a new [$post_type] for [$name] because cannot find the Class handler" );
+			}
+		}
+		if ( WP_DEBUG && FALSE ) { var_dump('finished' ); exit(); }
+  }
+
   function save() {
 		// Mimmick the Wordpress saving process
 		// Create an "auto-draft" in wp_posts (avoids hooks)
@@ -296,7 +350,7 @@ class CB_PostNavigator {
 			// wp_insert_post() will not trigger any hooks in this intergration
 			// wp_update_post() triggers the hooks below
 			// (int|WP_Error) The post ID on success. The value 0 or WP_Error on failure.
-			$args['post_status'] = 'auto-draft';
+			$args['post_status'] = CB2_AUTODRAFT;
 			$id = wp_insert_post( $args );
 			if ( is_wp_error( $id ) ) {
 				$error = $wpdb->last_error;
@@ -305,12 +359,12 @@ class CB_PostNavigator {
 			} else {
 				// Run the update action to move it to the custom DB structure
 				$args['ID']          = $id; // Normal wp_post at the moment
-				$args['post_status'] = 'publish';
+				$args['post_status'] = CB2_PUBLISH;
 
 				// Disable the admin screen redirect
-				remove_filter( 'save_post', 'cb2_save_post_redirect_to_native_post', 130 );
+				remove_filter( 'save_post', 'cb2_save_post_redirect_to_native_post', CB2_MTN_PRIORITY );
 				$result = wp_update_post( $args );
-				add_filter(    'save_post', 'cb2_save_post_redirect_to_native_post', 130, 3 );
+				add_filter(    'save_post', 'cb2_save_post_redirect_to_native_post', CB2_MTN_PRIORITY, 3 );
 
 				if ( is_wp_error( $result ) ) {
 					$error = $wpdb->last_error;

@@ -16,7 +16,37 @@ define( 'CB2_PERIOD_STATUS_TYPE_CLOSED',    3 );
 define( 'CB2_PERIOD_STATUS_TYPE_OPEN',      4 );
 define( 'CB2_PERIOD_STATUS_TYPE_REPAIR',    5 );
 define( 'CB2_PERIOD_STATUS_TYPE_HOLIDAY',   6 );
-define( 'CB2_CREATE_NEW', '-- create new --' );
+define( 'CB2_CREATE_NEW',       '-- create new --' );
+define( 'CB2_ALLOW_CREATE_NEW', TRUE );
+define( 'CB2_PUBLISH',          'publish' );
+define( 'CB2_AUTODRAFT',        'auto-draft' );
+define( 'CB2_POST_PROPERTIES',  array(
+	'ID',
+	'post_author',
+	'post_date',
+	'post_date_gmt',
+	'post_content',
+	'post_title',
+	'post_excerpt',
+	'post_status',
+	'comment_status',
+	'ping_status',
+	'post_password',
+	'post_name',
+	'to_ping',
+	'pinged',
+	'post_modified',
+	'post_modified_gmt',
+	'post_content_filtered',
+	'post_parent',
+	'guid',
+	'menu_order',
+	'post_type',
+	'post_mime_type',
+	'comment_count',
+	'filter',
+) );
+
 class CB_Query {
 	private static $schema_types = array();
 
@@ -163,7 +193,7 @@ class CB_Query {
 
 	static function is_wp_auto_draft( $post ) {
 		return $post && property_exists( $post, 'ID' )
-			&& in_array( $post->post_status, array( 'draft',  'auto-draft' ) );
+			&& in_array( $post->post_status, array( 'draft',  CB2_AUTODRAFT ) );
 	}
 
 	static function publishing_post( $post ) {
@@ -282,14 +312,15 @@ class CB_Query {
 					// get_metadata( $meta_type, ... )
 					//   meta.php has _get_meta_table( $meta_type );
 					//   $table_name = $meta_type . 'meta';
+					// And remove pseudo meta like _edit_lock
 					$metadata = get_metadata( $meta_type, $ID );
-					// Remove pseudo meta like _edit_lock
 					foreach ( $metadata as $name => $value )
 						if ( substr( $name, 0, 1 ) == '_' ) unset( $metadata[$name] );
+
 					// Check that some meta data is returned
 					if ( ! CB_Query::is_wp_auto_draft( $post ) ) {
 						if ( ! is_array( $metadata ) || ! count( $metadata ) )
-							throw new Exception( "[$post_type] [$ID] returned no metadata" );
+							throw new Exception( "[$post_type/$meta_type] [$ID] returned no metadata" );
 					}
 					if ( WP_DEBUG && FALSE )
 						var_dump( $ID, $post_type, $post->post_status, $meta_type, $postmeta_table, $metadata );
@@ -331,7 +362,11 @@ class CB_Query {
 																						$datetime = $now->setTimestamp( (int) $object );
 		else if ( is_string( $object ) )        $datetime = new DateTime( $object );
 		else if ( is_null( $object ) )          $datetime = NULL;
-		else throw new Exception( "[$name] has unhandled datetime type" );
+		else if ( $object === FALSE )           $datetime = NULL; // Happens when object->property fails
+		else {
+			var_dump( $object );
+			throw new Exception( "[$name] has unhandled datetime type" );
+		}
 
 		return $datetime;
 	}
@@ -341,10 +376,14 @@ class CB_Query {
 		return $object;
 	}
 
-	static function ensure_int( $name, $object ) {
+	static function ensure_int( $name, $object, $allow_create_new = FALSE ) {
 		$int = NULL;
 		if ( ! is_null( $object ) ) {
-			if ( is_numeric( $object ) ) $int = (int) $object;
+			if      ( $allow_create_new && $object == CB2_CREATE_NEW ) {
+				// Special value indicating that the ID object should be created
+				$int = CB2_CREATE_NEW;
+			}
+			else if ( is_numeric( $object ) ) $int = (int) $object;
 			else throw new Exception( "[$name] is not numeric [$object]" );
 		}
 		return $int;
@@ -360,10 +399,14 @@ class CB_Query {
 		$parameters            = $reflection->getParameters();
 
 		// Match raw values to given parameters OR defaults
+		// It is a PHP error to pass a wrong parameter count
+		// which means that all parameters must either have a value or a default
+		// getDefaultValue() will throw an exception if the parameter does not have one
 		$parameter_value_count = count( $parameter_values );
 		foreach ( $parameters as $i => &$parameter ) {
-			$name = $parameter->name;
-			$parameter->value = ( $i >= $parameter_value_count ? $parameter->getDefaultValue() : $parameter_values[$i] );
+			$name                 = $parameter->name;
+			$has_stated_parameter = $i < $parameter_value_count;
+			$parameter->value = ( $has_stated_parameter ? $parameter_values[$i] : $parameter->getDefaultValue() );
 		}
 
 		// Assign to object
@@ -373,7 +416,7 @@ class CB_Query {
 			try {
 				$value = self::cast_parameter( $name, $value );
 			} catch ( Exception $ex ) {
-				var_dump( $parameters );
+				var_dump( $parameters, $parameter_values );
 				throw $ex;
 			}
 
@@ -390,42 +433,61 @@ class CB_Query {
 		}
 	}
 
-	static function copy_all_properties( $from, $to, $overwrite = TRUE ) {
+	static function copy_all_wp_post_properties( $post, $object, $overwrite = TRUE ) {
 		// Important to overwrite
 		// because these objects are CACHED
-		foreach ( $from as $name => $from_value ) {
+		if ( is_null( $post ) )       throw new Exception( 'copy_all_wp_post_properties( $post null )' );
+		if ( is_array( $post ) )      throw new Exception( 'copy_all_wp_post_properties( $post is an array )' );
+		if ( ! is_object( $post ) )   throw new Exception( 'copy_all_wp_post_properties( $post not an object )' );
+		if ( ! is_object( $object ) ) throw new Exception( 'copy_all_wp_post_properties( $object not an object )' );
+
+		if ( WP_DEBUG ) {
+			foreach ( CB2_POST_PROPERTIES as $name )
+				if ( ! property_exists( $post, $name ) )
+					throw new Exception( "WP_Post->[$name] does not exist on source post" );
+		}
+
+		$object->extra_processing_properties = new stdClass();
+		foreach ( $post as $name => $from_value ) {
+			$wp_is_post_property = in_array( $name, CB2_POST_PROPERTIES );
 			try {
 				$new_value = self::cast_parameter( $name, $from_value );
 			} catch ( Exception $ex ) {
-				var_dump( $from );
+				var_dump( $post );
 				throw $ex;
 			}
-			if ( $overwrite || ! property_exists( $to, $name ) ) {
+
+			if ( $overwrite || ! property_exists( $object, $name ) ) {
 				if ( WP_DEBUG && FALSE ) {
-					if ( property_exists( $to, $name ) ) {
-						$old_value = $to->$name;
+					if ( property_exists( $object, $name ) ) {
+						$old_value = $object->$name;
 						if ( ! is_null( $old_value ) && $old_value != $new_value )
 							var_dump( "[$old_value] => [$new_value]" );
 					}
 				}
-				$to->$name = $new_value;
+
+				if ( $wp_is_post_property ) {
+					$object->$name = $new_value;
+				} else {
+					// We pass these through
+					// because the object may need to query its environment
+					// for example: to create sub-objects with their properties
+					$object->extra_processing_properties->$name = $new_value;
+				}
 			}
 		}
 	}
 
 	static function cast_parameter( $name, $value ) {
 		if ( ! is_null( $value ) ) {
-			if      ( substr( $name, -3 ) == '_ID' && $value == CB2_CREATE_NEW ) {
-				// Special value indicating that the ID object should be created
-			}
-			else if ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
+			if      ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
 			else if ( $name == 'date' )                      $value = self::ensure_datetime( $name, $value );
 			else if ( substr( $name, 0, 5 ) == 'time_' )     $value = self::ensure_time( $name, $value );
 			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_bitarray( $name, $value );
 			else if ( substr( $name, -3 ) == '_id' )         $value = self::ensure_int( $name, $value );
-			else if ( substr( $name, -3 ) == '_ID' )         $value = self::ensure_int( $name, $value );
+			else if ( substr( $name, -3 ) == '_ID' )         $value = self::ensure_int( $name, $value, CB2_ALLOW_CREATE_NEW );
 			else if ( substr( $name, -6 ) == '_index' )      $value = self::ensure_int( $name, $value );
-			else if ( $name == 'ID' )                        $value = self::ensure_int( $name, $value );
+			else if ( $name == 'ID' )                        $value = self::ensure_int( $name, $value, CB2_ALLOW_CREATE_NEW );
 		}
 
 		return $value;

@@ -4,6 +4,21 @@
   require_once( dirname( dirname( __FILE__ ) ) . '/includes/CB_Template.php' );
   require_once( dirname( dirname( __FILE__ ) ) . '/public/includes/CB_Query.php' );
   require_once( dirname( dirname( __FILE__ ) ) . '/public/includes/CB_Forms.php' );
+
+  if (0) {
+		try {
+			$obj = new stdClass();
+			$test = (string) $obj;
+		} catch ( Exception $ex) {
+			// NEED to setup a custom Exception handler
+			// to convert PHP errors in to PHP 5.0 exceptions
+			print( $ex );
+		}
+		print('[' . is_numeric('') . ']');
+		print('[' . is_numeric(NULL) . ']');
+		print('[' . is_numeric('34') . ']');
+		exit();
+	}
 ?>
 <html>
   <head>

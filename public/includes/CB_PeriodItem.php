@@ -325,7 +325,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
 			$post->datetime_period_item_end
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
   }
@@ -398,7 +398,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
 			$post->datetime_period_item_end
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
   }
@@ -478,7 +478,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
 			$post->datetime_period_item_end
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
   }
@@ -577,7 +577,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 			$post->datetime_period_item_end
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
   }
@@ -696,7 +696,7 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 			$post->datetime_period_item_end
 		);
 
-		CB_Query::copy_all_properties( $post, $object );
+		CB_Query::copy_all_wp_post_properties( $post, $object );
 
 		return $object;
   }
