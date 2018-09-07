@@ -13,11 +13,11 @@
 class CB_Shortcodes {
 
 	private $default_query_args = array(
-		'period_id'  => false, 
-		'location_id'  => false, 
-		'item_id'  => false, 
-		//'owner_id'  => false, 
-		//'location_cat'  => false, 
+		'period_id'  => false,
+		'location_id'  => false,
+		'item_id'  => false,
+		//'owner_id'  => false,
+		//'location_cat'  => false,
 		//'item_cat'   => false
 
 	);
@@ -35,12 +35,12 @@ class CB_Shortcodes {
 		*/
 
 		$array_atts_fields = array(
-			'period_id', 
-			'location_id', 
-			'item_id', 
-			//'owner_id', 
-			//'location_cat', 
-			//'item_cat' 
+			'period_id',
+			'location_id',
+			'item_id',
+			//'owner_id',
+			//'location_cat',
+			//'item_cat'
 		);
 
 		foreach($array_atts_fields as $field) {
@@ -55,7 +55,7 @@ class CB_Shortcodes {
 		$this->set_context('calendar');
 		$timeframes = $this->get_timeframes( $args );
 
-		
+
 		*/
 		// Do query here
 
@@ -115,7 +115,7 @@ class CB_Shortcodes {
 			)
 		) );
 
-		if ($period_query->have_posts()) { 
+		if ($period_query->have_posts()) {
 
 			$return = '<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>
 
@@ -141,9 +141,9 @@ class CB_Shortcodes {
 				</table>
 			</div>';
 
-		} 
+		}
 
-		
+
 
 		// reset posts
 		wp_reset_postdata();

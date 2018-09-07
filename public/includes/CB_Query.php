@@ -1,4 +1,53 @@
 <?php
+// WP_DEBUG setup
+if ( WP_DEBUG ) include( 'krumo/class.krumo.php' );
+if ( ! function_exists( 'krumo' ) ) {
+	function krumo( ...$params ) {if ( WP_DEBUG ) var_dump( $params );}
+}
+define( 'CB2_DEBUG_SAVE', WP_DEBUG && FALSE );
+
+// System PERIOD_STATUS_TYPEs
+// a database trigger prevents deletion of these
+define( 'CB2_PERIOD_STATUS_TYPE_AVAILABLE', 1 );
+define( 'CB2_PERIOD_STATUS_TYPE_BOOKED',    2 );
+define( 'CB2_PERIOD_STATUS_TYPE_CLOSED',    3 ); // For overriding CB2_PERIOD_STATUS_TYPE_OPEN
+define( 'CB2_PERIOD_STATUS_TYPE_OPEN',      4 );
+define( 'CB2_PERIOD_STATUS_TYPE_REPAIR',    5 );
+define( 'CB2_PERIOD_STATUS_TYPE_HOLIDAY',   6 );
+
+// Native post create process
+// TODO: Remove dependency on -- create new -- text
+define( 'CB2_CREATE_NEW',       '-- create new --' );
+define( 'CB2_ALLOW_CREATE_NEW', TRUE ); // Allows CB2_CREATE_NEW to be passed as a numeric ID
+define( 'CB2_PUBLISH',          'publish' );
+define( 'CB2_AUTODRAFT',        'auto-draft' );
+define( 'CB2_POST_PROPERTIES',  array(
+	'ID' => FALSE,
+	'post_author' => TRUE,     // TRUE == Relevant to native records
+	'post_date' => TRUE,
+	'post_date_gmt' => FALSE,
+	'post_content' => TRUE,
+	'post_title' => TRUE,
+	'post_excerpt' => TRUE,
+	'post_status' => FALSE,
+	'comment_status' => FALSE,
+	'ping_status' => FALSE,
+	'post_password' => FALSE,
+	'post_name' => TRUE,
+	'to_ping' => FALSE,
+	'pinged' => FALSE,
+	'post_modified' => TRUE,
+	'post_modified_gmt' => FALSE,
+	'post_content_filtered' => TRUE,
+	'post_parent' => FALSE,
+	'guid' => FALSE,
+	'menu_order' => FALSE,
+	'post_type' => TRUE,
+	'post_mime_type' => FALSE,
+	'comment_count' => FALSE,
+	'filter' => FALSE,
+) );
+
 require_once( 'CB_Database.php' );
 require_once( 'CB_PostNavigator.php' );
 require_once( 'CB_PeriodItem.php' );
@@ -8,44 +57,6 @@ require_once( 'the_template_functions.php' );
 require_once( 'CB_Time_Classes.php' );
 require_once( 'WP_Query_integration.php' );
 require_once( 'CB_Forms.php' );
-
-// System PERIOD_STATUS_TYPEs
-define( 'CB2_PERIOD_STATUS_TYPE_AVAILABLE', 1 );
-define( 'CB2_PERIOD_STATUS_TYPE_BOOKED',    2 );
-define( 'CB2_PERIOD_STATUS_TYPE_CLOSED',    3 );
-define( 'CB2_PERIOD_STATUS_TYPE_OPEN',      4 );
-define( 'CB2_PERIOD_STATUS_TYPE_REPAIR',    5 );
-define( 'CB2_PERIOD_STATUS_TYPE_HOLIDAY',   6 );
-define( 'CB2_CREATE_NEW',       '-- create new --' );
-define( 'CB2_ALLOW_CREATE_NEW', TRUE );
-define( 'CB2_PUBLISH',          'publish' );
-define( 'CB2_AUTODRAFT',        'auto-draft' );
-define( 'CB2_POST_PROPERTIES',  array(
-	'ID',
-	'post_author',
-	'post_date',
-	'post_date_gmt',
-	'post_content',
-	'post_title',
-	'post_excerpt',
-	'post_status',
-	'comment_status',
-	'ping_status',
-	'post_password',
-	'post_name',
-	'to_ping',
-	'pinged',
-	'post_modified',
-	'post_modified_gmt',
-	'post_content_filtered',
-	'post_parent',
-	'guid',
-	'menu_order',
-	'post_type',
-	'post_mime_type',
-	'comment_count',
-	'filter',
-) );
 
 class CB_Query {
 	private static $schema_types = array();
@@ -73,6 +84,10 @@ class CB_Query {
     return self::$schema_types;
   }
 
+  static function post_types() {
+    return array_keys( self::$schema_types );
+  }
+
   static function schema_type_class( $post_type ) {
 		$post_types = self::schema_types();
 		return isset( $post_types[$post_type] ) ? $post_types[$post_type] : NULL;
@@ -92,39 +107,52 @@ class CB_Query {
   // -------------------------------------------------------------------- WordPress integration
   // Complementary to WordPress
   // With CB Object understanding
-	static function get_post_type( $post_type, $post_id = NULL, $output = OBJECT, $filter = 'raw' ) {
+	static function get_post_with_type( $post_type, $post_id, $output = OBJECT, $filter = 'raw' ) {
 		// get_post() with table switch
 		// This will use standard WP cacheing
 		global $wpdb;
+
+		if ( ! is_string( $post_type ) )
+			throw new Exception( "get_post_with_type() \$post_type not a string" );
+		if ( ! is_numeric( $post_id ) )
+			throw new Exception( "get_post_with_type()[$post_type] \$post_id not numeric" );
+		if ( $post_type == 'user' )
+			throw new Exception( 'Use CB_Query::get_user() for CB_User.' );
+
+		$Class = self::schema_type_class( $post_type );
+		if ( ! $Class )
+			throw new Exception( "[$post_type] not managed by CB2" );
+
+		// Redirect
 		$old_wpdb_posts = NULL;
-
-		if ( $post_type == 'user' ) throw new Exception( 'Use CB_Query::get_user() for users.' );
-
 		$wpdb->posts = "{$wpdb->prefix}posts";
-
-		if ( $Class = self::schema_type_class($post_type) ) {
-			if ( $posts_table = CB_Database::posts_table( $Class ) ) {
-				$old_wpdb_posts = $wpdb->posts;
-				$wpdb->posts    = "$wpdb->prefix$posts_table";
-			}
+		if ( $posts_table = CB_Database::posts_table( $Class ) ) {
+			$old_wpdb_posts = $wpdb->posts;
+			$wpdb->posts    = "$wpdb->prefix$posts_table";
 		}
+		if ( CB2_DEBUG_SAVE && TRUE && $wpdb->posts == "{$wpdb->prefix}posts" )
+			print( "Notice: [$Class] get_post_with_type() using wp_posts table" );
 
+		// WP_Post::get_instance() will check the cache
+		wp_cache_delete( $post_id, 'posts' );
 		$post = get_post( $post_id, $output, $filter );
+		if ( is_null( $post ) )
+			throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
+		if ( $post->post_type != $post_type )
+			throw new Exception( "[$Class/$post_id] fetched a [$post->post_type] post_type from [$posts_table], not a [$post_type]" );
 
-		if ( $Class ) {
-			if ( is_null( $post ) )
-				throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
-			if ( $old_wpdb_posts )
-				$wpdb->posts = $old_wpdb_posts;
-			if ( method_exists( $Class, 'factory_from_wp_post' ) )
-				$post = $Class::factory_from_wp_post( $post );
-		}
+		// Reset
+		if ( $old_wpdb_posts ) $wpdb->posts = $old_wpdb_posts;
+		$post = self::ensure_correct_class( $post );
 
 		return $post;
 	}
 
 	static function get_user( $ID ) {
-		return get_user_by( 'ID', $ID );
+		if ( ! $ID )      throw new Exception( "User [$ID] blank" );
+		$wp_user = get_user_by( 'ID', $ID );
+		if ( ! $wp_user ) throw new Exception( "User [$ID] not found" );
+		return CB_User::factory( $wp_user->ID, $wp_user->user_login );
 	}
 
 	static function ensure_correct_classes( &$records ) {
@@ -145,11 +173,16 @@ class CB_Query {
 	static function ensure_correct_class( &$record, $post_classes = NULL ) {
     // Creation will aslo create the extra time based data structure
 		if ( ! $post_classes ) $post_classes = self::schema_types();
+
 		if ( property_exists( $record, 'post_type' ) && isset( $post_classes[$record->post_type] ) ) {
 			$Class = $post_classes[$record->post_type];
-			if ( method_exists( $Class, 'factory_from_wp_post' ) ) {
-				$record = $Class::factory_from_wp_post( $record );
-				if ( is_null( $record ) ) throw new Exception( "Failed to create [$Class] class from post" );
+			// Do not re-create it if it already is!
+			if ( ! is_a( $record, $Class ) ) {
+				if ( method_exists( $Class, 'factory_from_wp_post' ) ) {
+					$record = $Class::factory_from_wp_post( $record );
+					if ( is_null( $record ) )
+						throw new Exception( "Failed to create [$Class] class from post" );
+				}
 			}
 		}
 
@@ -160,7 +193,7 @@ class CB_Query {
 		global $wpdb;
 		$post_types = wp_cache_get( 'cb2-post-types' );
 		if ( ! $post_types ) {
-			$post_types = $wpdb->get_results( "SELECT post_type, ID_multiplier, ID_Base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC", OBJECT_K );
+			$post_types = $wpdb->get_results( "SELECT post_type, ID_multiplier, ID_base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC", OBJECT_K );
 			wp_cache_set( 'cb2-post-types', $post_types );
 		}
 		return $post_types;
@@ -173,7 +206,7 @@ class CB_Query {
 		$post_type  = NULL;
 
 		foreach ( $post_types as $post_type_check => $details ) {
-			$post_type_ID_base = $details->ID_Base;
+			$post_type_ID_base = $details->ID_base;
 			if ( $post_type_ID_base <= $ID ) {
 				$post_type = $post_type_check;
 				if ( WP_DEBUG && FALSE ) print( " <i>$ID =&gt; $post_type</i> " );
@@ -199,7 +232,7 @@ class CB_Query {
 	static function publishing_post( $post ) {
 		// Indicates that we need to move the post in to our native structures
 		//   post_status = publish
-		//   ID          = wp_posts id (NOT the eventual created native_id)
+		//   ID          = wp_posts id (NOT the eventual created native_ID)
 		// all metadata is saved before the save_post action
 		return property_exists( $post, 'ID' )
 			&& ! CB_Query::is_wp_auto_draft( $post )
@@ -210,9 +243,14 @@ class CB_Query {
 		// NULL return indicates that this post_type is not governed by CB2
 		$ID         = NULL;
 		$post_types = self::get_post_types();
+
+		if ( ! is_numeric( $id ) ) throw new Exception( "Numeric ID required for id_from_ID_with_post_type($id/$post_type)" );
+		if ( ! $post_type )        throw new Exception( "Post type required for id_from_ID_with_post_type($id)" );
+
 		if ( isset( $post_types[$post_type] ) ) {
 			$details = $post_types[$post_type];
-			$ID      = $id * $details->ID_multiplier + $details->ID_Base;
+			if ( $id >= $details->ID_base ) throw new Exception( "[$post_type/$id] is already more than its ID_base [$details->ID_base]" );
+			$ID      = $id * $details->ID_multiplier + $details->ID_base;
 		}
 
 		return $ID;
@@ -222,9 +260,14 @@ class CB_Query {
 		// NULL return indicates that this post_type is not governed by CB2
 		$id         = NULL;
 		$post_types = self::get_post_types();
+
+		if ( ! is_numeric( $ID ) ) throw new Exception( "Numeric ID required for id_from_ID_with_post_type($ID/$post_type)" );
+		if ( ! $post_type )        throw new Exception( "Post type required for id_from_ID_with_post_type($ID)" );
+
 		if ( isset( $post_types[$post_type] ) ) {
 			$details = $post_types[$post_type];
-			$id      = ( $ID - $details->ID_Base ) / $details->ID_multiplier;
+			if ( $details->ID_base > $ID ) throw new Exception( "Negative id from ID [$ID/$post_type] with [$details->ID_base/$details->ID_multiplier]" );
+			$id      = ( $ID - $details->ID_base ) / $details->ID_multiplier;
 		}
 
 		return $id;
@@ -322,8 +365,8 @@ class CB_Query {
 						if ( ! is_array( $metadata ) || ! count( $metadata ) )
 							throw new Exception( "[$post_type/$meta_type] [$ID] returned no metadata" );
 					}
-					if ( WP_DEBUG && FALSE )
-						var_dump( $ID, $post_type, $post->post_status, $meta_type, $postmeta_table, $metadata );
+					if ( CB2_DEBUG_SAVE && FALSE )
+						krumo( $ID, $post_type, $post->post_status, $meta_type, $postmeta_table, $metadata );
 
 					// Populate object
 					foreach ( $metadata as $this_meta_key => $meta_value )
@@ -364,7 +407,7 @@ class CB_Query {
 		else if ( is_null( $object ) )          $datetime = NULL;
 		else if ( $object === FALSE )           $datetime = NULL; // Happens when object->property fails
 		else {
-			var_dump( $object );
+			krumo( $object );
 			throw new Exception( "[$name] has unhandled datetime type" );
 		}
 
@@ -387,6 +430,40 @@ class CB_Query {
 			else throw new Exception( "[$name] is not numeric [$object]" );
 		}
 		return $int;
+	}
+
+	static function ensure_ints( $name, $object, $allow_create_new = FALSE ) {
+		$array = array();
+		if ( ! is_null( $object ) ) {
+			if ( is_string( $object ) && preg_match( '/^a:\\d+:\\{/', $object ) ) {
+				$array_object = unserialize( $object );
+				if ( $array_object !== FALSE ) $object = $array_object;
+			}
+
+			if ( is_array( $object ) ) {
+				$array = $object;
+				foreach ( $array as &$value ) {
+					$value = self::ensure_int( $name, $value, $allow_create_new );
+				}
+			}
+			else if ( is_string( $object ) && strchr( $object, ',' ) !== FALSE ) {
+				$array = explode( ',', $object );
+				foreach ( $array as &$value ) {
+					$value = self::ensure_int( $name, $value, $allow_create_new );
+				}
+			}
+			else if ( is_numeric( $object ) ) {
+				$array = array( self::ensure_int( $name, $object, $allow_create_new ) );
+			}
+			else if ( is_string( $object ) && empty( $object ) ) {
+				$array = array();
+			}
+			else {
+				krumo( $object );
+				throw new Exception( "[$name] is can not be converted to an array" );
+			}
+		}
+		return $array;
 	}
 
 	static function assign_all_parameters( $object, $parameter_values, $class_name = NULL, $method = '__construct' ) {
@@ -416,7 +493,7 @@ class CB_Query {
 			try {
 				$value = self::cast_parameter( $name, $value );
 			} catch ( Exception $ex ) {
-				var_dump( $parameters, $parameter_values );
+				krumo( $parameters, $parameter_values );
 				throw $ex;
 			}
 
@@ -425,8 +502,8 @@ class CB_Query {
 			if ( WP_DEBUG && FALSE ) {
 				print( "<i>$class_name->$name</i>: <b>" );
 				if      ( $value instanceof DateTime ) print( $value->format( 'c' ) );
-				else if ( is_object( $value ) ) var_dump( $value );
-				else if ( is_array(  $value ) ) var_dump( $value );
+				else if ( is_object( $value ) ) krumo( $value );
+				else if ( is_array(  $value ) ) krumo( $value );
 				else print( $value );
 				print( '</b><br/>' );
 			}
@@ -442,37 +519,30 @@ class CB_Query {
 		if ( ! is_object( $object ) ) throw new Exception( 'copy_all_wp_post_properties( $object not an object )' );
 
 		if ( WP_DEBUG ) {
-			foreach ( CB2_POST_PROPERTIES as $name )
+			foreach ( CB2_POST_PROPERTIES as $name => $native_relevant )
 				if ( ! property_exists( $post, $name ) )
 					throw new Exception( "WP_Post->[$name] does not exist on source post" );
 		}
 
-		$object->extra_processing_properties = new stdClass();
 		foreach ( $post as $name => $from_value ) {
-			$wp_is_post_property = in_array( $name, CB2_POST_PROPERTIES );
-			try {
-				$new_value = self::cast_parameter( $name, $from_value );
-			} catch ( Exception $ex ) {
-				var_dump( $post );
-				throw $ex;
-			}
-
-			if ( $overwrite || ! property_exists( $object, $name ) ) {
-				if ( WP_DEBUG && FALSE ) {
-					if ( property_exists( $object, $name ) ) {
-						$old_value = $object->$name;
-						if ( ! is_null( $old_value ) && $old_value != $new_value )
-							var_dump( "[$old_value] => [$new_value]" );
-					}
+			$wp_is_post_property = isset( CB2_POST_PROPERTIES[$name] );
+			if ( $wp_is_post_property ) {
+				try {
+					$new_value = self::cast_parameter( $name, $from_value );
+				} catch ( Exception $ex ) {
+					krumo( $post );
+					throw $ex;
 				}
 
-				if ( $wp_is_post_property ) {
+				if ( $overwrite || ! property_exists( $object, $name ) ) {
+					if ( WP_DEBUG && FALSE ) {
+						if ( property_exists( $object, $name ) ) {
+							$old_value = $object->$name;
+							if ( ! is_null( $old_value ) && $old_value != $new_value )
+								print( "copy_all_wp_post_properties( [$old_value] => [$new_value] )" );
+						}
+					}
 					$object->$name = $new_value;
-				} else {
-					// We pass these through
-					// because the object may need to query its environment
-					// for example: to create sub-objects with their properties
-					$object->extra_processing_properties->$name = $new_value;
 				}
 			}
 		}
@@ -484,10 +554,13 @@ class CB_Query {
 			else if ( $name == 'date' )                      $value = self::ensure_datetime( $name, $value );
 			else if ( substr( $name, 0, 5 ) == 'time_' )     $value = self::ensure_time( $name, $value );
 			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_bitarray( $name, $value );
-			else if ( substr( $name, -3 ) == '_id' )         $value = self::ensure_int( $name, $value );
-			else if ( substr( $name, -3 ) == '_ID' )         $value = self::ensure_int( $name, $value, CB2_ALLOW_CREATE_NEW );
-			else if ( substr( $name, -6 ) == '_index' )      $value = self::ensure_int( $name, $value );
-			else if ( $name == 'ID' )                        $value = self::ensure_int( $name, $value, CB2_ALLOW_CREATE_NEW );
+			else if ( substr( $name, -3 ) == '_id' )         $value = self::ensure_int(  $name, $value );
+			else if ( substr( $name, -4 ) == '_ids' )        $value = self::ensure_ints( $name, $value, CB2_ALLOW_CREATE_NEW );
+			else if ( substr( $name, -3 ) == '_ID' )         $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
+			else if ( substr( $name, -4 ) == '_IDs' )        $value = self::ensure_ints( $name, $value, CB2_ALLOW_CREATE_NEW );
+			else if ( substr( $name, -6 ) == '_index' )      $value = self::ensure_int(  $name, $value );
+			else if ( $name == 'ID' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
+			else if ( $name == 'id' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
 		}
 
 		return $value;

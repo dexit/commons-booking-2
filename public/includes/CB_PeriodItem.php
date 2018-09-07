@@ -391,8 +391,8 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
 
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( CB_PeriodEntity_Global::$static_post_type, $post->period_entity_ID ),
-			CB_Query::get_post_type( CB_Period::$static_post_type,              $post->period_ID ),
+			CB_Query::get_post_with_type( CB_PeriodEntity_Global::$static_post_type, $post->period_entity_ID ),
+			CB_Query::get_post_with_type( CB_Period::$static_post_type,              $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end
@@ -471,8 +471,8 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
 
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( CB_PeriodEntity_Location::$static_post_type, $post->period_entity_ID ),
-			CB_Query::get_post_type( CB_Period::$static_post_type,                $post->period_ID ),
+			CB_Query::get_post_with_type( CB_PeriodEntity_Location::$static_post_type, $post->period_entity_ID ),
+			CB_Query::get_post_with_type( CB_Period::$static_post_type,                $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end
@@ -570,8 +570,8 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( CB_PeriodEntity_Timeframe::$static_post_type, $post->period_entity_ID ),
-			CB_Query::get_post_type( CB_Period::$static_post_type,                 $post->period_ID ),
+			CB_Query::get_post_with_type( CB_PeriodEntity_Timeframe::$static_post_type, $post->period_entity_ID ),
+			CB_Query::get_post_with_type( CB_Period::$static_post_type,                 $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end
@@ -689,8 +689,8 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 
 		$object = self::factory(
 			$post->ID,
-			CB_Query::get_post_type( CB_PeriodEntity_Timeframe_User::$static_post_type, $post->period_entity_ID ),
-			CB_Query::get_post_type( CB_Period::$static_post_type,                      $post->period_ID ),
+			CB_Query::get_post_with_type( CB_PeriodEntity_Timeframe_User::$static_post_type, $post->period_entity_ID ),
+			CB_Query::get_post_with_type( CB_Period::$static_post_type,                      $post->period_ID ),
 			$post->recurrence_index,
 			$post->datetime_period_item_start,
 			$post->datetime_period_item_end

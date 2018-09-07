@@ -58,7 +58,7 @@ function cb2_admin_pages() {
 			'capability'     => NULL,
 			'function'       => NULL,
 			'wp_query_args'  => 'post_type=location',
-			'actions'        => '<a href="?page=cb2-opening-hours&location_ID=%ID%">Manage Opening Times</a>, <a href="?page=cb2-timeframes&location_ID=%ID%">Manage Item Availability</a>',
+			'actions'        => '<a href="?page=cb2-opening-hours&location_ID=%ID%">Opening Times</a>',
 			'post_new_page'  => NULL,
 			'count'          => "select count(*) from {$wpdb->prefix}posts where post_type='location' and post_status='publish'",
 		),
@@ -310,7 +310,6 @@ function cb2_admin_init_menus() {
 	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
   add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, 'cb2', 'cb2_options_page', 'dashicons-video-alt' );
 
-	add_submenu_page( 'cb2', 'Admin', "<span class='cb2-advanced-menu-item'>admin</span>", $capability_default, 'cb2-admin', 'cb2_admin_page' );
 	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
 		$capability = $details->capability;
 		if ( ! $capability ) $capability = $capability_default;
@@ -320,6 +319,9 @@ function cb2_admin_init_menus() {
 		$title = preg_replace( '/\%.+\%/', '', $details->page_title );
 		add_submenu_page( $parent_slug, $title, $details->menu_title, $capability, $menu_slug, 'cb2_settings_list_page' );
 	}
+	add_submenu_page( 'cb2', 'Admin',    "<span class='cb2-advanced-menu-item'>admin</span>",    $capability_default, 'cb2-admin',    'cb2_admin_page' );
+	add_submenu_page( 'cb2', 'Calendar', "<span class='cb2-advanced-menu-item'>calendar</span>", $capability_default, 'cb2-calendar', 'cb2_calendar' );
+	add_submenu_page( 'cb2', 'Reflection', "<span class='cb2-advanced-menu-item'>reflection</span>", $capability_default, 'cb2-reflection', 'cb2_reflection' );
 
 	// post-new.php (setup) => edit-form-advanced.php (form)
 	// The following line directly accesses the plugin post-new.php
@@ -374,7 +376,14 @@ function cb2_admin_page() {
 	print( '<h1>Super Admin Section</h1>' );
 	print( '<p>There be dragons</p>' );
 
+	print( '<h2>status</h2>');
+	print( '<ul>' );
+	print( '<li>error_reporting: ' . error_reporting() . '</li>' );
+	print( '</ul>' );
+
 	// --------------------------- reset data form
+	print( '<hr/>' );
+	print( '<h2>data</h2>');
 	$and_posts = isset( $_POST['and_posts'] ); // Checkbox
 	if ( isset( $_POST['reset_data'] ) ) {
 		$password  = $_POST['reset_data'];
@@ -386,9 +395,56 @@ function cb2_admin_page() {
 	$disabled          = ( isset( $_POST['reset_data'] ) ? 'disabled="1"' : '' );
 	print( "<form action='?page=cb2-admin' method='POST'>
 			<input type='hidden' name='reset_data' value='fryace4'/>
-			<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>And all non-post/page/location/item data</label>
+			<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>And all CB2 wp_post data</label>
 			<input $disabled class='cb2-submit cb2-dangerous' type='submit' value='Clear All Data'/>
 		</form>" );
+
+	// --------------------------- Model
+	print( '<hr/>' );
+	print( '<h2>model</h2>');
+	print( '<img src="' . plugins_url( CB_TEXTDOMAIN . '/wp-admin/model.png' ) . '"/>' );
+}
+
+function cb2_calendar() {
+	require_once( 'calendar.php' );
+}
+
+function cb2_reflection() {
+	// --------------------------------------- Reflection
+	print( '<h1>reflection</h1>' );
+	print( '<div style="font-weight:bold;">procedures</div>' );
+	krumo( CB_Database::procedures() );
+	print( '<div style="font-weight:bold;">tables</div>' );
+	krumo( CB_Database::tables() );
+	print( '<div style="font-weight:bold;">registered PHP objects</div>' );
+	$post_types = CB_Query::get_post_types();
+	foreach ( CB_Query::schema_types() as $Class ) {
+		$post_type      = $Class::$static_post_type;
+		$post_type_stub = CB_Query::substring_before( $post_type );
+		$post_details   = $post_types[$post_type];
+		print( "<div style='font-weight:bold;'>$Class($post_type):</div><ul>" );
+
+		foreach ($post_details as $name => $value )
+			print( "<li>$name = $value</li>" );
+
+		if ( CB_Database::has_table( "cb2_view_{$post_type_stub}_posts" ) )
+			print( "<li>has posts table cb2_view_{$post_type_stub}_posts</li>" );
+		if ( CB_Database::has_table( "cb2_view_{$post_type_stub}meta" ) )
+			print( "<li>has post meta table cb2_view_{$post_type_stub}meta</li>" );
+		if ( property_exists( $Class, 'database_table' ) && $Class::$database_table ) {
+			if ( CB_Database::has_table( $Class::$database_table ) )
+				print( "<li>database_table [" . $Class::$database_table . "] exists</li>" );
+			else
+				print( "<li class='cb2-error'>database_table [" . $Class::$database_table . "] NOT exists</li>" );
+		}
+		if ( CB_Database::has_procedure( "cb2_{$post_type}_update" ) )
+			print( "<li>UPDATE procedure exists</li>" );
+		if ( property_exists( $Class, 'all' ) )
+			print( '<li>$all collection exists</li>' );
+
+		print( '</ul>' );
+	}
+	print( '</div>' ); // .Reflection
 }
 
 function cb2_settings_list_page() {

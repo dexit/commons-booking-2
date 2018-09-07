@@ -24,13 +24,15 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
 	}
 
   function post_type() {return self::$static_post_type;}
+	function id( $why = '' ) {return $this->ID;}
 
   protected function __construct( $ID, $user_login = NULL ) {
     $this->perioditems    = array();
-		$this->id         = $ID;
+
+    if ( ! is_numeric( $ID ) ) throw new Exception( "[$ID] is not numeric for [" . get_class( $this ) . ']' );
 
     // WP_Post values
-    $this->ID         = $ID;
+    $this->ID         = (int) $ID;
     $this->user_login = $user_login;
     $this->post_title = $user_login;
     $this->post_type  = self::$static_post_type;
@@ -65,7 +67,8 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
       'ID' => $this->ID,
       'user_login' => $this->user_login,
     );
-    if ( self::$schema == 'with-perioditems' ) $array[ 'periods' ] = &$this->perioditems;
+    if ( self::$schema == 'with-perioditems' )
+			$array[ 'perioditems' ] = &$this->perioditems;
 
     return $array;
   }
@@ -81,15 +84,22 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
   public static $posts_table    = FALSE;
   public static $postmeta_table = FALSE;
   public static $database_table = FALSE;
+  public static $supports = array(
+		'title',
+		'editor',
+		'thumbnail',
+	);
 
   public function __toString() {return (string) $this->ID;}
+	function id( $why = '' ) {return $this->ID;}
 
   protected function __construct( $ID ) {
     $this->perioditems = array();
-		$this->id = $ID;
+
+    if ( ! is_numeric( $ID ) ) throw new Exception( "[$ID] is not numeric for [" . get_class( $this ) . ']' );
 
     // WP_Post values
-    $this->ID = $ID;
+    $this->ID = (int) $ID;
 
     parent::__construct( $this->perioditems );
 
@@ -118,7 +128,8 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
       'ID' => $this->ID,
       'post_title' => $this->post_title,
     );
-    if ( self::$schema == 'with-perioditems' ) $array[ 'periods' ] = &$this->perioditems;
+    if ( self::$schema == 'with-perioditems' )
+			$array[ 'perioditems' ] = &$this->perioditems;
 
     return $array;
   }
@@ -132,11 +143,6 @@ class CB_Location extends CB_Post implements JsonSerializable {
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-tools',
   );
-  public static $supports = array(
-		'title',
-		'editor',
-		'thumbnail',
-	);
 
 	static function selector_metabox() {
 		return array(
@@ -214,23 +220,10 @@ class CB_Location extends CB_Post implements JsonSerializable {
 		);
 	}
 
-  function render_location_summary(
-		CMB2_Field $field,
-			$field_escaped_value,
-			$object_id,
-			$object_type,
-			CMB2_Types $field_type_object
-	) {
-		// location-summary widget supports
-		exit();
-		return "<div>test</div>";
-  }
-
   function post_type() {return self::$static_post_type;}
 
   protected function __construct( $ID ) {
     parent::__construct( $ID );
-    $this->items = array();
 
     // WP_Post values
     $this->post_type = self::$static_post_type;
@@ -260,37 +253,88 @@ class CB_Location extends CB_Post implements JsonSerializable {
   }
 
   function manage_columns( $columns ) {
-		$columns['items'] = 'Item Availability';
+		$columns['item_availability'] = 'Item Availability';
+		$columns['bookings']          = 'Bookings';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
 
 	function custom_columns( $column ) {
+		global $post;
+
 		$html = '';
 		switch ( $column ) {
-			case 'items':
-				if ( count( $this->items ) ) {
-					$html .= ( '<ul>' );
-					foreach ( $this->items as $item ) {
-						$edit_link = "?page=cb-post-edit&post=$item->ID&post_type=item&action=edit";
-						$html     .= "<li><a href='$edit_link'>" . $item->post_title . '</a></li>';
+			case 'item_availability':
+				$wp_query = new WP_Query( array(
+					'post_type'   => 'periodent-timeframe',
+					'meta_query'  => array(
+						'location_clause' => array(
+							'key'   => 'location_ID',
+							'value' => $this->ID,
+						),
+						/*
+						'period_status_type_clause' => array(
+							'key'   => 'period_status_type_id',
+							'value' => CB2_PERIOD_STATUS_TYPE_AVAILABLE,
+						),
+						*/
+					),
+				) );
+
+				if ( $wp_query->have_posts() ) {
+					$html      .= '<ul>';
+					$outer_post = $post;
+					while ( $wp_query->have_posts() ) {
+						$wp_query->the_post();
+						$html .= '<li>' . the_summary() . '</li>';
 					}
-					$html .= ( '</ul>' );
-				} else $html .= ( 'No Items' );
+					$post  = &$outer_post;
+					$html .= '</ul>';
+				} else {
+					$html .= __( 'No Item Availability' );
+				}
+				$html .= " <a href='?page=cb-post-new&location_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001'>add</a>";
+				break;
+
+			case 'bookings':
+				$wp_query = new WP_Query( array(
+					'post_type'   => 'periodent-user',
+					'meta_query'  => array(
+						'location_clause' => array(
+							'key'   => 'location_ID',
+							'value' => $this->ID,
+						),
+						/*
+						'period_status_type_clause' => array(
+							'key'   => 'period_status_type_id',
+							'value' => CB2_PERIOD_STATUS_TYPE_AVAILABLE,
+						),
+						*/
+					),
+				) );
+
+				if ( $wp_query->have_posts() ) {
+					$html      .= '<ul>';
+					$outer_post = $post;
+					while ( $wp_query->have_posts() ) {
+						$wp_query->the_post();
+						$html .= '<li>' . the_summary() . '</li>';
+					}
+					$post  = &$outer_post;
+					$html .= '</ul>';
+				} else {
+					$html .= __( 'No Bookings' );
+				}
+				$html .= " <a href='?page=cb-post-new&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002'>add</a>";
 				break;
 		}
 		return $html;
 	}
 
-	function add_item( &$item ) {
-    array_push( $this->items, $item );
-    return $this;
-  }
-
   function jsonSerialize() {
     return array_merge( parent::jsonSerialize(),
       array(
-        'items' => &$this->items
+        'perioditems' => &$this->perioditems
     ));
   }
 }

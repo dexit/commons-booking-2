@@ -73,7 +73,7 @@ class CB_Forms {
   static function reset_data( $pass, $and_posts = FALSE ) {
     global $wpdb;
     $cleared      = FALSE;
-    $post_types   = "'page', 'post', 'location', 'item'";
+    $post_types   = "'periodgroup','period','periodent-global','periodent-location','periodent-timeframe','periodent-user'";
 		$post_IDs_SQL = "select ID from {$wpdb->prefix}posts where not post_type IN($post_types)";
 		$no_NULLs     = FALSE;
 		$no_prepare   = FALSE; // SQL clause in parameter
@@ -81,6 +81,16 @@ class CB_Forms {
 		$exists       = 'exists(select * from wp_posts where ID = post_id)';
 
     if ( WP_DEBUG && $pass == 'fryace4' ) {
+			// Native leaves
+			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_options', 'option_id' )->run();
+			CB_Database_Truncate::factory_truncate( 'cb2_global_period_groups', 'period_group_id' )->run();
+			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_period_groups', 'period_group_id' )->run();
+			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_user_period_groups', 'period_group_id' )->run();
+			CB_Database_Truncate::factory_truncate( 'cb2_location_period_groups', 'period_group_id' )->run();
+			CB_Database_Truncate::factory_truncate( 'cb2_period_group_period', 'period_group_id' )->run();
+			CB_Database_Truncate::factory_truncate( 'cb2_periods', 'period_id' )->run();
+			CB_Database_Truncate::factory_truncate( 'cb2_period_groups', 'period_group_id' )->run();
+
 			if ( $and_posts ) {
 				// Remove all non-page/post metadata
 				CB_Database_Delete::factory( 'postmeta' )->add_condition( 'post_id', $post_IDs_SQL, $no_NULLs, 'IN', $no_prepare )->run();
@@ -90,20 +100,10 @@ class CB_Forms {
 				// Remove all auto-drafts
 				CB_Database_Delete::factory( 'posts' )->add_condition( 'post_status', CB2_AUTODRAFT )->run();
 				// Remove ALL non page/posts
-				CB_Database_Delete::factory( 'posts' )->add_condition( 'post_type', $post_types, $no_NULLs, 'IN', $no_prepare, $NOT )->run();
+				CB_Database_Delete::factory( 'posts' )->add_condition( 'post_type', $post_types, $no_NULLs, 'IN', $no_prepare )->run();
 				// Clear up manual DRI
 				CB_Database_Delete::factory( 'postmeta' )->add_condition( $exists, NULL, $no_NULLs, NULL, $no_prepare, $NOT )->run();
 			}
-
-			// Clear native
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_options', 'option_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_global_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_user_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_location_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_period_group_period', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_periods', 'period_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_period_groups', 'period_group_id' )->run();
 			$cleared = TRUE;
     }
 

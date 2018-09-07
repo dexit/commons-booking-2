@@ -144,49 +144,57 @@ class CB_Database {
 		$new_data   = array();
 		$columns    = self::columns( $table, TRUE );
 
-		foreach ( $data as $field_name => $field_value ) {
-			if ( is_null( $field_value ) || empty( $field_value ) ) {
-				// Allow Database default values to take precedence
+		// Meta data queries use arrays
+		foreach ( $data as $name => &$value )
+			if ( is_array( $value ) ) $value = $value[0];
+
+		// Look through the data for a value for this column
+		foreach ( $columns as $column_name => $column_definition ) {
+			$data_value = NULL;
+			if ( isset( $data[$column_name] ) ) {
+				// Direct value with same name
+				$data_value = $data[$column_name];
 			} else {
-				// Meta data queries use arrays
-				if ( is_array( $field_value ) ) $field_value = $field_value[0];
+				// Standard mappings
+				switch ( $column_name ) {
+					case 'name':        if ( isset( $data['post_title'] ) )   $data_value = $data['post_title'];   break;
+					case 'description': if ( isset( $data['post_content'] ) ) $data_value = $data['post_content']; break;
+				}
 
-				if ( ! isset( $columns[$field_name] ) ) {
-					// Standard mappings
-					switch ( $field_name ) {
-						case 'post_title':   $field_name = 'name';        break;
-						case 'post_content': $field_name = 'description'; break;
-					}
-
-					// ID => id mappings
-					if ( substr( $field_name, -3 ) == '_ID' ) {
-						$field_stub  = substr( $field_name, 0, -3 );
-						$post_type   = str_replace( '_', '', $field_stub );
-						$field_name  = "{$field_stub}_id";
-						$field_value = CB_Query::id_from_ID_with_post_type( $field_value, $post_type );
-					}
-
-					// period_group => (object) period_group->period_group_id
-					if ( is_object( $field_value ) && property_exists( $field_value, "{$field_name}_id" ) ) {
-						$field_name  = "{$field_name}_id";
-						$field_value = $field_value->$field_name;
+				if ( substr( $column_name, -3 ) == '_ID' ) {
+					// period_group = CB_PeriodGroup => period_group_ID = CB_PeriodGroup->ID
+					$data_stub = substr( $column_name, 0, -3 );
+					if ( isset( $data[$data_stub] )
+						&& is_object( $data[$data_stub] )
+						&& property_exists( $data[$data_stub], 'ID' )
+					) {
+						$data_value = $data[$data_stub]->ID;
 					}
 				}
 
-				// Check table
-				if ( isset( $columns[$field_name] ) ) {
-					// Data conversion
-					$column_definition = $columns[$field_name];
-					switch ( CB_Query::substring_before( $column_definition->Type, '(' ) ) {
-						case 'bit':
-							$field_value = self::int_to_bitstring( $field_value );
-							break;
+				if ( substr( $column_name, -3 ) == '_id' ) {
+					// period_group = CB_PeriodGroup => period_group_ID = CB_PeriodGroup->ID
+					$data_stub = substr( $column_name, 0, -3 );
+					if ( isset( $data[$data_stub] )
+						&& is_object( $data[$data_stub] )
+						&& method_exists( $data[$data_stub], 'id' )
+					) {
+						$data_value = $data[$data_stub]->id( "For column [$column_name]" );
 					}
-					$field_value = CB_Query::cast_parameter( $field_name, $field_value );
-					$field_value = self::to_string( $field_name, $field_value );
-
-					$new_data[ $field_name ] = $field_value;
 				}
+			}
+
+			if ( ! is_null( $data_value ) && ! empty( $data_value ) ) {
+				// Data conversion
+				switch ( CB_Query::substring_before( $column_definition->Type, '(' ) ) {
+					case 'bit':
+						$data_value = self::int_to_bitstring( $data_value );
+						break;
+				}
+				$data_value = CB_Query::cast_parameter( $column_name, $data_value );
+				$data_value = self::to_string( $column_name, $data_value );
+
+				$new_data[ $column_name ] = $data_value;
 			}
 		}
 

@@ -40,8 +40,9 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		// This may not be present during post creation
 		$periods = array();
 		if ( property_exists( $post, 'period_IDs' ) && $post->period_IDs ) {
-			foreach ( explode( ',', $post->period_IDs) as $period_id ) {
-				$period = CB_Query::get_post_type( 'period', $period_id );
+			$period_IDs = CB_Query::ensure_ints( 'period_IDs', $post->period_IDs, TRUE );
+			foreach ( $period_IDs as $period_id ) {
+				$period = CB_Query::get_post_with_type( CB_Period::$static_post_type, $period_id );
 				array_push( $periods, $period );
 			}
 		}
@@ -102,29 +103,44 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		$html = '';
 		switch ( $column ) {
 			case 'periods':
-				$html .= ( '<ul class="cb2-period-list">' );
-				$count = count( $this->periods );
-				foreach ( $this->periods as $period ) {
-					$edit_link   = "<a href='?page=cb-post-edit&post=$period->ID&post_type=period&action=edit'>edit</a>";
-
-					$detach_link = '';
-					if ( $count > 1 ) {
-						$detach_text = 'detach';
-						$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=periodgroup&action=detach";
-						if ( $period->usage_once() ) {
-							$detach_text = 'delete';
-							$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=period&action=delete";
-						}
-						$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";
-					}
-
-					$summary     = $period->summary();
-					$html       .= "<li>$summary $edit_link $detach_link</li>";
-				}
-				$html .= ( '</ul>' );
-				$html .= ( '<a href="?">add new period</a> | <a href="?">attach existing period</a>' );
+				$html .= $this->summary_periods();
+				$html .= '<a href="admin.php?page=cb-post-new&post_type=period">add new period</a> | <a href="admin.php?page=cb2-periods">attach existing period</a>';
 				break;
 		}
+		return $html;
+	}
+
+	function summary_periods() {
+		$html = ( '<ul class="cb2-period-list">' );
+		$count = count( $this->periods );
+		foreach ( $this->periods as $period ) {
+			$edit_link   = "<a href='?page=cb-post-edit&post=$period->ID&post_type=period&action=edit'>edit</a>";
+
+			$detach_link = '';
+			if ( $count > 1 ) {
+				$detach_text = 'detach';
+				$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=periodgroup&action=detach";
+				if ( $period->usage_once() ) {
+					$detach_text = 'delete';
+					$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=period&action=delete";
+				}
+				$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";
+			}
+
+			$summary     = $period->summary();
+			$html       .= "<li>$summary $edit_link $detach_link</li>";
+		}
+		$html .= '</ul>';
+
+		return $html;
+	}
+
+	function summary() {
+		$html = ( $this->post_title ? $this->post_title : $this->ID );
+		$period_count = count( $this->periods );
+		if ( $period_count > 1 )
+			$html .= " <span class='cb2-usage-count' title='Several Periods'>$period_count</span>";
+		$html .= " <a href='post.php?post=$this->ID&action=edit'>edit</a>";
 		return $html;
 	}
 
@@ -134,8 +150,6 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 
   function post_post_update() {
 		global $wpdb;
-
-		var_dump($this);
 
 		// Link the Period to the PeriodGroup
 		$table = "{$wpdb->prefix}cb2_period_group_period";

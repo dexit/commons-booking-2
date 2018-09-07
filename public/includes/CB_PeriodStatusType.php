@@ -145,7 +145,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 			$object = self::$all[$ID];
     else {
       $Class = 'CB_PeriodStatusType';
-      $id    = CB_Query::id_from_ID_with_post_type( CB_PeriodStatusType::$static_post_type, $ID );
+      $id    = CB_Query::id_from_ID_with_post_type( $ID, CB_PeriodStatusType::$static_post_type );
       // Hardcoded system status types
       switch ( $id ) {
         case CB2_PERIOD_STATUS_TYPE_AVAILABLE: $Class = 'CB_PeriodStatusType_Available'; break;

@@ -22,6 +22,11 @@ function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_ty
 	}
 }
 
+function the_summary() {
+	global $post;
+	return ( is_object( $post ) && method_exists( $post, 'summary' ) ? $post->summary() : '' );
+}
+
 function is_current() {
 	// Indicates if the time post contains the current time
 	// e.g. if the CB_Day is today, or the CB_Week contains today
@@ -161,7 +166,7 @@ add_filter( 'the_content', 'cb2_template_include_ensure_correct_class', 1 );
 add_filter( "get_template_part_{$slug}", $slug, $name )
 add_action( 'get_template_part_template-parts/post/content', 'cb2_get_template_part', 10, 2 );
 function cb2_get_template_part( $slug, $name ) {
-	var_dump(array($slug, $name));
+	print( "cb2_get_template_part( $slug, $name )" );
 }
 */
 
@@ -196,7 +201,7 @@ function cb2_template_include_custom_plugin_templates( $content ) {
 		// Get class templates and the current template suggestion
 		$post_template_suggestions = NULL;
 		$post_type                 = $post->post_type;
-		
+
 		$context                   = CB_Query::template_loader_context();
 
 		if (is_single()) {

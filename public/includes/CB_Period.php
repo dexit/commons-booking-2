@@ -141,9 +141,12 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
 
 		// This may not exist in post creation
+		// We do not create the CB_PeriodGroup objects here
+		// because it could create a infinite circular creation
+		// as the CB_PeriodGroups already create their associated CB_Periods
 		$period_group_IDs = array();
-		if ( property_exists( $post, 'period_group_IDs' ) && $post->period_group_IDs )
-			$period_group_IDs = explode( ',', $post->period_group_IDs );
+		if ( property_exists( $post, 'period_group_IDs' ) )
+			$period_group_IDs = CB_Query::ensure_ints( 'period_group_IDs', $post->period_group_IDs, TRUE );
 
 		$object = self::factory(
 			$post->ID,
@@ -300,6 +303,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 	}
 
   function manage_columns( $columns ) {
+		$columns['summary'] = 'Summary';
 		$columns['periodgroups'] = 'Period Groups';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
@@ -308,6 +312,9 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 	function custom_columns( $column ) {
 		$html = '';
 		switch ( $column ) {
+			case 'summary':
+				$html .= $this->summary();
+				break;
 			case 'periodgroups':
 				$usage_count = $this->usage_count();
 				switch ( $usage_count ) {
@@ -315,11 +322,17 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 						$html .= 'No Period Group!';
 						break;
 					case 1:
-						$html .= implode( ',', $this->period_group_IDs );
+						$period_group = CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $this->period_group_IDs[0] );
+						$html .= $period_group->summary();
 						break;
 					default:
 						$html .= "<span class='cb2-usage-count' title='Used in several Period Groups'>$usage_count</span> ";
-						$html .= implode( ',', $this->period_group_IDs );
+						$html .= '<ul>';
+						foreach ( $this->period_group_IDs as $period_group_ID ) {
+							$period_group = CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $period_group_ID );
+							$html .= '<li>' . $period_group->summary() . '</li>';
+						}
+						$html .= '</ul>';
 						break;
 				}
 				break;
@@ -334,15 +347,17 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
   function post_post_update() {
 		global $wpdb;
 
-		var_dump($this);
-
-		// Link the Period to the PeriodGroup(s)
+		// Remove previous relations
 		$table = "{$wpdb->prefix}cb2_period_group_period";
 		$wpdb->delete( $table, array(
 			'period_id' => $this->id()
 		) );
-		foreach ( $this->$period_group_IDs as $period_group_ID ) {
-			$period_group_id = CB_Query::id_from_ID_post_type( CB_PeriodGroup::$static_post_type, $period_group_ID );
+
+		// Link the Period to the PeriodGroup(s)
+		// id_from_ID_with_post_type() and id()
+		// will throw Exceptions if IDs cannot be found
+		foreach ( $this->period_group_IDs as $period_group_ID ) {
+			$period_group_id = CB_Query::id_from_ID_with_post_type( $period_group_ID, CB_PeriodGroup::$static_post_type );
 			$wpdb->insert( $table, array(
 				'period_group_id' => $period_group_id,
 				'period_id'       => $this->id(),

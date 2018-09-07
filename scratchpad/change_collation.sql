@@ -11,6 +11,7 @@ show variables like 'coll%';
 show full columns from wp_posts;
 
 # getting the view definition without collation issues
+# MySQL Clients will often crash when trying to show the view details
 select VIEW_DEFINITION from INFORMATION_SCHEMA.VIEWS where TABLE_NAME = 'wp_cb2_view_periodentmeta' limit 1;
 
 # change everything

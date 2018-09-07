@@ -16,9 +16,9 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		if ( ! $post->period_status_type_ID ) throw new Exception( 'CB_PeriodEntity requires period_status_type_ID' );
 		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
 
-		$period_status_type = CB_Query::get_post_type( 'periodstatustype', $post->period_status_type_ID );
+		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
 		//  period_group_ID can == <create new>
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ) : NULL );
+		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
 
 		$object = self::factory(
 			$post->ID,
@@ -112,6 +112,8 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		$period_group,              // CB_PeriodGroup {[CB_Period, ...]}
     $period_status_type         // CB_PeriodStatusType
   ) {
+		parent::__construct();
+
 		$this->ID                 = $ID;
     $this->name               = $name;
 		$this->period_group       = $period_group;
@@ -119,14 +121,36 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
   }
 
 	function manage_columns( $columns ) {
+		if ( ! $this->period_group )
+			throw new Exception( '[' . get_class( $this ) . "] [$this->ID] has no period_group" );
 		return $this->period_group->manage_columns( $columns );
 	}
 
 	function custom_columns( $column ) {
+		if ( ! $this->period_group )
+			throw new Exception( '[' . get_class( $this ) . "] [$this->ID] has no period_group" );
 		return $this->period_group->custom_columns( $column );
 	}
 
+	function summary() {
+		$html      = '<b>' . $this->post_title . '</b>';
+
+		$post_type = $this->post_type();
+		$page      = 'cb-post-edit';
+		$action    = 'edit';
+		$edit_link = "?page=$page&post=$this->ID&post_type=$post_type&action=$action";
+		$html     .= " <a href='$edit_link'>edit</a>";
+
+		$html     .= '<br/>';
+		$html     .= $this->period_group->summary_periods();
+		return $html;
+	}
+
   function post_post_update() {
+		if ( ! $this->period_group ) {
+			krumo( $this );
+			throw new Exception( "CB_PeriodEntity has no period_group" );
+		}
 		return $this->period_group->post_post_update();
   }
 
@@ -154,8 +178,8 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
 		if ( ! $post->period_status_type_ID ) throw new Exception( 'CB_PeriodEntity requires period_status_type_ID' );
 		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
 
-		$period_status_type = CB_Query::get_post_type( 'periodstatustype', $post->period_status_type_ID );
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ) : NULL );
+		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
+		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
 
 		$object = self::factory(
 			$post->ID,
@@ -231,9 +255,9 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
 		if ( ! $post->location_ID )           throw new Exception( 'CB_PeriodEntity requires location_ID' );
 
-		$period_status_type = CB_Query::get_post_type( 'periodstatustype', $post->period_status_type_ID );
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ) : NULL );
-		$location           = CB_Query::get_post_type( 'location',         $post->location_ID );
+		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
+		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
+		$location           = CB_Query::get_post_with_type( CB_Location::$static_post_type, $post->location_ID );
 
 		$object = self::factory(
 			$post->ID,
@@ -314,10 +338,10 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 		if ( ! $post->location_ID )           throw new Exception( 'CB_PeriodEntity requires location_ID' );
 		if ( ! $post->item_ID )               throw new Exception( 'CB_PeriodEntity requires item_ID' );
 
-		$period_status_type = CB_Query::get_post_type( 'periodstatustype', $post->period_status_type_ID );
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ) : NULL );
-		$location           = CB_Query::get_post_type( 'location',         $post->location_ID );
-		$item               = CB_Query::get_post_type( 'item',             $post->item_ID );
+		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
+		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
+		$location           = CB_Query::get_post_with_type( CB_Location::$static_post_type,         $post->location_ID );
+		$item               = CB_Query::get_post_with_type( CB_Item::$static_post_type,             $post->item_ID );
 
 		$object = self::factory(
 			$post->ID,
@@ -406,10 +430,10 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 		if ( ! $post->item_ID )               throw new Exception( 'CB_PeriodEntity requires item_ID' );
 		if ( ! $post->user_ID )               throw new Exception( 'CB_PeriodEntity requires user_ID' );
 
-		$period_status_type = CB_Query::get_post_type( 'periodstatustype', $post->period_status_type_ID );
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_type( 'periodgroup', $post->period_group_ID ) : NULL );
-		$location           = CB_Query::get_post_type( 'location',         $post->location_ID );
-		$item               = CB_Query::get_post_type( 'item',             $post->item_ID );
+		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
+		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
+		$location           = CB_Query::get_post_with_type( CB_Location::$static_post_type,         $post->location_ID );
+		$item               = CB_Query::get_post_with_type( CB_Item::$static_post_type,             $post->item_ID );
 		$user               = CB_Query::get_user( $post->user_ID );
 
 		$object = self::factory(
@@ -473,7 +497,7 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
     array_push( $this->posts, $this->location );
 		$this->item = $item;
     array_push( $this->posts, $this->item );
-		$this->user = $item;
+		$this->user = $user;
     array_push( $this->posts, $this->user );
   }
 }
