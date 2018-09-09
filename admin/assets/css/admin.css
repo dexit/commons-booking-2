@@ -27,4 +27,207 @@
   background-color: #F1F1F1;
 }
 
+/* ---------------------- admin */
+.cb2-advanced-menu-item {
+	font-style:italic;
+}
+body .cb2-advanced-menu-item.cb2-first {
+	display:block;
+	border-top:1px dotted #d7d7d7;
+	padding-top:6px;
+}
+body .cb2-description {
+	margin:0px 8px;
+	color:#888;
+}
+a.cb2-selected {
+	text-decoration:none;
+	color: #555;
+	font-weight: bold;
+}
+.cb2-usage-count {
+	vertical-align: super;
+	font-size: 80%;
+
+	display: inline-block;
+	vertical-align: top;
+	margin: 1px 0 0 2px;
+	padding: 0 5px;
+	min-width: 7px;
+	height: 17px;
+	border-radius: 11px;
+	background-color: #ca4a1f;
+	color: #fff;
+	font-size: 9px;
+	line-height: 17px;
+	text-align: center;
+}
+.ui-widget {
+	background-color:#fff;
+	padding:4px;
+	border:1px solid #ddd;
+	box-shadow: 3px 3px #ddd;
+}
+
+/* ---------------------- calendar */
+label {
+	cursor:pointer;
+}
+
+.cb2-calendar {
+	width:100%;
+	border-collapse:collapse;
+}
+
+/* layout */
+.cb2-calendar > tbody  > tr {
+	padding:5px;
+	margin:2px;
+	overflow-y:hidden;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td.cb2-empty-pre-cell {
+	border:none;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts {
+	position:relative;
+	height:200px;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts > tbody > tr {
+	/* position:absolute; */
+	border:1px solid #d7d7d7;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts > tbody > tr > td {
+	position:relative;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td {
+	border:1px solid #d7d7d7;
+	vertical-align: top;
+	overflow:hidden;
+	padding:5px;
+}
+
+/* indicators */
+.cb2-perioditem-has-overlap {
+	opacity: 0.5;
+	color: #333;
+	border: 1px dotted #000;
+}
+.cb2-perioditem-has-overlap .cb2-period-period-status-type-name .cb2-field-value {
+	background-color:#777;
+}
+.cb2-indicators ul {
+	list-style:none;
+	padding:0px;
+}
+.cb2-indicators ul li {
+	float:left;
+}
+.cb2-indicators ul .cb2-indicator-collect,
+.cb2-indicators ul .cb2-indicator-return,
+.cb2-indicators ul .cb2-indicator-use {
+	display:none;
+}
+
+.cb2-indicator-no-collect {
+	background-color:#88ff88;
+}
+.cb2-indicator-no-return {
+	background-color:#ff8888;
+}
+.cb2-indicator-no-use {
+	background-color:#ff0000;
+}
+
+/* fields */
+.type-PeriodItem .entry-header {
+	display:none;
+}
+.type-day > .entry-header > .entry-title {
+	color:#888;
+	margin:0px;
+}
+.cb2-calendar .type-day.cb2-current > .entry-header {
+	color:#111;
+	font-weight:bold;
+	background-color:#c7c7c7;
+}
+.cb2-calendar .type-week.cb2-current  > td:first-child,
+.cb2-calendar .type-month.cb2-current > td:first-child {
+	border-left:3px double #dd0000;
+}
+.cb2-time {
+	margin-right:4px;
+	color:#444444;
+}
+.cb2-field-name {
+	display:none;
+}
+.cb2-period-period-status-type-name .cb2-field-value {
+	color:#fff;
+	background-color:#000;
+	font-size:10px;
+	padding:1px 4px;
+}
+
+.cb2-booked {
+	background-color:#ffdddd;
+}
+
+/* Entity types */
+.cb2-period-group-type {
+	font-size: 10px;
+	font-weight:bold;
+	color:#fff;
+	background-color:#000;
+	margin-right:2px;
+}
+.cb2-period-group-type .cb2-field-value {
+	writing-mode: vertical-rl;
+	text-orientation: upright;
+}
+.cb2-period-group-type-A .cb2-period-group-type {
+}
+.cb2-period-group-type-G .cb2-period-group-type {
+	background-color:#ff8888;
+}
+.cb2-period-group-type-L .cb2-period-group-type {
+	background-color:#88ff88;
+}
+.cb2-period-group-type-I .cb2-period-group-type {
+	background-color:#8888ff;
+}
+.cb2-period-group-type-U .cb2-period-group-type {
+	background-color:#ffff88;
+}
+
+.cb2-help {
+	color:#773333;
+	font-family:sans;
+	font-size:11px;
+}
+.cb2-submit {
+	height:40px;
+	font-weight:bold;
+}
+h2 {
+	font-size: 16px;
+	margin-bottom:0px;
+	margin-top:4px;
+}
+h2 a {
+	font-size:11px;
+	text-decoration:none;
+}
+#cb2-calendar-actions {
+	float:right;
+}
+
+/* availability */
+.cb2-template-available {
+	cursor:pointer;
+}
+.cb2-template-available h4 {
+	display:inline;
+}
+
 /*# sourceMappingURL=admin.css.map */

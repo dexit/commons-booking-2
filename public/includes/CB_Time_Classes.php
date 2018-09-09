@@ -226,7 +226,7 @@ class CB_Day extends CB_TimePostNavigator {
     $this->dayinmonth   = (int) $date->format( 'j' ); // 0-31 day in month
     $this->dayofweek    = (int) $date->format( 'w' ); // Sunday start day (see below)
     $this->dayofyear    = (int) $date->format( 'z' ); // 0-365
-    $this->today        = ( $date->format( 'Y-m-d' ) == (new DateTime())->format( 'Y-m-d' ) );
+    $this->today        = ( $date->format( CB_Query::$date_format ) == (new DateTime())->format( CB_Query::$date_format ) );
     $this->is_current   = $this->today;
     $this->title        = $date->format( $title_format );
 

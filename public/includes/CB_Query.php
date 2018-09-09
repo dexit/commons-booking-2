@@ -62,6 +62,8 @@ class CB_Query {
 	private static $schema_types = array();
 
   public  static $javascript_date_format = 'Y-m-d H:i:s';
+  public  static $date_format = 'Y-m-d';
+  public  static $datetime_format = 'Y-m-d H:i:s';
   public  static $meta_NULL = 'NULL';
   public  static $without_meta = array(
 		'key'     => 'item_ID',
@@ -134,7 +136,9 @@ class CB_Query {
 			print( "Notice: [$Class] get_post_with_type() using wp_posts table" );
 
 		// WP_Post::get_instance() will check the cache
+		// TODO: Can we intelligently wp_cache_delete() instead?
 		wp_cache_delete( $post_id, 'posts' );
+
 		$post = get_post( $post_id, $output, $filter );
 		if ( is_null( $post ) )
 			throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
@@ -396,16 +400,19 @@ class CB_Query {
 
 	static function ensure_datetime( $name, $object ) {
 		// Maintains NULLs
+		// empty = NULL
 		$datetime     = NULL;
 		$now          = new DateTime();
 		$epoch_min    = 20000000; // Thursday, 20 August 1970
 
-		if      ( $object instanceof DateTime ) $datetime = &$object;
+		if      ( is_null( $object ) )          $datetime = NULL;
+		else if ( is_string( $object ) && empty( $object ) )
+																						$datetime = NULL;
+		else if ( $object === FALSE )           $datetime = NULL; // Happens when object->property fails
+		else if ( $object instanceof DateTime ) $datetime = &$object;
 		else if ( is_numeric( $object ) && $object > $epoch_min )
 																						$datetime = $now->setTimestamp( (int) $object );
 		else if ( is_string( $object ) )        $datetime = new DateTime( $object );
-		else if ( is_null( $object ) )          $datetime = NULL;
-		else if ( $object === FALSE )           $datetime = NULL; // Happens when object->property fails
 		else {
 			krumo( $object );
 			throw new Exception( "[$name] has unhandled datetime type" );

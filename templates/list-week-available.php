@@ -1,5 +1,3 @@
-<?php echo "template : list-week-available.php <br>"; ?>
-
 <tr id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 	<?php //the_content(); ?>
 

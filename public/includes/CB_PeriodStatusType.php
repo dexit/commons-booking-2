@@ -16,12 +16,13 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 			'title'      => __( 'Period Status Type', 'commons-booking-2' ),
 			'show_names' => FALSE,
 			'context'    => 'side',
+			'closed'     => true,
 			'fields'     => array(
 				array(
 					'name'    => __( 'PeriodStatusType', 'commons-booking-2' ),
 					'id'      => 'period_status_type_ID',
-					'type'    => 'select',
-					'default' => $_GET['period_status_type_ID'],
+					'type'    => 'radio',
+					'default' => ( isset( $_GET['period_status_type_ID'] ) ? $_GET['period_status_type_ID'] : NULL ),
 					'options' => CB_Forms::period_status_type_options(),
 				),
 				array(

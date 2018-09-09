@@ -13,7 +13,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
   function post_type() {return self::$static_post_type;}
 
 	static function metaboxes() {
-		$format_date = 'Y-m-d';
+		$format_date = CB_Query::$date_format;
 		return array(
 			array(
 				'title' => __( 'Period', 'commons-booking-2' ),
@@ -36,15 +36,20 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			),
 
 			array(
-				'title' => __( 'Recurrence', 'commons-booking-2' ),
-				'context' => 'side',
+				'title' => __( 'Recurrence (optional)', 'commons-booking-2' ),
+				'context' => 'normal',
 				'show_names' => FALSE,
+				'add_button'    => __( 'Add Another Entry', 'commons-booking-2' ),
+				'remove_button' => __( 'Remove Entry', 'commons-booking-2' ),
+				'closed'     => true,
 				'fields' => array(
 					array(
 						'name' => __( 'Type', 'commons-booking-2' ),
 						'id' => 'recurrence_type',
-						'type' => 'select',
+						'type' => 'radio_inline',
 						'show_option_none' => TRUE,
+						// TODO: cannot reset Reccurrence to None after setting it
+						// because the value is not sent through and then not changed
 						'options'          => array(
 							'D' => __( 'Daily', 'commons-booking-2' ),
 							'W' => __( 'Weekly', 'commons-booking-2' ),
@@ -52,14 +57,6 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 							'Y' => __( 'Yearly', 'commons-booking-2' ),
 						),
 					),
-				),
-			),
-
-			array(
-				'title' => __( 'Sequence', 'commons-booking-2' ),
-				'context' => 'side',
-				'show_names' => FALSE,
-				'fields' => array(
 					array(
 						'name' => __( 'Sequence', 'commons-booking-2' ),
 						'id' => 'recurrence_sequence',
@@ -80,6 +77,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			array(
 				'title' => __( 'Validity Period (optional)', 'commons-booking-2' ),
 				'desc'  => __( 'Only relevant for reccurring periods. For example: every Monday during summer.', 'commons-booking-2' ),
+				'closed'     => true,
 				'fields' => array(
 					array(
 						'name' => __( 'From Date', 'commons-booking-2' ),
@@ -128,7 +126,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 					'id'      => 'period_ID',
 					'type'    => 'select',
 					//'show_option_none' => TRUE,
-					'default' => $_GET['period_ID'],
+					'default' => ( isset( $_GET['period_ID'] ) ? $_GET['period_ID'] : NULL ),
 					'options' => $period_options,
 				),
 			),
@@ -236,11 +234,13 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
   // ------------------------------------- Output
   function summary( $format = NULL ) {
     $now      = new DateTime();
-    $summary  = '';
-    if ( $datetime_to && $datetime_to < $now ) $summary .= 'Invalid ';
+    $classes  = $this->classes();
+    $summary  = "<span class='$classes'>";
+    if      ( $this->is_expired() ) $summary .= '<i class="cb2-invalidity">Expired ' . $this->summary_date( $this->datetime_to   )   . '</i>: ';
+    else if ( $this->is_future() )  $summary .= '<i class="cb2-invalidity">Future '  . $this->summary_date( $this->datetime_from   ) . '</i>: ';
     else {
-			if ( $datetime_from > $now ) $summary .= 'Valid from ' . $this->summary_date( $this->datetime_from ) . ' ';
-			if ( $datetime_to   > $now ) $summary .= 'to ' .         $this->summary_date( $this->datetime_to   ) . ' ';
+			if ( $this->datetime_from > $now ) $summary .= 'Valid from ' . $this->summary_date( $this->datetime_from ) . ' ';
+			if ( $this->datetime_to   > $now ) $summary .= 'to ' .         $this->summary_date( $this->datetime_to   ) . ' ';
 		}
 		$summary .= $this->summary_recurrence_type();
 		$summary .= ' ' . $this->summary_date_period();
@@ -249,6 +249,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			$summary .= " <span class='cb2-usage-count' title='Used in several Period Groups'>" .
 				$this->usage_count() .
 				"</span>";
+    $summary .= '</span>';
 
 		return $summary;
   }
@@ -264,10 +265,10 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
   function summary_recurrence_type( ) {
 		$recurrence_string = '';
 		switch ( $this->recurrence_type ) {
-			case 'D': $recurrence_string = 'daily';   break;
-			case 'W': $recurrence_string = 'weekly';  break;
-			case 'M': $recurrence_string = 'monthly'; break;
-			case 'Y': $recurrence_string = 'yearly';  break;
+			case 'D': $recurrence_string = 'Daily';   break;
+			case 'W': $recurrence_string = 'Weekly';  break;
+			case 'M': $recurrence_string = 'Monthly'; break;
+			case 'Y': $recurrence_string = 'Yearly';  break;
 		}
 		return $recurrence_string;
   }
@@ -275,8 +276,8 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
   function summary_date_period( $format_date = 'M-d', $format_time = 'H:m' ) {
 		$summary = '';
 		$now     = new DateTime();
-		if ( $this->datetime_part_period_start->format( 'Y-m-d' ) == $this->datetime_part_period_end->format( 'Y-m-d' ) ) {
-			if ( $now->format( 'Y-m-d' ) == $this->datetime_part_period_start->format( 'Y-m-d' ) )
+		if ( $this->datetime_part_period_start->format( CB_Query::$date_format ) == $this->datetime_part_period_end->format( CB_Query::$date_format ) ) {
+			if ( $now->format( CB_Query::$date_format ) == $this->datetime_part_period_start->format( CB_Query::$date_format ) )
 				$summary .= 'Today';
 			else
 				$summary .= $this->summary_date( $this->datetime_part_period_start );
@@ -340,8 +341,25 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		return $html;
 	}
 
+	function is_expired() {
+		$now = new DateTime();
+		return ! is_null( $this->datetime_to ) && $this->datetime_to < $now;
+	}
+
+	function is_future() {
+		$now = new DateTime();
+		return $this->datetime_from >= $now;
+	}
+
+	function is_valid() {
+		return ( ! $this->is_expired() && ! $this->is_future() );
+	}
+
 	function classes() {
-		return '';
+		$classes = '';
+		if ( $this->is_expired() ) $classes .= ' cb2-expired cb2-invalid';
+		if ( $this->is_future() )  $classes .= ' cb2-future cb2-invalid';
+		return $classes;
   }
 
   function post_post_update() {

@@ -4,8 +4,41 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 
 	static function metaboxes() {
 		$metaboxes = CB_Period::metaboxes();
+		array_push( $metaboxes,
+			array(
+				'title' => __( 'Status', 'commons-booking-2' ),
+				'context' => 'side',
+				'show_names' => TRUE,
+				'fields' => array(
+					array(
+						'name' => __( 'Enabled', 'commons-booking-2' ),
+						'id' => 'enabled',
+						'type' => 'checkbox',
+						'default' => 1,
+					),
+				),
+			)
+		);
+		array_push( $metaboxes,
+			array(
+				'title' => __( 'Calendar view', 'commons-booking-2' ),
+				'context' => 'normal',
+				'show_names' => FALSE,
+				'fields' => array(
+					array(
+						'name' => __( 'Timeframe', 'commons-booking-2' ),
+						'id' => 'calendar',
+						'type' => 'calendar',
+						'options' => array(
+							'template' => 'available',
+						),
+					),
+				),
+			)
+		);
 		array_push( $metaboxes, CB_PeriodStatusType::selector_metabox() );
 		array_push( $metaboxes, CB_Period::selector_metabox() );
+
 		return $metaboxes;
 	}
 

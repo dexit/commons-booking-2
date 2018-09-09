@@ -412,7 +412,10 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 // ------------------------------------------------------------------------------------------
 // Framework integration
 function cb2_init_temp_debug_enqueue() {
-	if ( WP_DEBUG ) wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-debug', plugins_url( 'public/assets/css/debug.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
+	// TODO: re-enable CB_Enqueue
+	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-admin',  plugins_url( 'admin/assets/css/admin.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
+	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
+	wp_enqueue_script( CB_TEXTDOMAIN . '-plugin-script', plugins_url( 'admin/assets/js/admin.js', CB_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB_VERSION );
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {
@@ -631,8 +634,7 @@ function cb2_pre_get_posts_query_string_extensions() {
 	if ( isset( $_GET[ 'location_ID' ] ) )             $meta_query_items[ 'location_clause' ]    = array( 'key' => 'location_ID', 'value' => $_GET[ 'location_ID' ] );
 	if ( isset( $_GET[ 'item_ID' ] ) )                 $meta_query_items[ 'item_clause' ]        = array( 'key' => 'item_ID',     'value' => $_GET[ 'item_ID' ] );
 	if ( isset( $_GET[ 'user_ID' ] ) )                 $meta_query_items[ 'user_clause' ]        = array( 'key' => 'user_ID',     'value' => $_GET[ 'user_ID' ] );
-	if ( isset( $_GET[ 'period_status_type_ID' ] ) )   $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_ID', 'value' => $_GET[ 'period_status_type_ID' ] );
-	if ( isset( $_GET[ 'period_status_type_id' ] ) )   $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_id', 'value' => $_GET[ 'period_status_type_id' ] );
+	if ( isset( $_GET[ 'period_status_type_ID' ] ) )   $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_ID',   'value' => $_GET[ 'period_status_type_ID' ] );
 	if ( isset( $_GET[ 'period_status_type_name' ] ) ) $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_name', 'value' => $_GET[ 'period_status_type_name' ] );
 
 	if ( $meta_query_items ) {
@@ -649,7 +651,6 @@ function cb2_query_vars( $qvars ) {
 	$qvars[] = 'show_overridden_periods';
 	$qvars[] = 'location_ID';
 	$qvars[] = 'item_ID';
-	$qvars[] = 'period_status_type_id';
 	$qvars[] = 'period_status_type_ID';
 	$qvars[] = 'period_status_type_name';
 

@@ -10,6 +10,7 @@
  * and, after creation, the period(s) must be 1-many linked to the relevant period_group
  */
 require_once( 'CMB2-field-Icon/cmb-field-icon.php' );
+require_once( 'CMB2-field-Calendar/cmb-field-calendar.php' );
 
 function cb2_admin_pages() {
 	// %token% replacement happens on ALL parameters.
@@ -21,7 +22,7 @@ function cb2_admin_pages() {
 		'cb2-holidays'      => (object) array(
 			'parent_slug'   => '',
 			'page_title'    => 'Holidays %(for)% %location_ID%',
-			'menu_title'    => 'holidays',
+			'menu_title'    => 'Holidays',
 			'capability'    => NULL,
 			'function'      => NULL,
 			'wp_query_args' => 'post_type=periodent-global&period_status_type_ID=100000006&post_title=Holidays',
@@ -32,11 +33,11 @@ function cb2_admin_pages() {
 		'cb2-items'         => (object) array(
 			'parent_slug' => '',
 			'page_title' => 'Items',
-			'menu_title' => 'items',
+			'menu_title' => 'Items',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=item',
-			'actions'    => '<a href="?page=cb2-repairs&item_ID=%ID%">Manage Repairs</a>,<a href="?page=cb2-timeframes&item_ID=%ID%">Manage Availability</a>',
+			'actions'    => NULL,
 			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}posts where post_type='item' and post_status='publish'",
 		),
@@ -44,7 +45,7 @@ function cb2_admin_pages() {
 			'parent_slug' => '',
 			'indent'      => 1,
 			'page_title' => 'Repairs %(for)% %location_ID% %item_ID%',
-			'menu_title' => 'repairs',
+			'menu_title' => 'Repairs',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000005',
@@ -54,7 +55,7 @@ function cb2_admin_pages() {
 		'cb2-locations'     => (object) array(
 			'parent_slug'    => '',
 			'page_title'     => 'Locations',
-			'menu_title'     => 'locations',
+			'menu_title'     => 'Locations',
 			'capability'     => NULL,
 			'function'       => NULL,
 			'wp_query_args'  => 'post_type=location',
@@ -66,7 +67,7 @@ function cb2_admin_pages() {
 			'parent_slug' => '',
 			'indent'      => 1,
 			'page_title' => 'Opening Hours %(for)% %location_ID%',
-			'menu_title' => 'opening hours',
+			'menu_title' => 'Opening Hours',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-location&period_status_type_ID=100000004&post_title=Opening Hours %(for)% %location_ID%',
@@ -77,7 +78,7 @@ function cb2_admin_pages() {
 			'parent_slug' => '',
 			'indent'      => 1,
 			'page_title' => 'Item availibility %(for)% %location_ID%',
-			'menu_title' => 'item availibility',
+			'menu_title' => 'Item Availibility',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-timeframe&period_status_type_ID=100000001',
@@ -90,7 +91,7 @@ function cb2_admin_pages() {
 		'cb2-periods' => (object) array(
 			'parent_slug'   => '',
 			'page_title'    => 'Periods',
-			'menu_title'    => 'periods',
+			'menu_title'    => 'Periods',
 			'capability'    => NULL,
 			'function'      => NULL,
 			'wp_query_args' => 'post_type=period',
@@ -103,7 +104,7 @@ function cb2_admin_pages() {
 			'parent_slug'   => '',
 			'indent'        => 1,
 			'page_title'    => 'Period Globals',
-			'menu_title'    => 'period globals',
+			'menu_title'    => 'Period Globals',
 			'capability'    => NULL,
 			'function'      => NULL,
 			'wp_query_args' => 'post_type=periodent-global',
@@ -115,7 +116,7 @@ function cb2_admin_pages() {
 			'parent_slug' => '',
 			'indent'        => 1,
 			'page_title' => 'Period Locations',
-			'menu_title' => 'period locations',
+			'menu_title' => 'Period Locations',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-location',
@@ -127,7 +128,7 @@ function cb2_admin_pages() {
 			'parent_slug' => '',
 			'indent'        => 1,
 			'page_title' => 'Period Timeframes',
-			'menu_title' => 'period timeframes',
+			'menu_title' => 'Period Timeframes',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-timeframe',
@@ -139,7 +140,7 @@ function cb2_admin_pages() {
 			'parent_slug' => '',
 			'indent'        => 1,
 			'page_title' => 'Period Users',
-			'menu_title' => 'period users',
+			'menu_title' => 'Period Users',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-user',
@@ -151,7 +152,7 @@ function cb2_admin_pages() {
 		'cb2-period-groups' => (object) array(
 			'parent_slug' => '',
 			'page_title' => 'Period Groups',
-			'menu_title' => 'period groups',
+			'menu_title' => 'Period Groups',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodgroup',
@@ -162,7 +163,7 @@ function cb2_admin_pages() {
 		'cb2-periodstatustypes' => (object) array(
 			'parent_slug' => '',
 			'page_title' => 'Period Status Types',
-			'menu_title' => 'period status types',
+			'menu_title' => 'Period Status Types',
 			'capability' => NULL,
 			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodstatustype',
@@ -319,9 +320,9 @@ function cb2_admin_init_menus() {
 		$title = preg_replace( '/\%.+\%/', '', $details->page_title );
 		add_submenu_page( $parent_slug, $title, $details->menu_title, $capability, $menu_slug, 'cb2_settings_list_page' );
 	}
-	add_submenu_page( 'cb2', 'Admin',    "<span class='cb2-advanced-menu-item'>admin</span>",    $capability_default, 'cb2-admin',    'cb2_admin_page' );
-	add_submenu_page( 'cb2', 'Calendar', "<span class='cb2-advanced-menu-item'>calendar</span>", $capability_default, 'cb2-calendar', 'cb2_calendar' );
-	add_submenu_page( 'cb2', 'Reflection', "<span class='cb2-advanced-menu-item'>reflection</span>", $capability_default, 'cb2-reflection', 'cb2_reflection' );
+	add_submenu_page( 'cb2', 'Admin',    "<span class='cb2-advanced-menu-item'>Admin</span>",    $capability_default, 'cb2-admin',    'cb2_admin_page' );
+	add_submenu_page( 'cb2', 'Calendar', "<span class='cb2-advanced-menu-item'>Calendar</span>", $capability_default, 'cb2-calendar', 'cb2_calendar' );
+	add_submenu_page( 'cb2', 'Reflection', "<span class='cb2-advanced-menu-item'>Reflection</span>", $capability_default, 'cb2-reflection', 'cb2_reflection' );
 
 	// post-new.php (setup) => edit-form-advanced.php (form)
 	// The following line directly accesses the plugin post-new.php

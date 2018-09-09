@@ -25,7 +25,7 @@ class CB_Enqueue {
 
 		add_filter( 'the_content', array ( __CLASS__, 'cb_template_chooser' ) );
 
-		
+
 		$shortcodes = new CB_Shortcodes();
 		add_shortcode( 'cb_calendar', array( $shortcodes, 'calendar_shortcode' ) ) ;
 		add_shortcode( 'cb_timeframe', array( $shortcodes, 'timeframe_shortcode' ) ) ;
@@ -45,7 +45,6 @@ class CB_Enqueue {
 	 */
 	public static function enqueue_styles() {
 		wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles', plugins_url( 'public/assets/css/public.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
-		if ( WP_DEBUG ) wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-debug', plugins_url( 'public/assets/css/debug.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
 	}
 	/**
 	 * Register and enqueues public-facing JavaScript files.

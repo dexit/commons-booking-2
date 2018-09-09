@@ -140,7 +140,7 @@ class CB_PostNavigator {
     return true;
 	}
 
-  function templates( $context = NULL, $type = NULL ) {
+  function templates( $context = 'list', $type = NULL ) {
 		$templates     = array();
 		$post_type     = $this->post_type;
 

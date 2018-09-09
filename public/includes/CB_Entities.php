@@ -16,7 +16,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
 					'name'    => __( 'User', 'commons-booking-2' ),
 					'id'      => 'user_ID',
 					'type'    => 'select',
-					'default' => $_GET['user_ID'],
+					'default' => ( isset( $_GET['user_ID'] ) ? $_GET['user_ID'] : NULL ),
 					'options' => CB_Forms::user_options(),
 				),
 			),
@@ -153,7 +153,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 					'name'    => __( 'Location', 'commons-booking-2' ),
 					'id'      => 'location_ID',
 					'type'    => 'select',
-					'default' => $_GET['location_ID'],
+					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
 					'options' => CB_Forms::location_options(),
 				),
 			),
@@ -171,21 +171,21 @@ class CB_Location extends CB_Post implements JsonSerializable {
 					'name'    => __( 'Location', 'commons-booking-2' ),
 					'id'      => 'location_ID',
 					'type'    => 'select',
-					'default' => $_GET['location_ID'],
+					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
 					'options' => CB_Forms::location_options(),
 				),
 				array(
 					'name'    => __( 'Holidays', 'commons-booking-2' ),
 					'id'      => 'holidays',
 					'type'    => 'select',
-					'default' => $_GET['location_ID'],
+					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
 					'options' => array(),
 				),
 				array(
 					'name'    => __( 'Opening Hours', 'commons-booking-2' ),
 					'id'      => 'opening_hours',
 					'type'    => 'select',
-					'default' => $_GET['location_ID'],
+					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
 					'options' => array(),
 				),
 				array(
@@ -273,8 +273,10 @@ class CB_Location extends CB_Post implements JsonSerializable {
 							'value' => $this->ID,
 						),
 						/*
+						// TODO: this does not work because the ID can change
+						// and we have no _id metadata
 						'period_status_type_clause' => array(
-							'key'   => 'period_status_type_id',
+							'key'   => 'period_status_type_ID',
 							'value' => CB2_PERIOD_STATUS_TYPE_AVAILABLE,
 						),
 						*/
@@ -305,6 +307,8 @@ class CB_Location extends CB_Post implements JsonSerializable {
 							'value' => $this->ID,
 						),
 						/*
+						// TODO: this does not work because the ID can change
+						// and we have no _id metadata
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
 							'value' => CB2_PERIOD_STATUS_TYPE_AVAILABLE,
@@ -357,7 +361,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 					'name'    => __( 'Item', 'commons-booking-2' ),
 					'id'      => 'item_ID',
 					'type'    => 'select',
-					'default' => $_GET['item_ID'],
+					'default' => ( isset( $_GET['item_ID'] ) ? $_GET['item_ID'] : NULL ),
 					'options' => CB_Forms::item_options(),
 				),
 			),
@@ -394,6 +398,114 @@ class CB_Item extends CB_Post implements JsonSerializable {
 
     return $object;
   }
+
+  function manage_columns( $columns ) {
+		$columns['availability'] = 'Availability';
+		$columns['bookings']     = 'Bookings';
+		$this->move_column_to_end( $columns, 'date' );
+		return $columns;
+	}
+
+	function custom_columns( $column ) {
+		global $post;
+
+		$html = '';
+		switch ( $column ) {
+			case 'availability':
+				$wp_query = new WP_Query( array(
+					'post_type'   => 'periodent-timeframe',
+					'meta_query'  => array(
+						'location_clause' => array(
+							'key'   => 'item_ID',
+							'value' => $this->ID,
+						),
+						/*
+						// TODO: this does not work because the ID can change
+						// and we have no _id metadata
+						'period_status_type_clause' => array(
+							'key'   => 'period_status_type_id',
+							'value' => CB2_PERIOD_STATUS_TYPE_AVAILABLE,
+						),
+						*/
+					),
+				) );
+
+				if ( $wp_query->have_posts() ) {
+					$html      .= '<ul>';
+					$outer_post = $post;
+					while ( $wp_query->have_posts() ) {
+						$wp_query->the_post();
+						$html .= '<li>' . the_summary() . '</li>';
+					}
+					$post  = &$outer_post;
+					$html .= '</ul>';
+				} else {
+					$html .= __( 'No Item Availability' );
+				}
+				$html .= " <a href='?page=cb-post-new&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001'>add</a>";
+				break;
+
+			case 'bookings':
+				$wp_query = new WP_Query( array(
+					'post_type'   => 'periodent-user',
+					'meta_query'  => array(
+						'item_clause' => array(
+							'key'   => 'item_ID',
+							'value' => $this->ID,
+						),
+						/*
+						// TODO: this does not work because the ID can change
+						// and we have no _id metadata
+						'period_status_type_clause' => array(
+							'key'   => 'period_status_type_id',
+							'value' => CB2_PERIOD_STATUS_TYPE_AVAILABLE,
+						),
+						*/
+					),
+				) );
+
+				if ( $wp_query->have_posts() ) {
+					$html      .= '<ul>';
+					$outer_post = $post;
+					while ( $wp_query->have_posts() ) {
+						$wp_query->the_post();
+						$html .= '<li>' . the_summary() . '</li>';
+					}
+					$post  = &$outer_post;
+					$html .= '</ul>';
+				} else {
+					$html .= __( 'No Bookings' );
+				}
+				$html .= " <a href='?page=cb-post-new&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002'>add</a>";
+				break;
+		}
+		return $html;
+	}
+
+	function add_actions( &$actions, $post ) {
+		$wp_query = new WP_Query( array(
+			'post_type'   => 'periodent-user',
+			'meta_query'  => array(
+				'item_clause' => array(
+					'key'   => 'item_ID',
+					'value' => $this->ID,
+				),
+				'period_status_type_clause' => array(
+					'key'   => 'period_status_type_name',
+					'value' => 'repair',
+				),
+			),
+		) );
+		// TODO: why not working?
+		$repair_count = $wp_query->post_count;
+
+		$action = "<a href='admin.php?page=cb2-repairs&item_ID=$this->ID'>Manage Repairs";
+		if ( $repair_count || TRUE)
+			$action .= " <span class='cb2-usage-count' title='Number of registered repair periods'>$repair_count</span> ";
+		$action .= '</a>';
+
+		$actions[ 'manage_repairs' ] = $action;
+	}
 }
 CB_Query::register_schema_type( 'CB_Item' );
 

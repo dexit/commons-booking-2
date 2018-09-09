@@ -6,7 +6,6 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
   public  static $static_post_type = 'perioditem';
   public  static $postmeta_table   = FALSE;
   public  static $standard_fields  = array(
-		'period_group_type',
 		'time_start',
 		'name',
 		'period->period_status_type->name',
@@ -280,7 +279,6 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
       'classes' => $this->classes(),
       'styles' => $this->styles(),
       'indicators' => $this->indicators(),
-      'period_group_type' => $this->period_group_type,
       'fullday' => $this->fullday
     );
   }
@@ -448,9 +446,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end,
-
-		$timeframe_id
+		$datetime_period_item_end
 	) {
     parent::__construct(
 			$ID,

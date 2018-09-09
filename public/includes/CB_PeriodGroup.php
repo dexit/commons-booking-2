@@ -23,7 +23,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 					'id'      => 'period_group_ID',
 					'type'    => 'select',
 					//'show_option_none' => TRUE,
-					'default' => $_GET['period_group_ID'],
+					'default' => ( isset( $_GET['period_group_ID'] ) ? $_GET['period_group_ID'] : NULL ),
 					'options' => $period_group_options,
 				),
 			),

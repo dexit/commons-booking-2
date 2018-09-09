@@ -34,6 +34,21 @@ function is_current() {
 	return is_object( $post ) && property_exists( $post, 'is_current' ) && $post->is_current;
 }
 
+function is_top_priority() {
+	// Indicates if the perioditem is overridden by another overlapping perioditem
+	global $post, $wp_query;
+
+	$top_priority = TRUE;
+	$show_overridden_periods = (
+		isset( $wp_query->query_vars['show_overridden_periods'] ) &&
+		$wp_query->query_vars['show_overridden_periods'] != 'no'
+	);
+	if ( is_object( $post ) && method_exists( $post, 'is_top_priority' ) )
+		$top_priority = $post->is_top_priority();
+
+	return $top_priority || $show_overridden_periods;
+}
+
 function cb2_get_field( $field_name, $class = '', $date_format = 'H:i' ) {
 	global $post;
 	$object  = $post;
