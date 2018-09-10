@@ -31,6 +31,13 @@
 .cb2-advanced-menu-item {
 	font-style:italic;
 }
+.cb2-invalid {
+	color: #888;
+}
+.cb2-invalidity {
+	color:#d44;
+	font-weight:bold;
+}
 body .cb2-advanced-menu-item.cb2-first {
 	display:block;
 	border-top:1px dotted #d7d7d7;

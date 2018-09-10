@@ -298,8 +298,13 @@ function cb2_custom_columns( $column ) {
 
 function cb2_manage_columns( $columns ) {
 	global $post;
-	$post = CB_Query::ensure_correct_class( $post );
-	return ( $post && method_exists( $post, 'manage_columns' ) ? $post->manage_columns( $columns ) : $columns );
+	if ( $post ) {
+		$post = CB_Query::ensure_correct_class( $post );
+		if ( method_exists( $post, 'manage_columns' ) ) {
+			$columns = $post->manage_columns( $columns );
+		}
+	}
+	return $columns;
 }
 // Action added by WP_Query_integration
 

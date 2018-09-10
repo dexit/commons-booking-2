@@ -236,8 +236,8 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
     $now      = new DateTime();
     $classes  = $this->classes();
     $summary  = "<span class='$classes'>";
-    if      ( $this->is_expired() ) $summary .= '<i class="cb2-invalidity">Expired ' . $this->summary_date( $this->datetime_to   )   . '</i>: ';
-    else if ( $this->is_future() )  $summary .= '<i class="cb2-invalidity">Future '  . $this->summary_date( $this->datetime_from   ) . '</i>: ';
+    if      ( $this->is_expired() ) $summary .= '<span class="cb2-invalidity">Expired ' . $this->summary_date( $this->datetime_to   )   . '</span>: ';
+    else if ( $this->is_future() )  $summary .= '<span class="cb2-invalidity">Future '  . $this->summary_date( $this->datetime_from   ) . '</span>: ';
     else {
 			if ( $this->datetime_from > $now ) $summary .= 'Valid from ' . $this->summary_date( $this->datetime_from ) . ' ';
 			if ( $this->datetime_to   > $now ) $summary .= 'to ' .         $this->summary_date( $this->datetime_to   ) . ' ';

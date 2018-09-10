@@ -178,6 +178,8 @@ class CB_Query {
     // Creation will aslo create the extra time based data structure
 		if ( ! $post_classes ) $post_classes = self::schema_types();
 
+		if ( ! $record ) throw new Exception( 'ensure_correct_class() requires a valid object' );
+
 		if ( property_exists( $record, 'post_type' ) && isset( $post_classes[$record->post_type] ) ) {
 			$Class = $post_classes[$record->post_type];
 			// Do not re-create it if it already is!
