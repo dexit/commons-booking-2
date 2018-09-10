@@ -87,9 +87,9 @@ if ( $post_count ) {
 	$post_types = array();
 	foreach ( $query->posts as $post )
 		$post_types[$post->post_type] = $post->post_type;
-	print( "<div><b>$post_count</b> posts returned" );
+	print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'><b>$post_count</b> posts returned" );
 	print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types</div>" );
-	print( "<div style='border:1px solid #000;padding:3px;background-color:#fff'>
+	print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
 		<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
 		<div style='margin-left:5px;color:#448;'>$query->request</div>
 		</div>" );

@@ -327,7 +327,6 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 						$html .= $period_group->summary();
 						break;
 					default:
-						$html .= "<span class='cb2-usage-count' title='Used in several Period Groups'>$usage_count</span> ";
 						$html .= '<ul>';
 						foreach ( $this->period_group_IDs as $period_group_ID ) {
 							$period_group = CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $period_group_ID );

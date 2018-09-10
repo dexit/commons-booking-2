@@ -59,7 +59,7 @@ function cb2_admin_pages() {
 			'capability'     => NULL,
 			'function'       => NULL,
 			'wp_query_args'  => 'post_type=location',
-			'actions'        => '<a href="?page=cb2-opening-hours&location_ID=%ID%">Opening Times</a>',
+			'actions'        => NULL,
 			'post_new_page'  => NULL,
 			'count'          => "select count(*) from {$wpdb->prefix}posts where post_type='location' and post_status='publish'",
 		),

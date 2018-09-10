@@ -341,6 +341,30 @@ class CB_Location extends CB_Post implements JsonSerializable {
         'perioditems' => &$this->perioditems
     ));
   }
+
+	function add_actions( &$actions, $post ) {
+		$wp_query = new WP_Query( array(
+			'post_type'   => 'periodent-location',
+			'meta_query'  => array(
+				'item_clause' => array(
+					'key'   => 'location_ID',
+					'value' => $this->ID,
+				),
+				'period_status_type_clause' => array(
+					'key'   => 'period_status_type_name',
+					'value' => 'open',
+				),
+			),
+		) );
+		$period_count = $wp_query->post_count;
+
+		$action = "<span style='white-space:nowrap;'><a href='admin.php?page=cb2-opening-hours&location_ID=$this->ID'>Opening Hours";
+		if ( $period_count != 1 )
+			$action .= " <span class='cb2-usage-count' title='Number of registered opening periods'>$period_count</span> ";
+		$action .= '</a></span>';
+
+		$actions[ 'manage_opening_hours' ] = $action;
+	}
 }
 CB_Query::register_schema_type( 'CB_Location' );
 
@@ -496,13 +520,12 @@ class CB_Item extends CB_Post implements JsonSerializable {
 				),
 			),
 		) );
-		// TODO: why not working?
-		$repair_count = $wp_query->post_count;
+		$period_count = $wp_query->post_count;
 
-		$action = "<a href='admin.php?page=cb2-repairs&item_ID=$this->ID'>Manage Repairs";
-		if ( $repair_count || TRUE)
-			$action .= " <span class='cb2-usage-count' title='Number of registered repair periods'>$repair_count</span> ";
-		$action .= '</a>';
+		$action = "<span style='white-space:nowrap;'><a href='admin.php?page=cb2-repairs&item_ID=$this->ID'>Repairs";
+		if ( $period_count )
+			$action .= " <span class='cb2-usage-count' title='Number of registered repair periods'>$period_count</span> ";
+		$action .= '</a></span>';
 
 		$actions[ 'manage_repairs' ] = $action;
 	}

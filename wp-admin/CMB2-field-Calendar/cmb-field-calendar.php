@@ -94,12 +94,19 @@ class CMB2_Field_Calendar {
         $startdate      = new DateTime( $startdate_string );
         $enddate        = new DateTime( $enddate_string );
         $pagesize       = $startdate->diff( $enddate );
+        $timeless_url   = preg_replace( '/&(start|end)date=[^&]*/', '', $url );
+
         $nextpage_start = (clone $enddate);
         $nextpage_end   = (clone $nextpage_start);
         $nextpage_end->add( $pagesize );
         $nextpage_start_string = $nextpage_start->format( CB_Query::$date_format );
         $nextpage_end_string   = $nextpage_end->format( CB_Query::$date_format );
-        $timeless_url   = preg_replace( '/&(start|end)date=[^&]*/', '', $url );
+
+        $prevpage_start = (clone $startdate);
+        $prevpage_end   = (clone $prevpage_start);
+        $prevpage_start->sub( $pagesize );
+        $prevpage_start_string = $prevpage_start->format( CB_Query::$date_format );
+        $prevpage_end_string   = $prevpage_end->format( CB_Query::$date_format );
 
         // View handling
         $view_is_calendar_class = ( $view == CB_Week::$static_post_type ? 'selected' : 'unselected' );
@@ -110,14 +117,25 @@ class CMB2_Field_Calendar {
 				print( "
 				<div class='cb2-calendar'>
 					<div class='entry-header'>
+						<div class='alignright actions bulkactions'>
+							<label for='bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label><select name='action' id='bulk-action-selector-top'>
+								<option value='-1'>Bulk Actions</option>
+									<option value='block' class='hide-if-no-js'>Block</option>
+									<option value='unblock'>UnBlock</option>
+									<option value='sequence'>Set Sequence</option>
+								</select>
+								<input type='submit' id='doaction' class='button action' value='Apply'>
+						</div>
+
 						<div class='cb2-view-selector'>View:
 							<a class='cb2-$view_is_calendar_class' href='$viewless_url&view=week'>calendar</a>
 							| <a class='cb2-$view_is_list_class' href='$viewless_url&view='>list</a></div>
 						<div class='cb2-calendar-pager'>
-							<a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
+							<a href='$timeless_url&startdate=$prevpage_start_string&enddate=$prevpage_end_string'>&lt;&lt; previous page</a>
+							| <a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
 						</div>
 					</div>
-					<div class='entry-content'>
+					<div class='entry-content clear'>
 						<table class='cb2-subposts'><tbody>" );
 				$outer_post  = $post;
 				while ( $query->have_posts() ) : $query->the_post();
@@ -129,7 +147,8 @@ class CMB2_Field_Calendar {
 					</div>
 					<div class='entry-footer'>
 						<div class='cb2-calendar-pager'>
-							<a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
+							<a href='$timeless_url&startdate=$prevpage_start_string&enddate=$prevpage_end_string'>&lt;&lt; previous page</a>
+							| <a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
 						</div>
 					</div>
 				</div>" );
