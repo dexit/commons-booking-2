@@ -12,6 +12,18 @@
 require_once( 'CMB2-field-Icon/cmb-field-icon.php' );
 require_once( 'CMB2-field-Calendar/cmb-field-calendar.php' );
 
+function cb2_wp_redirect( $location, $status ) {
+	if ( CB2_DEBUG_SAVE ) {
+		print( "wp_redirect( <a href='$location'>$location</a>, <b>$status</b> )" );
+		print( '<hr/><h2>CB2_DEBUG_SAVE</h2>' );
+		xdebug_print_function_stack();
+		krumo( $_POST );
+		exit();
+	}
+	return $location;
+}
+add_filter( 'wp_redirect', 'cb2_wp_redirect', 10, 2 );
+
 function cb2_admin_pages() {
 	// %token% replacement happens on ALL parameters.
 	// If any tokens are replaced then %(x)% => x texts are included.

@@ -1,8 +1,17 @@
 <?php
 // WP_DEBUG setup
+error_reporting( 0 );
 if ( WP_DEBUG ) include( 'krumo/class.krumo.php' );
+error_reporting( E_ALL );
 if ( ! function_exists( 'krumo' ) ) {
-	function krumo( ...$params ) {if ( WP_DEBUG ) var_dump( $params );}
+	function krumo( ...$params ) {
+		if ( WP_DEBUG ) var_dump( $params );
+	}
+}
+if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
+	function xdebug_print_function_stack() {
+		if ( WP_DEBUG ) var_dump( debug_backtrace() );
+	}
 }
 define( 'CB2_DEBUG_SAVE', WP_DEBUG && FALSE );
 
@@ -132,8 +141,12 @@ class CB_Query {
 			$old_wpdb_posts = $wpdb->posts;
 			$wpdb->posts    = "$wpdb->prefix$posts_table";
 		}
-		if ( CB2_DEBUG_SAVE && TRUE && $wpdb->posts == "{$wpdb->prefix}posts" )
-			print( "Notice: [$Class] get_post_with_type() using wp_posts table" );
+		if ( CB2_DEBUG_SAVE && TRUE
+			&& ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE )
+			&& $wpdb->posts == "{$wpdb->prefix}posts"
+		) {
+			throw new Exception( "[$Class] get_post_with_type() using wp_posts table" );
+		}
 
 		// WP_Post::get_instance() will check the cache
 		// TODO: Can we intelligently wp_cache_delete() instead?

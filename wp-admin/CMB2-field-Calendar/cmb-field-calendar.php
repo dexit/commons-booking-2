@@ -118,7 +118,8 @@ class CMB2_Field_Calendar {
 				<div class='cb2-calendar'>
 					<div class='entry-header'>
 						<div class='alignright actions bulkactions'>
-							<label for='bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label><select name='action' id='bulk-action-selector-top'>
+							<label for='bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label>
+							<select name='bulk-action' id='bulk-action-selector-top'>
 								<option value='-1'>Bulk Actions</option>
 									<option value='block' class='hide-if-no-js'>Block</option>
 									<option value='unblock'>UnBlock</option>

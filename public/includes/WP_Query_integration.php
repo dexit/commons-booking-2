@@ -262,9 +262,8 @@ function cb2_save_post_redirect_to_native_post( $post_id, $post, $update ) {
 					$action    = 'edit';
 					$URL       = admin_url( "admin.php?page=$page&post=$post->ID&post_type=$post_type&action=$action" );
 
-					if ( CB2_DEBUG_SAVE ) print( '<div>CB2_DEBUG_SAVE mode, no auto-redirect</div>' );
-					else wp_redirect( $URL );
-					print( "<div>redirecting to <a href='$URL'>$URL</a>...</div>" );
+					// if CB2_DEBUG_SAVE the redirect will be printed, not acted
+					wp_redirect( $URL );
 					exit();
 				}
 			}
