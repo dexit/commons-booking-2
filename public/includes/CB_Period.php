@@ -61,6 +61,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 						'name' => __( 'Sequence', 'commons-booking-2' ),
 						'id' => 'recurrence_sequence',
 						'type' => 'multicheck',
+						'before' => '<span class="cb2-todo"/>',
 						'options'          => array(
 							'1'  => __( 'Sunday', 'commons-booking-2' ),
 							'2'  => __( 'Monday', 'commons-booking-2' ),
@@ -96,12 +97,12 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			),
 
 			array(
-				'title' => __( 'Exceptions (optional)', 'commons-booking-2' ),
+				'title' => __( '<span class="cb2-todo">Exceptions</span> (optional)', 'commons-booking-2' ),
 				'desc'  => __( 'Only relevant for reccurring periods. For example: every Monday during summer.', 'commons-booking-2' ),
 				'context' => 'side',
 				'fields' => array(
 					array(
-						'name' => __( '<a href="#">add new</a>', 'commons-booking-2' ),
+						'name' => __( '<a class="cb2-todo" href="#">add new</a>', 'commons-booking-2' ),
 						'id' => 'exceptions',
 						'type' => 'title',
 					),
@@ -116,8 +117,8 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		$period_options       = CB_Forms::period_options( CB2_CREATE_NEW );
 		$periods_count        = count( $period_options ) - 1;
 		return array(
-			'title'      => __( 'Existing Period', 'commons-booking-2' ) .
-												" <span class='cb2-usage-count'>$periods_count</span>",
+			'title'      => __( 'Current Period', 'commons-booking-2' ) .
+												" <span class='cb2-usage-count-ok'>$periods_count</span>",
 			'show_names' => FALSE,
 			'context'    => 'side',
 			'fields'     => array(
@@ -128,6 +129,11 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 					//'show_option_none' => TRUE,
 					'default' => ( isset( $_GET['period_ID'] ) ? $_GET['period_ID'] : NULL ),
 					'options' => $period_options,
+				),
+				array(
+					'name'    => __( '<a class="cb2-todo" href="#">add existing</a>', 'commons-booking-2' ),
+					'id'      => 'title_23',
+					'type'    => 'title',
 				),
 			),
 		);
@@ -246,7 +252,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		$summary .= ' ' . $this->summary_date_period();
 
 		if ( ! $this->usage_once() )
-			$summary .= " <span class='cb2-usage-count' title='Used in several Period Groups'>" .
+			$summary .= " <span class='cb2-usage-count-warning' title='Used in several Period Groups'>" .
 				$this->usage_count() .
 				"</span>";
     $summary .= '</span>';

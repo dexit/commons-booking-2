@@ -13,8 +13,8 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		$period_group_options = CB_Forms::period_group_options( CB2_CREATE_NEW );
 		$period_groups_count  = count( $period_group_options ) - 1;
 		return array(
-			'title'      => __( 'Existing Period Group', 'commons-booking-2' ) .
-												" <span class='cb2-usage-count'>$period_groups_count</span>",
+			'title'      => __( 'Existing Period Groups', 'commons-booking-2' ) .
+												" <span class='cb2-usage-count-ok'>$period_groups_count</span>",
 			'show_names' => FALSE,
 			'context'    => 'side',
 			'fields'     => array(
@@ -104,7 +104,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		switch ( $column ) {
 			case 'periods':
 				$html .= $this->summary_periods();
-				$html .= '<a href="admin.php?page=cb-post-new&post_type=period">add new period</a> | <a href="admin.php?page=cb2-periods">attach existing period</a>';
+				$html .= '<a class="cb2-todo" href="admin.php?page=cb-post-new&post_type=period">add new period</a> | <a class="cb2-todo" href="admin.php?page=cb2-periods">attach existing period</a>';
 				break;
 		}
 		return $html;
@@ -124,7 +124,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 					$detach_text = 'delete';
 					$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=period&action=delete";
 				}
-				$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";
+				$detach_link = " | <a class='cb2-todo' href='$detach_url'>$detach_text</a></li>";
 			}
 
 			$summary     = $period->summary();
@@ -139,7 +139,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		$html = ( $this->post_title ? $this->post_title : $this->ID );
 		$period_count = count( $this->periods );
 		if ( $period_count > 1 )
-			$html .= " <span class='cb2-usage-count' title='Several Periods'>$period_count</span>";
+			$html .= " <span class='cb2-usage-count-warning' title='Several Periods'>$period_count</span>";
 		$html .= " <a href='post.php?post=$this->ID&action=edit'>edit</a>";
 		return $html;
 	}

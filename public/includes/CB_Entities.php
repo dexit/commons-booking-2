@@ -358,9 +358,9 @@ class CB_Location extends CB_Post implements JsonSerializable {
 		) );
 		$period_count = $wp_query->post_count;
 
-		$action = "<span style='white-space:nowrap;'><a href='admin.php?page=cb2-opening-hours&location_ID=$this->ID'>Opening Hours";
-		if ( $period_count != 1 )
-			$action .= " <span class='cb2-usage-count' title='Number of registered opening periods'>$period_count</span> ";
+		$action  = "<span style='white-space:nowrap;'><a href='admin.php?page=cb2-opening-hours&location_ID=$this->ID'>Opening Hours";
+		if ( $period_count ) $action .= " <span class='cb2-usage-count-ok' title='Number of registered opening periods'>$period_count</span> ";
+		else $action .= " <span class='cb2-usage-count-warning' title='Number of registered opening periods'>$period_count</span> ";
 		$action .= '</a></span>';
 
 		$actions[ 'manage_opening_hours' ] = $action;
@@ -524,7 +524,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 
 		$action = "<span style='white-space:nowrap;'><a href='admin.php?page=cb2-repairs&item_ID=$this->ID'>Repairs";
 		if ( $period_count )
-			$action .= " <span class='cb2-usage-count' title='Number of registered repair periods'>$period_count</span> ";
+			$action .= " <span class='cb2-usage-count-warning' title='Number of registered repair periods'>$period_count</span> ";
 		$action .= '</a></span>';
 
 		$actions[ 'manage_repairs' ] = $action;

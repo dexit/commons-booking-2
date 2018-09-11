@@ -248,6 +248,8 @@ function cb2_post_row_actions( $actions, $post ) {
 	// Move all edit actions to our custom screens
 	if ( isset( $actions['edit'] ) )
 		$actions['edit'] = "<a href='admin.php?page=cb-post-edit&post=$post->ID&post_type=$post->post_type&action=edit' aria-label='Edit &#8220;$post->post_title&#8221;'>Edit</a>";
+	if ( isset( $actions['inline hide-if-no-js'] ) )
+		$actions['inline hide-if-no-js'] = str_replace( ' class="', ' class="cb2-todo ', $actions['inline hide-if-no-js'] );
 
 	$post = CB_Query::ensure_correct_class( $post );
 	if ( $post instanceof CB_PostNavigator && method_exists( $post, 'add_actions' ) )

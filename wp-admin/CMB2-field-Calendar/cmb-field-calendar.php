@@ -114,10 +114,12 @@ class CMB2_Field_Calendar {
         $viewless_url = preg_replace( '/&view=[^&]*/', '', $url );
 
         // Render
+        // TODO: the wp_cb2_view_sequence_date is limited to 1000 days at the moment
+        // can we auto-extend this where necessary?
 				print( "
 				<div class='cb2-calendar'>
 					<div class='entry-header'>
-						<div class='alignright actions bulkactions'>
+						<div class='cb2-todo alignright actions bulkactions'>
 							<label for='bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label>
 							<select name='bulk-action' id='bulk-action-selector-top'>
 								<option value='-1'>Bulk Actions</option>
@@ -136,7 +138,7 @@ class CMB2_Field_Calendar {
 							| <a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
 						</div>
 					</div>
-					<div class='entry-content clear'>
+					<div class='cb2-todo entry-content clear'>
 						<table class='cb2-subposts'><tbody>" );
 				$outer_post  = $post;
 				while ( $query->have_posts() ) : $query->the_post();
