@@ -1,6 +1,6 @@
-# Commons Booking 2
+# CommonsBooking 2
 
-CB2 is a complete rewrite of [Commons Booking](https://github.com/wielebenwir/commons-booking).  It is currently far from feature complete.
+CB2 is a complete rewrite of [Commons Booking](https://github.com/wielebenwir/commons-booking).  It is currently under heavy development. 
 
 Main reasons for a new code base were:
 
@@ -23,10 +23,11 @@ For current progress, see the [project](https://github.com/wielebenwir/commons-b
 
 We are looking for developers, translators and people willing to beta-test new features.
 
-Please contact (@flegfleg)[https://github.com/flegfleg].
+Please contact [@flegfleg](https://github.com/flegfleg).
 
 ## Building Commons Booking 2
 
+*We are finishing up the DB structure right now, we will update this page as soon as we have an alpha*
 
 ### Prerequisites
 
