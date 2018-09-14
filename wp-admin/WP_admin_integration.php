@@ -11,6 +11,16 @@
  */
 require_once( 'CMB2-field-Icon/cmb-field-icon.php' );
 require_once( 'CMB2-field-Calendar/cmb-field-calendar.php' );
+require_once( 'CMB2-field-Paragraph/cmb-field-paragraph.php' );
+
+/*
+function cb2_cmb2_group_wrap_attributes( $group_wrap_attributes, $field_group ) {
+	// Allowing context closing of metaboxes
+	$group_wrap_attributes['class'] .= ' closed';
+	return $group_wrap_attributes;
+}
+add_filter( 'cmb2_group_wrap_attributes', 'cb2_cmb2_group_wrap_attributes', 10, 2 );
+*/
 
 function cb2_wp_redirect( $location, $status ) {
 	if ( CB2_DEBUG_SAVE ) {
@@ -224,7 +234,7 @@ function cb2_metaboxes() {
 				if ( WP_DEBUG ) {
 					// Extended checks
 					foreach ( $metabox['fields'] as $field ) {
-						$name = $field['name'];
+						$name = ( isset( $field['name'] ) ? $field['name'] : '<no field name>' );
 						switch ( $field['type'] ) {
 							case 'text_date':
 							case 'text_datetime_timestamp':

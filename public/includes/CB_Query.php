@@ -13,7 +13,7 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE', WP_DEBUG && FALSE );
+define( 'CB2_DEBUG_SAVE', WP_DEBUG && TRUE );
 
 // System PERIOD_STATUS_TYPEs
 // a database trigger prevents deletion of these
@@ -399,19 +399,46 @@ class CB_Query {
   }
 
   // -------------------------------------------------------------------- Class, Function and parameter utilities
-  static function ensure_bitarray( $name, $object ) {
-		if ( is_array( $object ) )
-			$object = CB_Database::bitarray_to_int( $object );
-		return $object;
+  // meta-data => objects
+  static function ensure_bitarray_integer( $name, $object ) {
+		$object = self::ensure_bitarray( $name, $object );
+		return CB_Database::bitarray_to_int( $object );
   }
 
-  static function substring_before( $string, $delimiter = '-' ) {
-		return ( strpos( $string, $delimiter ) === FALSE ? $string : substr( $string, 0, strpos( $string, $delimiter ) ) );
-	}
+  static function ensure_assoc_bitarray( $name, $object ) {
+		$object = self::ensure_bitarray( $name, $object );
+		$assoc_array = array();
+		foreach ( $object as $loc => $on ) {
+			if ( $on ) array_push( $assoc_array, (string) pow( 2, $loc ) );
+		}
+		return $assoc_array;
+  }
 
-  static function substring_after( $string, $delimiter = '-' ) {
-		return ( strrpos( $string, $delimiter ) === FALSE ? $string : substr( $string, strrpos( $string, $delimiter ) + 1 ) );
-	}
+  static function ensure_bitarray( $name, $object ) {
+		self::check_for_serialisation( $object, 'a' );
+
+		if ( is_null( $object ) ) {
+			$object = array();
+		} else if ( is_array( $object ) ) {
+			if ( self::array_has_associative( $object ) ) {
+				// This is an associative array:
+				// Array(
+				//   (string) '0' => 4,
+				//   (string) '1' => 16
+				// ) => 20
+				$object = array_sum( $object );
+				$object = CB_Database::int_to_bitarray( $object );
+			}
+		} else {
+			if ( is_numeric( $object ) ) {
+				$object = CB_Database::int_to_bitarray( $object );
+			} else {
+				krumo( $object );
+				throw new Exception( "Cannot understand bit array value for [$name]" );
+			}
+		}
+		return $object;
+  }
 
 	static function ensure_datetime( $name, $object ) {
 		// Maintains NULLs
@@ -449,18 +476,20 @@ class CB_Query {
 				$int = CB2_CREATE_NEW;
 			}
 			else if ( is_numeric( $object ) ) $int = (int) $object;
+			else if ( is_string( $object ) && empty( $object ) ) $int = 0;
 			else throw new Exception( "[$name] is not numeric [$object]" );
 		}
 		return $int;
 	}
 
+	static function ensure_boolean( $name, $object ) {
+		return (bool) $object;
+	}
+
 	static function ensure_ints( $name, $object, $allow_create_new = FALSE ) {
 		$array = array();
 		if ( ! is_null( $object ) ) {
-			if ( is_string( $object ) && preg_match( '/^a:\\d+:\\{/', $object ) ) {
-				$array_object = unserialize( $object );
-				if ( $array_object !== FALSE ) $object = $array_object;
-			}
+			self::check_for_serialisation( $object, 'a' );
 
 			if ( is_array( $object ) ) {
 				$array = $object;
@@ -512,23 +541,28 @@ class CB_Query {
 		foreach ( $parameters as $i => &$parameter ) {
 			$name  = $parameter->name;
 			$value = $parameter->value;
-			try {
-				$value = self::cast_parameter( $name, $value );
-			} catch ( Exception $ex ) {
-				krumo( $parameters, $parameter_values );
-				throw $ex;
-			}
-
-			$object->$name = $value;
 
 			if ( WP_DEBUG && FALSE ) {
-				print( "<i>$class_name->$name</i>: <b>" );
-				if      ( $value instanceof DateTime ) print( $value->format( 'c' ) );
+				print( "<i>assign_all_parameters($class_name)->$name</i>: <b>" );
+				if      ( $value instanceof DateTime ) print( $value->format( CB_Database::$database_datetime_format ) );
 				else if ( is_object( $value ) ) krumo( $value );
 				else if ( is_array(  $value ) ) krumo( $value );
 				else print( $value );
+				$new_value = self::to_object( $name, $value );
+				if ( $new_value !== $value ) {
+					print( ' =&gt; ' );
+					if      ( $new_value instanceof DateTime ) print( 'new DateTime(' . $new_value->format( CB_Database::$database_datetime_format ) . ')' );
+					else if ( is_object( $new_value ) ) krumo( $new_value );
+					else if ( is_array(  $new_value ) ) krumo( $new_value );
+					else print( $new_value );
+				}
 				print( '</b><br/>' );
 			}
+
+			// May throw Exceptions
+			$new_value = self::to_object( $name, $value );
+			$object->$name = $new_value;
+
 		}
 	}
 
@@ -550,7 +584,7 @@ class CB_Query {
 			$wp_is_post_property = isset( CB2_POST_PROPERTIES[$name] );
 			if ( $wp_is_post_property ) {
 				try {
-					$new_value = self::cast_parameter( $name, $from_value );
+					$new_value = self::to_object( $name, $from_value );
 				} catch ( Exception $ex ) {
 					krumo( $post );
 					throw $ex;
@@ -570,13 +604,24 @@ class CB_Query {
 		}
 	}
 
-	static function cast_parameter( $name, $value ) {
+	static function to_object( $name, $value ) {
+		// Useful for assigning attributes of PHP Objects
+		// in __constructor()s
+		//   string => object
+		// based on the property name
+		//
+		// Used by:
+		//   copy_all_wp_post_properties()
+		//   assign_all_parameters()
 		if ( ! is_null( $value ) ) {
+			self::check_for_serialisation( $value );
+
 			if      ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
 			else if ( $name == 'date' )                      $value = self::ensure_datetime( $name, $value );
 			else if ( substr( $name, 0, 5 ) == 'time_' )     $value = self::ensure_time( $name, $value );
-			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_bitarray( $name, $value );
-			else if ( substr( $name, -3 ) == '_id' )         $value = self::ensure_int(  $name, $value );
+			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_int( $name, $value );
+			else if ( $name == 'enabled' )                   $value = self::ensure_boolean( $name, $value );
+			else if ( substr( $name, -3 ) == '_id' )         $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW  );
 			else if ( substr( $name, -4 ) == '_ids' )        $value = self::ensure_ints( $name, $value, CB2_ALLOW_CREATE_NEW );
 			else if ( substr( $name, -3 ) == '_ID' )         $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
 			else if ( substr( $name, -4 ) == '_IDs' )        $value = self::ensure_ints( $name, $value, CB2_ALLOW_CREATE_NEW );
@@ -586,5 +631,77 @@ class CB_Query {
 		}
 
 		return $value;
+	}
+
+  static function to_string( &$name, $value ) {
+		// TODO: Refactor this in to the objects
+    if ( is_array( $value ) ) {
+			// periods = array(period, period)  => period_IDs = 200000238, 200000239
+			$string_value = '';
+			if ( substr( $name, -1 ) == 's' ) {
+				$sub_name = substr( $name, 0, -1 );
+				foreach ( $value as $sub_value ) {
+					if ( $string_value ) $string_value .= ',';
+					$string_value .= self::to_string( $sub_name, $sub_value );
+				}
+				$value = $string_value;
+			} else {
+				if ( WP_DEBUG && FALSE )
+					throw new Exception( "[$name] is not plural, but the value is an array" );
+			}
+    }
+
+    else if ( is_object( $value ) && $value instanceof CB_PostNavigator ) {
+			// period = period object => period_ID = 200000238
+			if ( property_exists( $value, 'ID' ) ) {
+				if ( $value->ID === CB2_CREATE_NEW ) throw new Exception( "[$name] WP_Post->ID value [CB2_CREATE_NEW] value should have been resolved" );
+				if ( ! is_numeric( $value->ID ) )    throw new Exception( "[$name] WP_Post->ID value [$value->ID] is not numeric" );
+				$name .= '_ID';
+				$value = (int) $value->ID;
+			} else throw new Exception( "This CB_Post / CB_PostNavigator object should have an ID for [$name] property" );
+		}
+
+		else if ( is_object( $value ) && $value instanceof DateTime ) {
+			// DateTime => 2018-06-10 12:34:23
+			$date_string = $value->format( CB_Database::$database_datetime_format );
+			if ( $value < new DateTime( '1970-01-01' ) ) throw new Exception( "Dodgy date [$date_string]" );
+			$value = $date_string;
+		}
+
+		else if ( is_object( $value ) && $value instanceof WP_Post ) {
+			if ( $value->ID === CB2_CREATE_NEW ) throw new Exception( "[$name] WP_Post->ID value [CB2_CREATE_NEW] value should have been resolved" );
+			if ( ! is_numeric( $value->ID ) )    throw new Exception( "[$name] WP_Post->ID value [$value->ID] is not numeric" );
+			$value = (int) $value->ID;
+		}
+
+		else if ( is_object( $value ) && method_exists( $value, '__toString' ) ) {
+			$value = (string) $value;
+		}
+
+		else {
+			$value = (string) $value;
+    }
+
+		self::check_for_serialisation( $value );
+
+    return $value;
+  }
+
+  // ---------------------------------------------- General utilities
+  static function substring_before( $string, $delimiter = '-' ) {
+		return ( strpos( $string, $delimiter ) === FALSE ? $string : substr( $string, 0, strpos( $string, $delimiter ) ) );
+	}
+
+  static function substring_after( $string, $delimiter = '-' ) {
+		return ( strrpos( $string, $delimiter ) === FALSE ? $string : substr( $string, strrpos( $string, $delimiter ) + 1 ) );
+	}
+
+	static function check_for_serialisation( $object, $type = 'a-z' ) {
+		if ( WP_DEBUG && is_string( $object ) && preg_match( "/^[$type]:[0-9]+:/", $object ) )
+			throw new Exception( "[$object] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
+	}
+
+	static function array_has_associative( $array ) {
+		return array_keys($arr) !== range(0, count($arr) - 1);
 	}
 }

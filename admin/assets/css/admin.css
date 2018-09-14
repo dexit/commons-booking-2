@@ -47,7 +47,8 @@ body .cb2-description {
 	margin:0px 8px;
 	color:#888;
 }
-a.cb2-disabled {
+body.wp-admin .cb2-disabled,
+body.wp-admin .cb2-disabled span {
 	text-decoration:none;
 	color: #888;
 	font-weight:normal;
@@ -74,6 +75,19 @@ a.cb2-selected {
 	text-decoration:none;
 	color: #555;
 	font-weight: bold;
+}
+ul.cb2-admin-column-ul {
+	margin:0px;
+}
+body input.cb2-tick-only {
+	border:none;
+	background: Transparent;
+	box-shadow: none;
+	cursor: default;
+}
+.cb2-colour-block {
+	height:20px;
+	width:80px;
 }
 .cb2-usage-count-warning {
 	vertical-align: super;

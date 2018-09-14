@@ -2,6 +2,8 @@
 require_once( 'CB_PeriodStatusType.php' );
 require_once( 'CB_PeriodGroup.php' );
 
+//add_filter( 'cmb2_override_recurrence_sequence_meta_value', array( 'CB_Period', 'cmb2_override_recurrence_sequence_meta_value' ), 10, 4 );
+
 class CB_Period extends CB_PostNavigator implements JsonSerializable {
   public static $database_table = 'cb2_periods';
   public static $all = array();
@@ -13,24 +15,33 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
   function post_type() {return self::$static_post_type;}
 
 	static function metaboxes() {
-		$format_date = CB_Query::$date_format;
+		$now            = new DateTime();
+		$morning_format = CB_Query::$date_format . ' 08:00:00';
+		$evening_format = CB_Query::$date_format . ' 18:00:00';
+
 		return array(
 			array(
 				'title' => __( 'Period', 'commons-booking-2' ),
+				'closed_cb' => array( 'CB_Period', 'metabox_closed_when_published' ),
 				'fields' => array(
+					array(
+						'id'   => 'explanation',
+						'type' => 'paragraph',
+						'html' => 'To create separate repeating slots see <b>Recurrence</b> below',
+					),
 					array(
 						'name' => __( 'Start Date', 'commons-booking-2' ),
 						'id' => 'datetime_part_period_start',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB_Database::$database_date_format,
-						'default' => date( $format_date ),
+						'default' => $now->format( $morning_format ),
 					),
 					array(
 						'name' => __( 'End Date', 'commons-booking-2' ),
 						'id' => 'datetime_part_period_end',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB_Database::$database_date_format,
-						'default' => (new DateTime())->add( new DateInterval( 'P1D' ) )->format( $format_date ),
+						'default' => $now->format( $evening_format ),
 					),
 				),
 			),
@@ -38,7 +49,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			array(
 				'title' => __( 'Recurrence (optional)', 'commons-booking-2' ),
 				'context' => 'normal',
-				'show_names' => FALSE,
+				'show_names' => TRUE,
 				'add_button'    => __( 'Add Another Entry', 'commons-booking-2' ),
 				'remove_button' => __( 'Remove Entry', 'commons-booking-2' ),
 				'closed'     => true,
@@ -47,10 +58,9 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 						'name' => __( 'Type', 'commons-booking-2' ),
 						'id' => 'recurrence_type',
 						'type' => 'radio_inline',
-						'show_option_none' => TRUE,
-						// TODO: cannot reset Reccurrence to None after setting it
-						// because the value is not sent through and then not changed
-						'options'          => array(
+						'default' => CB_Database::$NULL_indicator,
+						'options' => array(
+							CB_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
 							'D' => __( 'Daily', 'commons-booking-2' ),
 							'W' => __( 'Weekly', 'commons-booking-2' ),
 							'M' => __( 'Monthly', 'commons-booking-2' ),
@@ -62,7 +72,9 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 						'id' => 'recurrence_sequence',
 						'type' => 'multicheck',
 						'before' => '<span class="cb2-todo"/>',
-						'options'          => array(
+						'escape_cb'       => array( 'CB_Period', 'recurrence_sequence_escape' ),
+						'sanitization_cb' => array( 'CB_Period', 'recurrence_sequence_sanitization' ),
+						'options' => array(
 							'1'  => __( 'Sunday', 'commons-booking-2' ),
 							'2'  => __( 'Monday', 'commons-booking-2' ),
 							'4'  => __( 'Tuesday', 'commons-booking-2' ),
@@ -72,23 +84,15 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 							'64' => __( 'Saturday', 'commons-booking-2' ),
 						),
 					),
-				),
-			),
-
-			array(
-				'title' => __( 'Validity Period (optional)', 'commons-booking-2' ),
-				'desc'  => __( 'Only relevant for reccurring periods. For example: every Monday during summer.', 'commons-booking-2' ),
-				'closed'     => true,
-				'fields' => array(
 					array(
-						'name' => __( 'From Date', 'commons-booking-2' ),
+						'name' => __( 'Recurrence From Date', 'commons-booking-2' ),
 						'id' => 'datetime_from',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB_Database::$database_date_format,
-						'default' => date( $format_date ),
+						'default' => $now->format( $morning_format ),
 					),
 					array(
-						'name' => __( 'To Date (optional)', 'commons-booking-2' ),
+						'name' => __( 'Recurrence To Date (optional)', 'commons-booking-2' ),
 						'id' => 'datetime_to',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB_Database::$database_date_format,
@@ -96,21 +100,54 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				),
 			),
 
+			/*
 			array(
-				'title' => __( '<span class="cb2-todo">Exceptions</span> (optional)', 'commons-booking-2' ),
-				'desc'  => __( 'Only relevant for reccurring periods. For example: every Monday during summer.', 'commons-booking-2' ),
+				'title'   => __( '<span class="cb2-todo">Exceptions</span> (optional)', 'commons-booking-2' ),
 				'context' => 'side',
-				'fields' => array(
+				'fields'  => array(
 					array(
-						'name' => __( '<a class="cb2-todo" href="#">add new</a>', 'commons-booking-2' ),
-						'id' => 'exceptions',
-						'type' => 'title',
+						'name'  => __( '<a class="cb2-todo" href="#">add new</a>', 'commons-booking-2' ),
+						'desc'  => __( 'Only relevant for reccurring periods. For example: every Monday during summer.', 'commons-booking-2' ),
+						'id'    => 'exceptions',
+						'type'  => 'title',
 					),
 				),
 			),
-
-			CB_PeriodGroup::selector_metabox(),
+			*/
 		);
+	}
+
+	static function metabox_show_when_published() {
+		global $post;
+		return ( $post && $post->post_status == CB2_PUBLISH );
+	}
+
+	static function metabox_closed_when_published() {
+		global $post;
+		return ( $post && $post->post_status == CB2_PUBLISH );
+	}
+
+	static function cmb2_override_recurrence_sequence_meta_value( $data, $object_id, $a, $field ) {
+		// TODO: this is a permanent fix because of a bug we think is in CMB2
+		// recurrence_sequence is a multi-value meta-data
+		// which should be serialised in the wp_postmeta
+		// however, it comes from wp_cb2_periods and is stored as a bit() field
+		// wp_cb2_view_periodmeta returns it as an int
+		// thus it does not set the checkboxes correctly
+		// Asking wp_cb2_view_periodmeta to return a serialised array representation of the bit field
+		// will also fail because CMB2 does not honour the array properly
+		$int = get_metadata( 'period', $object_id, 'recurrence_sequence', TRUE );
+		$int = CB_Query::ensure_int( 'recurrence_sequence', $int );
+		return CB_Query::ensure_assoc_bitarray( 'recurrence_sequence', $int );
+	}
+
+	static function recurrence_sequence_escape( $value, $field_args, $field ) {
+		$value = CB_Query::ensure_int( 'recurrence_sequence', $value );
+		return CB_Query::ensure_assoc_bitarray( 'recurrence_sequence', $value );
+	}
+
+	static function recurrence_sequence_sanitization( $value, $field_args, $field ) {
+		return CB_Query::ensure_bitarray_integer( 'recurrence_sequence', $value );
 	}
 
   static function selector_metabox() {
@@ -129,11 +166,6 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 					//'show_option_none' => TRUE,
 					'default' => ( isset( $_GET['period_ID'] ) ? $_GET['period_ID'] : NULL ),
 					'options' => $period_options,
-				),
-				array(
-					'name'    => __( '<a class="cb2-todo" href="#">add existing</a>', 'commons-booking-2' ),
-					'id'      => 'title_23',
-					'type'    => 'title',
 				),
 			),
 		);
@@ -307,6 +339,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 
   function add_actions( &$actions, $post ) {
 		if ( $this->used() ) unset( $actions['trash'] );
+		unset( $actions['view'] );
 	}
 
   function manage_columns( $columns ) {

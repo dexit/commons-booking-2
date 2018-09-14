@@ -103,8 +103,12 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		$html = '';
 		switch ( $column ) {
 			case 'periods':
-				$html .= $this->summary_periods();
-				$html .= '<a class="cb2-todo" href="admin.php?page=cb-post-new&post_type=period">add new period</a> | <a class="cb2-todo" href="admin.php?page=cb2-periods">attach existing period</a>';
+				$html     .= $this->summary_periods();
+				$page      = 'cb-post-new';
+				$post_type = 'period';
+				$add_link  = "admin.php?page=$page&period_group_ID=$this->ID&post_type=$post_type";
+				$html     .= "<a href='$add_link'>add new period</a>";
+				$html     .= ' | <a class="cb2-todo" href="admin.php?page=cb2-periods">attach existing period</a>';
 				break;
 		}
 		return $html;

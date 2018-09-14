@@ -133,16 +133,18 @@ function cb2_delete_post( $ID ) {
 
 function cb2_save_post_debug( $post_id, $post, $update ) {
 	static $done = FALSE;
-	if ( ! $done ) {
-		print( '<h1>CB2_DEBUG_SAVE is on in CB_Query.php</h1>' );
-		print( '<p>Debug info will be shown and redirect will be suppressed, but printed at the bottom</p>' );
-		krumo( $_POST );
+	if ( WP_DEBUG ) {
+		if ( ! $done ) {
+			print( '<h1>CB2_DEBUG_SAVE is on in CB_Query.php</h1>' );
+			print( '<p>Debug info will be shown and redirect will be suppressed, but printed at the bottom</p>' );
+			krumo( $_POST );
+		}
+		// Bug https://core.trac.wordpress.org/ticket/9968
+		// will prevent the next action (cb2_save_post_move_to_native)
+		// as it deletes from an array of actions currently being traversed
+		// remove_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY );
+		$done = TRUE;
 	}
-	// Bug https://core.trac.wordpress.org/ticket/9968
-	// will prevent the next action (cb2_save_post_move_to_native)
-	// as it deletes from an array of actions currently being traversed
-	// remove_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY );
-	$done = TRUE;
 }
 
 function cb2_save_post_move_to_native( $post_id, $post, $update ) {
@@ -170,11 +172,22 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// Move all extra metadata in to global object
 				// for later actions to use
 				$metadata = get_metadata( 'post', $post_id );
-				foreach ( $metadata as $name => $value ) {
-					if ( ! isset( CB2_POST_PROPERTIES[ $name ] ) )
-						if ( substr( $name, 0, 1 ) != '_' ) $extra_processing_properties->$name = $value[0];
+				foreach ( $metadata as $name => $value_array ) {
+					if ( ! isset( CB2_POST_PROPERTIES[ $name ] ) ) {
+						$is_system_meta = ( substr( $name, 0, 1 ) == '_' );
+
+						// Because we are defaulting to SINGLE
+						// meta_value multiple value arrays are returned serialised
+						// currently we do not store any arrays:
+						//   ID lists are stored as comma delimited for example
+						//   bit arrays are handled as unsigned
+						if ( ! $is_system_meta ) {
+							$value = $value_array[0];
+							$extra_processing_properties->$name = CB_Query::to_object( $name, $value );
+						}
+					}
 				}
-				if ( CB2_DEBUG_SAVE ) krumo( $extra_processing_properties );
+				if ( CB2_DEBUG_SAVE ) krumo( $metadata, $extra_processing_properties );
 
 				// Create dependent objects before moving in to the native tables
 				// will also reset the metadata for $post, e.g.
@@ -187,13 +200,18 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				if ( method_exists( $cb2_post, 'pre_post_create' ) ) $cb2_post->pre_post_create();
 				$extra_processing_properties->dependency_depth--;
 
+				// Move any new values created to the main data array
+				$potential_table_data = (array) $cb2_post;
+				foreach ( $extra_processing_properties as $name => $value )
+					$potential_table_data[$name] = $value;
+
 				// Move this post into our structure
 				// Allow for main Class tables with no actual needed columns beyond the id
-				$result   = NULL;
-				$insert_data = CB_Database::sanitize_data_for_table( $class_database_table, (array) $cb2_post );
-				if ( CB2_DEBUG_SAVE ) krumo( $cb2_post, $insert_data );
+				$result      = NULL;
+				$insert_data = CB_Database::sanitize_data_for_table( $class_database_table, $potential_table_data, $formats );
+				if ( CB2_DEBUG_SAVE ) krumo( $potential_table_data, $insert_data, $formats );
 				if ( count( $insert_data ) )
-					$result = $wpdb->insert( "$wpdb->prefix$class_database_table", $insert_data );
+					$result = $wpdb->insert( "$wpdb->prefix$class_database_table", $insert_data, $formats );
 				else
 					$result = $wpdb->query( "INSERT into `$wpdb->prefix$class_database_table` values()" );
 				if ( $result === FALSE ) {
@@ -361,32 +379,35 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 					if ( $class_database_table = CB_Database::database_table( $Class ) ) {
 						if ( $id_field = CB_Database::id_field( $Class ) ) {
 							$post = CB_Query::ensure_correct_class( $post );
+							if ( empty( $meta_value ) ) $meta_value = NULL;
 							$data = array( $meta_key => $meta_value );
 
 							if ( method_exists( $post, 'sanitize_data_for_table' ) )
-								$data = $post->sanitize_data_for_table( $data );
-							$data = CB_Database::sanitize_data_for_table( $class_database_table, $data );
-							if ( WP_DEBUG && FALSE && ! count( $data ) )
-								print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>($Class/$post_type) = column [$meta_key] update on [$class_database_table] IGNORED because not present</div>" );
+								$data = $post->sanitize_data_for_table( $data, $formats );
+							else
+								$data = CB_Database::sanitize_data_for_table( $class_database_table, $data, $formats, TRUE );
 
-							foreach ( $data as $meta_key => $meta_value ) {
-								// Custom query
-								$query   = NULL;
+							if ( CB2_DEBUG_SAVE ) {
+								if ( ! is_string( $meta_value ) && ! is_numeric( $meta_value ) )
+									krumo( $meta_value, $data );
+								print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>cb2_update_post_metadata($Class/$post_type): [$meta_key] =&gt; [$meta_value]</div>" );
+								// if ( $meta_key == 'recurrence_sequence' ) exit();
+							}
+
+							// Update
+							// This field may be for another object being saved
+							// so do not worry if it is not present in this table
+							// TODO: This is executing the triggers for every meta-data update
+							// in case of a post save this will fire many times
+							if ( count( $data ) ) {
 								$id      = CB_Query::id_from_ID_with_post_type( $ID, $post_type );
-								if ( empty( $meta_value ) )
-									$query = $wpdb->prepare(
-										"UPDATE `$wpdb->prefix$class_database_table` set `$meta_key` = NULL where `$id_field` = %d",
-										array( $id )
-									);
-								else
-									$query = $wpdb->prepare(
-										"UPDATE `$wpdb->prefix$class_database_table` set `$meta_key` = %s where `$id_field` = %d",
-										array( $meta_value, $id )
-									);
-
-								// Run
-								if ( WP_DEBUG && FALSE ) print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>($Class/$post_type) = $query</div>" );
-								$result = $wpdb->query( $query );
+								$where   = array( $id_field => $id );
+								$query = $wpdb->update(
+									"$wpdb->prefix$class_database_table",
+									$data,
+									$where,
+									$formats
+								);
 								if ( $result === FALSE ) {
 									print( "<div id='error-page'><p>$wpdb->last_error</p></div>" );
 									exit();

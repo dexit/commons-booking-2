@@ -1,8 +1,8 @@
 <?php
 class CB_PostNavigator {
   protected function __construct( &$posts = NULL ) {
-    $this->zero_array = array();
-    if ( is_null( $posts ) ) $this->posts = &$this->zero_array;
+    $this->zeros = array();
+    if ( is_null( $posts ) ) $this->posts = &$this->zeros;
     else                     $this->posts = &$posts;
 
     // WP_Post default values
@@ -22,7 +22,13 @@ class CB_PostNavigator {
     if ( property_exists( $this, 'ID' ) ) wp_cache_add( $this->ID, $this, 'posts' );
   }
 
-  public function __toString() {return (string) $this->ID;}
+  public function __toStringFor( $column_data_type, $column_name ) {
+		return (string) $this->__toIntFor( $column_data_type, $column_name );
+	}
+
+	public function __toIntFor( $column_data_type, $column_name ) {
+		return ( preg_match( '/_ids?$/', $column_name ) ? $this->id() : $this->ID );
+	}
 
   // ------------------------------------------------- Navigation
   function have_posts() {
@@ -219,8 +225,10 @@ class CB_PostNavigator {
 		$meta = array();
 
 		foreach ( $this as $name => $value ) {
-			if ( ! is_null( $value ) && ! isset( CB2_POST_PROPERTIES[$name] ) )
-				$meta[ $name ] = CB_Database::to_string( $name, $value );
+			if ( ! is_null( $value ) && ! isset( CB2_POST_PROPERTIES[$name] ) ) {
+				// meta value will get serialised if it is not a string
+				$meta[ $name ] = CB_Query::to_string( $name, $value );
+			}
 		}
 
 		return $meta;
@@ -327,10 +335,10 @@ class CB_PostNavigator {
 
 						// Set values on $this
 						// because it still has to save itself
-						if ( property_exists( $this, $object_name ) )  $this->$object_name  = $object;
-						if ( property_exists( $this, $object_names ) ) $this->$object_names = array( $object );
-						if ( property_exists( $this, $base_name ) )    $this->$base_name    = $object->ID;
-						if ( property_exists( $this, $plural_name ) )  $this->$plural_name  = array( $object->ID );
+						$this->$object_name  = $object;
+						$this->$object_names = array( $object );
+						$this->$base_name    = $object->ID;
+						$this->$plural_name  = array( $object->ID );
 					} else throw new Exception( "Cannot create a new [$Class] from post because no factory_from_wp_post()" );
 				} else throw new Exception( "Cannot create a new [$post_type] for [$name] because cannot find the Class handler" );
 			}

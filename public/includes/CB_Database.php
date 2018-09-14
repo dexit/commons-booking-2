@@ -5,6 +5,7 @@
 class CB_Database {
   static $database_date_format = 'Y-m-d';
   static $database_datetime_format = 'Y-m-d H:i:s';
+  static $NULL_indicator = '__Null__';
 
   protected function __construct( $table = NULL, $alias = NULL ) {
     if ( $table ) $this->set_table( $table, $alias );
@@ -19,67 +20,19 @@ class CB_Database {
   }
 
   // -------------------------------- Utilities
-  static function to_string( &$name, $value ) {
-		// TODO: Refactor this in to the objects
-    if ( is_array( $value ) ) {
-			// periods = array(period, period) => period_IDs = 200000238, 200000239
-			$string_value = '';
-			$sub_name = $name;
-			if ( substr( $sub_name, -1 ) == 's' ) $sub_name = substr( $sub_name, 0, -1 );
-			foreach ( $value as $sub_value ) {
-				if ( $string_value ) $string_value .= ',';
-				$string_value .= self::to_string( $sub_name, $sub_value );
-			}
-			if ( substr( $sub_name, -1 ) != 's' ) $sub_name .= 's';
-			$name  = $sub_name;
-			$value = $string_value;
-    }
-
-    else if ( is_object( $value ) && $value instanceof CB_PostNavigator ) {
-			// period = period object => period_ID = 200000238
-			if ( property_exists( $value, 'ID' ) ) {
-				if ( $value->ID === CB2_CREATE_NEW ) throw new Exception( "[$name] WP_Post->ID value [CB2_CREATE_NEW] value should have been resolved" );
-				if ( ! is_numeric( $value->ID ) )    throw new Exception( "[$name] WP_Post->ID value [$value->ID] is not numeric" );
-				$name .= '_ID';
-				$value = (int) $value->ID;
-			} else throw new Exception( "This CB_Post / CB_PostNavigator object should have an ID for [$name] property" );
-		}
-
-		else if ( is_object( $value ) && $value instanceof DateTime ) {
-			// DateTime => 2018-06-10 12:34:23
-			$date_string = $value->format( self::$database_datetime_format );
-			if ( $value < new DateTime( '1970-01-01' ) ) throw new Exception( "Dodgy date [$date_string]" );
-			$value = $date_string;
-		}
-
-		else if ( is_object( $value ) && $value instanceof WP_Post ) {
-			if ( $value->ID === CB2_CREATE_NEW ) throw new Exception( "[$name] WP_Post->ID value [CB2_CREATE_NEW] value should have been resolved" );
-			if ( ! is_numeric( $value->ID ) )    throw new Exception( "[$name] WP_Post->ID value [$value->ID] is not numeric" );
-			$value = (int) $value->ID;
-		}
-
-		else if ( is_object( $value ) && method_exists( $value, '__toString' ) ) {
-			$value = (string) $value;
-		}
-
-		else {
-			$value = (string) $value;
-    }
-    return $value;
-  }
-
   static function bitarray_to_int( $bit_array ) {
     $int = NULL;
     if ( is_array( $bit_array ) ) {
       $int = 0;
-      foreach ( $bit_array as $loc ) {
-        $int += pow( 2, $loc );
+      foreach ( $bit_array as $loc => $on ) {
+        if ( $on ) $int += pow( 2, $loc );
       }
-    }
+    } else throw new Exception( 'bit_array is not an array' );
     return $int;
   }
 
   static function bitarray_to_bitstring( $bit_array, $offset = 1 ) {
+		// array(0,1,1) => b'011'
     $str = NULL;
     if ( is_array( $bit_array ) ) {
       $str = '000000';
@@ -89,17 +42,25 @@ class CB_Database {
           $str[$loc - $offset] = '1';
       }
       $str = "b'$str'";
-    }
+    } else throw new Exception( 'bit_array is not an array' );
     return $str;
   }
 
   static function int_to_bitstring( $int ) {
-		$binary    = decbin( $int );
-		$bitstring = "b'$binary'";
+		// 6 => b'011'
+		$bitarray  = self::int_to_bitarray( $int );
+		$bitstring = "b'" . implode( '', $bitarray ) . "'";
 		return $bitstring;
   }
 
-	// ------------------------------------------------------- Reflection
+  static function int_to_bitarray( $int ) {
+		// 6 => array(0,1,1)
+		$binary   = decbin( $int );
+		$bitarray = str_split( strrev($binary ) );
+		return $bitarray;
+  }
+
+  // ------------------------------------------------------- Reflection
   static function has_table( $table ) {
 		return in_array( $table, self::tables() );
   }
@@ -117,6 +78,7 @@ class CB_Database {
   }
 
   static function tables() {
+		// TODO: not portable. build this from the installation knowledge
 		global $wpdb;
 		$tables = $wpdb->get_col( "show tables", 0 );
 		foreach ( $tables as &$table ) $table = preg_replace( "/^$wpdb->prefix/", '', $table );
@@ -124,6 +86,7 @@ class CB_Database {
   }
 
 	static function columns( $table, $full_details = FALSE ) {
+		// TODO: not portable. build this from the installation knowledge
 		global $wpdb;
 		// TODO: cacheing!!!!
 		$desc_sql = "DESC $wpdb->prefix$table";
@@ -131,74 +94,173 @@ class CB_Database {
   }
 
   static function procedures() {
+		// TODO: not portable. build this from the installation knowledge
 		global $wpdb;
 		return $wpdb->get_col( 'show procedure status', 1 );
   }
 
   static function functions() {
+		// TODO: not portable. build this from the installation knowledge
 		global $wpdb;
 		return $wpdb->get_col( 'show function status', 0 );
   }
 
-	static function sanitize_data_for_table( $table, $data ) {
+	static function sanitize_data_for_table( $table, $data, &$formats = array(), $update = FALSE ) {
+		// https://developer.wordpress.org/reference/classes/wpdb/insert/
+		// A format is one of '%d', '%f', '%s' (integer, float, string).
+		// If omitted, all values in $data will be treated as strings...
 		$new_data   = array();
 		$columns    = self::columns( $table, TRUE );
+		if ( CB2_DEBUG_SAVE ) krumo( $columns );
 
-		// Meta data queries use arrays
-		foreach ( $data as $name => &$value )
-			if ( is_array( $value ) ) $value = $value[0];
-
-		// Look through the data for a value for this column
 		foreach ( $columns as $column_name => $column_definition ) {
-			$data_value = NULL;
+			// Look through the data for a value for this column
+			$data_value_array = NULL;
+
+			// Direct value with same name
 			if ( isset( $data[$column_name] ) ) {
-				// Direct value with same name
-				$data_value = $data[$column_name];
-			} else {
-				// Standard mappings
+				$data_value_array = $data[$column_name];
+			}
+
+			// Standard mappings
+			if ( is_null( $data_value_array ) ) {
 				switch ( $column_name ) {
-					case 'name':        if ( isset( $data['post_title'] ) )   $data_value = $data['post_title'];   break;
-					case 'description': if ( isset( $data['post_content'] ) ) $data_value = $data['post_content']; break;
-				}
-
-				if ( substr( $column_name, -3 ) == '_ID' ) {
-					// period_group = CB_PeriodGroup => period_group_ID = CB_PeriodGroup->ID
-					$data_stub = substr( $column_name, 0, -3 );
-					if ( isset( $data[$data_stub] )
-						&& is_object( $data[$data_stub] )
-						&& property_exists( $data[$data_stub], 'ID' )
-					) {
-						$data_value = $data[$data_stub]->ID;
-					}
-				}
-
-				if ( substr( $column_name, -3 ) == '_id' ) {
-					// period_group = CB_PeriodGroup => period_group_ID = CB_PeriodGroup->ID
-					$data_stub = substr( $column_name, 0, -3 );
-					if ( isset( $data[$data_stub] )
-						&& is_object( $data[$data_stub] )
-						&& method_exists( $data[$data_stub], 'id' )
-					) {
-						$data_value = $data[$data_stub]->id( "For column [$column_name]" );
-					}
+					case 'name':
+						if ( isset( $data['post_title'] ) )   $data_value_array = $data['post_title'];
+						break;
+					case 'description':
+						if ( isset( $data['post_content'] ) ) $data_value_array = $data['post_content'];
+						break;
 				}
 			}
 
-			if ( ! is_null( $data_value ) && ! empty( $data_value ) ) {
-				// Data conversion
-				switch ( CB_Query::substring_before( $column_definition->Type, '(' ) ) {
-					case 'bit':
-						$data_value = self::int_to_bitstring( $data_value );
-						break;
+			// object ID fields
+			if ( is_null( $data_value_array ) ) {
+				$object_column_name = preg_replace( '/_IDs?$|_ids?$/', '', $column_name);
+				if ( isset( $data[$object_column_name]) ) $data_value_array = $data[$object_column_name];
+			}
+
+			// Normalise input from meta-data arrays to objects
+			if ( ! is_array( $data_value_array ) )
+				$data_value_array = array( $data_value_array );
+
+			// Allow the Database to set DEFAULT values by ignoring empty info
+			// A special string of Null will force a Null in the field
+			$is_single_empty = (
+					 ( count( $data_value_array ) == 0 )
+				|| ( count( $data_value_array ) == 1 && is_null( $data_value_array[0] ) )
+				|| ( count( $data_value_array ) == 1 && is_string( $data_value_array[0] ) && empty( $data_value_array[0] ) )
+			);
+			if ( $is_single_empty ) {
+				// Is this mySQL specific?
+				$field_required = ( $column_definition->Null == 'NO'
+					&& is_null( $column_definition->Default )
+					&& $column_definition->Extra != 'auto_increment'
+				);
+				if ( $field_required && ! $update ) {
+					global $extra_processing_properties;
+					krumo( $data, $extra_processing_properties );
+					throw new Exception( "[$table::$column_name] is required" );
 				}
-				$data_value = CB_Query::cast_parameter( $column_name, $data_value );
-				$data_value = self::to_string( $column_name, $data_value );
+			} else {
+				$data_value = self::convert_for_field( $column_definition, $data_value_array, $format );
 
 				$new_data[ $column_name ] = $data_value;
+				$formats[  $column_name ] = $format;
 			}
 		}
 
 		return $new_data;
+	}
+
+	static function convert_for_field( $column_definition, $data_value_array, &$format ) {
+		// Data conversion
+		$format           = '%s';
+		$data_value       = NULL;
+		$column_name      = $column_definition->Field;
+		$column_data_type = strtolower( CB_Query::substring_before( $column_definition->Type, '(' ) );
+
+		switch ( $column_data_type ) {
+			// TODO: types not portable? build this from the installation knowledge
+			case 'bit':
+				// int works on input:
+				// 6 will successfully set bits 2 (2) and 3 (4)
+				// b'01010' bit syntax is tricky because WordPress does not provide a format for it
+				if ( count( $data_value_array ) > 1 )
+					throw new Exception( 'Multiple number array detected: bit arrays are set with a single unsigned' );
+				foreach ( $data_value_array as &$value ) {
+					if ( is_string( $value ) && $value == 'on' ) $value = 1;
+					if ( is_bool( $value ) ) $value = (int) $value;
+					if ( ! is_numeric( $value ) ) {
+						krumo( $value );
+						throw new Exception( 'Non-numeric value for bit field' );
+					}
+				}
+				$data_value = CB_Query::ensure_int( $column_name, $data_value_array[0] );
+				$format     = "%d";
+				break;
+			case 'tinyint':
+			case 'int':
+			case 'bigint':
+				foreach ( $data_value_array as &$value ) {
+					if ( is_object( $value ) ) {
+						if ( method_exists( $value, '__toIntFor' ) ) {
+							// PHP only supports __toString() magic method
+							$value = $value->__toIntFor( $column_data_type, $column_name );
+						} else throw new Exception( '[' . get_class( $value ) . '] must implement __toInt()' );
+						if ( is_numeric( $value ) ) $value = (int) $value;
+					}
+					if ( ! is_numeric( $value ) )
+						throw new Exception( 'Non-numeric value for int field' );
+				}
+				// In the normal case of just 1 value in the array
+				// we will simply sum just that value
+				$data_value = array_sum( $data_value_array );
+				$format     = "%d";
+				break;
+			case 'datetime':
+			case 'timestamp';
+				// TODO: Multiple value dates ignored at the moment
+				if ( count( $data_value_array ) > 1 )
+					throw new Exception( 'Multiple datetime input is not understood currently' );
+				foreach ( $data_value_array as &$value ) {
+					if ( is_object( $value ) && method_exists( $value, '__toDateTimeFor' ) ) {
+						// PHP only supports __toString() magic method
+						$value = $value->__toDateTimeFor( $column_data_type, $column_name );
+					} else {
+						$value = CB_Query::ensure_datetime( $column_name, $value );
+						$value = $value->format( CB_Database::$database_datetime_format );
+					}
+					if ( new DateTime( $value ) === FALSE )
+						throw new Exception( "Failed to parse [$value] for datetime field" );
+				}
+				$data_value = $data_value_array[0];
+				break;
+			case 'char':
+			case 'varchar':
+			case 'longtext':
+			default:
+				// In the common single value array
+				// we will simply concatenate the first value
+				foreach ( $data_value_array as &$value ) {
+					if ( is_object( $value ) && method_exists( $value, '__toStringFor' ) ) {
+						// We want to send the column name for processing as well
+						// so we do not use the built in magic __toString()
+						// In the case of *_IDs columns,
+						// the object should return its (string) __toInt() instead
+						$value = $value->__toStringFor( $column_data_type, $column_name );
+					}
+					if ( is_numeric( $value ) ) $value = (string) $value;
+
+					if ( ! is_string( $value ) ) throw new Exception( 'Non-string value for string field' );
+				}
+				$data_value = implode( ',', $data_value_array );
+		}
+
+		// Special cases
+		if ( is_string( $data_value ) && $data_value == CB_Database::$NULL_indicator ) $data_value = NULL;
+
+		return $data_value;
 	}
 
 	// -------------------------------------------------------------------- Classes
@@ -542,7 +604,7 @@ class CB_Database_Insert extends CB_Database {
 
   function add_field( $name, $value, $format = NULL ) {
     if ( ! is_null( $value ) )  {
-      $this->fields[$name]  = CB_Database::to_string( $name, $value );
+      $this->fields[$name]  = $value;
       $this->formats[$name] = ( is_null( $format ) ? '%s' : $format );
     }
   }

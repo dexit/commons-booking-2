@@ -64,22 +64,17 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 			),
 
 			array(
-				'title' => __( 'Item interaction', 'commons-booking-2' ),
+				'title' => __( '<span class="cb2-todo">Item interaction</span>', 'commons-booking-2' ),
 				'fields' => array(
 					array(
-						'name' => __( 'Collect', 'commons-booking-2' ),
-						'id' => 'collect',
-						'type' => 'checkbox',
-					),
-					array(
-						'name' => __( 'Use', 'commons-booking-2' ),
-						'id' => 'use',
-						'type' => 'checkbox',
-					),
-					array(
-						'name' => __( 'Return', 'commons-booking-2' ),
-						'id' => 'return',
-						'type' => 'checkbox',
+						'name' => __( 'Flags', 'commons-booking-2' ),
+						'id' => 'flags',
+						'type' => 'multicheck',
+						'options' => array(
+							'1' => __( 'Collect', 'commons-booking-2' ),
+							'2' => __( 'Use',     'commons-booking-2' ),
+							'4' => __( 'Return',  'commons-booking-2' ),
+						),
 					),
 				),
 			),
@@ -177,14 +172,15 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 			array_unshift( $actions, '<b style="color:#000;">System Status Type</b>' );
 			unset( $actions['trash'] );
 		}
+		unset( $actions['view'] );
 	}
 
   function manage_columns( $columns ) {
-		$columns['collect']  = 'Collect';
-		$columns['use']      = 'Use';
-		$columns['return']   = 'Return';
-		$columns['priority'] = 'Priority';
-		$columns['colour']   = 'Colour';
+		$columns['collect']  = '<span class="cb2-todo">Collect</span>';
+		$columns['use']      = '<span class="cb2-todo">Use</span>';
+		$columns['return']   = '<span class="cb2-todo">Return</span>';
+		$columns['priority'] = '<span>Priority</span>';
+		$columns['colour']   = '<span>Colour</span>';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
@@ -195,15 +191,13 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 			case 'collect':
 			case 'use':
 			case 'return':
-				$html .= "<input type='checkbox' checked='$this->$column' />";
+				$html .= "<input class='cb2-tick-only' type='checkbox' checked='$this->$column' />";
 				break;
 			case 'priority':
-				$html .= "<select>
-					<option>$this->priority</option>
-				</select>";
+				$html .= "<span class='cb2-usage-count-ok' title='Higher priority Periods override each other'>$this->priority</span>";
 				break;
 			case 'colour':
-				$html .= "<input value='$this->colour'/>";
+				$html .= "<div class='cb2-colour-block' style='background-color:$this->colour'></div>";
 				break;
 		}
 		return $html;

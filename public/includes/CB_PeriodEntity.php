@@ -21,14 +21,16 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		);
 		array_push( $metaboxes,
 			array(
-				'title' => __( 'Calendar view', 'commons-booking-2' ),
-				'context' => 'normal',
+				'title'      => __( 'Calendar view', 'commons-booking-2' ),
+				'context'    => 'normal',
 				'show_names' => FALSE,
+				'show_on_cb' => array( 'CB_Period', 'metabox_show_when_published' ),
 				'fields' => array(
 					array(
-						'name' => __( 'Timeframe', 'commons-booking-2' ),
-						'id' => 'calendar',
-						'type' => 'calendar',
+						'name'    => __( 'Timeframe', 'commons-booking-2' ),
+						'id'      => 'calendar',
+						'type'    => 'calendar',
+						'options_cb' => array( 'CB_PeriodEntity', 'metabox_calendar_options_cb' ),
 						'options' => array(
 							'template' => 'available',
 						),
@@ -38,8 +40,25 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		);
 		array_push( $metaboxes, CB_PeriodStatusType::selector_metabox() );
 		array_push( $metaboxes, CB_Period::selector_metabox() );
+		array_push( $metaboxes, CB_PeriodGroup::selector_metabox() );
 
 		return $metaboxes;
+	}
+
+	static function metabox_calendar_options_cb( $field ) {
+		global $post;
+
+		$options = array( 'template' => 'available' );
+		if ( $post ) $options[ 'query' ] = array(
+			'meta_query' => array(
+				'period_entity' => array(
+					'meta_key'   => 'period_entity_ID',
+					'meta_value' => $post->ID,
+				),
+			),
+		);
+
+		return $options;
 	}
 
 	static function &factory_from_wp_post( $post ) {
@@ -167,25 +186,19 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 
 	function summary() {
 		$html      = '<b>' . $this->post_title . '</b>';
-
-		$post_type = $this->post_type();
-		$page      = 'cb-post-edit';
-		$action    = 'edit';
-		$edit_link = "?page=$page&post=$this->ID&post_type=$post_type&action=$action";
-		$html     .= " <a href='$edit_link'>edit</a>";
-
+		$html     .= $this->summary_actions();
 		$html     .= '<br/>';
 		$html     .= $this->period_group->summary_periods();
 		return $html;
 	}
 
-  function post_post_update() {
-		if ( ! $this->period_group ) {
-			krumo( $this );
-			throw new Exception( "CB_PeriodEntity has no period_group" );
-		}
-		return $this->period_group->post_post_update();
-  }
+	function summary_actions() {
+		$post_type = $this->post_type();
+		$page      = 'cb-post-edit';
+		$action    = 'edit';
+		$edit_link = "?page=$page&post=$this->ID&post_type=$post_type&action=$action";
+		return " <a href='$edit_link'>edit</a>";
+	}
 
 	function jsonSerialize() {
     return $this;
@@ -273,7 +286,7 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 	static function metaboxes() {
 		$metaboxes = parent::metaboxes();
 		array_unshift( $metaboxes, CB_Location::selector_metabox() );
-		array_push(    $metaboxes, CB_Location::summary_metabox() );
+		// array_push(    $metaboxes, CB_Location::summary_metabox() );
 		return $metaboxes;
 	}
 
@@ -533,6 +546,17 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 		$this->user = $user;
     array_push( $this->posts, $this->user );
   }
+
+  function add_actions( &$actions, $post ) {
+		$actions['contact'] = "<a class='cb2-todo' href='#'>" . __( 'Contact User' ) . '</a>';
+	}
+
+	function summary_actions() {
+		$actions = parent::summary_actions();
+		$view_link = get_permalink( $this->ID );
+		$actions  .= " | <a href='$view_link'>view</a>";
+		return $actions;
+	}
 }
 CB_Query::register_schema_type( 'CB_PeriodEntity_Timeframe_User' );
 
