@@ -47,6 +47,9 @@ body .cb2-description {
 	margin:0px 8px;
 	color:#888;
 }
+.cb2-calendar-krumo-show {
+	cursor:pointer;
+}
 body.wp-admin .cb2-disabled,
 body.wp-admin .cb2-disabled span {
 	text-decoration:none;

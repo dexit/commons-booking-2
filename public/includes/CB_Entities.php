@@ -351,8 +351,8 @@ class CB_Location extends CB_Post implements JsonSerializable {
 				}
 				$add_link  = "admin.php?page=cb-post-new&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
 				$html     .= " <a href='$add_link'>add new booking</a>";
-				$view_link = "";
-				$html     .= " | <a class='cb2-todo' href='$view_link'>view in calendar</a>";
+				$view_link = "admin.php?page=cb2-calendar&location_ID=$this->ID&period_status_type_ID=100000002";
+				$html     .= " | <a href='$view_link'>view in calendar</a>";
 				break;
 		}
 		return $html;
@@ -526,8 +526,8 @@ class CB_Item extends CB_Post implements JsonSerializable {
 				}
 				$add_link  = "admin.php?page=cb-post-new&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
 				$html     .= " <a href='$add_link'>add new booking</a>";
-				$view_link = "";
-				$html     .= " | <a class='cb2-todo' href='$view_link'>view in calendar</a>";
+				$view_link = "admin.php?page=cb2-calendar&location_ID=$this->ID&period_status_type_ID=100000002";
+				$html     .= " | <a href='$view_link'>view in calendar</a>";
 				break;
 		}
 		return $html;
