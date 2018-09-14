@@ -1,7 +1,7 @@
 (function($) {
   'use strict';
   $(document).ready(function(){
-		$('.type-perioditem-location').click(function(){
+		$('.cb2-template-available').click(function(){
 			var checkbox = $(this).find( '.cb2-perioditem-selector' );
 
 			if (checkbox.attr('checked')) {
@@ -11,6 +11,10 @@
 				checkbox.attr('checked', '1');
 				$(this).attr( 'class', $(this).attr('class') + ' cb2-booked' );
 			}
+		});
+
+		$('.cb2-calendar-krumo-show').click(function(){
+			$(this).parent().find('.cb2-calendar-krumo').show();
 		});
 
 		$('form').submit(function(){

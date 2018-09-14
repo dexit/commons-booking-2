@@ -655,6 +655,7 @@ function cb2_pre_get_posts_query_string_extensions() {
 	if ( isset( $_GET[ 'item_ID' ] ) )                 $meta_query_items[ 'item_clause' ]        = array( 'key' => 'item_ID',     'value' => $_GET[ 'item_ID' ] );
 	if ( isset( $_GET[ 'user_ID' ] ) )                 $meta_query_items[ 'user_clause' ]        = array( 'key' => 'user_ID',     'value' => $_GET[ 'user_ID' ] );
 	if ( isset( $_GET[ 'period_status_type_ID' ] ) )   $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_ID',   'value' => $_GET[ 'period_status_type_ID' ] );
+	if ( isset( $_GET[ 'period_entity_ID' ] ) )        $meta_query_items[ 'period_entity_clause' ]      = array( 'key' => 'period_entity_ID',        'value' => $_GET[ 'period_entity_ID' ] );
 	if ( isset( $_GET[ 'period_status_type_name' ] ) ) $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_name', 'value' => $_GET[ 'period_status_type_name' ] );
 
 	if ( $meta_query_items ) {
@@ -671,6 +672,7 @@ function cb2_query_vars( $qvars ) {
 	$qvars[] = 'show_overridden_periods';
 	$qvars[] = 'location_ID';
 	$qvars[] = 'item_ID';
+	$qvars[] = 'period_group_ID';
 	$qvars[] = 'period_status_type_ID';
 	$qvars[] = 'period_status_type_name';
 

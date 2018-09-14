@@ -31,9 +31,6 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 						'id'      => 'calendar',
 						'type'    => 'calendar',
 						'options_cb' => array( 'CB_PeriodEntity', 'metabox_calendar_options_cb' ),
-						'options' => array(
-							'template' => 'available',
-						),
 					),
 				),
 			)
@@ -51,9 +48,10 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		$options = array( 'template' => 'available' );
 		if ( $post ) $options[ 'query' ] = array(
 			'meta_query' => array(
+				'relation' => 'OR',
 				'period_entity' => array(
-					'meta_key'   => 'period_entity_ID',
-					'meta_value' => $post->ID,
+					'key'   => 'period_entity_ID',
+					'value' => $post->ID,
 				),
 			),
 		);

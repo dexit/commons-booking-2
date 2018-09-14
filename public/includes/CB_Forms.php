@@ -20,11 +20,15 @@ class CB_Forms {
     return self::get_options( 'cb2_period_groups', CB_PeriodGroup::$static_post_type, 'period_group_id', 'name', '1=1', $none );
   }
 
+  static function period_entity_options( $none = FALSE ) {
+    return self::get_options( 'cb2_view_periodent_posts' );
+  }
+
   static function period_options( $none = FALSE ) {
     return self::get_options( 'cb2_periods', CB_Period::$static_post_type, 'period_id', 'name', '1=1', $none );
   }
 
-  static function get_options( $table, $post_type, $id_field = 'ID', $name_field = 'post_title', $condition = '1=1', $none = FALSE ) {
+  static function get_options( $table, $post_type = NULL, $id_field = 'ID', $name_field = 'post_title', $condition = '1=1', $none = FALSE ) {
 		global $wpdb;
 
 		$cache_name = "CB_Forms::get_options($table, $post_type, $id_field, $name_field, $condition, $none)";

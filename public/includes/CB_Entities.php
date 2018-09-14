@@ -5,7 +5,6 @@
 class CB_User extends CB_PostNavigator implements JsonSerializable {
   public static $all    = array();
   public static $schema = 'with-perioditems'; //this-only, with-perioditems
-  public function __toString() {return $this->ID;}
   static $static_post_type     = 'user';
 	static function selector_metabox() {
 		return array(

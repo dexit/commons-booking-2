@@ -22,6 +22,8 @@ class CB_PostNavigator {
     if ( property_exists( $this, 'ID' ) ) wp_cache_add( $this->ID, $this, 'posts' );
   }
 
+  public function __toString() {return (string) $this->ID;}
+
   public function __toStringFor( $column_data_type, $column_name ) {
 		return (string) $this->__toIntFor( $column_data_type, $column_name );
 	}

@@ -8,6 +8,7 @@ $item_ID          = ( isset( $_GET['item_ID'] )     ? $_GET['item_ID']     : NUL
 $user_ID          = ( isset( $_GET['user_ID'] )     ? $_GET['user_ID']          : NULL );
 $period_group_id  = ( isset( $_GET['period_group_id'] ) ? $_GET['period_group_id'] : NULL );
 $period_status_type_ID = ( isset( $_GET['period_status_type_ID'] ) ? $_GET['period_status_type_ID'] : NULL );
+$period_entity_ID = ( isset( $_GET['period_entity_ID'] ) ? $_GET['period_entity_ID'] : NULL );
 $schema_type      = ( isset( $_GET['schema_type'] )   ? $_GET['schema_type'] : CB_Week::$static_post_type );
 $template_part    = ( isset( $_GET['template_part'] ) ? $_GET['template_part'] : NULL );
 $no_auto_draft    = isset( $_GET['no_auto_draft'] );
@@ -32,6 +33,11 @@ if ( $period_status_type_ID )
 	$meta_query_items[ 'period_status_type_clause' ] = array(
 		'key' => 'period_status_type_ID',
 		'value' => $period_status_type_ID
+	);
+if ( $period_entity_ID )
+	$meta_query_items[ 'period_entity_clause' ] = array(
+		'key' => 'period_entity_ID',
+		'value' => $period_entity_ID
 	);
 
 if ( $meta_query_items ) {
@@ -67,6 +73,7 @@ print( 'Location: <select name="location_ID">'  . CB_Forms::select_options( CB_F
 print( 'Item: <select name="item_ID">'          . CB_Forms::select_options( CB_Forms::item_options(), $item_ID ) . '</select> ' );
 print( 'User: <select name="user_ID">'          . CB_Forms::select_options( CB_Forms::user_options(), $user_ID ) . '</select> ' );
 print( 'Period Status: <select name="period_status_type_ID">' . CB_Forms::select_options( CB_Forms::period_status_type_options(), $period_status_type_ID, TRUE ) . '</select> ' );
+print( 'Period Entity: <select name="period_entity_ID">'      . CB_Forms::select_options( CB_Forms::period_entity_options(), $period_entity_ID, TRUE ) . '</select> ' );
 print( '<br/>' );
 print( 'Output type:<select name="output_type">'     . CB_Forms::select_options( array( 'HTML' => 'HTML', 'JSON' => 'JSON' ), $output_type ) . '</select>' );
 print( 'Post Type:<select name="schema_type">'       . CB_Forms::select_options( CB_Forms::schema_options(), $schema_type ) . '</select>' );
@@ -94,7 +101,7 @@ if ( $post_count ) {
 		<div style='margin-left:5px;color:#448;'>$query->request</div>
 		</div>" );
 } else print( "<div>No posts returned!</div>" );
-krumo( $query );
+krumo( $args );
 
 switch ( $output_type ) {
 	case 'JSON':

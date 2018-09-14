@@ -13,7 +13,7 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE', WP_DEBUG && TRUE );
+define( 'CB2_DEBUG_SAVE', WP_DEBUG && FALSE );
 
 // System PERIOD_STATUS_TYPEs
 // a database trigger prevents deletion of these

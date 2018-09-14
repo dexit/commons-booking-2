@@ -92,7 +92,7 @@ function cb2_admin_pages() {
 			'menu_title' => 'Opening Hours',
 			'capability' => NULL,
 			'function'   => NULL,
-			'wp_query_args' => 'post_type=periodent-location&period_status_type_ID=100000004&post_title=Opening Hours %(for)% %location_ID%',
+			'wp_query_args' => 'post_type=periodent-location&recurrence_type=D&period_status_type_ID=100000004&post_title=Opening Hours %(for)% %location_ID%',
 			'actions'    => NULL,
 			'post_new_page' => NULL,
 		),

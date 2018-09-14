@@ -58,7 +58,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 						'name' => __( 'Type', 'commons-booking-2' ),
 						'id' => 'recurrence_type',
 						'type' => 'radio_inline',
-						'default' => CB_Database::$NULL_indicator,
+						'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB_Database::$NULL_indicator ),
 						'options' => array(
 							CB_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
 							'D' => __( 'Daily', 'commons-booking-2' ),
@@ -74,6 +74,8 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 						'before' => '<span class="cb2-todo"/>',
 						'escape_cb'       => array( 'CB_Period', 'recurrence_sequence_escape' ),
 						'sanitization_cb' => array( 'CB_Period', 'recurrence_sequence_sanitization' ),
+						// TODO: does not work default recurrence_sequence
+						'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
 						'options' => array(
 							'1'  => __( 'Sunday', 'commons-booking-2' ),
 							'2'  => __( 'Monday', 'commons-booking-2' ),

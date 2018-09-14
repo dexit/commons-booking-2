@@ -56,7 +56,7 @@ class CMB2_Field_Calendar {
 
         // Inputs
         $url              = $_SERVER['REQUEST_URI'];
-        $options          = $field->args( 'options' );
+        $options          = $field->options();
 				$startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : $yesterday->format( CB_Query::$date_format ) );
 				$enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : $nextmonth->format( CB_Query::$date_format ) );
         $view             = ( isset( $_GET['view'] ) ? $_GET['view'] : CB_Week::$static_post_type );
@@ -75,20 +75,33 @@ class CMB2_Field_Calendar {
         );
 
         // Analyse options
-        $query_options = ( isset( $options[ 'query' ] )    ? $options[ 'query' ]    : array() );
         $context       = ( isset( $options[ 'context' ] )  ? $options[ 'context' ]  : 'list' );
         $template      = ( isset( $options[ 'template' ] ) ? $options[ 'template' ] : NULL );
+        $query_options = ( isset( $options[ 'query' ] )    ? $options[ 'query' ]    : array() );
         $query_args    = array_merge( $default_query, $query_options );
 				if ( isset( $query_args['meta_query'] ) ) {
 					// Include the auto-draft which do not have meta
 					$meta_query = &$query_args['meta_query'];
 					if ( ! isset( $meta_query[ 'relation' ] ) ) $meta_query[ 'relation' ] = 'OR';
 					if ( ! isset( $meta_query[ 'without_meta' ] ) ) $meta_query[ 'without_meta' ] = CB_Query::$without_meta;
-					if ( ! isset( $meta_query[ 'items' ][ 'relation' ] ) ) $meta_query[ 'items' ][ 'relation' ] = 'AND';
 				}
 
         // Request period items
         $query = new WP_Query( $query_args );
+
+        // Debug
+        if ( WP_DEBUG ) {
+					$post_types = array();
+					$post_count = count( $query->posts );
+					foreach ( $query->posts as $post )
+						$post_types[$post->post_type] = $post->post_type;
+					print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
+					print( "WP_DEBUG: <b>$post_count</b> posts returned" );
+					print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
+					print( ' <a class="cb2-calendar-krumo-show">more...</a><div class="cb2-calendar-krumo" style="display:none;">' );
+					krumo($query_args);
+					print( '</div></div>' );
+				}
 
         // Date handling
         $startdate      = new DateTime( $startdate_string );
