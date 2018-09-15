@@ -153,6 +153,8 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				),
 			),
 			*/
+
+			CB_PeriodGroup::selector_metabox(),
 		);
 	}
 

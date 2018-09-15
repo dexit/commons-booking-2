@@ -37,7 +37,6 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		);
 		array_push( $metaboxes, CB_PeriodStatusType::selector_metabox() );
 		array_push( $metaboxes, CB_Period::selector_metabox() );
-		array_push( $metaboxes, CB_PeriodGroup::selector_metabox() );
 
 		return $metaboxes;
 	}
