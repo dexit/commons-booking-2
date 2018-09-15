@@ -74,19 +74,19 @@ if ($period_query->have_posts()) { ?>
 	<table class="cb-calendar">
 		<thead>
 			<tr>
-				<?php 
-				    for($i=1;$i<8;$i++) {
-						echo '<th>' . date("D",mktime(0,0,0,3,28,2009)+$i * (3600*24)) . '</th>';
+				<?php
+					// TODO: wordpress WeekStartsOn
+					foreach ( CB_Query::$days as $dayname ) {
+						print( "<th>$dayname</th>" );
 					}
 				?>
-
 			</tr>
 		</thead>
 		<tbody>
 			<?php the_inner_loop($period_query, 'list'); ?>
 		</tbody>
 	</table>
-		
+
 
 <?php } ?>
 

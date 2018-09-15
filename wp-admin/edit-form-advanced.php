@@ -484,9 +484,8 @@ if ( 'post' == $post_type ) {
 	) );
 }
 
-require_once( ABSPATH . 'wp-admin/admin-header.php' );
+// require_once( ABSPATH . 'wp-admin/admin-header.php' ); // CB2/Annesley: embedded
 ?>
-
 <div class="wrap">
 <h1 class="wp-heading-inline"><?php
 echo esc_html( $title );
@@ -496,6 +495,7 @@ echo esc_html( $title );
 if ( isset( $post_new_file ) && current_user_can( $post_type_object->cap->create_posts ) ) {
 	echo ' <a href="' . esc_url( admin_url( $post_new_file ) ) . '" class="page-title-action">' . esc_html( $post_type_object->labels->add_new ) . '</a>';
 }
+if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '</span>' ); // CB2/Annesley: debug
 ?>
 
 <hr class="wp-header-end">

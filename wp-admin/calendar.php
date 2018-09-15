@@ -1,4 +1,3 @@
-<h1>calendar</h1>
 <?php
 // --------------------------------------- Query Parameters
 $startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : '2018-09-01 00:00:00' );
@@ -13,6 +12,7 @@ $schema_type      = ( isset( $_GET['schema_type'] )   ? $_GET['schema_type'] : C
 $template_part    = ( isset( $_GET['template_part'] ) ? $_GET['template_part'] : NULL );
 $no_auto_draft    = isset( $_GET['no_auto_draft'] );
 $output_type      = ( isset( $_GET['output_type'] ) ? $_GET['output_type'] : 'HTML' );
+$extended_class   = ( isset( $_GET['extended'] ) ? '' : 'none' );
 
 // --------------------------------------- Query
 $meta_query       = array();
@@ -65,47 +65,62 @@ $args = array(
 $query = new WP_Query( $args );
 
 // --------------------------------------- Filter selection Form
-print( '<form>' );
-print( "<input name='page' type='hidden' value='cb2-calendar'/>" );
-print( "<input name='startdate' value='$startdate_string'/> =&gt; " );
-print( "<input name='enddate' value='$enddate_string'/> " );
-print( 'Location: <select name="location_ID">'  . CB_Forms::select_options( CB_Forms::location_options(), $location_ID ) . '</select> ' );
-print( 'Item: <select name="item_ID">'          . CB_Forms::select_options( CB_Forms::item_options(), $item_ID ) . '</select> ' );
-print( 'User: <select name="user_ID">'          . CB_Forms::select_options( CB_Forms::user_options(), $user_ID ) . '</select> ' );
-print( 'Period Status: <select name="period_status_type_ID">' . CB_Forms::select_options( CB_Forms::period_status_type_options(), $period_status_type_ID, TRUE ) . '</select> ' );
-if ( isset( $_GET['extended'] ) ) {
-	print( '<input type="hidden" name="extended" value="1"/>' );
-	print( 'Period Entity: <select name="period_entity_ID">'      . CB_Forms::select_options( CB_Forms::period_entity_options(), $period_entity_ID, TRUE ) . '</select> ' );
-	print( 'Output type:<select name="output_type">'     . CB_Forms::select_options( array( 'HTML' => 'HTML', 'JSON' => 'JSON' ), $output_type ) . '</select>' );
-	print( 'Post Type:<select name="schema_type">'       . CB_Forms::select_options( CB_Forms::schema_options(), $schema_type ) . '</select>' );
-	print( 'Template Part:<select name="template_part">' . CB_Forms::select_options( array( 'available' => 'available' ), $template_part ) . '</select>' );
-	print( '<br/>' );
-	print( " <input id='no_auto_draft' type='checkbox' name='no_auto_draft'/> <label for='no_auto_draft'>Exclude pseudo-periods (A)</label>" );
-	print( " <input id='show_overridden_periods' type='checkbox' name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>" );
-	print( '<br/>' );
-}
-print( '<input class="cb2-submit" type="submit" value="Filter"/>' );
-print( ' <a href="admin.php?page=cb2-calendar&extended=1">extended</a>' );
-print( '</form>' );
+$location_options = CB_Forms::select_options( CB_Forms::location_options(), $location_ID );
+$item_options     = CB_Forms::select_options( CB_Forms::item_options(), $item_ID );
+$user_options     = CB_Forms::select_options( CB_Forms::user_options(), $user_ID );
+$period_status_type_options = CB_Forms::select_options( CB_Forms::period_status_type_options(), $period_status_type_ID, TRUE );
+$period_entity_options = CB_Forms::select_options( CB_Forms::period_entity_options(), $period_entity_ID, TRUE );
+$output_options   = CB_Forms::select_options( array( 'HTML' => 'HTML', 'JSON' => 'JSON' ), $output_type );
+$schema_options   = CB_Forms::select_options( CB_Forms::schema_options(), $schema_type );
+$template_options = CB_Forms::select_options( array( 'available' => 'available' ), $template_part );
+
+print( <<<HTML
+	<h1>Calendar</h1>
+	<form>
+	<input name='page' type='hidden' value='cb2-calendar'/>
+	<input name='startdate' value='$startdate_string'/> =&gt;
+	<input name='enddate' value='$enddate_string'/>
+	Location:<select name="location_ID">$location_options</select>
+	Item:<select name="item_ID">$item_options</select>
+	User:<select name="user_ID">$user_options</select>
+	Period Status:<select name="period_status_type_ID">$period_status_type_options</select>
+	<div style='display:$extended_class'>
+		<input type="hidden" name="extended$extended_class" value="1"/>
+		Period Entity:<select name="period_entity_ID">$period_entity_options</select>
+		Output type:<select name="output_type">$output_options</select>
+		Post Type:<select name="schema_type">$schema_options</select>
+		Template Part:<select name="template_part">$template_options</select>
+		<br/>
+		<input id='no_auto_draft' type='checkbox' name='no_auto_draft'/> <label for='no_auto_draft'>Exclude pseudo-periods (A)</label>
+		<input id='show_overridden_periods' type='checkbox' name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
+		<br/>
+	</div>
+	<input class="cb2-submit" type="submit" value="Filter"/>
+	 <a href="admin.php?page=cb2-calendar&extended=1">extended</a>
+	</form>
+HTML
+);
 
 // --------------------------------------- Debug
-if ( $output_type == 'HTML' && ( $schema_type == 'location' || $schema_type == 'item' || $schema_type == 'user'  || $schema_type == 'form' ) )
-	print( '<div class="cb2-help">Calendar rendering of locations / items / users / forms maybe better in JSON output type</div>' );
-$post_count = count( $query->posts );
-if ( $post_count ) {
-	$post_types = array();
-	foreach ( $query->posts as $post )
-		$post_types[$post->post_type] = $post->post_type;
-	print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
-	print( "WP_DEBUG: <b>$post_count</b> posts returned" );
-	print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
-	print( ' <a class="cb2-calendar-krumo-show">more...</a><div class="cb2-calendar-krumo" style="display:none;">' );
-	print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
-		<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
-		<div style='margin-left:5px;color:#448;'>$query->request</div></div>" );
-	krumo( $args );
-	print( "</div></div>" );
-} else print( "<div>No posts returned!</div>" );
+if ( WP_DEBUG ) {
+	if ( $output_type == 'HTML' && ( $schema_type == 'location' || $schema_type == 'item' || $schema_type == 'user'  || $schema_type == 'form' ) )
+		print( '<div class="cb2-help">Calendar rendering of locations / items / users / forms maybe better in JSON output type</div>' );
+	$post_count = count( $query->posts );
+	if ( $post_count ) {
+		$post_types = array();
+		foreach ( $query->posts as $post )
+			$post_types[$post->post_type] = $post->post_type;
+		print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
+		print( "<b>$post_count</b> posts returned" );
+		print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
+		print( ' <a class="cb2-calendar-krumo-show">more...</a><div class="cb2-calendar-krumo" style="display:none;">' );
+		print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
+			<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
+			<div style='margin-left:5px;color:#448;'>$query->request</div></div>" );
+		krumo( $args );
+		print( "</div></div>" );
+	} else print( "<div>No posts returned!</div>" );
+}
 
 // --------------------------------------- HTML calendar output
 switch ( $output_type ) {
@@ -119,7 +134,17 @@ switch ( $output_type ) {
 		<div class="cb2-calendar">
 			<div class="entry-content">
 				<table class="cb2-subposts" style="width:98%;"><tbody>
-					<?php the_inner_loop( $query, 'list', $template_part ); ?>
+					<thead><tr>
+						<?php
+							// TODO: wordpress WeekStartsOn
+							foreach ( CB_Query::$days as $dayname ) {
+								print( "<th>$dayname</th>" );
+							}
+						?>
+					</tr></thead>
+					<tbody>
+						<?php the_inner_loop( $query, 'list', $template_part ); ?>
+					</tbody>
 				</tbody></table>
 			</div><!-- .entry-content -->
 		</div>

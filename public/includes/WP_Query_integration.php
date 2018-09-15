@@ -104,8 +104,8 @@ add_filter( 'post_results',  'cb2_post_results_unredirect_wpdb', 10, 2 );
 add_filter( 'loop_start',       'cb2_loop_start' );
 
 // --------------------------------------------- Custom post types and templates
-add_action( 'init',             'cb2_init_register_post_types' );
-add_action( 'init',             'cb2_init_temp_debug_enqueue' );
+add_action( 'init', 'cb2_init_register_post_types' );
+add_action( 'init', 'cb2_init_temp_debug_enqueue' );
 
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
@@ -436,6 +436,7 @@ function cb2_init_temp_debug_enqueue() {
 	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-admin',  plugins_url( 'admin/assets/css/admin.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
 	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
 	wp_enqueue_script( CB_TEXTDOMAIN . '-plugin-script', plugins_url( 'admin/assets/js/admin.js', CB_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB_VERSION );
+	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-cmb2', plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {

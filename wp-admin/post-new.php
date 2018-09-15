@@ -20,6 +20,8 @@
  */
 global $post_type, $post_type_object, $post;
 
+if ( WP_DEBUG )	print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '</span>' ); // CB2/Annesley: debug
+
 if ( ! isset( $_GET['post_type'] ) ) {
 	$post_type = 'post';
 } elseif ( in_array( $_GET['post_type'], get_post_types( array('show_ui' => true ) ) ) ) {

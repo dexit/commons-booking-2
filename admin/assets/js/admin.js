@@ -24,13 +24,14 @@
 
 		$('.cmb2-id-recurrence-type input').click(function(){
 			var datepickers     = $('.cmb2-id-datetime-part-period-start .cmb2-datepicker, .cmb2-id-datetime-part-period-end .cmb2-datepicker');
-			var explanation     = $('.cmb2-id-explanation p');
+			var explanation     = $('.cmb2-id-period-explanation p');
 			var sequence        = $('.cmb2-id-recurrence-sequence');
 			var sequence_inputs = sequence.find('input');
 
 			datepickers.removeAttr('disabled', '1');
 			sequence.addClass('cb2-disabled');
 			sequence_inputs.attr('disabled', '1');
+
 
 			switch ($(this).val()) {
 				case '__Null__': {
@@ -61,6 +62,7 @@
 				}
 			}
 		});
+		$('.cmb2-id-recurrence-type input[checked]').click();
 	});
 
 })(jQuery);

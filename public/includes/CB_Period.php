@@ -25,9 +25,13 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				'closed_cb' => array( 'CB_Period', 'metabox_closed_when_published' ),
 				'fields' => array(
 					array(
-						'id'   => 'explanation',
-						'type' => 'paragraph',
-						'html' => 'To create separate repeating slots see <b>Recurrence</b> below',
+						'id'      => 'period_explanation',
+						'type'    => 'paragraph',
+						'float'   => 'right',
+						'width'   => 300,
+						'html'    => 'To create separate repeating slots see <b>Recurrence</b> below.
+							For example: repeats Mon - Fri 8:00 - 18:00 should use Daily <b>Recurrence Type</b>
+							and Mon - Fri <b>Sequence</b>.',
 					),
 					array(
 						'name' => __( 'Start Date', 'commons-booking-2' ),
@@ -68,10 +72,9 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 						),
 					),
 					array(
-						'name' => __( 'Sequence', 'commons-booking-2' ),
+						'name' => __( 'Daily Sequence', 'commons-booking-2' ),
 						'id' => 'recurrence_sequence',
-						'type' => 'multicheck',
-						'before' => '<span class="cb2-todo"/>',
+						'type' => 'multicheck_inline',
 						'escape_cb'       => array( 'CB_Period', 'recurrence_sequence_escape' ),
 						'sanitization_cb' => array( 'CB_Period', 'recurrence_sequence_sanitization' ),
 						// TODO: does not work default recurrence_sequence
@@ -85,6 +88,40 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 							'32' => __( 'Friday', 'commons-booking-2' ),
 							'64' => __( 'Saturday', 'commons-booking-2' ),
 						),
+					),
+					/*
+					TODO: Monthly Sequence
+					array(
+						'name' => __( 'Monthly Sequence', 'commons-booking-2' ),
+						'id' => 'recurrence_sequence',
+						'type' => 'multicheck',
+						'escape_cb'       => array( 'CB_Period', 'recurrence_sequence_escape' ),
+						'sanitization_cb' => array( 'CB_Period', 'recurrence_sequence_sanitization' ),
+						// TODO: does not work default recurrence_sequence
+						'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
+						'options' => array(
+							'1'  => __( 'January', 'commons-booking-2' ),
+							'2'  => __( 'February', 'commons-booking-2' ),
+							'4'  => __( 'March', 'commons-booking-2' ),
+							'8'  => __( 'April', 'commons-booking-2' ),
+							'16' => __( 'May', 'commons-booking-2' ),
+							'32' => __( 'June', 'commons-booking-2' ),
+							'64' => __( 'July', 'commons-booking-2' ),
+							'128' => __( 'August', 'commons-booking-2' ),
+							'256' => __( 'September', 'commons-booking-2' ),
+							'1024' => __( 'October', 'commons-booking-2' ),
+							'2048' => __( 'November', 'commons-booking-2' ),
+							'4096' => __( 'December', 'commons-booking-2' ),
+						),
+					),
+					*/
+					array(
+						'id'      => 'validity_explanation',
+						'type'    => 'paragraph',
+						'float'   => 'right',
+						'width'   => 300,
+						'html'    => 'The recurrence will repeat indefinitely.
+							Here you can provide start and end dates for that recurrnce.',
 					),
 					array(
 						'name' => __( 'Recurrence From Date', 'commons-booking-2' ),

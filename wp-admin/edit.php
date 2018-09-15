@@ -305,7 +305,7 @@ $bulk_messages['page'] = array(
 $bulk_messages = apply_filters( 'bulk_post_updated_messages', $bulk_messages, $bulk_counts );
 $bulk_counts = array_filter( $bulk_counts );
 
-require_once( ABSPATH . 'wp-admin/admin-header.php' );
+// require_once( ABSPATH . 'wp-admin/admin-header.php' ); // CB2/Annesley: embedded
 ?>
 <div class="wrap">
 <h1 class="wp-heading-inline"><?php
@@ -322,6 +322,7 @@ if ( isset( $_REQUEST['s'] ) && strlen( $_REQUEST['s'] ) ) {
 	/* translators: %s: search keywords */
 	printf( ' <span class="subtitle">' . __( 'Search results for &#8220;%s&#8221;' ) . '</span>', get_search_query() );
 }
+if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '</span>' ); // CB2/Annesley: debug
 ?>
 
 <hr class="wp-header-end">

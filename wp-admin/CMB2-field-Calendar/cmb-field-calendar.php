@@ -95,8 +95,8 @@ class CMB2_Field_Calendar {
 					$post_count = count( $query->posts );
 					foreach ( $query->posts as $post )
 						$post_types[$post->post_type] = $post->post_type;
-					print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
-					print( "WP_DEBUG: <b>$post_count</b> posts returned" );
+					print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
+					print( "<b>$post_count</b> posts returned" );
 					print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
 					print( ' <a class="cb2-calendar-krumo-show">more...</a><div class="cb2-calendar-krumo" style="display:none;">' );
 					krumo($query_args);

@@ -18,6 +18,8 @@
 $parent_file = 'edit.php';
 $submenu_file = 'edit.php';
 
+if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '</span>' ); // CB2/Annesley: debug
+
 wp_reset_vars( array( 'action' ) );
 
 if ( isset( $_GET['post'] ) )
@@ -145,8 +147,8 @@ case 'edit':
 		else
 			$parent_file = "edit.php?post_type=$post_type";
 		$submenu_file = "edit.php?post_type=$post_type";
-		$post_new_file = "post-new.php?post_type=$post_type";
 	}
+	if ( isset( $post_new_file_custom ) ) $post_new_file = $post_new_file_custom; // CB2/Annesley: form submit
 
 	/**
 	 * Allows replacement of the editor.
@@ -167,7 +169,7 @@ case 'edit':
 			wp_enqueue_script('autosave');
 	}
 
-	$title = $post_type_object->labels->edit_item;
+	if ( ! isset( $title ) ) $title = $post_type_object->labels->edit_item; // CB2/Annesley: configurable title
 	$post = get_post($post_id, OBJECT, 'edit');
 
 	if ( post_type_supports($post_type, 'comments') ) {
@@ -175,7 +177,7 @@ case 'edit':
 		enqueue_comment_hotkeys_js();
 	}
 
-	include( ABSPATH . 'wp-admin/edit-form-advanced.php' );
+	include( dirname( __FILE__ ) . '/edit-form-advanced.php' ); // CB2/Annesley: use our form
 
 	break;
 

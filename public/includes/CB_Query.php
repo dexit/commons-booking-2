@@ -79,6 +79,7 @@ class CB_Query {
 		'value'   => 'NOT_USED',
 		'compare' => 'NOT EXISTS',
 	);
+	public static $days = array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
 
   // -------------------------------------------------------------------- Reflection
   // post_type to Class lookups

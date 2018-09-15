@@ -478,8 +478,8 @@ function cb2_reflection() {
 }
 
 function cb2_settings_list_page() {
-	// edit.php: presents the WP_List_Table using _get_list_table(...)
 	global $wpdb;
+	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 
 	if ( isset( $_GET[ 'page' ] ) ) {
 		$page      = $_GET[ 'page' ];
@@ -511,10 +511,10 @@ function cb2_settings_list_page() {
 				$page_value = preg_replace( '/%[^%]+%/', '', $page_value );
 			}
 
-			$title                = $details_page->page_title;
-			$post_new_file_custom = ( $details_page->post_new_page ? $details_page->post_new_page : 'admin.php?page=cb-post-new' );
+			$title = $details_page->page_title;
 
 			// Append input query string to post_new
+			$post_new_file_custom = ( $details_page->post_new_page ? $details_page->post_new_page : 'admin.php?page=cb-post-new' );
 			if ( count( $_GET ) ) {
 				$existing_query_string = array();
 				if ( strchr( $post_new_file_custom, '?' ) ) {
@@ -556,7 +556,7 @@ function cb2_settings_list_page() {
 }
 
 function cb2_settings_post_new() {
-	// post-new.php (setup) => edit-form-advanced.php (form)
+	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 	$title = 'Add New';
 	if ( isset( $_GET[ 'add_new_label' ] ) ) $title = $_GET[ 'add_new_label' ];
 	else {
@@ -590,7 +590,7 @@ function cb2_settings_post_new() {
 }
 
 function cb2_settings_post_edit() {
-	// post.php
+	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 	$title = 'Edit Post';
 	if ( isset( $_GET[ 'add_new_label' ] ) ) $title = $_GET[ 'add_new_label' ];
 	else {
@@ -612,6 +612,22 @@ function cb2_settings_post_edit() {
 			}
 		}
 		$title = preg_replace( '/%[^%]+%/', '', $title );
+	}
+
+	// Append input query string to post_new
+	$post_new_file_custom = ( isset( $_GET[ 'post_new_file_custom' ] ) ? $_GET[ 'post_new_file_custom' ] : 'admin.php?page=cb-post-new' );
+	if ( count( $_GET ) ) {
+		$existing_query_string = array();
+		if ( strchr( $post_new_file_custom, '?' ) ) {
+			$existing_query_string_pairs = explode( '&', explode( '?', $post_new_file_custom, 2 )[1] );
+			foreach ( $existing_query_string_pairs as $value ) $existing_query_string[ CB_Query::substring_before( $value, '=' ) ] = 1;
+		}
+		foreach ( $_GET as $name => $value ) {
+			if ( ! isset( $existing_query_string[ $name ] ) ) {
+				$post_new_file_custom .= ( strchr( $post_new_file_custom, '?' ) ? '&' : '?' );
+				$post_new_file_custom .= urlencode( $name ) . '=' . urlencode( $value );
+			}
+		}
 	}
 
 	// Global params used in included file

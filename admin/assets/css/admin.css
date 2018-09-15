@@ -27,7 +27,40 @@
   background-color: #F1F1F1;
 }
 
+/* ---------------------- admin screen */
+.admin_page_cb-post-edit #preview-action,
+.admin_page_cb-post-edit .misc-pub-visibility,
+.admin_page_cb-post-edit #minor-publishing-actions,
+
+.admin_page_cb-post-new #preview-action,
+.admin_page_cb-post-new .misc-pub-visibility,
+.admin_page_cb-post-new #minor-publishing-actions
+{
+	display:none;
+}
+.cmb-multicheck-toggle {
+	float:right;
+}
+
 /* ---------------------- admin */
+.cb2-WP_DEBUG {
+	color:#555;
+}
+.cb2-WP_DEBUG:before {
+	content: 'WP_DEBUG: ';
+	font-size: 80%;
+
+	display: inline-block;
+	margin: 1px 3px 0 2px;
+	padding: 0 5px;
+	min-width: 7px;
+	height: 17px;
+	border-radius: 11px;
+	background-color: #500;
+	color: #fff;
+	font-size: 9px;
+	text-align: center;
+}
 .cb2-advanced-menu-item {
 	font-style:italic;
 }
@@ -58,11 +91,8 @@ body.wp-admin .cb2-disabled span {
 }
 .cb2-todo:before {
 	content: 'TODO: ';
-	vertical-align: super;
-	font-size: 80%;
 
 	display: inline-block;
-	vertical-align: top;
 	margin: 1px 3px 0 2px;
 	padding: 0 5px;
 	min-width: 7px;
@@ -71,7 +101,6 @@ body.wp-admin .cb2-disabled span {
 	background-color: #8aaa1f;
 	color: #fff;
 	font-size: 9px;
-	line-height: 17px;
 	text-align: center;
 }
 a.cb2-selected {
@@ -134,7 +163,7 @@ body input.cb2-tick-only {
 }
 
 /* ---------------------- calendar */
-label {
+.cb2-calendar label {
 	cursor:pointer;
 }
 
@@ -209,10 +238,10 @@ label {
 }
 
 /* fields */
-.type-PeriodItem .entry-header {
+.cb2-calendar .type-PeriodItem .entry-header {
 	display:none;
 }
-.type-day > .entry-header > .entry-title {
+.cb2-calendar .type-day > .entry-header > .entry-title {
 	color:#888;
 	margin:0px;
 }
@@ -221,48 +250,48 @@ label {
 	font-weight:bold;
 	background-color:#c7c7c7;
 }
-.cb2-time {
+.cb2-calendar .cb2-time {
 	margin-right:4px;
 	color:#444444;
 }
-.cb2-field-name {
+.cb2-calendar .cb2-field-name {
 	display:none;
 }
-.cb2-period-period-status-type-name .cb2-field-value {
+.cb2-calendar .cb2-period-period-status-type-name .cb2-field-value {
 	color:#fff;
 	background-color:#000;
 	font-size:10px;
 	padding:1px 4px;
 }
 
-.cb2-booked {
+.cb2-calendar .cb2-booked {
 	background-color:#ffdddd;
 }
 
 /* Entity types */
-.cb2-period-group-type {
+.cb2-calendar .cb2-period-group-type {
 	font-size: 10px;
 	font-weight:bold;
 	color:#fff;
 	background-color:#000;
 	margin-right:2px;
 }
-.cb2-period-group-type .cb2-field-value {
+.cb2-calendar .cb2-period-group-type .cb2-field-value {
 	writing-mode: vertical-rl;
 	text-orientation: upright;
 }
-.cb2-period-group-type-A .cb2-period-group-type {
+.cb2-calendar .cb2-period-group-type-A .cb2-period-group-type {
 }
-.cb2-period-group-type-G .cb2-period-group-type {
+.cb2-calendar .cb2-period-group-type-G .cb2-period-group-type {
 	background-color:#ff8888;
 }
-.cb2-period-group-type-L .cb2-period-group-type {
+.cb2-calendar .cb2-period-group-type-L .cb2-period-group-type {
 	background-color:#88ff88;
 }
-.cb2-period-group-type-I .cb2-period-group-type {
+.cb2-calendar .cb2-period-group-type-I .cb2-period-group-type {
 	background-color:#8888ff;
 }
-.cb2-period-group-type-U .cb2-period-group-type {
+.cb2-calendar .cb2-period-group-type-U .cb2-period-group-type {
 	background-color:#ffff88;
 }
 
@@ -275,12 +304,12 @@ label {
 	height:40px;
 	font-weight:bold;
 }
-h2 {
+.cb2-calendar h2 {
 	font-size: 16px;
 	margin-bottom:0px;
 	margin-top:4px;
 }
-h2 a {
+.cb2-calendar h2 a {
 	font-size:11px;
 	text-decoration:none;
 }
