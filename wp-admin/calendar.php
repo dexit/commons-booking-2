@@ -1,7 +1,11 @@
 <?php
+// --------------------------------------- Defaults
+$yesterday        = (new DateTime())->sub( new DateInterval( 'P2D' ) );
+$plus3months      = (clone $yesterday)->add( new DateInterval( 'P3M' ) );
+
 // --------------------------------------- Query Parameters
-$startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : '2018-09-01 00:00:00' );
-$enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : '2018-10-01 00:00:00' );
+$startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : $yesterday->format(   CB_Query::$datetime_format ) );
+$enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : $plus3months->format( CB_Query::$datetime_format ) );
 $location_ID      = ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL );
 $item_ID          = ( isset( $_GET['item_ID'] )     ? $_GET['item_ID']     : NULL );
 $user_ID          = ( isset( $_GET['user_ID'] )     ? $_GET['user_ID']          : NULL );
@@ -77,26 +81,26 @@ $template_options = CB_Forms::select_options( array( 'available' => 'available' 
 print( <<<HTML
 	<h1>Calendar</h1>
 	<form>
-	<input name='page' type='hidden' value='cb2-calendar'/>
-	<input name='startdate' value='$startdate_string'/> =&gt;
-	<input name='enddate' value='$enddate_string'/>
-	Location:<select name="location_ID">$location_options</select>
-	Item:<select name="item_ID">$item_options</select>
-	User:<select name="user_ID">$user_options</select>
-	Period Status:<select name="period_status_type_ID">$period_status_type_options</select>
-	<div style='display:$extended_class'>
-		<input type="hidden" name="extended$extended_class" value="1"/>
-		Period Entity:<select name="period_entity_ID">$period_entity_options</select>
-		Output type:<select name="output_type">$output_options</select>
-		Post Type:<select name="schema_type">$schema_options</select>
-		Template Part:<select name="template_part">$template_options</select>
-		<br/>
-		<input id='no_auto_draft' type='checkbox' name='no_auto_draft'/> <label for='no_auto_draft'>Exclude pseudo-periods (A)</label>
-		<input id='show_overridden_periods' type='checkbox' name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
-		<br/>
-	</div>
-	<input class="cb2-submit" type="submit" value="Filter"/>
-	 <a href="admin.php?page=cb2-calendar&extended=1">extended</a>
+		<input name='page' type='hidden' value='cb2-calendar'/>
+		<input type='text' name='startdate' value='$startdate_string'/> =&gt;
+		<input type='text' name='enddate' value='$enddate_string'/>
+		Location:<select name="location_ID">$location_options</select>
+		Item:<select name="item_ID">$item_options</select>
+		User:<select name="user_ID">$user_options</select>
+		Period Status:<select name="period_status_type_ID">$period_status_type_options</select>
+		<div style='display:$extended_class'>
+			<input type="hidden" name="extended$extended_class" value="1"/>
+			Period Entity:<select name="period_entity_ID">$period_entity_options</select>
+			Output type:<select name="output_type">$output_options</select>
+			Post Type:<select name="schema_type">$schema_options</select>
+			Template Part:<select name="template_part">$template_options</select>
+			<br/>
+			<input id='no_auto_draft' type='checkbox' name='no_auto_draft'/> <label for='no_auto_draft'>Exclude pseudo-periods (A)</label>
+			<input id='show_overridden_periods' type='checkbox' name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
+			<br/>
+		</div>
+		<input class="cb2-submit button" type="submit" value="Filter"/>
+		<a href="admin.php?page=cb2-calendar&amp;extended=1">extended</a>
 	</form>
 HTML
 );
@@ -145,6 +149,14 @@ switch ( $output_type ) {
 					<tbody>
 						<?php the_inner_loop( $query, 'list', $template_part ); ?>
 					</tbody>
+					<thead><tr>
+						<?php
+							// TODO: wordpress WeekStartsOn
+							foreach ( CB_Query::$days as $dayname ) {
+								print( "<th>$dayname</th>" );
+							}
+						?>
+					</tr></thead>
 				</tbody></table>
 			</div><!-- .entry-content -->
 		</div>

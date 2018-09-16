@@ -180,9 +180,21 @@ body input.cb2-tick-only {
 .cb2-calendar label {
 	cursor:pointer;
 }
+.cb2-calendar thead {
+	background-color:#fff;
+}
+.cb2-calendar thead tr {
+	border:1px solid #e1e1e1;
+}
+.cb2-calendar thead th {
+	font-weight:normal;
+	padding:8px 0px;
+}
 
 .cb2-calendar {
 	width:100%;
+}
+.cb2-calendar table {
 	border-collapse:collapse;
 }
 
@@ -196,7 +208,6 @@ body input.cb2-tick-only {
 	border:none;
 	background-color: #888;
 	opacity: 0.1;
-	border:1px dotted #444;
 }
 .cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts {
 	position:relative;
@@ -204,13 +215,13 @@ body input.cb2-tick-only {
 }
 .cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts > tbody > tr {
 	/* position:absolute; */
-	border:1px solid #d7d7d7;
+	border:1px solid #e1e1e1;
 }
 .cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts > tbody > tr > td {
 	position:relative;
 }
 .cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td {
-	border:1px solid #d7d7d7;
+	border:1px solid #e1e1e1;
 	vertical-align: top;
 	overflow:hidden;
 	padding:5px;
