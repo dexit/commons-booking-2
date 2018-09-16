@@ -155,9 +155,7 @@ class CMB2_Field_Calendar {
 						<table class='cb2-subposts'><tbody>" );
 				$outer_post  = $post;
 				while ( $query->have_posts() ) : $query->the_post();
-					print( $before );
 					cb_get_template_part( CB_TEXTDOMAIN, $post->templates( $context, $template ) );
-					print( $after );
 				endwhile;
 				print( "</table>
 					</div>

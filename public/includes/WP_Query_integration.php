@@ -159,8 +159,8 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 
 	$post_type = $post->post_type;
 	if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-		if ( CB_Query::publishing_post( $post ) ) {
-			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+		if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+			if ( CB_Query::publishing_post( $post ) ) {
 				// This post is currently a normal post in wp_posts
 				// with one of our post_types, but a small ID
 				// not an auto-draft request anymore so all its meta-data is saved and ready
@@ -225,6 +225,9 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// NOTE: this is set agaist the wp_posts ID, not the new one
 				// and the remaining save_post calls will be passed this native_id
 				$extra_processing_properties->native_ID = $native_ID;
+			} else {
+				// TODO: Updating post
+				// Maybe Quick Edit
 			}
 		}
 	}

@@ -143,7 +143,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		$html = ( $this->post_title ? $this->post_title : $this->ID );
 		$period_count = count( $this->periods );
 		if ( $period_count > 1 )
-			$html .= " <span class='cb2-usage-count-warning' title='Several Periods'>$period_count</span>";
+			$html .= " <span class='cb2-usage-count-ok' title='Several Periods'>$period_count</span>";
 		$html .= " <a href='post.php?post=$this->ID&action=edit'>edit</a>";
 		return $html;
 	}

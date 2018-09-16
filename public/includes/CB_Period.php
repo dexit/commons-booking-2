@@ -34,14 +34,14 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 							and Mon - Fri <b>Sequence</b>.',
 					),
 					array(
-						'name' => __( 'Start Date', 'commons-booking-2' ),
+						'name' => __( 'Start', 'commons-booking-2' ),
 						'id' => 'datetime_part_period_start',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB_Database::$database_date_format,
 						'default' => $now->format( $morning_format ),
 					),
 					array(
-						'name' => __( 'End Date', 'commons-booking-2' ),
+						'name' => __( 'End', 'commons-booking-2' ),
 						'id' => 'datetime_part_period_end',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB_Database::$database_date_format,
@@ -51,17 +51,19 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			),
 
 			array(
-				'title' => __( 'Recurrence (optional)', 'commons-booking-2' ),
+				'title' => __( 'Recurrence', 'commons-booking-2' ) .
+					( CB_Period::metabox_recurrence_type_show() ? ' (optional)' : '' ),
 				'context' => 'normal',
 				'show_names' => TRUE,
 				'add_button'    => __( 'Add Another Entry', 'commons-booking-2' ),
 				'remove_button' => __( 'Remove Entry', 'commons-booking-2' ),
-				'closed'     => true,
+				'closed'     => ! isset( $_GET['recurrence_type'] ),
 				'fields' => array(
 					array(
 						'name' => __( 'Type', 'commons-booking-2' ),
 						'id' => 'recurrence_type',
 						'type' => 'radio_inline',
+						'classes' => ( CB_Period::metabox_recurrence_type_show() ? '' : 'hidden' ),
 						'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB_Database::$NULL_indicator ),
 						'options' => array(
 							CB_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
@@ -156,6 +158,10 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 
 			CB_PeriodGroup::selector_metabox(),
 		);
+	}
+
+	static function metabox_recurrence_type_show() {
+		return ( ! isset( $_GET['recurrence_type_show'] ) || $_GET['recurrence_type_show'] == 'yes' );
 	}
 
 	static function metabox_show_when_published() {
@@ -306,6 +312,10 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		return $this->usage_count() == 1;
   }
 
+  function usage_multiple() {
+		return $this->usage_count() > 1;
+  }
+
   function usage_count() {
 		return count( $this->period_group_IDs );
 	}
@@ -324,10 +334,17 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		$summary .= $this->summary_recurrence_type();
 		$summary .= ' ' . $this->summary_date_period();
 
-		if ( ! $this->usage_once() )
-			$summary .= " <span class='cb2-usage-count-warning' title='Used in several Period Groups'>" .
-				$this->usage_count() .
-				"</span>";
+		switch ( $this->usage_count() ) {
+			case 0:
+				$summary .= " <span class='cb2-usage-count-warning' title='Used in several Period Groups'>0</span>";
+				break;
+			case 1:
+				break;
+			default:
+				$summary .= " <span class='cb2-usage-count-ok' title='Used in several Period Groups'>" .
+					$this->usage_count() .
+					"</span>";
+		}
     $summary .= '</span>';
 
 		return $summary;
@@ -397,8 +414,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 				$html .= $this->summary();
 				break;
 			case 'periodgroups':
-				$usage_count = $this->usage_count();
-				switch ( $usage_count ) {
+				switch ( $this->usage_count() ) {
 					case 0:
 						$html .= 'No Period Group!';
 						break;

@@ -310,6 +310,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 						$html .= '<li>' . the_summary() . '</li>';
 					}
 					$post  = &$outer_post;
+					wp_reset_postdata();
 					$html .= '</ul>';
 				} else {
 					$html .= '<div>' . __( 'No Item Availability' ) . '</div>';
@@ -345,6 +346,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 						$html .= '<li>' . the_summary() . '</li>';
 					}
 					$post  = &$outer_post;
+					wp_reset_postdata();
 					$html .= '</ul>';
 				} else {
 					$html .= '<div>' . __( 'No Bookings' ) . '</div>';
@@ -485,6 +487,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 						$html .= '<li>' . the_summary() . '</li>';
 					}
 					$post  = &$outer_post;
+					wp_reset_postdata();
 					$html .= '</ul>';
 				} else {
 					$html .= '<div>' . __( 'No Item Availability' ) . '</div>';
@@ -520,6 +523,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 						$html .= '<li>' . the_summary() . '</li>';
 					}
 					$post  = &$outer_post;
+					wp_reset_postdata();
 					$html .= '</ul>';
 				} else {
 					$html .= '<div>' . __( 'No Bookings' ) . '</div>';

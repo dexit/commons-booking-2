@@ -34,27 +34,42 @@
 
 .admin_page_cb-post-new #preview-action,
 .admin_page_cb-post-new .misc-pub-visibility,
-.admin_page_cb-post-new #minor-publishing-actions
-{
+.admin_page_cb-post-new #minor-publishing-actions,
+
+ul.subsubsub,
+#posts-filter .search-box,
+body .cmb2-id-recurrence-sequence .cmb-multicheck-toggle {
 	display:none;
-}
-.cmb-multicheck-toggle {
-	float:right;
 }
 
 /* ---------------------- admin */
+body .cmb2-id-recurrence-sequence li {
+	text-align:center;
+	border:1px solid #c7c7c7;
+	background-color:#e7e7e7;
+	padding:10px 5px;
+	min-width:80px;
+}
+body .cmb2-id-recurrence-sequence input[type=checkbox] {
+	display:block;
+	margin: 0px auto 3px auto;
+}
+body .cmb-type-group .cmb-th+.cmb-td,
+body .cmb2-postbox .cmb-th+.cmb-td {
+	/* TODO: this is probably not  good idea allow paragraph to wrap around fields better */
+	float:none;
+	width:auto;
+}
 .cb2-WP_DEBUG {
 	color:#555;
 }
 .cb2-WP_DEBUG:before {
 	content: 'WP_DEBUG: ';
-	font-size: 80%;
 
 	display: inline-block;
 	margin: 1px 3px 0 2px;
-	padding: 0 5px;
+	padding: 2px 5px;
 	min-width: 7px;
-	height: 17px;
 	border-radius: 11px;
 	background-color: #500;
 	color: #fff;
@@ -94,9 +109,8 @@ body.wp-admin .cb2-disabled span {
 
 	display: inline-block;
 	margin: 1px 3px 0 2px;
-	padding: 0 5px;
+	padding: 2px 5px;
 	min-width: 7px;
-	height: 17px;
 	border-radius: 11px;
 	background-color: #8aaa1f;
 	color: #fff;

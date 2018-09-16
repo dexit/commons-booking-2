@@ -169,6 +169,11 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		$this->period_status_type = $period_status_type;
   }
 
+  function add_actions( &$actions, $post ) {
+		if ( isset( $actions['inline hide-if-no-js'] ) )
+			$actions['inline hide-if-no-js'] = str_replace( ' class="', ' class="cb2-todo ', $actions['inline hide-if-no-js'] );
+	}
+
 	function manage_columns( $columns ) {
 		if ( ! $this->period_group )
 			throw new Exception( '[' . get_class( $this ) . "] [$this->ID] has no period_group" );
@@ -545,6 +550,7 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
   }
 
   function add_actions( &$actions, $post ) {
+		parent::add_actions( $actions, $post );
 		$actions['contact'] = "<a class='cb2-todo' href='#'>" . __( 'Contact User' ) . '</a>';
 	}
 

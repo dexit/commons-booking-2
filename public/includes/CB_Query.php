@@ -1,5 +1,5 @@
 <?php
-// WP_DEBUG setup
+// -------------------------------------------- WP_DEBUG setup
 error_reporting( 0 );
 if ( WP_DEBUG ) include( 'krumo/class.krumo.php' );
 error_reporting( E_ALL );
@@ -13,9 +13,9 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE', WP_DEBUG && FALSE );
+define( 'CB2_DEBUG_SAVE', WP_DEBUG && ! defined( DOING_AJAX ) && FALSE );
 
-// System PERIOD_STATUS_TYPEs
+// -------------------------------------------- System PERIOD_STATUS_TYPEs
 // a database trigger prevents deletion of these
 define( 'CB2_PERIOD_STATUS_TYPE_AVAILABLE', 1 );
 define( 'CB2_PERIOD_STATUS_TYPE_BOOKED',    2 );
@@ -68,6 +68,10 @@ require_once( 'CB_Time_Classes.php' );
 require_once( 'WP_Query_integration.php' );
 require_once( 'CB_Forms.php' );
 
+
+// ----------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 class CB_Query {
 	private static $schema_types = array();
 

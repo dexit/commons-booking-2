@@ -32,10 +32,11 @@
 			sequence.addClass('cb2-disabled');
 			sequence_inputs.attr('disabled', '1');
 
-
 			switch ($(this).val()) {
 				case '__Null__': {
-					explanation.html('To create separate repeating slots see <b>Recurrence</b> below');
+					explanation.html('To create separate repeating slots see <b>Recurrence</b> below.'
+						+ 'For example: repeats Mon - Fri 8:00 - 18:00 should use Daily <b>Recurrence Type</b>'
+						+ 'and Mon - Fri <b>Sequence</b>.');
 					break;
 				}
 				case 'D': {
