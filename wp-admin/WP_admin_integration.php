@@ -384,8 +384,8 @@ function cb2_options_page() {
 		if ( ! $parent_slug ) $parent_slug = 'cb2';
 
 		$title = preg_replace( '/\%.+\%/', '', $menu_item->page_title );
-		$class .= " $menu_item->first";
-		if ( $menu_item->advanced ) $class .= ' cb2-advanced-menu-item';
+		if ( property_exists( $menu_item, 'first') )     $class .= " $menu_item->first";
+		if ( property_exists( $menu_item, 'advanced' ) ) $class .= ' cb2-advanced-menu-item';
 		if ( current_user_can( $capability ) ) {
 			print( "<li><a class='$class' href='admin.php?page=$menu_slug'>$title</a>" );
 			if ( property_exists( $menu_item, 'description' ) )
