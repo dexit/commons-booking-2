@@ -32,7 +32,7 @@ class CB_Enqueue_Admin {
 		$plugin_basename = plugin_basename( plugin_dir_path( realpath( dirname( __FILE__ ) ) ) . CB_TEXTDOMAIN . '.php' );
 
 		// Add the manage menu & options page entry
-		add_action( 'admin_menu', array( $this, 'add_plugin_manage_menu') );
+		add_action( 'admin_menu', array( $this, 'add_plugin_settings_menu') );
 		// Add an action link pointing to the options page.
 		add_filter( 'plugin_action_links_' . $plugin_basename, array( $this, 'add_action_links' ) );
 		// Load admin style sheet and JavaScript.
@@ -84,26 +84,7 @@ class CB_Enqueue_Admin {
 	 *
 	 * @return void
 	 */
-	public function add_plugin_manage_menu() {
-		/*
-		 * Add the CB main entry, sub-menu entries for items and locations are created in CB_Posttypes.php.
-		 *
-		 */
-		add_menu_page( __( 'Dashboard', CB_TEXTDOMAIN ), __( 'Commons Booking', CB_TEXTDOMAIN ), 'manage_options', 'cb_dashboard_page', array( $this, 'display_plugin_admin_page' ), 'dashicons-hammer', 6 );
-		/**
-		 * Bookings Admin Pages
-		 */
-		// 1. Bookings List Table
-		add_submenu_page( 'cb_dashboard_page', __('Bookings', 'commons-booking'), __('Bookings', 'commons-booking'), 'manage_options', 'cb_bookings_table', array( $this, 'display_bookings_table_page' ) );
-
-		// 2. Bookings Edit Screen
-    add_submenu_page( NULL, __('Add new', 'commons-booking'), __('Add new', 'commons-booking'), 'manage_options', 'cb_bookings_edit', array( $this, 'display_bookings_edit_page' ) );
-
-		// 2. Timeframes List Table
-		add_submenu_page( 'cb_dashboard_page', __('Timeframes', 'commons-booking'), __('Timeframes', 'commons-booking'), 'manage_options', 'cb_timeframes_table', array( $this, 'display_timeframes_table_page' ) );
-
-		// 2. Timeframes Add/Edit Screen
-    add_submenu_page( NULL, __('Add new', 'commons-booking'), __('Add new', 'commons-booking'), 'manage_options', 'cb_timeframes_edit', array( $this, 'display_timeframes_edit_page' ) );
+	public function add_plugin_settings_menu() {
 
 		// Settings menu
 		$this->admin_view_page = add_submenu_page( 'cb_dashboard_page', __( 'Settings', CB_TEXTDOMAIN ), __( 'Settings', CB_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );

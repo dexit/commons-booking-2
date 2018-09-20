@@ -57,18 +57,6 @@ define( 'CB2_POST_PROPERTIES',  array(
 	'filter' => FALSE,
 ) );
 
-require_once( 'CB_Database.php' );
-require_once( 'CB_PostNavigator.php' );
-require_once( 'CB_PeriodItem.php' );
-require_once( 'CB_Entities.php' );
-require_once( 'CB_PeriodEntity.php' );
-require_once( 'CB_PeriodInteractionStrategies.php' );
-require_once( 'the_template_functions.php' );
-require_once( 'CB_Time_Classes.php' );
-require_once( 'WP_Query_integration.php' );
-require_once( 'CB_Forms.php' );
-
-
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------

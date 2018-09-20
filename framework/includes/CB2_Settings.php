@@ -3,7 +3,7 @@
  * Admin settings & CB-Posttypes Metaboxes for Commons Booking
  *
  * Global settings, settings for items, timeframes, etc
- * Get setting usage: $setting = CB_Settings::get( 'bookings', 'max-slots');
+ * Get setting usage: $setting = CB2_Settings::get( 'bookings', 'max-slots');
  *
  * All post type metaboxes are defined here.
  *
@@ -13,7 +13,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-class CB_Settings {
+class CB2_Settings {
 	/**
 	 * Instance of this class.
 	 *
@@ -170,7 +170,7 @@ class CB_Settings {
 	public static function do_timeframe_options() {
 		foreach ( self::$timeframe_options as $option ) {
 			// Add setting groups
-			CB_Settings::do_settings_group( $option );
+			CB2_Settings::do_settings_group( $option );
 		}
 	}
 	/**
@@ -909,4 +909,4 @@ public static function get_settings_template_location_personal_contact_info()
 
 
 }
-add_action( 'plugins_loaded', array( 'CB_Settings', 'get_instance' ) );
+add_action( 'plugins_loaded', array( 'CB2_Settings', 'get_instance' ) );
