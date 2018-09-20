@@ -1,4 +1,9 @@
 <?php
+/**
+ * TODO: for template-tags use file template-tags.php?
+ * similar with cb_get_template_part.php?
+ */
+
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
@@ -157,7 +162,7 @@ function cb2_post_class( $classes, $class, $ID ) {
 
 	return $classes;
 }
-add_filter( 'post_class', 'cb2_post_class', 10, 3 );
+add_filter( 'post_class', 'cb2_post_class', 10, 3 ); /* @TODO: retire, filter is in public/cb.php */
 
 function is_list( $post = '' ) {
 	global $wp_query;

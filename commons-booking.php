@@ -25,7 +25,7 @@ if ( !defined( 'WPINC' ) ) {
 define( 'CB_VERSION', '2.0.0' );
 define( 'CB_DEV_BUILD', '180516' );
 define( 'CB_TEXTDOMAIN', 'commons-booking-2' );
-define( 'CB_NAME', 'Commons Booking' );
+define( 'CB_NAME', 'CommonsBooking' );
 define( 'CB_PLUGIN_ROOT', plugin_dir_path( __FILE__ ) );
 define( 'CB_PLUGIN_ABSOLUTE',  __FILE__  );
 
@@ -42,6 +42,12 @@ function cb_load_plugin_textdomain() {
 	load_textdomain( CB_TEXTDOMAIN, trailingslashit( WP_PLUGIN_DIR ) . CB_TEXTDOMAIN . '/languages/' . CB_TEXTDOMAIN . '-' . $locale . '.mo' );
 }
 add_action( 'plugins_loaded', 'cb_load_plugin_textdomain', 1 );
+
+
+require_once(CB_PLUGIN_ROOT . 'framework/CB2_framework.php');
+require_once(CB_PLUGIN_ROOT . 'public/Commons_Booking.php');
+require_once(CB_PLUGIN_ROOT . 'public/includes/CB_Shortcodes.php');
+require_once(CB_PLUGIN_ROOT . 'wp-admin/WP_admin_integration.php'); // admin screens
 /*
 require_once( CB_PLUGIN_ROOT . 'composer/autoload.php' );
 require_once( CB_PLUGIN_ROOT . 'includes/CB_PostTypes.php' );
@@ -50,8 +56,7 @@ require_once( CB_PLUGIN_ROOT . 'includes/CB_Helpers.php' );
 require_once( CB_PLUGIN_ROOT . 'includes/CB_Gui.php' );
 require_once( CB_PLUGIN_ROOT . 'includes/CB_Settings.php' );
 */
-require_once( CB_PLUGIN_ROOT . 'public/Commons_Booking.php' );
-require_once( CB_PLUGIN_ROOT . 'framework/CB2_framework.php' );
+
 /*
 require_once( CB_PLUGIN_ROOT . 'classes/CB_Object.php' );
 require_once( CB_PLUGIN_ROOT . 'classes/CB_Timeframes.php' );
@@ -106,5 +111,4 @@ function cb2_plugins_loaded() {
 // add_action( 'plugins_loaded', 'cb2_plugins_loaded' );
 // require_once( CB_PLUGIN_ROOT . 'admin/includes/CB2_Metaboxes.php' );
 // require_once(CB_PLUGIN_ROOT . 'includes/CB_Template.php');
-require_once(CB_PLUGIN_ROOT . 'public/includes/CB_Shortcodes.php');
-require_once(CB_PLUGIN_ROOT . 'wp-admin/WP_admin_integration.php'); // admin screens
+

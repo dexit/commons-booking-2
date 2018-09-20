@@ -21,6 +21,8 @@ require_once('includes/lib/cmb2-field-icon/cmb2-field-icon.php');
 /** in /lib-temp because not availabe via composer atm */
 require_once('includes/lib-temp/CMB2-field-Calendar/cmb-field-calendar.php');
 require_once('includes/lib-temp/CMB2-field-Paragraph/cmb-field-paragraph.php');
+require_once(CB_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php'); /* TODO */
+
 
 /** Includes - CB_Query period framework */
 require_once('CB2_Query/CB_Query.php');
@@ -35,5 +37,9 @@ require_once('CB2_Query/WP_Query_integration.php');
 require_once('CB2_Query/CB_Forms.php');
 
 /** Includes - other */
-require_once('includes/the_template_functions.php');
+require_once('includes/CB2_Settings.php');
+require_once('includes/CB2_Holidays.php');
+require_once('includes/cb_get_template_part.php');
+require_once('includes/template_functions.php');
+require_once('includes/helper_functions.php');
 
