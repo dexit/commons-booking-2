@@ -29,13 +29,8 @@ define( 'CB_NAME', 'Commons Booking' );
 define( 'CB_PLUGIN_ROOT', plugin_dir_path( __FILE__ ) );
 define( 'CB_PLUGIN_ABSOLUTE',  __FILE__  );
 
-define( 'CB_TIMEFRAMES_TABLE', 'cb2_timeframes' );
+/* DB Tables @TODO */
 define( 'CB_TIMEFRAME_OPTIONS_TABLE', 'cb2_timeframe_options' );
-define( 'CB_BOOKINGS_TABLE', 'cb2_bookings' );
-define( 'CB_SETS_TABLE', 'cb2_sets' );
-define( 'CB_SLOTS_TABLE', 'cb2_slots' );
-define( 'CB_SLOTS_BOOKINGS_REL_TABLE', 'cb2_slots_bookings_relation' );
-define( 'CB_SLOT_TEMPLATES_TABLE', 'cb2_slot_templates' );
 
 /**
  * Load the textdomain of the plugin
@@ -108,7 +103,7 @@ function cb2_plugins_loaded() {
 
 // Annesley new stuffs
 // add_action( 'plugins_loaded', 'cb2_plugins_loaded' );
-require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_CMB.php' );
+require_once( CB_PLUGIN_ROOT . 'admin/includes/CB2_Metaboxes.php' );
 require_once( CB_PLUGIN_ROOT . 'includes/CB_Template.php' );
 require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Shortcodes.php' );
 require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Query.php' );      // register_post_types()

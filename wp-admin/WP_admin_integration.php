@@ -9,9 +9,6 @@
  * For example: when a timeframe is created, its period_group and period must be created first
  * and, after creation, the period(s) must be 1-many linked to the relevant period_group
  */
-require_once( 'CMB2-field-Icon/cmb-field-icon.php' );
-require_once( 'CMB2-field-Calendar/cmb-field-calendar.php' );
-require_once( 'CMB2-field-Paragraph/cmb-field-paragraph.php' );
 
 /*
 function cb2_cmb2_group_wrap_attributes( $group_wrap_attributes, $field_group ) {
@@ -384,8 +381,8 @@ function cb2_options_page() {
 		if ( ! $parent_slug ) $parent_slug = 'cb2';
 
 		$title = preg_replace( '/\%.+\%/', '', $menu_item->page_title );
-		if ( property_exists( $menu_item, 'first') )     $class .= " $menu_item->first";
-		if ( property_exists( $menu_item, 'advanced' ) ) $class .= ' cb2-advanced-menu-item';
+		$class .= " $menu_item->first";
+		if ( $menu_item->advanced ) $class .= ' cb2-advanced-menu-item';
 		if ( current_user_can( $capability ) ) {
 			print( "<li><a class='$class' href='admin.php?page=$menu_slug'>$title</a>" );
 			if ( property_exists( $menu_item, 'description' ) )
