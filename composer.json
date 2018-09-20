@@ -1,66 +1,73 @@
 {
-		"name": "wielebenwir/commons-booking-2",
-		"description": "CommonsBooking 2 requirements",
-		"license": "GPL-2.0-or-later",
-    "require": {
-        "php": ">=5.6",
-        "composer\/installers": "1.x",
-        "mnsami\/composer-custom-directory-installer": "1.1.*",
-				"azuyalabs\/yasumi": "~1.8.0",
-				"flegfleg\/CMB2-field-Icon": "master",
-				"opencage/geocode": "~2.0",
-				"webdevstudios/cmb2": "~2.3",
-				"origgami/cmb2-grid": "dev-master"
-    },
-    "repositories": [
-        {
-            "type": "package",
-            "package": {
-                "name": "rubengc\/cmb2-tabs",
-                "version": "1.0.0",
-                "source": {
-                    "url": "https:\/\/github.com\/rubengc\/cmb2-tabs",
-                    "type": "git",
-                    "reference": "master"
-                }
-            }
-        },
-        {
-            "type": "composer",
-            "url": "https:\/\/wpackagist.org"
-				},
-				{
+	"name": "wielebenwir/commons-booking-2",
+	"description": "CommonsBooking 2 requirements",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=5.6",
+		"composer\/installers": "1.x",
+		"mnsami\/composer-custom-directory-installer": "1.1.*",
+		"azuyalabs\/yasumi": "~1.8.0",
+		"flegfleg\/CMB2-field-Icon": "master",
+		"opencage\/geocode": "~2.0",
+		"webdevstudios\/cmb2": "~2.3",
+		"origgami\/cmb2-grid": "dev-master",
+		"nathanielks\/wp-admin-notice": "dev-master",
+		"rubengc\/cmb2-tabs": "~1.0.0"
+	},
+	"repositories": [{
+			"url": "git@github.com:nathanielks\/wordpress-admin-notice.git",
+			"type": "git"
+		},
+		{
+			"type": "package",
+			"package": {
+				"name": "rubengc\/cmb2-tabs",
+				"version": "1.0.0",
+				"source": {
+					"url": "https:\/\/github.com\/rubengc\/cmb2-tabs",
 					"type": "git",
-					"url": "https:\/\/github.com\/flegfleg\/CMB2-field-Icon"
+					"reference": "master"
 				}
-    ],
-    "config": {
-        "vendor-dir": "composer\/"
-    },
-    "require-dev": {
-        "phpro\/grumphp": "^0.12",
-        "lucatume\/function-mocker": "~1.0"
-    },
-    "minimum-stability": "dev",
-    "extra": {
-        "installer-paths": {
-            ".\/includes\/lib\/{$name}": [
+			}
+		},
+		{
+			"type": "composer",
+			"url": "https:\/\/wpackagist.org"
+		},
+		{
+			"type": "git",
+			"url": "https:\/\/github.com\/flegfleg\/CMB2-field-Icon"
+		}
+	],
+	"config": {
+		"vendor-dir": "composer\/"
+	},
+	"require-dev": {
 
-            ],
-            ".\/includes\/lib\/Freemius": [
+	},
+	"minimum-stability": "dev",
+	"extra": {
+		"installer-paths": {
+			".\/includes\/lib\/{$name}": [
 
-						],
-            ".\/public\/includes\/lib\/{$name}": [
+			],
+			".\/includes\/lib\/Freemius": [
 
-						],
-            ".\/admin\/includes\/lib\/{$name}": [
-                "webdevstudios\/cmb2",
-                "origgami\/cmb2-grid",
-                "rubengc\/cmb2-tabs",
-								"flegfleg\/cmb2-field-icon",
-								"opencage\/geocode",
-								"azuyalabs\/yasumi"
-            ]
-        }
-    }
+			],
+			".\/public\/includes\/lib\/{$name}": [
+
+			],
+			".\/framework\/includes\/lib\/{$name}": [
+				"webdevstudios\/cmb2",
+				"origgami\/cmb2-grid",
+				"rubengc\/cmb2-tabs",
+				"flegfleg\/cmb2-field-icon"
+			],
+			".\/admin\/includes\/lib\/{$name}": [
+				"nathanielks\/wp-admin-notice",
+				"opencage\/geocode",
+				"azuyalabs\/yasumi"
+			]
+		}
+	}
 }
