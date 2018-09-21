@@ -11,10 +11,10 @@
 /**
  * This class contain the Uninstall code
  */
-class Cb_Uninstall {
+class CB2_Uninstall {
 	/**
 	 * Initialize the snippet
-	 * 
+	 *
 	 * @return void
 	 */
 	function __construct() {
@@ -22,9 +22,9 @@ class Cb_Uninstall {
 	}
 	/**
 	 * Loop for uninstall
-	 * 
+	 *
 	 * @global type $wpdb
-	 * 
+	 *
 	 * @return void
 	 */
 	function uninstall_hook() {
@@ -43,9 +43,9 @@ class Cb_Uninstall {
 	}
 	/**
 	 * What happen on uninstall?
-	 * 
+	 *
 	 * @global WP_Roles $wp_roles
-	 * 
+	 *
 	 * @return void
 	 */
 	function uninstall() {
@@ -96,4 +96,4 @@ class Cb_Uninstall {
 		}
 	}
 }
-new Cb_Uninstall();
+new CB2_Uninstall();

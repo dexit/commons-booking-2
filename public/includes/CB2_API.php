@@ -10,7 +10,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-class CB_API {
+class CB2_API {
 
 	public $api_uri = 'cb-api';
 	public $query_args = array();

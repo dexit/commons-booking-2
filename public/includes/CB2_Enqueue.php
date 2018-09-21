@@ -26,9 +26,9 @@ class CB_Enqueue {
 		add_filter( 'the_content', array ( __CLASS__, 'cb_template_chooser' ) );
 
 
-		$shortcodes = new CB_Shortcodes();
-		add_shortcode( 'cb_calendar', array( $shortcodes, 'calendar_shortcode' ) ) ;
-		add_shortcode( 'cb_timeframe', array( $shortcodes, 'timeframe_shortcode' ) ) ;
+		$shortcodes = new CB2_Shortcodes();
+		add_shortcode( 'cb2_calendar', array( $shortcodes, 'calendar_shortcode' ) ) ;
+		add_shortcode( 'cb2_timeframe', array( $shortcodes, 'timeframe_shortcode' ) ) ;
 
 		/*
 		// create an API end point

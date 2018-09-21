@@ -22,6 +22,7 @@
 if ( !defined( 'WPINC' ) ) {
 	die;
 }
+
 define( 'CB2_VERSION', '2.0.0' );
 define( 'CB2_TEXTDOMAIN', 'commons-booking-2' );
 define( 'CB2_NAME', 'CommonsBooking 2' );
@@ -30,25 +31,13 @@ define( 'CB2_MENU_SLUG', 'cb2_menu');
 define( 'CB2_PLUGIN_ROOT', plugin_dir_path( __FILE__ ) );
 define( 'CB2_PLUGIN_ABSOLUTE',  __FILE__  );
 
-/* DB Tables @TODO */
-define( 'CB2_TIMEFRAME_OPTIONS_TABLE', 'cb2_timeframe_options' );
-
-/**
- * Load the textdomain of the plugin
- *
- * @return void
- */
-function cb_load_plugin_textdomain() {
-	$locale = apply_filters( 'plugin_locale', get_locale(), CB2_TEXTDOMAIN );
-	load_textdomain( CB2_TEXTDOMAIN, trailingslashit( WP_PLUGIN_DIR ) . CB2_TEXTDOMAIN . '/languages/' . CB2_TEXTDOMAIN . '-' . $locale . '.mo' );
-}
-add_action( 'plugins_loaded', 'cb_load_plugin_textdomain', 1 );
-
+/* DB Tables @TODO – move to CB_Database.php ? */
+define( 'CB2_AVAILABILITY_OPTIONS_TABLE', 'cb2_availability_options' );
+/* Load framework */
 require_once(CB2_PLUGIN_ROOT . 'framework/CB2_framework.php');
-require_once(CB2_PLUGIN_ROOT . 'public/CB2_public.php');
-require_once(CB2_PLUGIN_ROOT . 'public/includes/CB_Shortcodes.php');
-require_once(CB2_PLUGIN_ROOT . 'wp-admin/WP_admin_integration.php');
-
+/* Load public */
+require_once(CB2_PLUGIN_ROOT . 'public/CB2_Public.php');
+/* Load admin */
 if ( is_admin() ) {
 	if (
 			(function_exists( 'wp_doing_ajax' ) && !wp_doing_ajax() ||
@@ -58,3 +47,14 @@ if ( is_admin() ) {
 	}
 }
 
+/**
+ * Load the textdomain of the plugin
+ *
+ * @return void
+ */
+function cb_load_plugin_textdomain()
+{
+	$locale = apply_filters('plugin_locale', get_locale(), CB2_TEXTDOMAIN);
+	load_textdomain(CB2_TEXTDOMAIN, trailingslashit(WP_PLUGIN_DIR) . CB2_TEXTDOMAIN . '/languages/' . CB2_TEXTDOMAIN . '-' . $locale . '.mo');
+}
+add_action('plugins_loaded', 'cb_load_plugin_textdomain', 1);

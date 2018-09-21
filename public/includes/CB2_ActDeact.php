@@ -11,7 +11,7 @@
 /**
  * This class contain the activate and deactive method and relates.
  */
-class CB_ActDeact {
+class CB2_ActDeact {
 	/**
 	 * Initialize the Act/Deact
 	 *
@@ -207,4 +207,4 @@ class CB_ActDeact {
 	}
 
 }
-new CB_ActDeact();
+new CB2_ActDeact();

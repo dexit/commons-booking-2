@@ -10,7 +10,7 @@
 /**
  * This class contains the shortcode for map and calendar
  */
-class CB_Shortcodes {
+class CB2_Shortcodes {
 
 	private $default_query_args = array(
 		'period_id'  => false,
