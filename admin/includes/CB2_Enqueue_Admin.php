@@ -5,7 +5,7 @@
  * Admin-related scripts, styles
  * WP Backend settings menu, plugin screen action menu
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -29,7 +29,7 @@ class CB2_Enqueue_Admin {
 			return;
 		}
 
-		$plugin_basename = plugin_basename( plugin_dir_path( realpath( dirname( __FILE__ ) ) ) . CB_TEXTDOMAIN . '.php' );
+		$plugin_basename = plugin_basename( plugin_dir_path( realpath( dirname( __FILE__ ) ) ) . CB2_TEXTDOMAIN . '.php' );
 
 		// Add the manage menu & options page entry
 		add_action( 'admin_menu', array( $this, 'add_plugin_settings_menu') );
@@ -55,9 +55,9 @@ class CB2_Enqueue_Admin {
 		}
 		$screen = get_current_screen();
 		if ( $this->admin_view_page === $screen->id || strpos( $_SERVER[ 'REQUEST_URI' ], 'index.php' ) || strpos( $_SERVER[ 'REQUEST_URI' ], get_bloginfo( 'wpurl' ) . '/wp-admin/' ) ) {
-			wp_enqueue_style( CB_TEXTDOMAIN . '-settings-styles', plugins_url( 'admin/assets/css/settings.css', CB_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB_VERSION );
+			wp_enqueue_style( CB2_TEXTDOMAIN . '-settings-styles', plugins_url( 'admin/assets/css/settings.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
 		}
-		wp_enqueue_style( CB_TEXTDOMAIN . '-admin-styles', plugins_url( 'admin/assets/css/admin.css', CB_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB_VERSION );
+		wp_enqueue_style( CB2_TEXTDOMAIN . '-admin-styles', plugins_url( 'admin/assets/css/admin.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
 	}
 		/**
 	 * Register and enqueue admin-specific JavaScript.
@@ -73,9 +73,9 @@ class CB2_Enqueue_Admin {
 
 		$screen = get_current_screen();
 		if ( $this->admin_view_page === $screen->id ) {
-			wp_enqueue_script( CB_TEXTDOMAIN . '-settings-script', plugins_url( 'admin/assets/js/settings.js', CB_PLUGIN_ABSOLUTE ), array( 'jquery', 'jquery-ui-tabs' ), CB_VERSION );
+			wp_enqueue_script( CB2_TEXTDOMAIN . '-settings-script', plugins_url( 'admin/assets/js/settings.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery', 'jquery-ui-tabs' ), CB2_VERSION );
 		}
-		wp_enqueue_script( CB_TEXTDOMAIN . '-admin-script', plugins_url( 'admin/assets/js/admin.js', CB_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB_VERSION );
+		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-script', plugins_url( 'admin/assets/js/admin.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 	}
 	/**
 	 * Register the plugin settings menu.
@@ -90,7 +90,7 @@ class CB2_Enqueue_Admin {
 		 *  @TODO: Temporarily a main menu item,
 		 *  possible conflict with WP_Admin_Integration?
 		 */
-		// $this->admin_view_page = add_submenu_page( CB_MENU_SLUG, __( 'Settings', CB_TEXTDOMAIN ), __( 'Settings', CB_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
+		// $this->admin_view_page = add_submenu_page( CB_MENU_SLUG, __( 'Settings', CB2_TEXTDOMAIN ), __( 'Settings', CB2_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
 		$this->admin_view_page = add_menu_page( __('CommonsBooking 2 Settings', 'commons-booking'), __('Settings', 'commons-booking'), 'manage_options', 'cb_settings_page', array($this, 'display_plugin_admin_page'));
 	}
 	/**
@@ -101,7 +101,7 @@ class CB2_Enqueue_Admin {
 	 * @return void
 	 */
 	public function display_plugin_admin_page() {
-		include_once( CB_PLUGIN_ROOT . 'admin/views/settings.php' );
+		include_once( CB2_PLUGIN_ROOT . 'admin/views/settings.php' );
 	}
 	/**
 	 * Add settings action link to the plugins page.
@@ -115,7 +115,7 @@ class CB2_Enqueue_Admin {
 	public function add_action_links( $links ) {
 		return array_merge(
 				array(
-			'settings' => '<a href="' . admin_url( 'options-general.php?page=' . CB_TEXTDOMAIN ) . '">' . __( 'Settings' ) . '</a>',
+			'settings' => '<a href="' . admin_url( 'options-general.php?page=' . CB2_TEXTDOMAIN ) . '">' . __( 'Settings' ) . '</a>',
 				), $links
 		);
 	}

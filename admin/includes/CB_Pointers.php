@@ -4,7 +4,7 @@
  *
  * @TODO: not in use.
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -20,8 +20,8 @@ class CB_Pointers {
 		if ( !apply_filters( 'commons_booking_cb_pointers_initialize', true ) ) {
 			return;
 		}
-		new PointerPlus( array( 'prefix' => CB_TEXTDOMAIN ) );
-		add_filter( CB_TEXTDOMAIN . '-pointerplus_list', array( $this, 'custom_initial_pointers' ), 10, 2 );
+		new PointerPlus( array( 'prefix' => CB2_TEXTDOMAIN ) );
+		add_filter( CB2_TEXTDOMAIN . '-pointerplus_list', array( $this, 'custom_initial_pointers' ), 10, 2 );
 	}
 	/**
 	 * Add pointers.
@@ -36,8 +36,8 @@ class CB_Pointers {
 		return array_merge( $pointers, array(
 			$prefix . '_contextual_tab' => array(
 				'selector' => '#contextual-help-link',
-				'title' => __( 'Boilerplate Help', CB_TEXTDOMAIN ),
-				'text' => __( 'A pointer for help tab.<br>Go to Posts, Pages or Users for other pointers.', CB_TEXTDOMAIN ),
+				'title' => __( 'Boilerplate Help', CB2_TEXTDOMAIN ),
+				'text' => __( 'A pointer for help tab.<br>Go to Posts, Pages or Users for other pointers.', CB2_TEXTDOMAIN ),
 				'edge' => 'top',
 				'align' => 'right',
 				'icon_class' => 'dashicons-welcome-learn-more',

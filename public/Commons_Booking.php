@@ -4,7 +4,7 @@
  *
  * Include the necessary files for the front-end.
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -42,10 +42,10 @@ class Commons_Booking {
 	 * @return void
 	 */
 	public static function initialize() {
-			require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Enqueue.php' );
-			//require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Extras.php' );
-			//require_once( CB_PLUGIN_ROOT . 'public/includes/CB_Template.php' );
-			//require_once( CB_PLUGIN_ROOT . 'public/widgets/sample.php' );
+			require_once( CB2_PLUGIN_ROOT . 'public/includes/CB_Enqueue.php' );
+			//require_once( CB2_PLUGIN_ROOT . 'public/includes/CB_Extras.php' );
+			//require_once( CB2_PLUGIN_ROOT . 'public/includes/CB_Template.php' );
+			//require_once( CB2_PLUGIN_ROOT . 'public/widgets/sample.php' );
 		}
 		/**
 	 * Return the cpts

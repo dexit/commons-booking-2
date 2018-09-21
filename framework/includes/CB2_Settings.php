@@ -7,7 +7,7 @@
  *
  * All post type metaboxes are defined here.
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -50,7 +50,7 @@ class CB2_Settings
      *
      * @var array
      */
-    protected static $settings_slug = CB_TEXTDOMAIN . '-settings-';
+    protected static $settings_slug = CB2_TEXTDOMAIN . '-settings-';
     /**
      * Return an instance of this class.
      *
@@ -255,7 +255,7 @@ class CB2_Settings
             <?php
             $cmb_bookings = new_cmb2_box(
                 array(
-                'id' => CB_TEXTDOMAIN  . '_options-' . $slug,
+                'id' => CB2_TEXTDOMAIN  . '_options-' . $slug,
                 'show_on' => array(
                 'key' => 'options-page',
                 'value' => array( 'commons-booking' ), ),
@@ -264,7 +264,7 @@ class CB2_Settings
                 )
             );
 
-                        cmb2_metabox_form(CB_TEXTDOMAIN  . '_options-' . $slug, self::$settings_slug . $slug);
+                        cmb2_metabox_form(CB2_TEXTDOMAIN  . '_options-' . $slug, self::$settings_slug . $slug);
         ?>
         </div>
        </div>

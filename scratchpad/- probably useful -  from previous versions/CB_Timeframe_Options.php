@@ -1,11 +1,11 @@
 <?php
 /**
- * CB Timeframe Options
+ * Availability Options
  *
- * Options for timeframes.
+ * Options for availabilities, a subset of plugin settings.
  * Overwrites the cmb2 save/retrieve functions.
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+

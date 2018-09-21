@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -134,7 +134,7 @@ class CB_Shortcodes {
 
 						// call ensure class
 						//cb2_template_include_ensure_correct_class();
-						$return .= cb_get_template_part(  CB_TEXTDOMAIN, 'list', 'week', $args , true );
+						$return .= cb_get_template_part(  CB2_TEXTDOMAIN, 'list', 'week', $args , true );
 					}
 
 					$return .= '</tbody>

@@ -436,10 +436,10 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 // Framework integration
 function cb2_init_temp_debug_enqueue() {
 	// TODO: re-enable CB_Enqueue
-	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-admin',  plugins_url( 'admin/assets/css/admin.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
-	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
-	wp_enqueue_script( CB_TEXTDOMAIN . '-plugin-script', plugins_url( 'admin/assets/js/admin.js', CB_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB_VERSION );
-	wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles-cmb2', plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
+	wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles-admin',  plugins_url( 'admin/assets/css/admin.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+	wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+	wp_enqueue_script( CB2_TEXTDOMAIN . '-plugin-script', plugins_url( 'admin/assets/js/admin.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
+	wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles-cmb2', plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {

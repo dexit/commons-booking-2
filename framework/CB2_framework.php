@@ -12,7 +12,7 @@
 
 
 /**
- * Libraries
+ * Libraries - managed by Composer
  */
 require_once('includes/lib/cmb2/init.php');
 require_once('includes/lib/cmb2-grid/Cmb2GridPluginLoad.php');
@@ -25,7 +25,7 @@ require_once('includes/lib/cmb2-field-icon/cmb2-field-icon.php');
  */
 require_once('includes/lib-temp/CMB2-field-Calendar/cmb-field-calendar.php');
 require_once('includes/lib-temp/CMB2-field-Paragraph/cmb-field-paragraph.php');
-require_once(CB_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php'); /* TODO */
+require_once(CB2_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php'); /* TODO */
 
 
 /**

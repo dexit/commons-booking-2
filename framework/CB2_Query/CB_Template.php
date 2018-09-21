@@ -2,7 +2,7 @@
 /**
  * @TODO: remove
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -34,7 +34,7 @@ class CB_Template {
 	 */
 	public static function load_content_demo( $original_template ) {
 		if ( is_singular( 'demo' ) && in_the_loop() ) {
-			return wpbp_get_template_part( CB_TEXTDOMAIN, 'content', 'demo', false );
+			return wpbp_get_template_part( CB2_TEXTDOMAIN, 'content', 'demo', false );
 		}
 		return $original_template;
 	}

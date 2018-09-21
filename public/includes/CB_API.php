@@ -4,7 +4,7 @@
  *
  * Reachable via mysite.de/cb-api/
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+

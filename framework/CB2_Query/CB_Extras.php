@@ -2,7 +2,7 @@
 /**
  * Commons booking extras
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -28,7 +28,7 @@ class CB_Extras {
 	 * @return array
 	 */
 	public static function add_cb_class( $classes ) {
-		$classes[] = CB_TEXTDOMAIN;
+		$classes[] = CB2_TEXTDOMAIN;
 		return $classes;
 	}
 }

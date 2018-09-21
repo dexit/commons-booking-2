@@ -427,7 +427,7 @@ function cb2_admin_page() {
 	// --------------------------- Model
 	print( '<hr/>' );
 	print( '<h2>model</h2>');
-	print( '<img src="' . plugins_url( CB_TEXTDOMAIN . '/wp-admin/model.png' ) . '"/>' );
+	print( '<img src="' . plugins_url( CB2_TEXTDOMAIN . '/wp-admin/model.png' ) . '"/>' );
 }
 
 function cb2_calendar() {

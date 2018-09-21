@@ -9,8 +9,8 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 	function __construct() {
 		// Configure widget array
 		$args = array(
-			'label' => __( 'My Recent Posts Example', CB_TEXTDOMAIN ),
-			'description' => __( 'My Recent Posts Widget Description', CB_TEXTDOMAIN ),
+			'label' => __( 'My Recent Posts Example', CB2_TEXTDOMAIN ),
+			'description' => __( 'My Recent Posts Widget Description', CB2_TEXTDOMAIN ),
 		);
 		// Configure the widget fields
 		// Example for: Title ( text ) and Amount of posts to show ( select box )
@@ -18,9 +18,9 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 			// Title field
 			array(
 				// Field name/label									
-				'name' => __( 'Title', CB_TEXTDOMAIN ),
+				'name' => __( 'Title', CB2_TEXTDOMAIN ),
 				// Field description					
-				'desc' => __( 'Enter the widget title.', CB_TEXTDOMAIN ),
+				'desc' => __( 'Enter the widget title.', CB2_TEXTDOMAIN ),
 				// Field id		
 				'id' => 'title',
 				// Field type ( text, checkbox, textarea, select, select-group, taxonomy, taxonomyterm, pages, hidden )
@@ -28,7 +28,7 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 				// Class, rows, cols								
 				'class' => 'widefat',
 				// Default value						
-				'std' => __( 'Recent Posts', CB_TEXTDOMAIN ),
+				'std' => __( 'Recent Posts', CB2_TEXTDOMAIN ),
 				/**
 				  Set the field validation type/s
 				  'alpha_dash'
@@ -61,9 +61,9 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 			// Taxonomy Field
 			array(
 				// Field name/label									
-				'name' => __( 'Taxonomy', CB_TEXTDOMAIN ),
+				'name' => __( 'Taxonomy', CB2_TEXTDOMAIN ),
 				// Field description					
-				'desc' => __( 'Set the taxonomy.', CB_TEXTDOMAIN ),
+				'desc' => __( 'Set the taxonomy.', CB2_TEXTDOMAIN ),
 				// Field id		
 				'id' => 'taxonomy',
 				'type' => 'taxonomy',
@@ -73,9 +73,9 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 			// Taxonomy Field
 			array(
 				// Field name/label									
-				'name' => __( 'Taxonomy terms', CB_TEXTDOMAIN ),
+				'name' => __( 'Taxonomy terms', CB2_TEXTDOMAIN ),
 				// Field description					
-				'desc' => __( 'Set the taxonomy terms.', CB_TEXTDOMAIN ),
+				'desc' => __( 'Set the taxonomy terms.', CB2_TEXTDOMAIN ),
 				// Field id		
 				'id' => 'taxonomyterm',
 				'type' => 'taxonomyterm',
@@ -86,9 +86,9 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 			// Pages Field
 			array(
 				// Field name/label									
-				'name' => __( 'Pages', CB_TEXTDOMAIN ),
+				'name' => __( 'Pages', CB2_TEXTDOMAIN ),
 				// Field description					
-				'desc' => __( 'Set the page.', CB_TEXTDOMAIN ),
+				'desc' => __( 'Set the page.', CB2_TEXTDOMAIN ),
 				// Field id		
 				'id' => 'pages',
 				'type' => 'pages',
@@ -98,9 +98,9 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 			// Post type Field
 			array(
 				// Field name/label									
-				'name' => __( 'Post type', CB_TEXTDOMAIN ),
+				'name' => __( 'Post type', CB2_TEXTDOMAIN ),
 				// Field description					
-				'desc' => __( 'Set the post type.', CB_TEXTDOMAIN ),
+				'desc' => __( 'Set the post type.', CB2_TEXTDOMAIN ),
 				// Field id		
 				'id' => 'posttype',
 				'type' => 'posttype',
@@ -111,23 +111,23 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 			// Amount Field
 			array(
 				'name' => __( 'Amount' ),
-				'desc' => __( 'Select how many posts to show.', CB_TEXTDOMAIN ),
+				'desc' => __( 'Select how many posts to show.', CB2_TEXTDOMAIN ),
 				'id' => 'amount',
 				'type' => 'select',
 				// Selectbox fields			
 				'fields' => array(
 					array(
 						// Option name
-						'name' => __( '1 Post', CB_TEXTDOMAIN ),
+						'name' => __( '1 Post', CB2_TEXTDOMAIN ),
 						// Option value			
 						'value' => '1'
 					),
 					array(
-						'name' => __( '2 Posts', CB_TEXTDOMAIN ),
+						'name' => __( '2 Posts', CB2_TEXTDOMAIN ),
 						'value' => '2'
 					),
 					array(
-						'name' => __( '3 Posts', CB_TEXTDOMAIN ),
+						'name' => __( '3 Posts', CB2_TEXTDOMAIN ),
 						'value' => '3'
 					)
 				// Add more options
@@ -137,8 +137,8 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 			),
 			// Output type checkbox
 			array(
-				'name' => __( 'Output as list', CB_TEXTDOMAIN ),
-				'desc' => __( 'Wraps posts with the <li> tag.', CB_TEXTDOMAIN ),
+				'name' => __( 'Output as list', CB2_TEXTDOMAIN ),
+				'desc' => __( 'Wraps posts with the <li> tag.', CB2_TEXTDOMAIN ),
 				'id' => 'list',
 				'type' => 'checkbox',
 				// Checked by default: 

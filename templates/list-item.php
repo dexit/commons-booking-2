@@ -4,7 +4,7 @@
 /**
  * Items in archives, list timeframes below item excerpt.
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Annesley Newholm <annesley_newholm@yahoo.it>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+

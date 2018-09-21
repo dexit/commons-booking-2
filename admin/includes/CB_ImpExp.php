@@ -2,7 +2,7 @@
 /**
  * Commons_Booking
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -39,8 +39,8 @@ class CB_ImpExp {
 		if ( !current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$settings[ 0 ] = get_option( CB_TEXTDOMAIN . '-settings' );
-		$settings[ 1 ] = get_option( CB_TEXTDOMAIN . '-settings-second' );
+		$settings[ 0 ] = get_option( CB2_TEXTDOMAIN . '-settings' );
+		$settings[ 1 ] = get_option( CB2_TEXTDOMAIN . '-settings-second' );
 		ignore_user_abort( true );
 		nocache_headers();
 		header( 'Content-Type: application/json; charset=utf-8' );
@@ -72,17 +72,17 @@ class CB_ImpExp {
 		}
 		$extension = end( explode( '.', $_FILES[ 'import_file' ][ 'name' ] ) );
 		if ( $extension !== 'json' ) {
-			wp_die( __( 'Please upload a valid .json file', CB_TEXTDOMAIN ) );
+			wp_die( __( 'Please upload a valid .json file', CB2_TEXTDOMAIN ) );
 		}
 		$import_file = $_FILES[ 'import_file' ][ 'tmp_name' ];
 		if ( empty( $import_file ) ) {
-			wp_die( __( 'Please upload a file to import', CB_TEXTDOMAIN ) );
+			wp_die( __( 'Please upload a file to import', CB2_TEXTDOMAIN ) );
 		}
 		// Retrieve the settings from the file and convert the json object to an array.
 		$settings = ( array ) json_decode( file_get_contents( $import_file ) );
-		update_option( CB_TEXTDOMAIN . '-settings', get_object_vars( $settings[ 0 ] ) );
-		update_option( CB_TEXTDOMAIN . '-settings-second', get_object_vars( $settings[ 1 ] ) );
-		wp_safe_redirect( admin_url( 'options-general.php?page=' . CB_TEXTDOMAIN ) );
+		update_option( CB2_TEXTDOMAIN . '-settings', get_object_vars( $settings[ 0 ] ) );
+		update_option( CB2_TEXTDOMAIN . '-settings-second', get_object_vars( $settings[ 1 ] ) );
+		wp_safe_redirect( admin_url( 'options-general.php?page=' . CB2_TEXTDOMAIN ) );
 		exit;
 	}
 }

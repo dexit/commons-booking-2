@@ -4,7 +4,7 @@
  *
  * Handles includes of admin-related files
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -30,11 +30,11 @@ class CB2_Admin {
 			return;
 		}
 
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB2_Enqueue_Admin.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Enqueue_Admin.php' );
 		// /*
 		// * All the extras functions
 		// */
-		// require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_Extras_Admin.php' );
+		// require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_Extras_Admin.php' );
 
 		/* @TODO: add all filters & functions from WP_Admin_Integration */
 

@@ -2,7 +2,7 @@
 /**
  * Commons_Booking
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -21,8 +21,8 @@ class CB_ActDeact {
 		// Activate plugin when new blog is added
 		add_action( 'wpmu_new_blog', array( $this, 'activate_new_site' ) );
 
-		register_activation_hook( CB_TEXTDOMAIN . '/' . CB_TEXTDOMAIN . '.php', array( __CLASS__, 'activate' ) );
-		register_deactivation_hook( CB_TEXTDOMAIN . '/' . CB_TEXTDOMAIN . '.php', array( __CLASS__, 'deactivate' ) );
+		register_activation_hook( CB2_TEXTDOMAIN . '/' . CB2_TEXTDOMAIN . '.php', array( __CLASS__, 'activate' ) );
+		register_deactivation_hook( CB2_TEXTDOMAIN . '/' . CB2_TEXTDOMAIN . '.php', array( __CLASS__, 'deactivate' ) );
 		add_action( 'admin_init', array( $this, 'upgrade_procedure' ) );
 	}
 
@@ -103,7 +103,7 @@ class CB_ActDeact {
 	 */
 	private static function single_activate() {
 		// Requirements Detection System - read the doc/example in the library file
-		new Plugin_Requirements( CB_NAME, CB_TEXTDOMAIN, array(
+		new Plugin_Requirements( CB2_NAME, CB2_TEXTDOMAIN, array(
 			'WP' => new WordPress_Requirement( '4.6.0' )
 				) );
 		// @TODO: Define activation functionality here
@@ -199,9 +199,9 @@ class CB_ActDeact {
 	public static function upgrade_procedure() {
 		if ( is_admin() ) {
 			$version = get_option( 'commons-booking-version' );
-			if ( version_compare( CB_VERSION, $version, '>' ) ) {
-				update_option( 'commons-booking-version', CB_VERSION );
-				delete_option( CB_TEXTDOMAIN . '_fake-meta' );
+			if ( version_compare( CB2_VERSION, $version, '>' ) ) {
+				update_option( 'commons-booking-version', CB2_VERSION );
+				delete_option( CB2_TEXTDOMAIN . '_fake-meta' );
 			}
 		}
 	}

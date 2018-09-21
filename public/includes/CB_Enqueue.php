@@ -5,7 +5,7 @@
  * Scripts, styles, etc.
  * Content filters: Overwrite items, location with templates
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -44,7 +44,7 @@ class CB_Enqueue {
 	 * @return void
 	 */
 	public static function enqueue_styles() {
-		wp_enqueue_style( CB_TEXTDOMAIN . '-plugin-styles', plugins_url( 'public/assets/css/public.css', CB_PLUGIN_ABSOLUTE ), array(), CB_VERSION );
+		wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 	}
 	/**
 	 * Register and enqueues public-facing JavaScript files.
@@ -54,7 +54,7 @@ class CB_Enqueue {
 	 * @return void
 	 */
 	public static function enqueue_scripts() {
-		wp_enqueue_script( CB_TEXTDOMAIN . '-plugin-script', plugins_url( 'public/assets/js/public.min.js', CB_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB_VERSION );
+		wp_enqueue_script( CB2_TEXTDOMAIN . '-plugin-script', plugins_url( 'public/assets/js/public.min.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 	}
 	/**
 	 * Templates for cb_items and cb_locations.
@@ -72,23 +72,23 @@ class CB_Enqueue {
 			$args = array ( 'item_id' => get_the_id() );
 			$timeframe_object = new CB_Timeframes( $args );
 			$CB_Timeframes = $timeframe_object->get( );
-			cb_get_template_part(  CB_TEXTDOMAIN, 'item', 'list', $CB_Timeframes );
+			cb_get_template_part(  CB2_TEXTDOMAIN, 'item', 'list', $CB_Timeframes );
 		} elseif ( is_singular( 'cb_item' ) && in_the_loop() ) {
 			$args = array ( 'item_id' => get_the_id() );
 			$timeframe_object = new CB_Timeframes( $args );
 			$CB_Timeframes = $timeframe_object->get( );
-			cb_get_template_part(  CB_TEXTDOMAIN, 'item', 'single', $CB_Timeframes );
+			cb_get_template_part(  CB2_TEXTDOMAIN, 'item', 'single', $CB_Timeframes );
 		// locations
 		} elseif ( is_post_type_archive( 'cb_location' ) && in_the_loop() ) {
 			$args = array ( 'location_id' => get_the_id() );
 			$timeframe_object = new CB_Timeframes( $args );
 			$CB_Timeframes = $timeframe_object->get( );
-			cb_get_template_part(  CB_TEXTDOMAIN, 'location', 'list', $CB_Timeframes );
+			cb_get_template_part(  CB2_TEXTDOMAIN, 'location', 'list', $CB_Timeframes );
 		} elseif ( is_singular( 'cb_location') && in_the_loop() ) {
 			$args = array ( 'location_id' => get_the_id() );
 			$timeframe_object = new CB_Timeframes( $args );
 			$CB_Timeframes = $timeframe_object->get( );
-			cb_get_template_part(  CB_TEXTDOMAIN, 'location', 'single', $CB_Timeframes );
+			cb_get_template_part(  CB2_TEXTDOMAIN, 'location', 'single', $CB_Timeframes );
 		} else {
 			return $content;
 		}
