@@ -12,9 +12,11 @@
 		"webdevstudios\/cmb2": "~2.3",
 		"origgami\/cmb2-grid": "dev-master",
 		"nathanielks\/wp-admin-notice": "dev-master",
-		"rubengc\/cmb2-tabs": "~1.0.0"
+		"rubengc\/cmb2-tabs": "~1.0.0",
+		"drmonty/leaflet": "dev-master"
 	},
-	"repositories": [{
+	"repositories": [
+		{
 			"url": "git@github.com:nathanielks\/wordpress-admin-notice.git",
 			"type": "git"
 		},
@@ -43,7 +45,9 @@
 		"vendor-dir": "composer\/"
 	},
 	"require-dev": {
-
+		"phpro\/grumphp": "^0.12",
+		"lucatume\/function-mocker": "~1.0",
+		"codeception/codeception": "2.4.x-dev"
 	},
 	"minimum-stability": "dev",
 	"extra": {
@@ -61,7 +65,8 @@
 				"webdevstudios\/cmb2",
 				"origgami\/cmb2-grid",
 				"rubengc\/cmb2-tabs",
-				"flegfleg\/cmb2-field-icon"
+				"flegfleg\/cmb2-field-icon",
+				"drmonty/leaflet"
 			],
 			".\/admin\/includes\/lib\/{$name}": [
 				"nathanielks\/wp-admin-notice",
