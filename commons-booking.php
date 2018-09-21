@@ -45,7 +45,7 @@ function cb_load_plugin_textdomain() {
 add_action( 'plugins_loaded', 'cb_load_plugin_textdomain', 1 );
 
 require_once(CB2_PLUGIN_ROOT . 'framework/CB2_framework.php');
-require_once(CB2_PLUGIN_ROOT . 'public/Commons_Booking.php');
+require_once(CB2_PLUGIN_ROOT . 'public/CB2_public.php');
 require_once(CB2_PLUGIN_ROOT . 'public/includes/CB_Shortcodes.php');
 require_once(CB2_PLUGIN_ROOT . 'wp-admin/WP_admin_integration.php');
 
