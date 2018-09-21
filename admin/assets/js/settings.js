@@ -1,5 +1,6 @@
 (function($) {
-  'use strict';
+	'use strict';
+	/** allow jumping to admin tabs via url hash  */
   $(function() {
 		$('#tabs').tabs({
 			beforeActivate: function (event, ui) {
@@ -8,5 +9,4 @@
 			}
 		});
   });
-// Place your administration-specific JavaScript here
 })(jQuery);
