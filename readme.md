@@ -1,6 +1,6 @@
 # CommonsBooking 2
 
-CB2 is a complete rewrite of [Commons Booking](https://github.com/wielebenwir/commons-booking).  It is currently under heavy development. 
+CB2 is a complete rewrite of [Commons Booking](https://github.com/wielebenwir/commons-booking).  It is currently under heavy development.
 
 Main reasons for a new code base were:
 
@@ -68,6 +68,7 @@ For now, just* import this sql file into your db:
 
 * [ADFC Essen](https://www.adfc-nrw.de/kreisverbaende/kv-essen/kreisverband-essen.html) / [Essener Lastenräder](https://essener-lastenrad.de)
 * [ADFC Bundesverband](https://www.adfc.de)
+* [Freie Lasten – Dein Lastenrad in Marburg](https://freie-lasten.org/)
 
 ### CB 1.0
 
