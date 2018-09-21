@@ -117,8 +117,7 @@ class CB2_Codes
      */
     public static function sanitize_form( $field_value )
     {
-
-        return $field_value;
-
+			/* @TODO sanitize function */
+      return $field_value;
     }
 }

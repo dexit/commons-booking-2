@@ -1,8 +1,8 @@
 <?php
 /**
- * Admin settings & CB-Posttypes Metaboxes for Commons Booking
+ * Admin settings & Metaboxes for Commons Booking
  *
- * Global settings, settings for items, timeframes, etc
+ * Global settings & settings for availabilities
  * Get setting usage: $setting = CB2_Settings::get( 'bookings', 'max-slots');
  *
  * All post type metaboxes are defined here.
@@ -59,19 +59,19 @@ class CB2_Settings {
 	 */
 	public static function get_instance() {
 
-		// // If the single instance hasn't been set, set it now.
-		// if ( null == self::$instance ) {
-		// 	try {
-		// 		self::$instance = new self;
-		// 		self::initialize();
-		// 	} catch ( Exception $err ) {
-		// 		do_action( 'commons_booking_settings_failed', $err );
-		// 		if ( WP_DEBUG ) {
-		// 			throw $err->getMessage();
-		// 		}
-		// 	}
-		// }
-		// return self::$instance;
+		// If the single instance hasn't been set, set it now.
+		if ( null == self::$instance ) {
+			try {
+				self::$instance = new self;
+				self::initialize();
+			} catch ( Exception $err ) {
+				do_action( 'cb2_settings_failed', $err );
+				if ( WP_DEBUG ) {
+					throw $err->getMessage();
+				}
+			}
+		}
+		return self::$instance;
 		}
 	/**
 	 * Initialize

@@ -2,13 +2,16 @@
 /**
  * Translateable string snippets.
  *
+ * Allows admins to change frontend strings in settings
+ * without editing the plugin code.
+ *
  * @package   Commons_Booking
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-class CB_Strings {
+class CB2_Strings {
 	/**
 	 * Instance of this class.
 	 *
@@ -20,7 +23,7 @@ class CB_Strings {
 	 *
 	 * @var object
 	 */
-  public static $cb_strings = array ();
+  public static $strings = array ();
 
 	/**
 	 * Return an instance of this class.
@@ -54,6 +57,7 @@ class CB_Strings {
 	 */
 	public static function initialize() {
 
+		self::$strings = self::setup_strings();
 
 		}
 	/**
@@ -76,16 +80,14 @@ class CB_Strings {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param $category The string category
-	 * @param $key 		Optional: The key
+	 * @param string $category The string category
+	 * @param string $key 		Optional: The key
 	 *
-	 * @uses CB_Settings
+	 * @uses CB2_Settings
 	 *
 	 * @return array|string string
 	 */
 	public static function get( $category='', $key = '' ) {
-
-		$strings = self::setup_strings();
 
 		// check that the string is in our pre-defined array
 		if ( empty ($category) && empty ( $key ) ) { // return the whole array
@@ -105,4 +107,4 @@ class CB_Strings {
 	}
 
 }
-add_action( 'plugins_loaded', array( 'CB_Strings', 'get_instance' ) );
+add_action( 'plugins_loaded', array( 'CB2_Strings', 'get_instance' ) );
