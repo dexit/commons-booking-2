@@ -1,7 +1,7 @@
 <?php
 /**
  * TODO: for template-tags use file template-tags.php?
- * similar with cb_get_template_part.php?
+ * similar with cb2_get_template_part.php?
  */
 
 // -------------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_ty
 		$outer_post  = $post;
 		while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 			print( $before );
-			cb_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ) );
+			cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ) );
 			print( $after );
 		endwhile;
 		$post     = &$outer_post;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Load template files of the plugin also include a filter cb_get_template_part.
+ * Load template files of the plugin also include a filter cb2_get_template_part.
  * Uses Cache.
  *
  * Based on https://github.com/humanmade/hm-core/blob/master/hm-core.functions.php
@@ -12,7 +12,7 @@
  * @since     2.0.0
  */
 
-if ( !function_exists( 'cb_get_template_part' ) ) {
+if ( !function_exists( 'cb2_get_template_part' ) ) {
     /**
      *
      * @param string $plugin_slug
@@ -21,7 +21,7 @@ if ( !function_exists( 'cb_get_template_part' ) ) {
      * @param array $template_args  wp_args style argument list
      * @return string
      */
-    function cb_get_template_part( $plugin_slug, $slugs, $name = '', $template_args = array(), $return = false, $cache_args = array() ) {
+    function cb2_get_template_part( $plugin_slug, $slugs, $name = '', $template_args = array(), $return = false, $cache_args = array() ) {
 			$template    = '';
 			$plugin_slug = $plugin_slug . '/';
 			$path        = WP_PLUGIN_DIR . '/'. $plugin_slug . 'templates/';
@@ -52,7 +52,7 @@ if ( !function_exists( 'cb_get_template_part' ) ) {
 			}
 
 			// Allow 3rd party plugin filter template file from their plugin
-			$template = apply_filters( 'cb_get_template_part', $template, $slug, $name, $plugin_slug );
+			$template = apply_filters( 'cb2_get_template_part', $template, $slug, $name, $plugin_slug );
 
 			// Template existence check
 			if ( empty( $template ) )

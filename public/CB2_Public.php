@@ -34,7 +34,7 @@ class CB2_Public {
 
 		require_once( CB2_PLUGIN_ROOT . 'public/includes/CB2_Enqueue.php' );
 
-		require_once( CB2_PLUGIN_ROOT . 'public/widgets/sample.php' );
+		// require_once( CB2_PLUGIN_ROOT . 'public/widgets/sample.php' );
 		}
 
 	/**
