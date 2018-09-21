@@ -10,9 +10,6 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-/**
- * Import/Export settings.
- */
 ?>
 		<div id="tabs-importexport" class="metabox-holder">
 			<div class="postbox">
