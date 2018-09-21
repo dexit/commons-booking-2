@@ -333,33 +333,33 @@ function cb2_admin_init_menus() {
 	$capability_default   = 'manage_options';
 	$bookings_count       = $wpdb->get_var( "select count(*) from {$wpdb->prefix}cb2_view_future_bookings" );
 	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
-  add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, 'cb2', 'cb2_options_page', 'dashicons-video-alt' );
+  add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_options_page', 'dashicons-video-alt' );
 
 	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
 		$capability = $details->capability;
 		if ( ! $capability ) $capability = $capability_default;
 		$parent_slug = $details->parent_slug;
-		if ( ! $parent_slug ) $parent_slug = 'cb2';
+		if ( ! $parent_slug ) $parent_slug = CB2_MENU_SLUG;
 
 		$title = preg_replace( '/\%.+\%/', '', $details->page_title );
 		add_submenu_page( $parent_slug, $title, $details->menu_title, $capability, $menu_slug, 'cb2_settings_list_page' );
 	}
-	add_submenu_page( 'cb2', 'Admin',    "<span class='cb2-advanced-menu-item'>Admin</span>",    $capability_default, 'cb2-admin',    'cb2_admin_page' );
-	add_submenu_page( 'cb2', 'Calendar', "<span class='cb2-advanced-menu-item'>Calendar</span>", $capability_default, 'cb2-calendar', 'cb2_calendar' );
-	add_submenu_page( 'cb2', 'Reflection', "<span class='cb2-advanced-menu-item'>Reflection</span>", $capability_default, 'cb2-reflection', 'cb2_reflection' );
+	add_submenu_page( CB2_MENU_SLUG, 'Admin',    "<span class='cb2-advanced-menu-item'>Admin</span>",    $capability_default, 'cb2-admin',    'cb2_admin_page' );
+	add_submenu_page( CB2_MENU_SLUG, 'Calendar', "<span class='cb2-advanced-menu-item'>Calendar</span>", $capability_default, 'cb2-calendar', 'cb2_calendar' );
+	add_submenu_page( CB2_MENU_SLUG, 'Reflection', "<span class='cb2-advanced-menu-item'>Reflection</span>", $capability_default, 'cb2-reflection', 'cb2_reflection' );
 
 	// post-new.php (setup) => edit-form-advanced.php (form)
 	// The following line directly accesses the plugin post-new.php
 	// However, post-new.php is loaded directly WITHOUT calling the hook function
 	// so we cannot set titles and things
 	// $wp_admin_dir = 'commons-booking-2/wp-admin';
-	// add_submenu_page( 'cb2', 'Add New', NULL, $capability_default, '/commons-booking-2/admin/post-new.php' );
+	// add_submenu_page( CB2_MENU_SLUG, 'Add New', NULL, $capability_default, '/commons-booking-2/admin/post-new.php' );
 	// Sending through ?post_type seems to prevent the submenu_page from working
 	// This hook, in combination with the capability in the add_submenu_page() call
 	// allows the page to load
-	add_submenu_page( 'cb2', 'Add New', NULL, $capability_default, 'cb-post-new' );
+	add_submenu_page( CB2_MENU_SLUG, 'Add New', NULL, $capability_default, 'cb-post-new' );
 	add_filter( 'admin_page_cb-post-new', 'cb2_settings_post_new', 0, 10 );
-	add_submenu_page( 'cb2', 'Edit Post', NULL, $capability_default, 'cb-post-edit' );
+	add_submenu_page( CB2_MENU_SLUG, 'Edit Post', NULL, $capability_default, 'cb-post-edit' );
 	add_filter( 'admin_page_cb-post-edit', 'cb2_settings_post_edit', 0, 10 );
 }
 add_action( 'admin_menu', 'cb2_admin_init_menus' );
@@ -378,7 +378,7 @@ function cb2_options_page() {
 		$capability = $menu_item->capability;
 		if ( ! $capability ) $capability = $capability_default;
 		$parent_slug = $menu_item->parent_slug;
-		if ( ! $parent_slug ) $parent_slug = 'cb2';
+		if ( ! $parent_slug ) $parent_slug = CB2_MENU_SLUG;
 
 		$title = preg_replace( '/\%.+\%/', '', $menu_item->page_title );
 		$class .= " $menu_item->first";

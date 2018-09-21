@@ -28,6 +28,7 @@ define( 'CB_TEXTDOMAIN', 'commons-booking-2' );
 define( 'CB_NAME', 'CommonsBooking' );
 define( 'CB_PLUGIN_ROOT', plugin_dir_path( __FILE__ ) );
 define( 'CB_PLUGIN_ABSOLUTE',  __FILE__  );
+define( 'CB2_MENU_SLUG', 'cb2_menu');
 
 /* DB Tables @TODO */
 define( 'CB_TIMEFRAME_OPTIONS_TABLE', 'cb2_timeframe_options' );
