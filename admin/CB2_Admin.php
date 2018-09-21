@@ -30,15 +30,11 @@ class CB2_Admin {
 			return;
 		}
 
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_Enqueue_Admin.php' );
-		/*
-		 * Include CMB2
-		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB2_Metaboxes.php' );
-		/*
-		* All the extras functions
-		*/
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_Extras_Admin.php' );
+		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB2_Enqueue_Admin.php' );
+		// /*
+		// * All the extras functions
+		// */
+		// require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_Extras_Admin.php' );
 	}
 	/**
 	 * Return an instance of this class.

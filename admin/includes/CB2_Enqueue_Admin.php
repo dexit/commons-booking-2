@@ -3,7 +3,7 @@
  * Administration Enqueue
  *
  * Admin-related scripts, styles
- * WP Backend Manage menu & settings menu
+ * WP Backend settings menu, plugin screen action menu
  *
  * @package   Commons_Booking
  * @author    Florian Egermann <florian@wielebenwir.de>
@@ -14,7 +14,7 @@
 /**
  * This class contains the Enqueues for the backend
  */
-class CB_Enqueue_Admin {
+class CB2_Enqueue_Admin {
 		/**
 	 * Slug of the plugin screen.
 	 *
@@ -78,7 +78,7 @@ class CB_Enqueue_Admin {
 		wp_enqueue_script( CB_TEXTDOMAIN . '-admin-script', plugins_url( 'admin/assets/js/admin.js', CB_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB_VERSION );
 	}
 	/**
-	 * Register the plugin management menu (items, locations, timeframes, bookings) and settings into the WordPress Dashboard menu.
+	 * Register the plugin settings menu.
 	 *
 	 * @since 2.0.0
 	 *
@@ -86,8 +86,12 @@ class CB_Enqueue_Admin {
 	 */
 	public function add_plugin_settings_menu() {
 
-		// Settings menu
-		$this->admin_view_page = add_submenu_page( 'cb_dashboard_page', __( 'Settings', CB_TEXTDOMAIN ), __( 'Settings', CB_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
+		/** Settings menu
+		 *  @TODO: Temporarily a main menu item,
+		 *  possible conflict with WP_Admin_Integration?
+		 */
+		// $this->admin_view_page = add_submenu_page( CB_MENU_SLUG, __( 'Settings', CB_TEXTDOMAIN ), __( 'Settings', CB_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
+		$this->admin_view_page = add_menu_page( __('CommonsBooking 2 Settings', 'commons-booking'), __('Settings', 'commons-booking'), 'manage_options', 'cb_settings_page', array($this, 'display_plugin_admin_page'));
 	}
 	/**
 	 * Render the settings page for this plugin.
@@ -97,60 +101,7 @@ class CB_Enqueue_Admin {
 	 * @return void
 	 */
 	public function display_plugin_admin_page() {
-		include_once( CB_PLUGIN_ROOT . 'admin/settings/views/admin.php' );
-	}
-	/**
-	 * Render the timeframe table page.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @return void
-	 */
-	public function display_timeframes_table_page() {
-		include_once( CB_PLUGIN_ROOT . 'admin/manage/views/timeframes-table.php' );
-	}
-	/**
-	 * Render the timeframe edit page.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @return void
-	 */
-	public function display_timeframes_edit_page() {
-		include_once( CB_PLUGIN_ROOT . 'admin/manage/views/timeframes-edit.php' );
-	}
-	/**
-	 * Render the bookings table page.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @return void
-	 */
-	public function display_bookings_table_page() {
-		include_once( CB_PLUGIN_ROOT . 'admin/manage/views/bookings-table.php' );
-	}
-	/**
-	 * Render the bookings table page.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @return void
-	 */
-	public function display_bookings_edit_page() {
-		include_once( CB_PLUGIN_ROOT . 'admin/manage/views/bookings-edit.php' );
-	}
-	/**
-	 * Render the timeframe management page.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @return void
-	 */
-	public function display_list_table_page() {
-
-		include_once( CB_PLUGIN_ROOT . 'admin/manage/views/list-table.php' );
-
-
+		include_once( CB_PLUGIN_ROOT . 'admin/views/settings.php' );
 	}
 	/**
 	 * Add settings action link to the plugins page.
@@ -181,6 +132,6 @@ function cmb2_sanitize_checkbox( $override_value, $value ) {
     return is_null( $value ) ? 0 : $value;
 	}
 }
-$cb_enqueue_admin = new CB_Enqueue_Admin();
+$cb_enqueue_admin = new CB2_Enqueue_Admin();
 $cb_enqueue_admin->initialize();
 do_action( 'commons_booking_cb_enqueue_admin_instance', $cb_enqueue_admin );
