@@ -1,7 +1,11 @@
 <?php
+
 /**
  * Provide international holidays
  *
+ * /* @TODO throws error right now
+ *
+ * @see https://azuyalabs.github.io/yasumi/cookbook/
  *
  *
  * @uses Yasumi
@@ -25,7 +29,7 @@ class CB2_Holidays {
 	 *
 	 * @var string
 	 */
-	static $holiday_provider = 'none';
+	static $holiday_provider = '';
 
 	/**
 	 * Return an instance of this class.
@@ -78,17 +82,17 @@ class CB2_Holidays {
 	 * @since 2.0.0
 	 *
 	 * @uses Yasumi
-	 * @uses CB_Settings
+	 * @uses CB2_Settings
 	 *
 	 * @param array $years
 	 * @return array $holidays
 	 */
 	public static function get_holidays_list ( $years_array = array( 2018 ), $locale = '' ) {
 
-		/* @TODO: pass locale instead of CB_Settings holdiday provider */
-
-		$holiday_provider = CB_Settings::get('calendar', 'holiday_provider');
 		$holidays_array = array();
+
+		/* @TODO: pass locale instead of CB2_Settings holiday provider */
+		$holiday_provider = CB_Settings::get('calendar', 'holiday_provider');
 
 		if ( isset( $holiday_provider) && ! empty ( $holiday_provider ) ) {
 

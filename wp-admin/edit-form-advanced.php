@@ -741,6 +741,12 @@ else {
 
 do_meta_boxes(null, 'advanced', $post);
 
+// added by fleg
+// function to render the availability options form
+// @TODO: Saving, only open on link
+echo ("<h2>AVAILABILITY OPTIONS</h2>");
+echo CB2_Settings::do_availability_options_metaboxes();
+
 ?>
 </div>
 <?php

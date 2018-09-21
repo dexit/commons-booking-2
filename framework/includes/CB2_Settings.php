@@ -65,12 +65,13 @@ class CB2_Settings
         if (null == self::$instance ) {
             try {
                 self::$instance = new self;
-                self::initialize();
-            } catch ( Exception $err ) {
+								self::initialize();
+							} catch ( Exception $err ) {
+								var_dump ($err);
                 do_action('cb2_settings_failed', $err);
-                // if (WP_DEBUG ) {
-                //     throw $err->getMessage();
-                // }
+                if (WP_DEBUG ) {
+                    throw $err->getMessage();
+                }
             }
         }
         return self::$instance;
@@ -165,14 +166,14 @@ class CB2_Settings
 
     }
     /**
-     * Render the timeframe options in the cb_timeframes_edit
+     * Render the timeframe options in edit.php
      *
      * @since 2.0.0
      *
      * @return array
      */
 
-    public static function do_timeframe_options()
+    public static function do_availability_options_metaboxes()
     {
         foreach ( self::$timeframe_options as $option ) {
             // Add setting groups
@@ -482,7 +483,7 @@ class CB2_Settings
         'id' => 'holiday_provider',
         'type' => 'select',
         'show_option_none' => true,
-        'options' => CB2_Holidays::get_providers()
+        'options' => array()
         ),
         array(
         'name' => __('Allow booking over closed days & holidays', 'commons-booking'),
