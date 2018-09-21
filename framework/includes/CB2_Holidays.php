@@ -1,6 +1,10 @@
 <?php
 /**
- * Provide holidays
+ * Provide international holidays
+ *
+ *
+ *
+ * @uses Yasumi
  *
  *
  * @package   Commons_Booking
@@ -9,7 +13,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-class CB_Holidays {
+class CB2_Holidays {
 	/**
 	 * Instance of this class.
 	 *
@@ -37,6 +41,7 @@ class CB_Holidays {
 			try {
 				self::$instance = new self;
 				self::initialize();
+				/* @TODO: check if Yasumi class is available */
 			} catch ( Exception $err ) {
 				do_action( 'commons_booking_holidays_failed', $err );
 				if ( WP_DEBUG ) {
@@ -59,6 +64,7 @@ class CB_Holidays {
 	 * Get holiday providers
 	 *
 	 * @since 2.0.0
+	 * @uses Yasumi
 	 *
 	 * @return array $providers
 	 */
@@ -71,10 +77,15 @@ class CB_Holidays {
 	 *
 	 * @since 2.0.0
 	 *
+	 * @uses Yasumi
+	 * @uses CB_Settings
+	 *
 	 * @param array $years
 	 * @return array $holidays
 	 */
-	public static function get_holidays_list ( $years_array = array( 2018 ) ) {
+	public static function get_holidays_list ( $years_array = array( 2018 ), $locale = '' ) {
+
+		/* @TODO: pass locale instead of CB_Settings holdiday provider */
 
 		$holiday_provider = CB_Settings::get('calendar', 'holiday_provider');
 		$holidays_array = array();
@@ -105,4 +116,4 @@ class CB_Holidays {
 
 
 }
-add_action( 'plugins_loaded', array( 'CB_Holidays', 'get_instance' ) );
+add_action( 'plugins_loaded', array( 'CB2_Holidays', 'get_instance' ) );

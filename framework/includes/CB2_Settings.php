@@ -83,37 +83,37 @@ class CB2_Settings {
 	public static function initialize() {
 
 		/* Add settings tabs */
-		self::cb2_add_settings_tab( 'welcome', __( 'CB2', 'commons-booking-2' ), 'Welcome');
-		self::cb2_add_settings_tab( 'bookings', __( 'Bookings', 'commons-booking-2' ), '');
-		self::cb2_add_settings_tab( 'calendar', __( 'Calendar', 'commons-booking-2' ), '');
-		self::cb2_add_settings_tab( 'map', __( 'Map', 'commons-booking-2' ), '');
-		self::cb2_add_settings_tab( 'strings', __( 'Strings', 'commons-booking-2' ), 'nothing yet');
+		self::add_settings_tab( 'welcome', __( 'CB2', 'commons-booking-2' ), 'Welcome');
+		self::add_settings_tab( 'bookings', __( 'Bookings', 'commons-booking-2' ), '');
+		self::add_settings_tab( 'calendar', __( 'Calendar', 'commons-booking-2' ), '');
+		self::add_settings_tab( 'map', __( 'Map', 'commons-booking-2' ), '');
+		self::add_settings_tab( 'strings', __( 'Strings', 'commons-booking-2' ), 'nothing yet');
 
 		/* Add settings groups to tabs */
-		self::cb2_add_settings_group(
+		self::add_settings_group(
 			self::get_settings_template_bookings(),
 			'bookings'
 		);
-		self::cb2_add_settings_group(
+		self::add_settings_group(
 			self::get_settings_template_calendar(),
 			'calendar'
 		);
-		self::cb2_add_settings_group(
+		self::add_settings_group(
 			self::get_settings_template_map_geocode(),
 			'map'
 		);
 
 		/* Add settings groups for cpts only  */
-		self::cb2_add_settings_group(
+		self::add_settings_group(
 			self::get_settings_template_location_opening_times()
 		);
-		self::cb2_add_settings_group(
+		self::add_settings_group(
 			self::get_settings_template_location_pickup_mode()
 		);
-		self::cb2_add_settings_group(
+		self::add_settings_group(
 		self::get_settings_template_location_personal_contact_info()
 		);
-		self::cb2_add_settings_group(
+		self::add_settings_group(
 			self::get_settings_template_location_address()
 		);
 
@@ -135,7 +135,7 @@ class CB2_Settings {
 	 *
 	 * @return void
 	 */
-	public static function cb2_add_settings_group ( $group, $tab_id=FALSE ) {
+	public static function add_settings_group ( $group, $tab_id=FALSE ) {
 
 		$slug = $group['slug'];
 		self::$plugin_settings[ $slug ] = $group;
@@ -268,7 +268,7 @@ class CB2_Settings {
 	 *
 	 * @param array $args
 	 */
-	public static function cb2_add_settings_tab( $tab_id, $title, $description ) {
+	public static function add_settings_tab( $tab_id, $title, $description ) {
 
 		self::$plugin_settings_tabs[$tab_id] = array(
 		'title' => $title,
