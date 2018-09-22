@@ -5,6 +5,7 @@
  * Allows admins to change frontend strings in settings
  * without editing the plugin code.
  *
+ *
  * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
@@ -21,9 +22,15 @@ class CB2_Strings {
     /**
 	 * array holding all strings
 	 *
-	 * @var object
+	 * @var array
 	 */
   public static $strings = array ();
+   /**
+	 * placholder
+	 *
+	 * @var string
+	 */
+  public static $placeholder = '%%';
 
 	/**
 	 * Return an instance of this class.
@@ -57,54 +64,57 @@ class CB2_Strings {
 	 */
 	public static function initialize() {
 
-		self::$strings = self::setup_strings();
+		self::$strings = array(
+			'general' => array(
+				'not-defined' => __('No booking timeframes found, this item cannot be booked right now.', 'commons-booking-2'),
+				'general-error' => __('Something went wrong.', 'commons-booking-2'),
+				'test-variable' => __('This contains a placeholder, the string "%%".', 'commons-booking-2'),
+			)
+		);
+
 
 		}
 	/**
-	 * Setup the interface strings
+	 * Retrieve a interface string
+	 *
+	 * Can be replaced by user defined string via plugin settings->strings
+	 * Support for placeholders
+	 *
 	 *
 	 * @since 2.0.0
 	 *
-	 * @return string string
-	 */
-	public static function setup_strings() {
-		$strings = array(
-			'timeframes' => array (
-				'not-defined' => __('No booking timeframes found, this item cannot be booked right now.', 'commons-booking')
-        )
-			);
-		return $strings;
-	}
-	/**
-	 * Retrieve a interface string, possibly overwritten by settings
-	 *
-	 * @since 2.0.0
-	 *
-	 * @param string $category The string category
-	 * @param string $key 		Optional: The key
+	 * @param string 	$category The string category
+	 * @param string 	$key 		 The key
+	 * @param string 	$replace
 	 *
 	 * @uses CB2_Settings
 	 *
 	 * @return array|string string
 	 */
-	public static function get( $category='', $key = '' ) {
+	public static function get( $category='', $key = '', $replace='' ) {
 
-		// check that the string is in our pre-defined array
 		if ( empty ($category) && empty ( $key ) ) { // return the whole array
-			return $strings;
-		} elseif ( ! empty ($category) && array_key_exists( $category, $strings ) ) { // else: query by cat/key
-			if ( !empty ( $key ) && array_key_exists( $key, $strings[ $category ] ) ){
+			return self::$strings;
+		} elseif ( ! empty ($category) && array_key_exists( $category, self::$strings ) ) { // else: query by cat/key
+			if ( !empty ( $key ) && array_key_exists( $key, self::$strings[ $category ] ) ) { // exists in array
 
-				$user_defined_string = CB_Settings::get( 'strings', $category . '_' . $key );
+				$user_defined_string = CB2_Settings::get( 'strings', $category . '_' . $key ); // check for string overwrite in settings
 
-				if ( ! empty ( $user_defined_string ) ) {
-					return $user_defined_string;
+				if ( ! empty ( $user_defined_string ) ) { // user definition is not empty
+					$string =  $user_defined_string;
 				} else {
-					return $strings[ $category ][ $key ];
+					$string = self::$strings[ $category ][ $key ];
+				}
+
+				if ( ! empty( $replace ) ) { // we are replacing placeholder
+					return str_replace( self::$placeholder, $replace, $string );
+				} else {
+					return $string;
 				}
 			}
 		}
 	}
+
 
 }
 add_action( 'plugins_loaded', array( 'CB2_Strings', 'get_instance' ) );

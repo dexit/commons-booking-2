@@ -14,6 +14,8 @@
 <div class="wrap">
     <h2><?php echo esc_html( get_admin_page_title() ); ?></h2>
 
+		<?php echo CB2_Strings::get('general', 'test-variable', 'i am replacing this' ); ?>
+
     <div id="tabs" class="settings-tab">
 		<ul>
 			<?php

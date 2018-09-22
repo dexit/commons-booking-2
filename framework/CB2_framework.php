@@ -45,6 +45,7 @@ require_once('CB2_Query/CB_Forms.php');
 /**
  * Includes - Classes
  */
+require_once('includes/CB2_Strings.php');
 require_once('includes/CB2_Settings.php');
 require_once('includes/CB2_Holidays.php');
 require_once('includes/CB2_Codes.php');

@@ -88,10 +88,10 @@ class CB2_Settings
 
         /* Add settings tabs */
         self::add_settings_tab('welcome', __('CB2', 'commons-booking-2'), 'Welcome');
-        self::add_settings_tab('bookings', __('Bookings', 'commons-booking-2'), '');
-        self::add_settings_tab('calendar', __('Calendar', 'commons-booking-2'), '');
-        self::add_settings_tab('map', __('Map', 'commons-booking-2'), '');
-        self::add_settings_tab('strings', __('Strings', 'commons-booking-2'), 'nothing yet');
+        self::add_settings_tab('bookings', __('Bookings', 'commons-booking-2'), 'Settings for bookings');
+        self::add_settings_tab('calendar', __('Calendar', 'commons-booking-2'), 'Settings for calendar');
+        self::add_settings_tab('map', __('Map', 'commons-booking-2'), 'Settings for Map');
+        self::add_settings_tab('strings', __('Strings', 'commons-booking-2'), 'Frontend interface strings');
 
         /* Add settings groups to tabs */
         self::add_settings_group(
@@ -106,8 +106,12 @@ class CB2_Settings
             self::get_settings_template_map_geocode(),
             'map'
         );
+        self::add_settings_group(
+            self::get_settings_template_cb2_strings(),
+            'strings'
+        );
 
-        /* Add settings groups for cpts only  */
+        /* Add settings groups for cpts only @TODO */
         self::add_settings_group(
             self::get_settings_template_location_opening_times()
         );
@@ -612,11 +616,11 @@ class CB2_Settings
      *
      * @return array
      */
-    public static function get_settings_template_cb_strings()
+    public static function get_settings_template_cb2_strings()
     {
 
-        $strings_array = CB_Strings::get();
-        $fields_array = array();
+        $strings_array = CB2_Strings::get();
+				$fields_array = array();
 
         // reformat array to fit our cmb2 settings fields
         foreach ($strings_array as $category => $fields) {
