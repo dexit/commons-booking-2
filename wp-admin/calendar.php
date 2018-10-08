@@ -15,6 +15,7 @@ $period_entity_ID = ( isset( $_GET['period_entity_ID'] ) ? $_GET['period_entity_
 $schema_type      = ( isset( $_GET['schema_type'] )   ? $_GET['schema_type'] : CB_Week::$static_post_type );
 $template_part    = ( isset( $_GET['template_part'] ) ? $_GET['template_part'] : NULL );
 $no_auto_draft    = isset( $_GET['no_auto_draft'] );
+$show_debug       = isset( $_GET['show_debug'] );
 $output_type      = ( isset( $_GET['output_type'] ) ? $_GET['output_type'] : 'HTML' );
 $extended_class   = ( isset( $_GET['extended'] ) ? '' : 'none' );
 
@@ -45,11 +46,8 @@ if ( $period_entity_ID )
 	);
 
 if ( $meta_query_items ) {
-	// Include the auto-draft which do not have meta
-	$meta_query[ 'relation' ]       = 'OR';
-	$meta_query[ 'without_meta' ]   = CB_Query::$without_meta;
-	$meta_query_items[ 'relation' ] = 'AND';
-	$meta_query[ 'items' ]          = $meta_query_items;
+	if ( ! isset( $meta_query_items[ 'relation' ] ) ) $meta_query_items[ 'relation' ] = 'AND';
+	$meta_query[ 'items' ] = $meta_query_items;
 }
 
 $args = array(
@@ -77,9 +75,10 @@ $period_entity_options = CB_Forms::select_options( CB_Forms::period_entity_optio
 $output_options   = CB_Forms::select_options( array( 'HTML' => 'HTML', 'JSON' => 'JSON' ), $output_type );
 $schema_options   = CB_Forms::select_options( CB_Forms::schema_options(), $schema_type );
 $template_options = CB_Forms::select_options( array( 'available' => 'available' ), $template_part );
+$class_WP_DEBUG   = ( WP_DEBUG ? '' : 'hidden' );
 
+print( "<h1>Calendar <a class='cb2-WP_DEBUG $class_WP_DEBUG' href='admin.php?page=cb2-calendar&amp;extended=1'>" . basename( __FILE__ ) . ": extended debug form</a></h1>" );
 print( <<<HTML
-	<h1>Calendar</h1>
 	<form>
 		<input name='page' type='hidden' value='cb2-calendar'/>
 		<input type='text' name='startdate' value='$startdate_string'/> =&gt;
@@ -97,10 +96,10 @@ print( <<<HTML
 			<br/>
 			<input id='no_auto_draft' type='checkbox' name='no_auto_draft'/> <label for='no_auto_draft'>Exclude pseudo-periods (A)</label>
 			<input id='show_overridden_periods' type='checkbox' name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
+			<input id='show_debug' type='checkbox' name='show_debug' checked="1"/> <label for='show_debug'>show debug</label>
 			<br/>
 		</div>
 		<input class="cb2-submit button" type="submit" value="Filter"/>
-		<a href="admin.php?page=cb2-calendar&amp;extended=1">extended</a>
 	</form>
 HTML
 );
@@ -137,27 +136,13 @@ switch ( $output_type ) {
 		?>
 		<div class="cb2-calendar">
 			<div class="entry-content">
-				<table class="cb2-subposts" style="width:98%;"><tbody>
-					<thead><tr>
-						<?php
-							// TODO: wordpress WeekStartsOn
-							foreach ( CB_Query::$days as $dayname ) {
-								print( "<th>$dayname</th>" );
-							}
-						?>
-					</tr></thead>
+				<table class="cb2-subposts" style="width:98%;">
+					<?php the_calendar_header( $query ); ?>
 					<tbody>
 						<?php the_inner_loop( $query, 'list', $template_part ); ?>
 					</tbody>
-					<thead><tr>
-						<?php
-							// TODO: wordpress WeekStartsOn
-							foreach ( CB_Query::$days as $dayname ) {
-								print( "<th>$dayname</th>" );
-							}
-						?>
-					</tr></thead>
-				</tbody></table>
+					<?php the_calendar_footer( $query ); ?>
+				</table>
 			</div><!-- .entry-content -->
 		</div>
 	<?php

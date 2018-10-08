@@ -3,7 +3,7 @@
  * Custom meta boxes for items & locations
  * @TODO: item metaboxes
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -25,7 +25,7 @@ class CB_PostTypes_Metaboxes {
 	 */
 	function __construct() {
 
-		$this->slug = CB_TEXTDOMAIN;
+		$this->slug = CB2_TEXTDOMAIN;
 		$this->prefix = $prefix = '_' . $this->slug . '_';
 
 		add_action( 'add_meta_boxes', array( $this, 'add_item_timeframe_metabox' ) );

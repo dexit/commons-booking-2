@@ -5,7 +5,7 @@
  * Provides snippets for items, locations, etc in the desired formatting
  * Example Usage: CB_Gui::col_format_post( $id );
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+

@@ -4,7 +4,7 @@
  *
  * Handles editing, cancelling and detail view of bookings.
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -82,7 +82,7 @@ class CB_Bookings_Admin  {
 
 			if (! $booking ) {
 				$booking = $this->default_fields['booking_id'];
-				$this->message = new WP_Admin_Notice( __( 'Saved', CB_TEXTDOMAIN ), 'updated' );
+				$this->message = new WP_Admin_Notice( __( 'Saved', CB2_TEXTDOMAIN ), 'updated' );
 			}
 			return $booking;
 		}
@@ -240,9 +240,9 @@ public function get_item_count( ) {
 	public function set_message( $result ) {
 
 		if ($result) {
-			$this->message = new WP_Admin_Notice( __( 'Saved', CB_TEXTDOMAIN ), 'updated' );
+			$this->message = new WP_Admin_Notice( __( 'Saved', CB2_TEXTDOMAIN ), 'updated' );
 		} else {
-			$this->message = new WP_Admin_Notice( __( 'Error saving', CB_TEXTDOMAIN ), 'error' );
+			$this->message = new WP_Admin_Notice( __( 'Error saving', CB2_TEXTDOMAIN ), 'error' );
 		}
 
 	}

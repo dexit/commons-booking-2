@@ -4,7 +4,7 @@
  * @TODO not in use right now, maybe depreciate
  * meta boxes are defined in CB_PostTypes_Metaboxes
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -37,7 +37,7 @@ class CB_CMB {
 		$prefix = '_demo_';
 		$cmb_demo = new_cmb2_box( array(
 			'id' => $prefix . 'metabox',
-			'title' => __( 'Demo Metabox', CB_TEXTDOMAIN ),
+			'title' => __( 'Demo Metabox', CB2_TEXTDOMAIN ),
 			'object_types' => array( 'demo', ), // Post type
 			'context' => 'normal',
 			'priority' => 'high',
@@ -49,8 +49,8 @@ class CB_CMB {
 					'icon' => 'dashicons-admin-site',
 					'title' => 'Tab 1',
 					'fields' => array(
-						$prefix . CB_TEXTDOMAIN . '_text',
-						$prefix . CB_TEXTDOMAIN . '_text2'
+						$prefix . CB2_TEXTDOMAIN . '_text',
+						$prefix . CB2_TEXTDOMAIN . '_text2'
 					),
 				),
 				array(
@@ -58,8 +58,8 @@ class CB_CMB {
 					'icon' => 'dashicons-align-left',
 					'title' => 'Tab 2',
 					'fields' => array(
-						$prefix . CB_TEXTDOMAIN . '_textsmall',
-						$prefix . CB_TEXTDOMAIN . '_textsmall2'
+						$prefix . CB2_TEXTDOMAIN . '_textsmall',
+						$prefix . CB2_TEXTDOMAIN . '_textsmall2'
 					),
 				),
 			)
@@ -67,27 +67,27 @@ class CB_CMB {
 		$cmb2Grid = new \Cmb2Grid\Grid\Cmb2Grid( $cmb_demo );
 		$row = $cmb2Grid->addRow();
 				$field1 = $cmb_demo->add_field( array(
-			'name' => __( 'Text', CB_TEXTDOMAIN ),
-			'desc' => __( 'field description (optional)', CB_TEXTDOMAIN ),
-			'id' => $prefix . CB_TEXTDOMAIN . '_text',
+			'name' => __( 'Text', CB2_TEXTDOMAIN ),
+			'desc' => __( 'field description (optional)', CB2_TEXTDOMAIN ),
+			'id' => $prefix . CB2_TEXTDOMAIN . '_text',
 			'type' => 'text'
 				) );
 		$field2 = $cmb_demo->add_field( array(
-			'name' => __( 'Text 2', CB_TEXTDOMAIN ),
-			'desc' => __( 'field description (optional)', CB_TEXTDOMAIN ),
-			'id' => $prefix . CB_TEXTDOMAIN . '_text2',
+			'name' => __( 'Text 2', CB2_TEXTDOMAIN ),
+			'desc' => __( 'field description (optional)', CB2_TEXTDOMAIN ),
+			'id' => $prefix . CB2_TEXTDOMAIN . '_text2',
 			'type' => 'text'
 				) );
 		$field3 = $cmb_demo->add_field( array(
-			'name' => __( 'Text Small', CB_TEXTDOMAIN ),
-			'desc' => __( 'field description (optional)', CB_TEXTDOMAIN ),
-			'id' => $prefix . CB_TEXTDOMAIN . '_textsmall',
+			'name' => __( 'Text Small', CB2_TEXTDOMAIN ),
+			'desc' => __( 'field description (optional)', CB2_TEXTDOMAIN ),
+			'id' => $prefix . CB2_TEXTDOMAIN . '_textsmall',
 			'type' => 'text_small'
 				) );
 		$field4 = $cmb_demo->add_field( array(
-			'name' => __( 'Text Small 2', CB_TEXTDOMAIN ),
-			'desc' => __( 'field description (optional)', CB_TEXTDOMAIN ),
-			'id' => $prefix . CB_TEXTDOMAIN . '_textsmall2',
+			'name' => __( 'Text Small 2', CB2_TEXTDOMAIN ),
+			'desc' => __( 'field description (optional)', CB2_TEXTDOMAIN ),
+			'id' => $prefix . CB2_TEXTDOMAIN . '_textsmall2',
 			'type' => 'text_small'
 				) );
 				$row->addColumns( array( $field1, $field2 ) );

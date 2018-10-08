@@ -21,7 +21,7 @@ class CB_Extras_Admin {
 		 * Debug mode
 		 */
 		$debug = new WPBP_Debug( 'WPBP' );
-		$debug->log( __( 'Plugin Loaded', CB_TEXTDOMAIN ) );
+		$debug->log( __( 'Plugin Loaded', CB2_TEXTDOMAIN ) );
 
 		$this->check_wp_environment(); // check plugin environment and notify the user if things are not properly defined.
 
@@ -78,7 +78,7 @@ class CB_Extras_Admin {
 	public function show_build_info($admin_bar){
 			$admin_bar->add_menu( array(
 				'id'    => 'cb-build',
-				'title' => 'CB' . CB_VERSION . '-' . CB_DEV_BUILD,
+				'title' => 'CB' . CB2_VERSION . '-' . CB_DEV_BUILD,
 				'href'  => '#',
 				'meta'  => array(
 					'title' => CB_DEV_BUILD,

@@ -18,8 +18,6 @@
 $parent_file = 'edit.php';
 $submenu_file = 'edit.php';
 
-if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '</span>' ); // CB2/Annesley: debug
-
 wp_reset_vars( array( 'action' ) );
 
 if ( isset( $_GET['post'] ) )
@@ -28,6 +26,8 @@ elseif ( isset( $_POST['post_ID'] ) )
  	$post_id = $post_ID = (int) $_POST['post_ID'];
 else
  	$post_id = $post_ID = 0;
+
+if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . ", action=[<i>$action</i>], post_id=[<i>$post_id</i>]</span> " ); // CB2/Annesley: debug
 
 /**
  * @global string  $post_type

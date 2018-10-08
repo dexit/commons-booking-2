@@ -3,7 +3,7 @@
  * Plugin Shortcodes (OLD)
  *
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -46,7 +46,7 @@ class CB_Shortcodes extends CB_Object {
 		$this->set_context('calendar');
 		$timeframes = $this->get_timeframes( $args );
 
-		cb_get_template_part(  CB_TEXTDOMAIN, 'calendar', 'timeframes', $timeframes );
+		cb_get_template_part(  CB2_TEXTDOMAIN, 'calendar', 'timeframes', $timeframes );
 	}
 	/**
 	 * Render timeframe(s)
@@ -59,7 +59,7 @@ class CB_Shortcodes extends CB_Object {
 
 		$timeframes = $this->get_timeframes( $args );
 
-		cb_get_template_part(  CB_TEXTDOMAIN, 'item', 'list', $timeframes );
+		cb_get_template_part(  CB2_TEXTDOMAIN, 'item', 'list', $timeframes );
 	}
 
 	/**
@@ -92,6 +92,6 @@ class CB_Shortcodes extends CB_Object {
 		$this->set_context('calendar');
 		$timeframes = $this->get_timeframes( $args );
 
-		cb_get_template_part(  CB_TEXTDOMAIN, 'map', 'timeframes', $timeframes );
+		cb_get_template_part(  CB2_TEXTDOMAIN, 'map', 'timeframes', $timeframes );
 	}
 }

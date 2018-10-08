@@ -1,6 +1,6 @@
 /*
  * This stylesheet is used to style the public-facing components of the plugin
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
  * @since 0.2
@@ -10,7 +10,7 @@
 /* Variables: colors, widths, padding */
 /*
  * Base colors etc.
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
  * @since     0.7
@@ -24,7 +24,7 @@
 /* Mixins */
 /*
  * Effects & eye-candy
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
  * @since     0.7
@@ -35,7 +35,7 @@
 /* Base styles */
 /*
  * Standard elements
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
  * @since     0.7
@@ -363,7 +363,7 @@ a.cb-button.warning:hover, .tooltipster-box li a.warning:hover, input#wp-submit.
 /* Calendar styles */
 /*
  * Calendar
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
  * @since     0.7
@@ -760,7 +760,7 @@ Tooltips
 /* Booking Bar */
 /*
  * Booking bar displayed on calendar pages
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
  * @since     0.7
@@ -869,6 +869,12 @@ Tooltips
 /* Leaflet.js customization */
 
 /* ---------------------- debug */
+.cb2-debug-control {
+	position:relative;
+	font-size:10px;
+	color:#777;
+	cursor:pointer;
+}
 .cb2-debug-control span {
 	position:absolute;
 	top:-3px;
@@ -877,20 +883,26 @@ Tooltips
 	border:1px dotted #000;
 	background-color:#fff;
 }
-.cb2-debug-control {
-	position:relative;
-	font-size:10px;
-	color:#777;
-	cursor:pointer;
+.cb2-debug-control:before {
+	content: '•';
+
+	display: inline-block;
+	margin: 0px 2px 0 0px;
+	padding: 0px 2px;
+	min-width: 7px;
+	border-radius:11px;
+	background-color: #500;
+	color: #fff;
+	font-size: 6px;
+	line-height:10px;
+	text-align: center;
 }
 .cb2-debug {
-	background-color:#fac83f;
-	border:1px solid #888;
+	background-color:Transparent;
 	font-family: Sans;
-	color: #000;
+	color:#555;
 	font-size:10px;
 	padding:4px;
-	display:none;
 	white-space:nowrap;
 }
 body .cb2-low-debug {
@@ -904,8 +916,15 @@ body .cb2-low-debug {
 	border:1px solid #888;
 }
 .cb2-dangerous,
+.cb2-warning,
 .cb2-error {
 	color:red;
 }
+
+/* TODO: Future start is not invalid for bookings
+.cb2-booked .cb2-future .cb2-invalidity {
+	display:none;
+}
+*/
 
 /*# sourceMappingURL=public.css.map */

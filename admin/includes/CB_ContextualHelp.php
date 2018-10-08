@@ -6,7 +6,7 @@
  *
  * @TODO: not in use right now.
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -63,14 +63,14 @@ class Cb_ContextualHelp {
             return;
         }
         // Only display on the pages - post.php and post-new.php, but only on the `demo` post_type
-        WP_Contextual_Help::register_tab( 'demo-example', __( 'Demo Management', CB_TEXTDOMAIN ), array(
+        WP_Contextual_Help::register_tab( 'demo-example', __( 'Demo Management', CB2_TEXTDOMAIN ), array(
             'page' => array( 'post.php', 'post-new.php' ),
             'post_type' => 'demo',
             'wpautop' => true
         ) );
         // Add to a custom plugin settings page
-        WP_Contextual_Help::register_tab( 'cb_settings', __( 'Boilerplate Settings', CB_TEXTDOMAIN ), array(
-            'page' => 'settings_page_' . CB_TEXTDOMAIN,
+        WP_Contextual_Help::register_tab( 'cb_settings', __( 'Boilerplate Settings', CB2_TEXTDOMAIN ), array(
+            'page' => 'settings_page_' . CB2_TEXTDOMAIN,
             'wpautop' => true
         ) );
     }

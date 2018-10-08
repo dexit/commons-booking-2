@@ -3,7 +3,7 @@
  * Template for the timeframes edit screen.
  *
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -289,7 +289,7 @@ function render_timeframe_view_meta_box( $item ) {
 	$args = array ( 'timeframe_id' => $item['timeframe_id'] );
 	$timeframe_object = new CB_Timeframes( $args );
 	$CB_Timeframes = $timeframe_object->get( );
-	cb_get_template_part(  CB_TEXTDOMAIN, 'timeframe', 'admin', $CB_Timeframes );
+	cb_get_template_part(  CB2_TEXTDOMAIN, 'timeframe', 'admin', $CB_Timeframes );
 
 
 

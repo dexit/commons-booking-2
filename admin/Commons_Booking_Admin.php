@@ -4,7 +4,7 @@
  *
  * Handles includes of admin-related files
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -37,51 +37,51 @@ class Commons_Booking_Admin {
 		  return;
 		  }
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_Enqueue_Admin.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_Enqueue_Admin.php' );
 		/*
 		 * Load CMB
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_CMB.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_CMB.php' );
 		/*
 		 * Import Export settings
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_ImpExp.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_ImpExp.php' );
 		/*
 		 * Contextual Help
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_ContextualHelp.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_ContextualHelp.php' );
 		/*
 		 * All the pointers
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_Pointers.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_Pointers.php' );
 		/*
 		 * Cron
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_Cron.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_Cron.php' );
 		/*
 		* All the extras functions
 		*/
-		require_once( CB_PLUGIN_ROOT . 'admin/includes/CB_Extras_Admin.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_Extras_Admin.php' );
 		/*
 		* Bookings Functions
 		*/
-		require_once( CB_PLUGIN_ROOT . 'admin/manage/includes/CB_Bookings_Admin.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/manage/includes/CB_Bookings_Admin.php' );
 		/*
 		* Bookings Table
 		*/
-		require_once( CB_PLUGIN_ROOT . 'admin/manage/includes/CB_Bookings_Table.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/manage/includes/CB_Bookings_Table.php' );
 		/*
 		 * Timeframes Table
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/manage/includes/CB_Timeframes_Admin.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/manage/includes/CB_Timeframes_Admin.php' );
 		/*
 		 * Timeframes Table
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/manage/includes/CB_Timeframes_Table.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/manage/includes/CB_Timeframes_Table.php' );
 		/*
 		 * Locations Functions
 		 */
-		require_once( CB_PLUGIN_ROOT . 'admin/manage/includes/CB_Locations_Admin.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/manage/includes/CB_Locations_Admin.php' );
 	}
 	/**
 	 * Return an instance of this class.

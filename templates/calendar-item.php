@@ -4,7 +4,7 @@
 /**
  * Calendar of items
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Annesley Newholm <annesley_newholm@yahoo.it>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -19,7 +19,7 @@
 	<table class="cb-calendar">
 		<thead>
 			<tr>
-				<?php 
+				<?php
 				    for($i=1;$i<8;$i++) {
 						echo '<th>' . date("D",mktime(0,0,0,3,28,2009)+$i * (3600*24)) . '</th>';
 					}

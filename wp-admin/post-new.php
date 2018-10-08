@@ -20,8 +20,6 @@
  */
 global $post_type, $post_type_object, $post;
 
-if ( WP_DEBUG )	print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '</span>' ); // CB2/Annesley: debug
-
 if ( ! isset( $_GET['post_type'] ) ) {
 	$post_type = 'post';
 } elseif ( in_array( $_GET['post_type'], get_post_types( array('show_ui' => true ) ) ) ) {
@@ -30,6 +28,8 @@ if ( ! isset( $_GET['post_type'] ) ) {
 	wp_die( __( 'Invalid post type.' ) );
 }
 $post_type_object = get_post_type_object( $post_type );
+
+if ( WP_DEBUG )	print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . ", post_type=[<i>$post_type</i>]</span>" ); // CB2/Annesley: debug
 
 if ( 'post' == $post_type ) {
 	$parent_file = 'edit.php';

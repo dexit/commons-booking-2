@@ -322,7 +322,7 @@ if ( isset( $_REQUEST['s'] ) && strlen( $_REQUEST['s'] ) ) {
 	/* translators: %s: search keywords */
 	printf( ' <span class="subtitle">' . __( 'Search results for &#8220;%s&#8221;' ) . '</span>', get_search_query() );
 }
-if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '</span>' ); // CB2/Annesley: debug
+if ( WP_DEBUG )	print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . ", typenow=[<i>$typenow</i>]</span>" ); // CB2/Annesley: debug
 ?>
 
 <hr class="wp-header-end">

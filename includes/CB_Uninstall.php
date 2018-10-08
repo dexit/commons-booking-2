@@ -2,7 +2,7 @@
 /**
  * Commons_Booking
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -14,7 +14,7 @@
 class Cb_Uninstall {
 	/**
 	 * Initialize the snippet
-	 * 
+	 *
 	 * @return void
 	 */
 	function __construct() {
@@ -22,9 +22,9 @@ class Cb_Uninstall {
 	}
 	/**
 	 * Loop for uninstall
-	 * 
+	 *
 	 * @global type $wpdb
-	 * 
+	 *
 	 * @return void
 	 */
 	function uninstall_hook() {
@@ -43,9 +43,9 @@ class Cb_Uninstall {
 	}
 	/**
 	 * What happen on uninstall?
-	 * 
+	 *
 	 * @global WP_Roles $wp_roles
-	 * 
+	 *
 	 * @return void
 	 */
 	function uninstall() {

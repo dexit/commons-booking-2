@@ -1,6 +1,6 @@
 /*
  * This stylesheet is used to style the public-facing components of the plugin
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
  * @since 0.2
@@ -43,6 +43,12 @@ body .cmb2-id-recurrence-sequence .cmb-multicheck-toggle {
 }
 
 /* ---------------------- admin */
+h1 a,
+h2 a,
+h3 a {
+	font-size:12px;
+	font-weight:normal;
+}
 body .cmb2-id-recurrence-sequence li {
 	text-align:center;
 	border:1px solid #c7c7c7;
@@ -59,6 +65,24 @@ body .cmb2-postbox .cmb-th+.cmb-td {
 	/* TODO: this is probably not  good idea allow paragraph to wrap around fields better */
 	float:none;
 	width:auto;
+}
+.cb2-WP_DEBUG-small {
+	color:#555;
+	font-size:10px;
+}
+.cb2-WP_DEBUG-small:before {
+	content: '•';
+
+	display: inline-block;
+	margin: 0px 2px 0 0px;
+	padding: 0px 2px;
+	min-width: 7px;
+	border-radius:11px;
+	background-color: #500;
+	color: #fff;
+	font-size: 6px;
+	line-height:10px;
+	text-align: center;
 }
 .cb2-WP_DEBUG {
 	color:#555;
@@ -164,10 +188,29 @@ body input.cb2-tick-only {
 	height: 17px;
 	border-radius: 11px;
 	background-color: #00b9eb;
-	color: #fff;
+	color: #000;
 	font-size: 9px;
 	line-height: 17px;
 	text-align: center;
+}
+.cb2-usage-count-info {
+	vertical-align: super;
+	font-size: 80%;
+
+	display: inline-block;
+	vertical-align: top;
+	margin: 1px 0 0 2px;
+	padding: 0 5px;
+	min-width: 7px;
+	height: 17px;
+	border-radius: 11px;
+	/* background-color: #444; */
+	color: #aaa;
+	font-size: 9px;
+	line-height: 17px;
+	text-align: center;
+
+	box-shadow: 0px 0px 1px #aaa;
 }
 .ui-widget {
 	background-color:#fff;
@@ -180,15 +223,20 @@ body input.cb2-tick-only {
 .cb2-calendar label {
 	cursor:pointer;
 }
-.cb2-calendar thead {
+.cb2-calendar thead,
+.cb2-calendar tfoot {
 	background-color:#fff;
 }
-.cb2-calendar thead tr {
+.cb2-calendar thead tr,
+.cb2-calendar tfoot tr {
 	border:1px solid #e1e1e1;
 }
-.cb2-calendar thead th {
+.cb2-calendar thead th,
+.cb2-calendar tfoot td {
 	font-weight:normal;
 	padding:8px 0px;
+	text-align: center;
+	color: #444;
 }
 
 .cb2-calendar {
@@ -212,6 +260,9 @@ body input.cb2-tick-only {
 .cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts {
 	position:relative;
 	height:200px;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td.cb2-first {
+	border-left:3px double #888;
 }
 .cb2-calendar > .entry-content > table.cb2-subposts > tbody  > tr > td > .entry-content > table.cb2-subposts > tbody > tr {
 	/* position:absolute; */
@@ -267,13 +318,30 @@ body input.cb2-tick-only {
 	display:none;
 }
 .cb2-calendar .type-day > .entry-header > .entry-title {
-	color:#888;
+	color:#444;
 	margin:0px;
+	font-weight:normal;
+	font-size:12px;
+}
+.cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td.type-day.cb2-current {
+	background-color:#f7f7f7;
 }
 .cb2-calendar .type-day.cb2-current > .entry-header {
 	color:#111;
 	font-weight:bold;
-	background-color:#c7c7c7;
+	text-decoration:underline;
+}
+.cb2-calendar .type-day.cb2-current > .entry-header > .entry-title:after {
+	content: ' ';
+
+	display: inline-block;
+	margin-left:3px;
+	padding: 5px 5px;
+	border-radius: 11px;
+	background-color: #f00;
+	color: #fff;
+	font-size: 9px;
+	text-align: center;
 }
 .cb2-calendar .cb2-time {
 	margin-right:4px;
@@ -290,7 +358,10 @@ body input.cb2-tick-only {
 }
 
 .cb2-calendar .cb2-booked {
-	background-color:#ffdddd;
+	font-weight:bold;
+}
+.cb2-calendar .cb2-time-period {
+	white-space:nowrap;
 }
 
 /* Entity types */

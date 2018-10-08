@@ -2,7 +2,7 @@
 /**
  * Commons_Booking
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
@@ -76,8 +76,8 @@ class CB_PostTypes {
 			),
 				), array(
 			# Override the base names used for labels:
-			'singular' => __( 'Item', CB_TEXTDOMAIN ),
-			'plural' => __( 'Items', CB_TEXTDOMAIN ),
+			'singular' => __( 'Item', CB2_TEXTDOMAIN ),
+			'plural' => __( 'Items', CB2_TEXTDOMAIN ),
 			'slug' => 'items',
 			'capability_type' => array( 'demo', 'demoes' ), //@TODO: Roles
 				) );
@@ -97,8 +97,8 @@ class CB_PostTypes {
 			),
 			), array(
 			# Override the base names used for labels:
-			'singular' => __( 'Location', CB_TEXTDOMAIN ),
-			'plural' => __( 'Locations', CB_TEXTDOMAIN ),
+			'singular' => __( 'Location', CB2_TEXTDOMAIN ),
+			'plural' => __( 'Locations', CB2_TEXTDOMAIN ),
 			'slug' => 'locations',
 			'capability_type' => array( 'demo', 'demoes' ), //@TODO: Roles
 				) );

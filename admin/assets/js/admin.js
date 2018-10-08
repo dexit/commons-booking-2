@@ -1,8 +1,8 @@
 (function($) {
   'use strict';
   $(document).ready(function(){
-		$('.cb2-template-available').click(function(){
-			var checkbox = $(this).find( '.cb2-perioditem-selector' );
+		$('.cb2-template-available .cb2-time-period').click(function(){
+			var checkbox = $(this).parent().find( '.cb2-perioditem-selector' );
 
 			if (checkbox.attr('checked')) {
 				checkbox.removeAttr('checked');

@@ -3,7 +3,7 @@
  * Commons_Booking Settings
  * All available settings (plugin, post type) are stored here
  *
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+

@@ -1,6 +1,6 @@
 /*
  * Booking bar displayed on calendar pages
- * @package   Commons_Booking
+ * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
  * @since     0.7
@@ -14,9 +14,9 @@
   height: auto;
   left: 0px;
   right: 0px;
-  bottom: 10px; 
+  bottom: 10px;
   @include transition(all .3s ease);
-  
+
 
   .cb-inner {
     @extend .cb-floating-shadow;
@@ -51,7 +51,7 @@
         }
         .cb-j, .cb-M {
           font-weight: bold;
-          color: $black;          
+          color: $black;
         }
       }
   }
@@ -61,7 +61,7 @@
       width: auto;
       display: inline-block;
     }
-    
+
   }
 }
 
