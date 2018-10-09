@@ -9,7 +9,7 @@ new Fake_Page(
 
 function testing() {
 
-	/* add code here that will be printed on page http:77cb.dev/fake_slug
+	/* add code here that will be printed on page http://cb.dev/fake_slug
 	*/
 
 }

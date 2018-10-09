@@ -30,6 +30,8 @@ define( 'CB2_MENU_SLUG', 'cb2_menu');
 /* Paths */
 define( 'CB2_PLUGIN_ROOT', plugin_dir_path( __FILE__ ) );
 define( 'CB2_PLUGIN_ABSOLUTE',  __FILE__  );
+define( 'CB2_PLUGIN_URI',  plugin_dir_url( __FILE__ ) );
+
 
 /* DB Tables @TODO – move to CB_Database.php ? */
 define( 'CB2_AVAILABILITY_OPTIONS_TABLE', 'cb2_availability_options' );
