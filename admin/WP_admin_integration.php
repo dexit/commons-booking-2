@@ -415,7 +415,7 @@ function cb2_admin_page() {
 	// --------------------------- Model
 	print( '<hr/>' );
 	print( '<h2>model</h2>');
-	print( '<img src="' . plugins_url( CB2_TEXTDOMAIN . '/wp-admin/model.png' ) . '"/>' );
+	print( '<img src="' . plugins_url( CB2_TEXTDOMAIN . '/admin/assets/model.png' ) . '"/>' );
 }
 
 function cb2_calendar() {
@@ -531,7 +531,7 @@ function cb2_settings_list_page() {
 			// This is a COPY of the normal wp-admin file
 			$screen = WP_Screen::get( $typenow );
 			set_current_screen( $screen );
-			require_once( dirname( __FILE__ ) . '/edit.php' );
+			require_once( dirname( __FILE__ ) . '/wp-admin/edit.php' );
 		} else throw new Exception( 'CB2 admin page cannot find its location in the db' );
 	} else throw new Exception( 'CB2 admin page does not understand its location. A querystring ?page= parameter is needed' );
 
@@ -587,7 +587,7 @@ function cb2_settings_post_new() {
 	// This is a COPY of the normal wp-admin file
 	$screen = WP_Screen::get( $typenow );
 	set_current_screen( $screen );
-	require_once( dirname( __FILE__ ) . '/post-new.php' );
+	require_once( dirname( __FILE__ ) . '/wp-admin/post-new.php' );
 }
 
 function cb2_settings_post_edit() {
@@ -648,6 +648,6 @@ function cb2_settings_post_edit() {
 	// creating meta_data as well
 	$screen = WP_Screen::get( $typenow );
 	set_current_screen( $screen );
-	require_once( dirname( __FILE__ ) . '/post.php' );
+	require_once( dirname( __FILE__ ) . '/wp-admin/post.php' );
 }
 
