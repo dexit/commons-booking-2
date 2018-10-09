@@ -495,7 +495,7 @@ echo esc_html( $title );
 if ( isset( $post_new_file ) && current_user_can( $post_type_object->cap->create_posts ) ) {
 	echo ' <a href="' . esc_url( admin_url( $post_new_file ) ) . '" class="page-title-action">' . esc_html( $post_type_object->labels->add_new ) . '</a>';
 }
-if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '</span>' ); // CB2/Annesley: debug
+if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . ", post_type=[<i>$post_type</i>], post_status=[<i>$post->post_status</i>], post->ID=[<i>$post->ID</i>]</span>" ); // CB2/Annesley: debug
 ?>
 
 <hr class="wp-header-end">
@@ -511,7 +511,11 @@ if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . '
 	<span class="hide-if-no-sessionstorage"><?php _e( 'We&#8217;re backing up this post in your browser, just in case.' ); ?></span>
 	</p>
 </div>
-<form name="post" action="post.php" method="post" id="post"<?php
+<?php
+	$post_submit = ( isset( $post_submit_custom ) ? $post_submit_custom : 'post.php' ); // CB2/Annesley: custom form submits
+	if ( WP_DEBUG ) print( " <span class='cb2-WP_DEBUG'><b>&lt;form @submit</b> =&gt; $post_submit</span>" ); // CB2/Annesley: debug
+?>
+<form name="post" action="<?php print( $post_submit ); ?>" method="post" id="post"<?php
 /**
  * Fires inside the post editor form tag.
  *
@@ -740,12 +744,6 @@ else {
 
 
 do_meta_boxes(null, 'advanced', $post);
-
-// added by fleg
-// function to render the availability options form
-// @TODO: Saving, only open on link
-echo ("<h2>AVAILABILITY OPTIONS</h2>");
-echo CB2_Settings::do_availability_options_metaboxes();
 
 ?>
 </div>

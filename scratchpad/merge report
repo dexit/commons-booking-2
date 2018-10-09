@@ -1,0 +1,66 @@
+Auto-merging wp-admin/edit-form-advanced.php
+Auto-merging wp-admin/WP_admin_integration.php
+CONFLICT (content): Merge conflict in wp-admin/WP_admin_integration.php
+Auto-merging templates/calendar-timeframes.php
+CONFLICT (rename/delete): classes/CB_Timeframe_Options.php deleted in framework and renamed to scratchpad/- probably useful -  from previous versions/CB_Timeframe_Options.php in HEAD. Version HEAD of scratchpad/- probably useful -  from previous versions/CB_Timeframe_Options.php left in tree.
+Auto-merging public/widgets/sample.php
+CONFLICT (content): Merge conflict in public/widgets/sample.php
+CONFLICT (rename/delete): public/includes/CB_Shortcodes.php deleted in framework and renamed to public/includes/CB2_Shortcodes.php in HEAD. Version HEAD of public/includes/CB2_Shortcodes.php left in tree.
+Auto-merging public/includes/CB2_Enqueue.php
+CONFLICT (content): Merge conflict in public/includes/CB2_Enqueue.php
+Auto-merging public/assets/sass/partials/_mixins.scss
+Auto-merging public/assets/sass/partials/_calendar.scss
+Auto-merging public/assets/sass/partials/_bookingbar.scss
+Auto-merging public/assets/css/public.css
+Auto-merging public/CB2_Public.php
+CONFLICT (content): Merge conflict in public/CB2_Public.php
+CONFLICT (modify/delete): includes/CB_Shortcodes.php deleted in HEAD and modified in framework. Version framework of includes/CB_Shortcodes.php left in tree.
+CONFLICT (modify/delete): includes/CB_PostTypes_Metaboxes.php deleted in HEAD and modified in framework. Version framework of includes/CB_PostTypes_Metaboxes.php left in tree.
+CONFLICT (modify/delete): includes/CB_PostTypes.php deleted in HEAD and modified in framework. Version framework of includes/CB_PostTypes.php left in tree.
+CONFLICT (modify/delete): includes/CB_Gui.php deleted in HEAD and modified in framework. Version framework of includes/CB_Gui.php left in tree.
+Auto-merging framework/includes/template_functions.php
+CONFLICT (content): Merge conflict in framework/includes/template_functions.php
+CONFLICT (rename/rename): Rename "wp-admin/CMB2-field-Paragraph/LICENSE"->"framework/includes/lib-temp/CMB2-field-Paragraph/LICENSE" in branch "HEAD" rename "wp-admin/CMB2-field-Paragraph/LICENSE"->"framework/includes/lib-temp/CMB2-field-Icon/LICENSE" in "framework"
+Auto-merging framework/includes/lib-temp/CMB2-field-Calendar/cmb-field-calendar.php
+CONFLICT (content): Merge conflict in framework/includes/lib-temp/CMB2-field-Calendar/cmb-field-calendar.php
+CONFLICT (rename/delete): includes/CB_Strings.php deleted in HEAD and renamed to framework/includes/CB2_Strings.php in framework. Version framework of framework/includes/CB2_Strings.php left in tree.
+CONFLICT (rename/delete): includes/CB_Settings.php deleted in HEAD and renamed to framework/includes/CB2_Settings.php in framework. Version framework of framework/includes/CB2_Settings.php left in tree.
+CONFLICT (rename/delete): classes/CB_Codes.php deleted in HEAD and renamed to framework/includes/CB2_Codes.php in framework. Version framework of framework/includes/CB2_Codes.php left in tree.
+CONFLICT (rename/rename): Rename admin/settings/views/index.php->framework/CB2_Query/index.php in HEAD. Rename public/includes/index.php->framework/CB2_Query/index.php in framework
+Renaming admin/settings/views/index.php to framework/CB2_Query/index.php~HEAD and public/includes/index.php to framework/CB2_Query/index.php~framework instead
+Auto-merging framework/CB2_Query/WP_Query_integration.php
+CONFLICT (content): Merge conflict in framework/CB2_Query/WP_Query_integration.php
+Auto-merging framework/CB2_Query/CB_Time_Classes.php
+Auto-merging framework/CB2_Query/CB_Query.php
+CONFLICT (content): Merge conflict in framework/CB2_Query/CB_Query.php
+Auto-merging framework/CB2_Query/CB_PostNavigator.php
+Auto-merging framework/CB2_Query/CB_PeriodStatusType.php
+Auto-merging framework/CB2_Query/CB_PeriodItem.php
+CONFLICT (rename/delete): public/includes/CB_PeriodInteractionStrategies.php deleted in framework and renamed to framework/CB2_Query/CB_PeriodInteractionStrategies.php in HEAD. Version HEAD of framework/CB2_Query/CB_PeriodInteractionStrategies.php left in tree.
+Auto-merging framework/CB2_Query/CB_PeriodGroup.php
+Auto-merging framework/CB2_Query/CB_PeriodEntity.php
+Auto-merging framework/CB2_Query/CB_Period.php
+Auto-merging framework/CB2_Query/CB_Forms.php
+Auto-merging framework/CB2_Query/CB_Entities.php
+Auto-merging framework/CB2_Query/CB_Database.php
+Auto-merging commons-booking.php
+CONFLICT (content): Merge conflict in commons-booking.php
+Auto-merging admin/views/settings_importexport.php
+CONFLICT (content): Merge conflict in admin/views/settings_importexport.php
+CONFLICT (modify/delete): admin/settings/views/admin.php deleted in HEAD and modified in framework. Version framework of admin/settings/views/admin.php left in tree.
+CONFLICT (modify/delete): admin/settings/includes/plugin_settings.php deleted in HEAD and modified in framework. Version framework of admin/settings/includes/plugin_settings.php left in tree.
+CONFLICT (modify/delete): admin/manage/views/timeframes-table.php deleted in HEAD and modified in framework. Version framework of admin/manage/views/timeframes-table.php left in tree.
+CONFLICT (modify/delete): admin/manage/views/timeframes-edit.php deleted in HEAD and modified in framework. Version framework of admin/manage/views/timeframes-edit.php left in tree.
+CONFLICT (modify/delete): admin/manage/views/bookings-table.php deleted in HEAD and modified in framework. Version framework of admin/manage/views/bookings-table.php left in tree.
+CONFLICT (modify/delete): admin/manage/views/bookings-edit.php deleted in HEAD and modified in framework. Version framework of admin/manage/views/bookings-edit.php left in tree.
+CONFLICT (modify/delete): admin/manage/includes/CB_Timeframes_Table.php deleted in HEAD and modified in framework. Version framework of admin/manage/includes/CB_Timeframes_Table.php left in tree.
+CONFLICT (modify/delete): admin/manage/includes/CB_Timeframes_Admin.php deleted in HEAD and modified in framework. Version framework of admin/manage/includes/CB_Timeframes_Admin.php left in tree.
+CONFLICT (modify/delete): admin/manage/includes/CB_Locations_Admin.php deleted in HEAD and modified in framework. Version framework of admin/manage/includes/CB_Locations_Admin.php left in tree.
+CONFLICT (modify/delete): admin/manage/includes/CB_Bookings_Table.php deleted in HEAD and modified in framework. Version framework of admin/manage/includes/CB_Bookings_Table.php left in tree.
+CONFLICT (modify/delete): admin/manage/includes/CB_Bookings_Admin.php deleted in HEAD and modified in framework. Version framework of admin/manage/includes/CB_Bookings_Admin.php left in tree.
+CONFLICT (modify/delete): admin/includes/CB_CMB.php deleted in HEAD and modified in framework. Version framework of admin/includes/CB_CMB.php left in tree.
+CONFLICT (rename/delete): admin/includes/CB_Enqueue_Admin.php deleted in HEAD and renamed to admin/includes/CB2_Enqueue_Admin.php in framework. Version framework of admin/includes/CB2_Enqueue_Admin.php left in tree.
+Auto-merging admin/assets/css/admin.css
+CONFLICT (modify/delete): admin/Commons_Booking_Admin.php deleted in HEAD and modified in framework. Version framework of admin/Commons_Booking_Admin.php left in tree.
+CONFLICT (rename/delete): classes/CB_Items.php deleted in framework and renamed to admin/CB2_Admin.php in HEAD. Version HEAD of admin/CB2_Admin.php left in tree.
+Automatic merge failed; fix conflicts and then commit the result.

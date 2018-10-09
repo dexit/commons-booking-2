@@ -19,12 +19,29 @@ function cb2_cmb2_group_wrap_attributes( $group_wrap_attributes, $field_group ) 
 add_filter( 'cmb2_group_wrap_attributes', 'cb2_cmb2_group_wrap_attributes', 10, 2 );
 */
 
+// TODO: this was removed from edit-form-advanced.php and needs to be re-implemented
+// added by fleg
+// function to render the availability options form
+// @TODO: Saving, only open on link
+// echo ("<h2>AVAILABILITY OPTIONS</h2>");
+// echo CB2_Settings::do_availability_options_metaboxes();
+
+
 function cb2_wp_redirect( $location, $status ) {
 	if ( CB2_DEBUG_SAVE ) {
 		print( "wp_redirect( <a href='$location'>$location</a>, <b>$status</b> )" );
 		print( '<hr/><h2>CB2_DEBUG_SAVE</h2>' );
-		xdebug_print_function_stack();
 		krumo( $_POST );
+		xdebug_print_function_stack();
+		exit();
+	}
+	if ( WP_DEBUG ) {
+		// We will have had debug information already
+		// and a header after output error
+		// so we need to JS redirect instead
+		$esc_location = str_replace( "'", "\\\'", $location );
+		print( "Using JavaScript redirect because WP_DEBUG has already output debug info..." );
+		print( "<script>document.location='$esc_location';</script>" );
 		exit();
 	}
 	return $location;
@@ -38,165 +55,134 @@ function cb2_admin_pages() {
 	global $wpdb;
 
 	$basic_interface = array(
-		'cb2-holidays'      => (object) array(
-			'parent_slug'   => '',
+		'cb2-holidays'      => array(
 			'page_title'    => 'Holidays %(for)% %location_ID%',
 			'menu_title'    => 'Holidays',
-			'capability'    => NULL,
-			'function'      => NULL,
 			'wp_query_args' => 'post_type=periodent-global&period_status_type_ID=100000006&post_title=Holidays',
-			'actions'       => NULL,
-			'post_new_page' => NULL,
 			'description'   => 'Edit the global holidays, and holidays for specific locations.',
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups where period_status_type_id = " . CB2_PERIOD_STATUS_TYPE_HOLIDAY,
 		),
-		'cb2-items'         => (object) array(
-			'parent_slug' => '',
+		'cb2-items'         => array(
 			'page_title' => 'Items',
-			'menu_title' => 'Items',
-			'capability' => NULL,
-			'function'   => NULL,
 			'wp_query_args' => 'post_type=item',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}posts where post_type='item' and post_status='publish'",
 		),
-		'cb2-repairs'       => (object) array(
-			'parent_slug' => '',
+		'cb2-repairs'       => array(
 			'indent'      => 1,
 			'page_title' => 'Repairs %(for)% %location_ID% %item_ID%',
 			'menu_title' => 'Repairs',
-			'capability' => NULL,
-			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000005',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups where period_status_type_id = " . CB2_PERIOD_STATUS_TYPE_REPAIR,
+			'count_class'   => 'warning',
 		),
-		'cb2-locations'     => (object) array(
-			'parent_slug'    => '',
+		'cb2-locations'     => array(
 			'page_title'     => 'Locations',
-			'menu_title'     => 'Locations',
-			'capability'     => NULL,
-			'function'       => NULL,
 			'wp_query_args'  => 'post_type=location',
-			'actions'        => NULL,
-			'post_new_page'  => NULL,
 			'count'          => "select count(*) from {$wpdb->prefix}posts where post_type='location' and post_status='publish'",
 		),
-		'cb2-opening-hours' => (object) array(
-			'parent_slug' => '',
+		'cb2-opening-hours' => array(
 			'indent'      => 1,
 			'page_title' => 'Opening Hours %(for)% %location_ID%',
 			'menu_title' => 'Opening Hours',
-			'capability' => NULL,
-			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-location&recurrence_type=D&recurrence_type_show=no&period_status_type_ID=100000004&post_title=Opening Hours %(for)% %location_ID%',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where period_status_type_id = " . CB2_PERIOD_STATUS_TYPE_OPEN,
 		),
-		'cb2-timeframes'    => (object) array(
-			'parent_slug' => '',
+		'cb2-timeframes'    => array(
 			'indent'      => 1,
 			'page_title' => 'Item availibility %(for)% %location_ID%',
 			'menu_title' => 'Item Availibility',
-			'capability' => NULL,
-			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodent-timeframe&period_status_type_ID=100000001',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where period_status_type_id = " . CB2_PERIOD_STATUS_TYPE_AVAILABLE,
+		),
+		'cb2-bookings'    => array(
+			'indent'      => 1,
+			'page_title' => 'Bookings %(for)% %location_ID%',
+			'menu_title' => 'Bookings',
+			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000002',
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_view_future_bookings",
+			'count_class'   => 'ok',
+		),
+		'cb2-calendar' => array(
+			'page_title'    => 'Calendar',
+			'function'      => 'cb2_calendar',
 		),
 	);
 
 	$advanced_interface = array(
-		'cb2-periods' => (object) array(
-			'parent_slug'   => '',
+		'cb2-admin' => array(
+			'page_title'    => 'Admin',
+			'function'      => 'cb2_admin_page',
+		),
+		'cb2-periods' => array(
 			'page_title'    => 'Periods',
-			'menu_title'    => 'Periods',
-			'capability'    => NULL,
-			'function'      => NULL,
 			'wp_query_args' => 'post_type=period',
-			'actions'       => NULL,
-			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_periods",
 		),
 
-		'cb2-period-globals' => (object) array(
-			'parent_slug'   => '',
+		'cb2-period-globals' => array(
 			'indent'        => 1,
-			'page_title'    => 'Period Globals',
-			'menu_title'    => 'Period Globals',
-			'capability'    => NULL,
-			'function'      => NULL,
+			'page_title'    => 'Globals',
 			'wp_query_args' => 'post_type=periodent-global',
-			'actions'       => NULL,
-			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups",
 		),
-		'cb2-period-locations' => (object) array(
-			'parent_slug' => '',
+		'cb2-period-locations' => array(
 			'indent'        => 1,
-			'page_title' => 'Period Locations',
-			'menu_title' => 'Period Locations',
-			'capability' => NULL,
-			'function'   => NULL,
+			'page_title' => 'Locations',
 			'wp_query_args' => 'post_type=periodent-location',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups",
 		),
-		'cb2-period-timeframes' => (object) array(
-			'parent_slug' => '',
+		'cb2-period-timeframes' => array(
 			'indent'        => 1,
-			'page_title' => 'Period Timeframes',
-			'menu_title' => 'Period Timeframes',
-			'capability' => NULL,
-			'function'   => NULL,
+			'page_title' => 'Timeframes',
 			'wp_query_args' => 'post_type=periodent-timeframe',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups",
 		),
-		'cb2-period-users' => (object) array(
-			'parent_slug' => '',
+		'cb2-period-users' => array(
 			'indent'        => 1,
-			'page_title' => 'Period Users',
-			'menu_title' => 'Period Users',
-			'capability' => NULL,
-			'function'   => NULL,
+			'page_title' => 'Users',
 			'wp_query_args' => 'post_type=periodent-user',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups",
 		),
 
-		'cb2-period-groups' => (object) array(
-			'parent_slug' => '',
+		'cb2-period-groups' => array(
 			'page_title' => 'Period Groups',
-			'menu_title' => 'Period Groups',
-			'capability' => NULL,
-			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodgroup',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_period_groups",
 		),
-		'cb2-periodstatustypes' => (object) array(
-			'parent_slug' => '',
+		'cb2-periodstatustypes' => array(
 			'page_title' => 'Period Status Types',
-			'menu_title' => 'Period Status Types',
-			'capability' => NULL,
-			'function'   => NULL,
 			'wp_query_args' => 'post_type=periodstatustype',
-			'actions'    => NULL,
-			'post_new_page' => NULL,
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_period_status_types",
+		),
+		'cb2-reflection' => array(
+			'page_title'    => 'Reflection',
+			'function'      => 'cb2_reflection',
+		),
+
+		// post-new.php (setup) => edit-form-advanced.php (form)
+		// The following line directly accesses the plugin post-new.php
+		// However, post-new.php is loaded directly WITHOUT calling the hook function
+		// so we cannot set titles and things
+		// $wp_admin_dir = 'commons-booking-2/wp-admin';
+		// add_submenu_page( CB2_MENU_SLUG, 'Add New', NULL, $capability_default, '/commons-booking-2/admin/post-new.php' );
+		// Sending through ?post_type seems to prevent the submenu_page from working
+		// This hook, in combination with the capability in the add_submenu_page() call
+		// allows the page to load
+		'cb-post-new' => array(
+			'page_title'    => 'Add New',
+			'function'      => 'cb2_settings_post_new',
+		),
+		'cb-post-edit' => array(
+			'page_title'    => 'Edit Post',
+			'function'      => 'cb2_settings_post_edit',
 		),
 	);
 
 	// Admin advanced markup
 	$first = 'cb2-first';
 	foreach ( $advanced_interface as &$menu_item ) {
-		$menu_item->first      = $first;
-		$menu_item->advanced   = TRUE;
+		$menu_item['first']      = $first;
+		$menu_item['advanced']   = TRUE;
 		$first = '';
 	}
 
@@ -205,16 +191,18 @@ function cb2_admin_pages() {
 
 	// Menu adornments
 	foreach ( $menu_interface as &$menu_item ) {
-		if ( property_exists( $menu_item, 'count' ) ) {
-			$count = $wpdb->get_var( $menu_item->count );
-			$menu_item->menu_title .= " ($count)";
+		if ( ! isset( $menu_item['menu_title'] ) ) $menu_item['menu_title'] = $menu_item['page_title'];
+		if ( isset( $menu_item['count'] ) ) {
+			$count       = $wpdb->get_var( $menu_item['count'] );
+			$count_class = ( isset( $menu_item['count_class'] ) ? "cb2-usage-count-$menu_item[count_class]" : 'cb2-usage-count-info' );
+			if ( $count ) $menu_item['menu_title'] .= " <span class='$count_class'>$count</span>";
 		}
-		if ( property_exists( $menu_item, 'indent' ) )
-			$menu_item->menu_title = str_repeat( '&nbsp;&nbsp;', $menu_item->indent ) . $menu_item->menu_title;
-		if ( property_exists( $menu_item, 'advanced' ) )
-			$menu_item->menu_title = "<span class='cb2-advanced-menu-item $menu_item->first'>$menu_item->menu_title</span>";
-		if ( property_exists( $menu_item, 'description' ) )
-			$menu_item->menu_title = "<span title='$menu_item->description'>$menu_item->menu_title</span>";
+		if ( isset( $menu_item['indent'] ) )
+			$menu_item['menu_title'] = str_repeat( '&nbsp;&nbsp;', $menu_item['indent'] ) . '•&nbsp;' . $menu_item['menu_title'];
+		if ( isset( $menu_item['advanced'] ) )
+			$menu_item['menu_title'] = "<span class='cb2-advanced-menu-item $menu_item[first]'>$menu_item[menu_title]</span>";
+		if ( isset( $menu_item['description'] ) )
+			$menu_item['menu_title'] = "<span title='$menu_item[description]'>$menu_item[menu_title]</span>";
 	}
 
 	return $menu_interface;
@@ -252,25 +240,32 @@ add_action( 'cmb2_admin_init', 'cb2_metaboxes', 1 );
 function cb2_post_row_actions( $actions, $post ) {
 	global $wpdb;
 
-	// Move all edit actions to our custom screens
-	if ( isset( $actions['edit'] ) )
-		$actions['edit'] = "<a href='admin.php?page=cb-post-edit&post=$post->ID&post_type=$post->post_type&action=edit' aria-label='Edit &#8220;$post->post_title&#8221;'>Edit</a>";
+	$post_type  = $post->post_type;
+	$post_title = htmlspecialchars( $post->post_title );
+	if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+		// Move all edit actions to our custom screens
+		if ( isset( $actions['edit'] ) )
+			$actions['edit'] = "<a href='admin.php?page=cb-post-edit&post=$post->ID&post_type=$post->post_type&action=edit' aria-label='Edit &#8220;$post_title&#8221;'>Edit</a>";
 
-	$post = CB_Query::ensure_correct_class( $post );
-	if ( $post instanceof CB_PostNavigator && method_exists( $post, 'add_actions' ) )
-		$post->add_actions( $actions, $post );
+		$post = CB_Query::ensure_correct_class( $post );
+		if ( $post instanceof CB_PostNavigator && method_exists( $post, 'add_actions' ) )
+			$post->add_actions( $actions, $post );
 
-	if ( basename( $_SERVER['PHP_SELF'] ) == 'admin.php' && isset( $_GET[ 'page' ] ) ) {
-		$page          = $_GET[ 'page' ];
-		$action_string = ( isset( cb2_admin_pages()[$page] ) ? cb2_admin_pages()[$page]->actions : NULL );
-		if ( $action_string ) {
-			$new_actions = explode( ',', $action_string );
-			foreach ( $new_actions as $new_action ) {
-				foreach ( $post as $name => $value ) {
-					if ( strstr( $new_action, "%$name%" ) !== FALSE )
-						$new_action = str_replace( "%$name%", $value, $new_action );
+		if ( basename( $_SERVER['PHP_SELF'] ) == 'admin.php' && isset( $_GET[ 'page' ] ) ) {
+			$page        = $_GET[ 'page' ];
+			$admin_pages = cb2_admin_pages();
+			if ( isset( $admin_pages[$page] ) && isset( $admin_pages[$page]['actions'] ) ) {
+				$action_string = $admin_pages[$page]['actions'];
+				if ( $action_string ) {
+					$new_actions = explode( ',', $action_string );
+					foreach ( $new_actions as $new_action ) {
+						foreach ( $post as $name => $value ) {
+							if ( strstr( $new_action, "%$name%" ) !== FALSE )
+								$new_action = str_replace( "%$name%", $value, $new_action );
+						}
+						array_push( $actions, $new_action );
+					}
 				}
-				array_push( $actions, $new_action );
 			}
 		}
 	}
@@ -310,17 +305,20 @@ add_action('admin_menu', 'cb2_notification_bubble_in_admin_menu', 110 );
 
 function cb2_custom_columns( $column ) {
 	global $post;
-	$post = CB_Query::ensure_correct_class( $post );
-	if ( $post && method_exists( $post, 'custom_columns' ) ) print( $post->custom_columns( $column ) );
+	if ( $post ) {
+		$cb2_post = CB_Query::ensure_correct_class( $post );
+		if ( $cb2_post && method_exists( $cb2_post, 'custom_columns' ) )
+			print( $cb2_post->custom_columns( $column ) );
+	}
 }
 // Action added by WP_Query_integration
 
 function cb2_manage_columns( $columns ) {
 	global $post;
 	if ( $post ) {
-		$post = CB_Query::ensure_correct_class( $post );
-		if ( method_exists( $post, 'manage_columns' ) ) {
-			$columns = $post->manage_columns( $columns );
+		$cb2_post = CB_Query::ensure_correct_class( $post );
+		if ( method_exists( $cb2_post, 'manage_columns' ) ) {
+			$columns = $cb2_post->manage_columns( $columns );
 		}
 	}
 	return $columns;
@@ -333,34 +331,24 @@ function cb2_admin_init_menus() {
 	$capability_default   = 'manage_options';
 	$bookings_count       = $wpdb->get_var( "select count(*) from {$wpdb->prefix}cb2_view_future_bookings" );
 	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
-  add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_options_page', 'dashicons-video-alt' );
+	add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_options_page', 'dashicons-video-alt' );
 
 	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
-		$capability = $details->capability;
-		if ( ! $capability ) $capability = $capability_default;
-		$parent_slug = $details->parent_slug;
-		if ( ! $parent_slug ) $parent_slug = CB2_MENU_SLUG;
+		$parent_slug  = ( isset( $details['parent_slug'] )  ? $details['parent_slug']  : CB2_MENU_SLUG );
+		$page_title   = ( isset( $details['page_title'] )   ? preg_replace( '/\%.+\%/', '', $details['page_title'] ) : '' );
+		$menu_title   = ( isset( $details['menu_title'] )   ? $details['menu_title']   : $page_title );
+		$capability   = ( isset( $details['capability'] )   ? $details['capability']   : $capability_default );
+		$function     = ( isset( $details['function'] )     ? $details['function']     : 'cb2_settings_list_page' );
+		$menu_visible = ( isset( $details['menu_visible'] ) ? $details['menu_visible'] : ! $details['advanced'] );
 
-		$title = preg_replace( '/\%.+\%/', '', $details->page_title );
-		add_submenu_page( $parent_slug, $title, $details->menu_title, $capability, $menu_slug, 'cb2_settings_list_page' );
+		if ( $menu_visible ) {
+			add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function );
+		} else {
+			$priority = ( isset( $details['priority'] ) ? $details['priority'] : 10 );
+			add_submenu_page( $parent_slug, $page_title, NULL, $capability_default, $menu_slug );
+			add_filter( "admin_page_$menu_slug", $function, 0, $priority );
+		}
 	}
-	add_submenu_page( CB2_MENU_SLUG, 'Admin',    "<span class='cb2-advanced-menu-item'>Admin</span>",    $capability_default, 'cb2-admin',    'cb2_admin_page' );
-	add_submenu_page( CB2_MENU_SLUG, 'Calendar', "<span class='cb2-advanced-menu-item'>Calendar</span>", $capability_default, 'cb2-calendar', 'cb2_calendar' );
-	add_submenu_page( CB2_MENU_SLUG, 'Reflection', "<span class='cb2-advanced-menu-item'>Reflection</span>", $capability_default, 'cb2-reflection', 'cb2_reflection' );
-
-	// post-new.php (setup) => edit-form-advanced.php (form)
-	// The following line directly accesses the plugin post-new.php
-	// However, post-new.php is loaded directly WITHOUT calling the hook function
-	// so we cannot set titles and things
-	// $wp_admin_dir = 'commons-booking-2/wp-admin';
-	// add_submenu_page( CB2_MENU_SLUG, 'Add New', NULL, $capability_default, '/commons-booking-2/admin/post-new.php' );
-	// Sending through ?post_type seems to prevent the submenu_page from working
-	// This hook, in combination with the capability in the add_submenu_page() call
-	// allows the page to load
-	add_submenu_page( CB2_MENU_SLUG, 'Add New', NULL, $capability_default, 'cb-post-new' );
-	add_filter( 'admin_page_cb-post-new', 'cb2_settings_post_new', 0, 10 );
-	add_submenu_page( CB2_MENU_SLUG, 'Edit Post', NULL, $capability_default, 'cb-post-edit' );
-	add_filter( 'admin_page_cb-post-edit', 'cb2_settings_post_edit', 0, 10 );
 }
 add_action( 'admin_menu', 'cb2_admin_init_menus' );
 
@@ -373,26 +361,26 @@ function cb2_options_page() {
 	print( '<ul>' );
 	$capability_default = 'manage_options';
 
-	foreach ( cb2_admin_pages() as $menu_slug => $menu_item ) {
-		$class = '';
-		$capability = $menu_item->capability;
-		if ( ! $capability ) $capability = $capability_default;
-		$parent_slug = $menu_item->parent_slug;
-		if ( ! $parent_slug ) $parent_slug = CB2_MENU_SLUG;
+	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
+		$parent_slug  = ( isset( $details['parent_slug'] )  ? $details['parent_slug']  : CB2_MENU_SLUG );
+		$page_title   = ( isset( $details['page_title'] )   ? preg_replace( '/\%.+\%/', '', $details['page_title'] ) : '' );
+		$menu_title   = ( isset( $details['menu_title'] )   ? $details['menu_title']   : $page_title );
+		$capability   = ( isset( $details['capability'] )   ? $details['capability']   : $capability_default );
+		$function     = ( isset( $details['function'] )     ? $details['function']     : 'cb2_settings_list_page' );
+		$menu_visible = ( isset( $details['menu_visible'] ) ? $details['menu_visible'] : ! $details['advanced'] );
+		$description  = ( isset( $details['description'] )  ? $details['description']  : FALSE );
 
-		$title = preg_replace( '/\%.+\%/', '', $menu_item->page_title );
-		$class .= " $menu_item->first";
-		if ( $menu_item->advanced ) $class .= ' cb2-advanced-menu-item';
+		$class = '';
+		if ( isset( $details['first']) )     $class .= " $details[first]";
+		if ( isset( $details['advanced'] ) ) $class .= ' cb2-advanced-menu-item';
 		if ( current_user_can( $capability ) ) {
-			print( "<li><a class='$class' href='admin.php?page=$menu_slug'>$title</a>" );
-			if ( property_exists( $menu_item, 'description' ) )
-				print( "<p class='cb2-description'>$menu_item->description</p>" );
-			print( "</li>" );
-		} else
-		  print( "<li class='$class'>$title</li>" );
+			print( "<li><a class='$class' href='admin.php?page=$menu_slug'>$menu_title</a>" );
+		} else {
+		  print( "<li class='$class'>$menu_title" );
+		}
+		if ( $description ) print( "<p class='cb2-description'>$description</p>" );
+		print( "</li>" );
 	}
-	if ( current_user_can( $capability_default ) )
-		print( "<li><a class='cb2-advanced-menu-item' href='admin.php?page=cb2-admin'>Admin</a></li>" );
 	print( '</ul>' );
 }
 
@@ -506,10 +494,10 @@ function cb2_settings_list_page() {
 				$page_value = preg_replace( '/%[^%]+%/', '', $page_value );
 			}
 
-			$title = $details_page->page_title;
+			$title = $details_page['page_title'];
 
 			// Append input query string to post_new
-			$post_new_file_custom = ( $details_page->post_new_page ? $details_page->post_new_page : 'admin.php?page=cb-post-new' );
+			$post_new_file_custom = ( $details_page['post_new_page'] ? $details_page['post_new_page'] : 'admin.php?page=cb-post-new' );
 			if ( count( $_GET ) ) {
 				$existing_query_string = array();
 				if ( strchr( $post_new_file_custom, '?' ) ) {
@@ -527,8 +515,8 @@ function cb2_settings_list_page() {
 			// Global params used in included file
 			// WP_Query arguments
 			// write them to the global query_string
-			$wp_query_args = $details_page->wp_query_args;
-			$add_new_query = $details_page->wp_query_args;
+			$wp_query_args = $details_page['wp_query_args'];
+			$add_new_query = $details_page['wp_query_args'];
 			foreach ( explode( '&', $wp_query_args ) as $arg_detail_string ) {
 				$arg_details   = explode( '=', $arg_detail_string, 2 );
 				$name          = $arg_details[0];
@@ -551,6 +539,7 @@ function cb2_settings_list_page() {
 }
 
 function cb2_settings_post_new() {
+	global $post_save_processing;
 	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 	$title = 'Add New';
 	if ( isset( $_GET[ 'add_new_label' ] ) ) $title = $_GET[ 'add_new_label' ];
@@ -575,8 +564,25 @@ function cb2_settings_post_new() {
 		$title = preg_replace( '/%[^%]+%/', '', $title );
 	}
 
+	// edit-form-advanced.php altered to accept $post_submit_custom
+	// post_type will be passed through
+	$remove_parameters  = array( 'post_ID' );
+	$add_parameters     = array( 'auto_draft_publish_transition' => 1 );
+	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb-post-edit' );
+	$post_submit_custom = CB_Query::pass_through_query_string( $post_submit_custom, $add_parameters, $remove_parameters );
+
 	// Global params used in included file
-	$typenow = $_GET[ 'post_type' ];
+	$post_type = $_GET[ 'post_type' ];
+	$typenow   = $post_type;
+
+	// DO NOT redirect the $wpdb->prefix
+	// because post-new.php will
+	//   get_default_post_to_edit( $post_type, CREATE_IN_DB );
+	// and this will need to write to wp_posts
+	// an auto-draft
+	$post_save_processing->auto_draft_publish_transition = FALSE;
+	if ( CB2_DEBUG_SAVE )
+		print( '<div class="cb2-WP_DEBUG-small">post_save_processing->auto_draft_publish_transition ' . ( $post_save_processing->auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
 
 	// This is a COPY of the normal wp-admin file
 	$screen = WP_Screen::get( $typenow );
@@ -585,6 +591,8 @@ function cb2_settings_post_new() {
 }
 
 function cb2_settings_post_edit() {
+	global $action, $post_save_processing; // post.php will wp_reset_vars(action)
+
 	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 	$title = 'Edit Post';
 	if ( isset( $_GET[ 'add_new_label' ] ) ) $title = $_GET[ 'add_new_label' ];
@@ -610,26 +618,34 @@ function cb2_settings_post_edit() {
 	}
 
 	// Append input query string to post_new
+	// post.php altered to accept $post_new_file_custom
 	$post_new_file_custom = ( isset( $_GET[ 'post_new_file_custom' ] ) ? $_GET[ 'post_new_file_custom' ] : 'admin.php?page=cb-post-new' );
-	if ( count( $_GET ) ) {
-		$existing_query_string = array();
-		if ( strchr( $post_new_file_custom, '?' ) ) {
-			$existing_query_string_pairs = explode( '&', explode( '?', $post_new_file_custom, 2 )[1] );
-			foreach ( $existing_query_string_pairs as $value ) $existing_query_string[ CB_Query::substring_before( $value, '=' ) ] = 1;
-		}
-		foreach ( $_GET as $name => $value ) {
-			if ( ! isset( $existing_query_string[ $name ] ) ) {
-				$post_new_file_custom .= ( strchr( $post_new_file_custom, '?' ) ? '&' : '?' );
-				$post_new_file_custom .= urlencode( $name ) . '=' . urlencode( $value );
-			}
-		}
-	}
+	$post_new_file_custom = CB_Query::pass_through_query_string( $post_new_file_custom );
+
+	// edit-form-advanced.php altered to accept $post_submit_custom
+	// post_type will be passed through
+	$remove_parameters  = array( 'post', 'action', 'auto_draft_publish_transition' );
+	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb-post-edit' );
+	$post_submit_custom = CB_Query::pass_through_query_string( $post_submit_custom, array(), $remove_parameters );
 
 	// Global params used in included file
-	$typenow = $_GET[ 'post_type' ];
-	$action  = 'edit';
+	$post_type = $_GET[ 'post_type' ];
+	$typenow   = $post_type;
 
-	// This is a COPY of the normal wp-admin file
+	// conditionally redirect the get_post() in post.php
+	// redirect the postmeta may cause the _edit_lock to fail
+	// TODO: move to get_post_type() in post.php? possibly with a conditional $redirect = TRUE parameter
+	// TODO: temporarily redirect and unredirect in post.php
+	if ( ! $post_save_processing->auto_draft_publish_transition ) {
+		// Full normal redirected main get_post()
+		CB_Query::redirect_wpdb_for_post_type( $post_type, FALSE );
+		if ( CB2_DEBUG_SAVE )
+			print( "<div class='cb2-WP_DEBUG-small'>permanent page level wp_posts redirect for $post_type to handle get_post()</div>" );
+	}
+
+	// This is a COPY of the normal wp-admin file will:
+	//   $post_id = edit_post() from the $_POST
+	// creating meta_data as well
 	$screen = WP_Screen::get( $typenow );
 	set_current_screen( $screen );
 	require_once( dirname( __FILE__ ) . '/post.php' );

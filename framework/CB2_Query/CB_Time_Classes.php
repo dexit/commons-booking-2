@@ -6,10 +6,12 @@ class CB_TimePostNavigator extends CB_PostNavigator implements JsonSerializable 
   public static $posts_table    = FALSE;
   public static $postmeta_table = FALSE;
   public static $database_table = FALSE;
+	public $first = FALSE;
 
   function classes() {
     $classes = '';
-    if ( $this->is_current ) $classes .= 'cb2-current';
+    if ( $this->is_current ) $classes .= ' cb2-current';
+    if ( $this->first )      $classes .= ' cb2-first';
     return $classes;
 	}
 
@@ -98,6 +100,7 @@ class CB_Month extends CB_TimePostNavigator {
     $this->monthname     = $day->monthname;
     $this->first_day_num = 31;
     $this->add_day( $day );
+		$this->first        = ($this->monthinyear == 1);
 
     // WP_Post values
     $this->post_title    = $this->monthname;
@@ -158,6 +161,7 @@ class CB_Week extends CB_TimePostNavigator {
 
     $this->weekinyear = (int) $day->weekinyear;
     $this->first_day_num = 7;
+    $this->first        = ($this->weekinyear == 1);
 
     $this->add_day( $day );
 
@@ -215,7 +219,7 @@ class CB_Day extends CB_TimePostNavigator {
   function post_type() {return self::$static_post_type;}
   public function __toString() {return $this->post_title;}
 
-  protected function __construct( $date, $title_format = 'D, M-d' ) {
+  protected function __construct( $date, $title_format = 'M d' ) {
     $this->perioditems  = array();
 
     $this->date         = $date;
@@ -229,6 +233,7 @@ class CB_Day extends CB_TimePostNavigator {
     $this->today        = ( $date->format( CB_Query::$date_format ) == (new DateTime())->format( CB_Query::$date_format ) );
     $this->is_current   = $this->today;
     $this->title        = $date->format( $title_format );
+    $this->first        = ($this->dayinmonth == 1);
 
     // format( 'w' ) is Sunday start day based:
     // http://php.net/manual/en/function.date.php
@@ -245,7 +250,7 @@ class CB_Day extends CB_TimePostNavigator {
     parent::__construct( $this->perioditems );
   }
 
-  static function &factory( $date, $title_format = 'D, M-d' ) {
+  static function &factory( $date, $title_format = 'M d' ) {
     // Design Patterns: Factory Singleton with Multiton
     $key = $date->format( 'z' );
     if ( isset( self::$all[$key] ) ) $object = self::$all[$key];

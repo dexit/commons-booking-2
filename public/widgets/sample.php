@@ -3,7 +3,7 @@
 class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 	/**
 	 * Initialize the widget
-	 * 
+	 *
 	 * @return void
 	 */
 	function __construct() {
@@ -17,17 +17,17 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 		$args[ 'fields' ] = array(
 			// Title field
 			array(
-				// Field name/label									
+				// Field name/label
 				'name' => __( 'Title', CB2_TEXTDOMAIN ),
-				// Field description					
+				// Field description
 				'desc' => __( 'Enter the widget title.', CB2_TEXTDOMAIN ),
-				// Field id		
+				// Field id
 				'id' => 'title',
 				// Field type ( text, checkbox, textarea, select, select-group, taxonomy, taxonomyterm, pages, hidden )
 				'type' => 'text',
-				// Class, rows, cols								
+				// Class, rows, cols
 				'class' => 'widefat',
-				// Default value						
+				// Default value
 				'std' => __( 'Recent Posts', CB2_TEXTDOMAIN ),
 				/**
 				  Set the field validation type/s
@@ -60,52 +60,52 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 			),
 			// Taxonomy Field
 			array(
-				// Field name/label									
+				// Field name/label
 				'name' => __( 'Taxonomy', CB2_TEXTDOMAIN ),
-				// Field description					
+				// Field description
 				'desc' => __( 'Set the taxonomy.', CB2_TEXTDOMAIN ),
-				// Field id		
+				// Field id
 				'id' => 'taxonomy',
 				'type' => 'taxonomy',
-				// Class, rows, cols								
+				// Class, rows, cols
 				'class' => 'widefat',
 			),
 			// Taxonomy Field
 			array(
-				// Field name/label									
+				// Field name/label
 				'name' => __( 'Taxonomy terms', CB2_TEXTDOMAIN ),
-				// Field description					
+				// Field description
 				'desc' => __( 'Set the taxonomy terms.', CB2_TEXTDOMAIN ),
-				// Field id		
+				// Field id
 				'id' => 'taxonomyterm',
 				'type' => 'taxonomyterm',
 				'taxonomy' => 'category',
-				// Class, rows, cols								
+				// Class, rows, cols
 				'class' => 'widefat',
 			),
 			// Pages Field
 			array(
-				// Field name/label									
+				// Field name/label
 				'name' => __( 'Pages', CB2_TEXTDOMAIN ),
-				// Field description					
+				// Field description
 				'desc' => __( 'Set the page.', CB2_TEXTDOMAIN ),
-				// Field id		
+				// Field id
 				'id' => 'pages',
 				'type' => 'pages',
-				// Class, rows, cols								
+				// Class, rows, cols
 				'class' => 'widefat',
 			),
 			// Post type Field
 			array(
-				// Field name/label									
+				// Field name/label
 				'name' => __( 'Post type', CB2_TEXTDOMAIN ),
-				// Field description					
+				// Field description
 				'desc' => __( 'Set the post type.', CB2_TEXTDOMAIN ),
-				// Field id		
+				// Field id
 				'id' => 'posttype',
 				'type' => 'posttype',
 				'posttype' => 'post',
-				// Class, rows, cols								
+				// Class, rows, cols
 				'class' => 'widefat',
 			),
 			// Amount Field
@@ -114,12 +114,12 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 				'desc' => __( 'Select how many posts to show.', CB2_TEXTDOMAIN ),
 				'id' => 'amount',
 				'type' => 'select',
-				// Selectbox fields			
+				// Selectbox fields
 				'fields' => array(
 					array(
 						// Option name
 						'name' => __( '1 Post', CB2_TEXTDOMAIN ),
-						// Option value			
+						// Option value
 						'value' => '1'
 					),
 					array(
@@ -141,7 +141,7 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 				'desc' => __( 'Wraps posts with the <li> tag.', CB2_TEXTDOMAIN ),
 				'id' => 'list',
 				'type' => 'checkbox',
-				// Checked by default: 
+				// Checked by default:
 				'std' => 1, // 0 or 1
 				'filter' => 'strip_tags|esc_attr',
 			),
@@ -151,11 +151,11 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 		$this->create_widget( $args );
 	}
 	/**
-	 * Custom validation for this widget 
-	 * 
+	 * Custom validation for this widget
+	 *
 	 * @param string $value The text.
-	 * 
-	 * @return boolean 
+	 *
+	 * @return boolean
 	 */
 	function my_custom_validation( $value ) {
 		if ( strlen( $value ) > 1 ) {
@@ -165,10 +165,10 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 	}
 	/**
 	 * Output function
-	 * 
+	 *
 	 * @param array $args     The argument shared to the output from WordPress.
 	 * @param array $instance The settings saved.
-	 * 
+	 *
 	 * @return void
 	 */
 	function widget( $args, $instance ) {
@@ -177,7 +177,7 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 		$out .= $args[ 'before_title' ];
 		$out .= $instance[ 'title' ];
 		$out .= $args[ 'after_title' ];
-		// Here you would get the most recent posts based on the selected amount: $instance['amount'] 
+		// Here you would get the most recent posts based on the selected amount: $instance['amount']
 		// Then return those posts on the $out variable ready for the output
 		$out .= '<p>Hey There! </p>';
 		$out .= $args[ 'after_widget' ];
@@ -188,7 +188,7 @@ class Cb_My_Recent_Posts_Widget extends WPH_Widget {
 if ( !function_exists( 'cb_my_register_widget' ) ) {
 	/**
 	 * Initialize the widget
-	 * 
+	 *
 	 * @return void
 	 */
 	function cb_my_register_widget() {

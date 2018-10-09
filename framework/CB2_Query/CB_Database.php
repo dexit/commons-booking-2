@@ -109,6 +109,7 @@ class CB_Database {
 		// https://developer.wordpress.org/reference/classes/wpdb/insert/
 		// A format is one of '%d', '%f', '%s' (integer, float, string).
 		// If omitted, all values in $data will be treated as strings...
+		global $post_save_processing;
 		$new_data   = array();
 		$columns    = self::columns( $table, TRUE );
 		if ( CB2_DEBUG_SAVE ) krumo( $columns );
@@ -158,8 +159,7 @@ class CB_Database {
 					&& $column_definition->Extra != 'auto_increment'
 				);
 				if ( $field_required && ! $update ) {
-					global $extra_processing_properties;
-					krumo( $data, $extra_processing_properties );
+					if ( CB2_DEBUG_SAVE ) krumo( $data, $post_save_processing );
 					throw new Exception( "[$table::$column_name] is required" );
 				}
 			} else {
@@ -187,13 +187,13 @@ class CB_Database {
 				// 6 will successfully set bits 2 (2) and 3 (4)
 				// b'01010' bit syntax is tricky because WordPress does not provide a format for it
 				if ( count( $data_value_array ) > 1 )
-					throw new Exception( 'Multiple number array detected: bit arrays are set with a single unsigned' );
+					throw new Exception( "Multiple number array detected [$column_name]: bit arrays are set with a single unsigned" );
 				foreach ( $data_value_array as &$value ) {
 					if ( is_string( $value ) && $value == 'on' ) $value = 1;
 					if ( is_bool( $value ) ) $value = (int) $value;
 					if ( ! is_numeric( $value ) ) {
 						krumo( $value );
-						throw new Exception( 'Non-numeric value for bit field' );
+						throw new Exception( "Non-numeric value for bit field [$column_name]" );
 					}
 				}
 				$data_value = CB_Query::ensure_int( $column_name, $data_value_array[0] );
@@ -208,10 +208,14 @@ class CB_Database {
 							// PHP only supports __toString() magic method
 							$value = $value->__toIntFor( $column_data_type, $column_name );
 						} else throw new Exception( '[' . get_class( $value ) . '] must implement __toInt()' );
-						if ( is_numeric( $value ) ) $value = (int) $value;
 					}
-					if ( ! is_numeric( $value ) )
-						throw new Exception( 'Non-numeric value for int field' );
+					if      ( is_numeric( $value ) ) $value = (int) $value;
+					else if ( is_bool( $value ) )    $value = (int) $value;
+
+					if ( ! is_numeric( $value ) ) {
+						krumo( $value );
+						throw new Exception( "Non-numeric value for int field [$column_name]" );
+					}
 				}
 				// In the normal case of just 1 value in the array
 				// we will simply sum just that value
@@ -222,7 +226,7 @@ class CB_Database {
 			case 'timestamp';
 				// TODO: Multiple value dates ignored at the moment
 				if ( count( $data_value_array ) > 1 )
-					throw new Exception( 'Multiple datetime input is not understood currently' );
+					throw new Exception( "Multiple datetime input is not understood currently for [$column_name]" );
 				foreach ( $data_value_array as &$value ) {
 					if ( is_object( $value ) && method_exists( $value, '__toDateTimeFor' ) ) {
 						// PHP only supports __toString() magic method
@@ -232,7 +236,7 @@ class CB_Database {
 						$value = $value->format( CB_Database::$database_datetime_format );
 					}
 					if ( new DateTime( $value ) === FALSE )
-						throw new Exception( "Failed to parse [$value] for datetime field" );
+						throw new Exception( "Failed to parse [$value] for datetime field [$column_name]" );
 				}
 				$data_value = $data_value_array[0];
 				break;
@@ -252,7 +256,10 @@ class CB_Database {
 					}
 					if ( is_numeric( $value ) ) $value = (string) $value;
 
-					if ( ! is_string( $value ) ) throw new Exception( 'Non-string value for string field' );
+					if ( ! is_string( $value ) ) {
+						krumo( $value );
+						throw new Exception( "Non-string value for string field [$column_name]" );
+					}
 				}
 				$data_value = implode( ',', $data_value_array );
 		}
@@ -290,7 +297,7 @@ class CB_Database {
 		return $posts_table;
 	}
 
-  static function postmeta_table( $Class, &$meta_type = NULL, &$meta_table_stub = NULL, $ID = NULL ) {
+  static function postmeta_table( $Class, &$meta_type = NULL, &$meta_table_stub = NULL ) {
 		$postmeta_table = FALSE;
 
 		if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
@@ -298,15 +305,7 @@ class CB_Database {
 				$meta_type       = CB_Query::substring_before( $Class::$static_post_type );
 				$meta_table_stub = "{$meta_type}meta";
 
-				if ( $ID && CB_Query::is_wp_post_ID( $ID ) ) {
-					// NOTE: if the sent $ID is a wp_posts id
-					// Then the postmeta_table will be set to wp_postmeta
-					// This happens when the post is still in the normal WP tables
-					// not been moved yet to the native structures and views
-					$meta_type       = 'post';
-					$meta_table_stub = 'postmeta';
-					$postmeta_table  = 'postmeta';
-				} else if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) ) {
+				if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) ) {
 					$postmeta_table  = $Class::$postmeta_table;
 				} else {
 					$postmeta_table  = "cb2_view_{$meta_table_stub}";

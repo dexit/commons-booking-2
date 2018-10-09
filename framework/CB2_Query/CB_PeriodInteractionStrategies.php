@@ -27,10 +27,71 @@ class CB_PeriodInteractionStrategy {
 	 *     )
 	 *   );
 	 */
-	function __construct( $all_periods ) {
-		$this->all_periods = $all_periods;
+	private $wp_query;
+
+	function __construct( $startdate = NULL, $enddate = NULL, $view_mode = NULL, $args = NULL ) {
+		// Defaults
+		if ( is_null( $startdate ) ) $startdate   = ( isset( $_GET['startdate'] ) ? new DateTime( $_GET['startdate'] ) : new DateTime() );
+		if ( is_null( $enddate ) )   $enddate     = ( isset( $_GET['enddate'] )   ? new DateTime( $_GET['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
+		if ( is_null( $view_mode ) ) $view_mode   = ( isset( $_GET['view_mode'] ) ? $_GET['view_mode'] : CB_Week::$static_post_type );
+		if ( is_null( $args ) )      $args        = array();
+
+		// Properties
+		$this->startdate = $startdate;
+		$this->enddate   = $enddate;
+		$this->view_mode = $view_mode;
+
+		// Construct args
+		// PeriodItem-automatic (CB_PeriodItem_Automatic)
+		// one is generated for each day between the dates
+		// very useful for iterating through to show a calendar
+		// They have a post_status = auto-draft
+		if ( ! isset( $args['post_status'] ) ) $args['post_status'] = array(
+			'publish',
+			'auto-draft'
+		);
+		if ( ! isset( $args['post_type'] ) )      $args['post_type'] = CB_PeriodItem::$all_post_types;
+		if ( ! isset( $args['posts_per_page'] ) ) $args['posts_per_page'] = -1;
+		if ( ! isset( $args['order'] ) )          $args['order'] = 'ASC'; // defaults to post_date
+		if ( ! isset( $args['date_query'] ) )     $args['date_query'] = array();
+		if ( ! isset( $args['date_query']['after'] ) )  $args['date_query']['after']  = $this->startdate->format( 'c' );
+		if ( ! isset( $args['date_query']['before'] ) ) $args['date_query']['before'] = $this->enddate->format( 'c' );
+		// This sets which CB_(ObjectType) is the resultant primary posts array
+		// e.g. CB_Weeks generated from the CB_PeriodItem records
+		if ( ! isset( $args['date_query']['compare'] ) ) $args['date_query']['compare'] = $this->view_mode;
+
+		$this->args = $args;
+		$this->query();
 	}
 
+	// -------------------------------------------- query functions
+	function query() {
+		$this->wp_query = new WP_Query( $this->args );
+		$this->wp_query->display_strategy = $this;
+		$this->query   = $this->wp_query->query;
+		$this->request = $this->wp_query->request;
+
+		// Process here before any loop_start re-organiastion
+		//CB_Query::ensure_correct_classes( $this->wp_query->posts );
+		$this->wp_query->post = ( count( $this->wp_query->posts ) ? $this->wp_query->posts[0] : NULL );
+		foreach ( $this->wp_query->posts as &$post ) {
+			if ( ! property_exists( $post, '_cb2_processed' ) ) {
+				//CB_Query::ensure_correct_class( $post );
+				//$post->priority = $this->process_post( $post );
+				//$post->_cb2_processed = TRUE;
+			}
+		}
+	}
+
+	function have_posts() {
+		return $this->wp_query->have_posts();
+	}
+
+	function the_post()   {
+		return $this->wp_query->the_post();
+	}
+
+	// -------------------------------------------- period analysis functions
 	function overlaps_time( $perioditem1, $perioditem2 ) {
 		return ( $perioditem1->datetime_period_item_start >= $perioditem2->datetime_period_item_start
 			    && $perioditem1->datetime_period_item_start <= $perioditem2->datetime_period_item_end )
@@ -62,23 +123,15 @@ class CB_PeriodInteractionStrategy {
 			&&   $this->overlaps_item(    $perioditem1, $perioditem2 );
   }
 
-  function process_all() {
-		// Iterate over all the periods
-		// re-arranging their priorities
-		// or removing them
-		foreach ( $this->all_periods as $perioditem )
-			$this->process_period( $perioditem );
+  function process_post( $post ) {
+		return $this->dynamic_priority( $post );
   }
 
-  function process_period( CB_PeriodItem &$perioditem ) {
-		$perioditem->priority = $this->dynamic_priority( $perioditem );
-  }
-
-  function dynamic_priority( $perioditem ) {
+  function dynamic_priority( $post ) {
 		// Dictate the new display order
 		// only relevant for partial overlap
 		// for example a morning slot overlapping a full-day open period
-		return $perioditem->period_entity->period_status_type->priority;
+		return $post->period_entity->period_status_type->priority;
   }
 }
 
@@ -105,15 +158,24 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 	 *   and the item is available for the full day
 	 * then the item availability rejects/adopts the partial period
 	 */
-	function __construct( $all_periods, CB_Item $item, $require_location_open = TRUE ) {
-		parent::__construct( $all_periods );
-		$this->item = $item;
-		$this->require_location_open = $require_location_open;
+	function __construct( $item, $startdate = NULL, $enddate = NULL, $view_mode = 'week', $args = array() ) {
+		$this->item      = $item;
+
+		if ( ! isset( $args['meta_query'] ) ) $args['meta_query'] = array();
+		if ( ! isset( $args['meta_query']['item_ID_clause'] ) ) $args['meta_query']['item_ID_clause'] = array(
+			'key'     => 'item_ID',
+			'value'   => array( $this->item->ID, 0 ),
+			'compare' => 'IN',
+		);
+
+		parent::__construct( $startdate, $enddate, $view_mode, $args );
 	}
 
-	function process_period( CB_PeriodItem &$period ) {
-		if ( $period instanceof CB_PeriodItem_User ) {
-			parent::process_period( $period );
+	function dynamic_priority( $post ) {
+		$priority = 0;
+		if ( $post instanceof CB_PeriodItem_Timeframe ) {
+			print("<div>" . $post->summary() . '</div>');
 		}
+		return $priority;
 	}
 }

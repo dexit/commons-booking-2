@@ -120,10 +120,19 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 			    && $this->datetime_period_item_end   <= $period->datetime_period_item_end );
   }
 
+  function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
+		// Redirect the edit post to the entity
+		return parent::get_the_edit_post_link( $text, $before, $after, ( $id ? $id : $this->period_entity->ID ), $class );
+  }
+
   function priority() {
 		$priority = $this->period_entity->period_status_type->priority;
 		return (int) $priority;
   }
+
+	function summary() {
+		return ucfirst( $this->post_type() ) . "($this->ID)";
+	}
 
   function add_new_overlap( $new_perioditem ) {
 		// A Linked list of overlapping periods is not logical
@@ -224,6 +233,17 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 		return $name_value;
 	}
 
+	function period_status_type_name() {
+		return $this->period_entity->period_status_type->name;
+	}
+
+	function get_the_time_period( $format = 'H:i' ) {
+		// TODO: all the_*() need to be namespaced. In CB_Query? or CB_TemplateFunctions::*()
+		$time_period = $this->datetime_period_item_start->format( $format ) . ' - ' . $this->datetime_period_item_end->format( $format );
+		if ( $this->period->fullday ) $time_period = 'all day';
+		return $time_period;
+	}
+
 
   function get_the_content( $more_link_text = null, $strip_teaser = false ) {
     // Indicators field
@@ -238,20 +258,18 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
   }
 
   function get_the_debug( $before = '', $after = '' ) {
-    $onclick = "this.firstElementChild.style = (this.firstElementChild.style.length ? '' : 'display:block;');";
-    $debug  = $before;
-    $debug .= '<div class="cb2-debug-control" onclick="' . $onclick . '">';
-    $debug .= '<table class="cb2-debug cb2-notice cb2-hidden">';
+		$debug  = $before;
+    $debug .= '<ul class="cb2-debug">';
 		foreach ( $this as $name => $value ) {
 			if ( $name ) {
 				if      ( $value instanceof DateTime ) $value = $value->format( 'c' );
-				else if ( is_array( $value ) ) $value = 'Array(' . count( $value ) . ')';
-				else if ( $value instanceof WP_Post ) $value = 'WP_Post(' . $value->post_title . ')';
-				else if ( $value instanceof WP_User ) $value = 'WP_User(' . $value->user_login . ')';
-				$debug .= "<tr><td>$name</td><td>$value</td></tr>";
+				else if ( is_array( $value ) )         $value = 'Array(' . count( $value ) . ')';
+				else if ( $value instanceof WP_Post )  $value = 'WP_Post(' . $value->post_title . ')';
+				else if ( $value instanceof WP_User )  $value = 'WP_User(' . $value->user_login . ')';
+				$debug .= "<li><b>$name</b>: $value</li>";
 			}
 		}
-    $debug .= '</table><span>debug</span></div>';
+    $debug .= '</ul>';
     $debug .= $after;
 
     return $debug;
@@ -345,6 +363,14 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
     }
 
     return $object;
+  }
+
+  function period_status_type_name() {
+		return NULL;
+  }
+
+  function priority() {
+		return NULL;
   }
 }
 CB_Query::register_schema_type( 'CB_PeriodItem_Automatic' );

@@ -48,7 +48,11 @@ class CB_Forms {
 					where ($condition) and pt.post_type = '$post_type'";
 			}
 			$db_options = $wpdb->get_results( $sql, OBJECT_K );
-			foreach ( $db_options as $id => &$db_option ) $options[$id] = htmlspecialchars( $db_option->name );
+			foreach ( $db_options as $id => &$db_option ) {
+				$name = $db_option->name;
+				if ( WP_DEBUG ) $name .= " ($id)";
+				$options[$id] = htmlspecialchars( $name );
+			}
 			wp_cache_set( $cache_name, $options );
 		}
 		return $options;

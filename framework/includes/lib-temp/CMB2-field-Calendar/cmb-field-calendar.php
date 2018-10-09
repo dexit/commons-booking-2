@@ -51,14 +51,14 @@ class CMB2_Field_Calendar {
             $field_type_object->type = new CMB2_Type_Text( $field_type_object );
         }
 
-        $yesterday        = (new DateTime())->sub( new DateInterval( 'P2D' ) );
-        $nextmonth        = (clone $yesterday)->add( new DateInterval( 'P1M' ) );
+        $yesterday        = (new DateTime())->sub(   new DateInterval( 'P2D' ) );
+        $next2month       = (clone $yesterday)->add( new DateInterval( 'P2M' ) );
 
         // Inputs
         $url              = $_SERVER['REQUEST_URI'];
         $options          = $field->options();
-				$startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : $yesterday->format( CB_Query::$date_format ) );
-				$enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : $nextmonth->format( CB_Query::$date_format ) );
+				$startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : $yesterday->format(  CB_Query::$date_format ) );
+				$enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : $next2month->format( CB_Query::$date_format ) );
         $view             = ( isset( $_GET['view'] ) ? $_GET['view'] : CB_Week::$static_post_type );
 
         // Defaults
@@ -79,12 +79,6 @@ class CMB2_Field_Calendar {
         $template      = ( isset( $options[ 'template' ] ) ? $options[ 'template' ] : NULL );
         $query_options = ( isset( $options[ 'query' ] )    ? $options[ 'query' ]    : array() );
         $query_args    = array_merge( $default_query, $query_options );
-				if ( isset( $query_args['meta_query'] ) ) {
-					// Include the auto-draft which do not have meta
-					$meta_query = &$query_args['meta_query'];
-					if ( ! isset( $meta_query[ 'relation' ] ) ) $meta_query[ 'relation' ] = 'OR';
-					if ( ! isset( $meta_query[ 'without_meta' ] ) ) $meta_query[ 'without_meta' ] = CB_Query::$without_meta;
-				}
 
         // Request period items
         $query = new WP_Query( $query_args );
@@ -95,11 +89,11 @@ class CMB2_Field_Calendar {
 					$post_count = count( $query->posts );
 					foreach ( $query->posts as $post )
 						$post_types[$post->post_type] = $post->post_type;
-					print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
+					print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;font-size:10px;background-color:#fff;margin:1em 0em;'>" );
 					print( "<b>$post_count</b> posts returned" );
 					print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
 					print( ' <a class="cb2-calendar-krumo-show">more...</a><div class="cb2-calendar-krumo" style="display:none;">' );
-					krumo($query_args);
+					krumo( $query );
 					print( '</div></div>' );
 				}
 
@@ -151,13 +145,16 @@ class CMB2_Field_Calendar {
 							| <a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
 						</div>
 					</div>
-					<div class='cb2-todo entry-content clear'>
-						<table class='cb2-subposts'><tbody>" );
-				$outer_post  = $post;
-				while ( $query->have_posts() ) : $query->the_post();
-					cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template ) );
-				endwhile;
+					<div class='cb2-calendar'>
+						<div class='cb2-todo entry-content clear'>
+							<table class='cb2-subposts'>" );
+				the_calendar_header( $query );
+				print( '<tbody>' );
+				the_inner_loop( $query, $context, $template );
+				print( '</tbody>' );
+				the_calendar_footer( $query );
 				print( "</table>
+						</div>
 					</div>
 					<div class='entry-footer'>
 						<div class='cb2-calendar-pager'>
@@ -166,7 +163,6 @@ class CMB2_Field_Calendar {
 						</div>
 					</div>
 				</div>" );
-				$post     = &$outer_post;
 
         $field_type_object->_desc( true, true );
     }
