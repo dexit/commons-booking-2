@@ -9,6 +9,7 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 				'title' => __( 'Status', 'commons-booking-2' ),
 				'context' => 'side',
 				'show_names' => TRUE,
+				'closed'     => TRUE,
 				'fields' => array(
 					array(
 						'name' => __( 'Enabled', 'commons-booking-2' ),
@@ -47,10 +48,10 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		$options = array( 'template' => 'available' );
 		if ( $post ) $options[ 'query' ] = array(
 			'meta_query' => array(
-				'relation' => 'OR',
-				'period_entity' => array(
-					'key'   => 'period_entity_ID',
-					'value' => $post->ID,
+				'period_entity_ID_clause' => array(
+					'key'     => 'period_entity_ID',
+					'value'   => array( $post->ID, 0 ),
+					'compare' => 'IN',
 				),
 			),
 		);
@@ -186,11 +187,21 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		return $this->period_group->custom_columns( $column );
 	}
 
+  function classes() {
+    $classes  = '';
+    $classes .= $this->period_status_type->classes();
+    $classes .= ' cb2-' . $this->post_type();
+    return $classes;
+  }
+
 	function summary() {
-		$html      = '<b>' . $this->post_title . '</b>';
-		$html     .= $this->summary_actions();
-		$html     .= '<br/>';
-		$html     .= $this->period_group->summary_periods();
+		$classes = $this->classes();
+		$html  = "<div class='$classes'>";
+		$html .= '<b>' . $this->post_title . '</b>';
+		$html .= $this->summary_actions();
+		$html .= '<br/>';
+		$html .= $this->period_group->summary_periods();
+		$html .= "</div>";
 		return $html;
 	}
 
@@ -385,7 +396,6 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
 		if ( ! $post->location_ID )           throw new Exception( 'CB_PeriodEntity requires location_ID' );
 		if ( ! $post->item_ID )               throw new Exception( 'CB_PeriodEntity requires item_ID' );
-
 		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
 		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
 		$location           = CB_Query::get_post_with_type( CB_Location::$static_post_type,         $post->location_ID );

@@ -47,9 +47,9 @@
   border-bottom-left-radius:          $bottomleft;
   border-top-left-radius:             $topleft;
 
-  -moz-background-clip:    padding; 
-  -webkit-background-clip: padding-box; 
-  background-clip:         padding-box; 
+  -moz-background-clip:    padding;
+  -webkit-background-clip: padding-box;
+  background-clip:         padding-box;
 }
 
 @mixin selection-end-round( $radius ) {

@@ -17,13 +17,14 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 												" <span class='cb2-usage-count-ok'>$period_groups_count</span>",
 			'show_names' => FALSE,
 			'context'    => 'side',
+			'closed'     => TRUE,
 			'fields'     => array(
 				array(
 					'name'    => __( 'PeriodGroup', 'commons-booking-2' ),
 					'id'      => 'period_group_ID',
-					'type'    => 'select',
+					'type'    => 'radio',
 					//'show_option_none' => TRUE,
-					'default' => ( isset( $_GET['period_group_ID'] ) ? $_GET['period_group_ID'] : NULL ),
+					'default' => ( isset( $_GET['period_group_ID'] ) ? $_GET['period_group_ID'] : CB2_CREATE_NEW ),
 					'options' => $period_group_options,
 				),
 			),
@@ -95,30 +96,48 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 
   function manage_columns( $columns ) {
 		$columns['periods'] = 'Periods';
+		$columns['entities'] = 'Entities';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
 
 	function custom_columns( $column ) {
-		$html = '';
 		switch ( $column ) {
 			case 'periods':
-				$html     .= $this->summary_periods();
+				print( $this->summary_periods() );
 				$page      = 'cb-post-new';
 				$post_type = 'period';
 				$add_link  = "admin.php?page=$page&period_group_ID=$this->ID&post_type=$post_type";
-				$html     .= "<a class='cb2-todo' href='$add_link'>add new period</a>";
-				$html     .= ' | <a class="cb2-todo" href="admin.php?page=cb2-periods">attach existing period</a>';
+				print( "<a class='cb2-todo' href='$add_link'>add new period</a>" );
+				print( ' | <a class="cb2-todo" href="admin.php?page=cb2-periods">attach existing period</a>' );
+				break;
+			case 'entities':
+				$wp_query = new WP_Query( array(
+					'post_type'   => array( 'periodent-global', 'periodent-location', 'periodent-timeframe', 'periodent-user' ),
+					'meta_query'  => array(
+						'period_group_ID_clause' => array(
+							'key'   => 'period_group_ID',
+							'value' => $this->ID,
+						),
+					),
+				) );
+
+				if ( $wp_query->have_posts() ) {
+					print( '<ul class="cb2-admin-column-ul">' );
+					the_inner_loop( $wp_query, 'admin', 'summary' );
+					print( '</ul>' );
+				} else {
+					print( '<div>' . __( 'No Entities' ) . '</div>' );
+				}
 				break;
 		}
-		return $html;
 	}
 
 	function summary_periods() {
 		$html = ( '<ul class="cb2-period-list">' );
 		$count = count( $this->periods );
 		foreach ( $this->periods as $period ) {
-			$edit_link   = "<a href='?page=cb-post-edit&post=$period->ID&post_type=period&action=edit'>edit</a>";
+			$edit_link   = $period->get_the_edit_post_link( 'edit' );
 
 			$detach_link = '';
 			if ( $count > 1 ) {
@@ -144,7 +163,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		$period_count = count( $this->periods );
 		if ( $period_count > 1 )
 			$html .= " <span class='cb2-usage-count-ok' title='Several Periods'>$period_count</span>";
-		$html .= " <a href='post.php?post=$this->ID&action=edit'>edit</a>";
+		$html .= ' ' . $this->get_the_edit_post_link( 'edit' );
 		return $html;
 	}
 
@@ -154,6 +173,8 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 
   function post_post_update() {
 		global $wpdb;
+
+		if ( CB2_DEBUG_SAVE ) print( "<h2>" . get_class( $this ) . "::post_post_update($this->ID) dependencies</h2>" );
 
 		// Link the Period to the PeriodGroup
 		$table = "{$wpdb->prefix}cb2_period_group_period";

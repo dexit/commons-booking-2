@@ -69,22 +69,14 @@ $period_query = new WP_Query( array(
 	)
 ) );
 
-if ($period_query->have_posts()) { ?>
+if ( $period_query->have_posts() ) { ?>
 
 	<table class="cb-calendar">
-		<thead>
-			<tr>
-				<?php
-					// TODO: wordpress WeekStartsOn
-					foreach ( CB_Query::$days as $dayname ) {
-						print( "<th>$dayname</th>" );
-					}
-				?>
-			</tr>
-		</thead>
+		<?php the_calendar_header(); ?>
 		<tbody>
 			<?php the_inner_loop($period_query, 'list'); ?>
 		</tbody>
+		<?php the_calendar_header(); ?>
 	</table>
 
 

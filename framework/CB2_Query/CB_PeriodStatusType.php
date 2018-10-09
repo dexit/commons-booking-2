@@ -26,7 +26,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 					'options' => CB_Forms::period_status_type_options(),
 				),
 				array(
-					'name' => __( '<a href="#">add new</a>', 'commons-booking-2' ),
+					'name' => __( '<a href="admin.php?page=cb2-periodstatustypes">add new</a>', 'commons-booking-2' ),
 					'id' => 'exceptions',
 					'type' => 'title',
 				),
@@ -35,6 +35,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 	}
 
   function post_type() {return self::$static_post_type;}
+
 	static function metaboxes() {
 		return array(
 			array(
@@ -204,7 +205,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 	}
 
 	function classes() {
-    return '';
+    return "cb2-$this->name";
   }
 
   function indicators() {

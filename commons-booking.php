@@ -40,7 +40,7 @@ require_once(CB2_PLUGIN_ROOT . 'framework/CB2_framework.php');
 /* Load public */
 require_once(CB2_PLUGIN_ROOT . 'public/CB2_Public.php');
 /* Load admin */
-require_once(CB2_PLUGIN_ROOT . 'wp-admin/WP_admin_integration.php');
+require_once(CB2_PLUGIN_ROOT . 'admin/WP_admin_integration.php');
 
 if ( is_admin() ) {
 	if (

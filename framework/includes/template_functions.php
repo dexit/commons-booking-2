@@ -8,28 +8,95 @@
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
+	echo get_the_inner_loop( $post_navigator, $context, $template_type, $before, $after );
+}
+
+function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
 	global $post;
+	$outer_post = $post;
+	$html = '';
 
 	if ( $context == 'single' )
 		throw new Exception( 'the_inner_loop() should never be called with context [single]' );
 
 	if ( ! $post_navigator ) $post_navigator = $post;
 	if ( $post_navigator instanceof CB_PostNavigator || $post_navigator instanceof WP_Query ) {
-		$outer_post  = $post;
 		while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
-			print( $before );
-			cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ) );
-			print( $after );
+			$html .= $before;
+			$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', array(), TRUE );
+			$html .= $after;
 		endwhile;
-		$post     = &$outer_post;
 	} else {
-		throw new Exception( 'the_inner_loop() only available for CB_PostNavigator' );
+		throw new Exception( 'the_inner_loop() only available for CB_PostNavigator or WP_Query' );
 	}
+	wp_reset_query();
+	$post = $outer_post;
+
+	return $html;
+}
+
+function the_calendar_footer( $query = NULL, $classes = '', $type = 'td', $before = '<tfoot><tr>', $after = '</tr></tfoot>' ) {
+	echo get_the_calendar_footer( $query, $classes, $type, $before, $after );
+}
+
+function get_the_calendar_footer( $query = NULL, $classes = '', $type = 'td', $before = '<tfoot><tr>', $after = '</tr></tfoot>' ) {
+	return get_the_calendar_header( $query, $classes, $type, $before, $after );
+}
+
+function the_calendar_header( $query = NULL, $classes = '', $type = 'th', $before = '<thead><tr>', $after = '</tr></thead>' ) {
+	echo get_the_calendar_header( $query, $classes, $type, $before, $after );
+}
+
+function get_the_calendar_header( $query = NULL, $classes = '', $type = 'th', $before = '<thead><tr>', $after = '</tr></thead>' ) {
+	global $wp_query;
+	$html = '';
+	$schema_type = NULL;
+
+	if ( ! $query ) $query = $wp_query;
+	if ( $query && isset( $query->query['date_query']['compare'] ) )
+		$schema_type = $query->query['date_query']['compare'];
+
+	switch ( $schema_type ) {
+		case CB_Week::$static_post_type:
+			// TODO: wordpress WeekStartsOn
+			$html .= ( $before );
+			foreach ( CB_Query::$days as $dayname ) {
+				$html .= ( "<$type>$dayname</$type>" );
+			}
+			$html .= ( $after );
+			break;
+		default:
+			// Do nothing
+	}
+
+	return $html;
+}
+
+function the_period_status_type_name() {
+	echo get_the_period_status_type_name();
+}
+
+function get_the_period_status_type_name() {
+	global $post;
+	return ( is_object( $post ) && method_exists( $post, 'period_status_type_name' ) ? $post->period_status_type_name() : '' );
 }
 
 function the_summary() {
+	print( get_the_summary() );
+}
+
+function get_the_summary() {
 	global $post;
 	return ( is_object( $post ) && method_exists( $post, 'summary' ) ? $post->summary() : '' );
+}
+
+function the_time_period( $format = 'H:i' ) {
+	print( get_the_time_period( $format ) );
+}
+
+function get_the_time_period( $format = 'H:i' ) {
+	global $post;
+	return ( is_object( $post ) && method_exists( $post, 'get_the_time_period' ) ? $post->get_the_time_period( $format ) : '' );
 }
 
 function is_current() {
@@ -135,6 +202,15 @@ function the_debug( $before = '', $afer = '' ) {
 	}
 }
 
+function the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
+	global $post;
+	if ( is_object( $post ) && method_exists( $post, 'get_the_edit_post_link' ) ) {
+		echo $post->get_the_edit_post_link( $text, $before, $after, $id, $class );
+	} else {
+		edit_post_link( $text, $before, $after, $id, $class );
+	}
+}
+
 function cb2_post_class( $classes, $class, $ID ) {
 	$post_type = NULL;
 	foreach ( $classes as $class ) {
@@ -179,7 +255,7 @@ function is_list( $post = '' ) {
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 // TODO: move functions to CB_Templates utilities files
-add_filter( 'the_content', 'cb2_template_include_ensure_correct_class', 1 );
+add_filter( 'the_content', 'cb2_the_content', 1 );
 //add_filter( 'the_content', 'cb2_template_include_custom_plugin_templates' );
 
 /*
@@ -190,13 +266,18 @@ function cb2_get_template_part( $slug, $name ) {
 }
 */
 
-function cb2_template_include_ensure_correct_class( $template ) {
+function cb2_the_content( $content ) {
 	global $post;
 	if ( $post ) {
-		$post_class = CB_Query::ensure_correct_class( $post );
-		$post       = &$post_class;
+		$post_type = $post->post_type;
+		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+			$post_class = CB_Query::ensure_correct_class( $post );
+			$post       = &$post_class;
+			if ( method_exists( $post, 'get_the_content' ) )
+				$content = $post->get_the_content();
+		}
 	}
-	return $template;
+	return $content;
 }
 
 function cb2_template_path() {

@@ -38,9 +38,10 @@
  * The triggers use wp_cb2_view_perioditemmeta to sync the metadata during post saves()
  * of periods or entities.
  */
-global $extra_processing_properties;
-$extra_processing_properties = new stdClass();
-$extra_processing_properties->dependency_depth = 0;
+global $post_save_processing;
+$post_save_processing = new stdClass();
+$post_save_processing->auto_draft_publish_transition = isset( $_GET['auto_draft_publish_transition'] );
+$post_save_processing->redirect_to_native_ID         = FALSE;
 
 // --------------------------------------------- Misc
 add_filter( 'query',            'cb2_query_debug' );
@@ -56,7 +57,7 @@ add_filter( 'query_vars',       'cb2_query_vars' );
 // TODO: make a static plugin setting
 // TODO: analyse potential conflicts with other installed post_id fake plugins
 //   based on this plugin
-add_filter( 'query',             'cb2_wpdb_query_select' );
+//add_filter( 'query',             'cb2_wpdb_query_select' );
 add_filter( 'get_post_metadata', 'cb2_get_post_metadata', 10, 4 );
 
 // --------------------------------------------- Adding / Updating posts
@@ -74,11 +75,15 @@ add_filter( 'get_post_metadata', 'cb2_get_post_metadata', 10, 4 );
 // so there will be no meta-data available at pre_post_update stage
 define( 'CB2_DS_PRIORITY',  100 );
 define( 'CB2_MTN_PRIORITY', 140 );
-if ( CB2_DEBUG_SAVE ) add_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY, 3 ); // Just print out debug info
-add_action( 'save_post', 'cb2_save_post_move_to_native',              110, 3 ); // Create $native_ID, and $ID
-add_action( 'save_post', 'cb2_save_post_post_actions',                120, 3 ); // $CB_object->post_post_update()
-add_action( 'save_post', 'cb2_save_post_delete_auto_draft',           130, 3 ); // original wp_posts $post and $ID
+add_action( 'save_post', 'cb2_save_post_debug',                   CB2_DS_PRIORITY, 3 ); // Just print out debug info
+add_action( 'save_post', 'cb2_save_post_move_to_native',          110, 3 ); // Create $native_ID, and $ID
 add_action( 'save_post', 'cb2_save_post_redirect_to_native_post', CB2_MTN_PRIORITY, 3 ); // new $ID
+// Delete auto-draft is done at point of redirect now
+//add_action( 'save_post', 'cb2_save_post_delete_auto_draft',       130, 3 ); // original wp_posts $post and $ID
+
+// Prevent updates of wp_posts
+add_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 1, 2 );
+//add_filter( 'edit_post', 'cb2_edit_post', 1, 2 );
 
 // Direct metadata updates
 // CMB2 MetaBoxes DO NOT use meta-data!
@@ -91,7 +96,6 @@ add_action( 'add_post_meta',        'cb2_add_post_meta',           10, 3 );
 add_action( 'update_post_meta',     'cb2_update_post_meta',        10, 4 );
 
 // --------------------------------------------- Deleting posts
-add_action( 'delete_post',          'cb2_delete_post' );
 add_action( 'trashed_post',         'cb2_delete_post' );
 
 // --------------------------------------------- WP_Query Database redirect to views for custom posts
@@ -111,33 +115,66 @@ add_action( 'init', 'cb2_init_temp_debug_enqueue' );
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // Update/Delete integration
-function cb2_delete_post( $ID ) {
-	global $wpdb;
+function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
+	global $post_save_processing, $CB2_POST_PROPERTIES;
 
-	if ( $post_type = CB_Query::post_type_from_ID( $ID ) ) {
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
-				if ( $id_field = CB_Database::id_field( $Class ) ) {
-					if ( $id = CB_Query::id_from_ID_with_post_type( $ID, $post_type ) ) {
-						$result = $wpdb->delete( "$wpdb->prefix$class_database_table", array( $id_field => $id ) );
-						if ( $result === FALSE ) {
-							print( "<div id='error-page'><p>$wpdb->last_error</p></div>" );
-							exit();
-						} // Still a WP_Post?
+	$consider_empty_post = FALSE;
+	$post_id     = ( isset( $postarr['ID'] ) ? $postarr['ID'] : NULL );
+	$post_type   = ( isset( $postarr['post_type'] ) ? $postarr['post_type'] : NULL );
+	$update      = ( ! empty( $post_id ) );
+	$post        = (object) $postarr;
+
+	if ( $update ) {
+		if ( ! $post_save_processing->auto_draft_publish_transition ) {
+			if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+				if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+					// Prevent Class::factory_from_wp_post()
+					//  get_metadata_assign() calling for the old meta-data
+					// BECAUSE this is not a wp_post
+					// TODO: a more elegant way to indicate that the meta-data is already assigned?
+					$post->_get_metadata_assign = TRUE;
+
+					/* TODO: post_save_processing for pre_post_update()
+					if ( CB2_DEBUG_SAVE ) krumo( $postarr );
+					foreach ( $postarr as $name => $value ) {
+						if ( ! isset( $CB2_POST_PROPERTIES[ $name ] ) ) {
+							$is_system_meta = ( substr( $name, 0, 1 ) == '_' );
+							if ( ! $is_system_meta ) {
+								$post_save_processing->$name = CB_Query::to_object( $name, $value );
+							}
+						}
 					}
-				} else throw new Exception( "Cannot delete [$Class] because no id field" );
+					*/
+					if ( CB2_DEBUG_SAVE ) krumo( $post_save_processing );
+
+					$cb2_post = CB_Query::ensure_correct_class( $post );
+					$cb2_post->save();
+
+					// Prevent post.php wp_insert_post() from continuing
+					// with its update of wp_posts
+					if ( CB2_DEBUG_SAVE ) {
+						print( "<h1>CB2_DEBUG_SAVE:</h1><div>cb2_wp_insert_post_empty_content() preventing update to wp_posts and remaining save process</div>" );
+						krumo($postarr);
+					}
+					$consider_empty_post = TRUE;
+				}
 			}
 		}
 	}
+
+	return $consider_empty_post;
 }
 
 function cb2_save_post_debug( $post_id, $post, $update ) {
+	global $post_save_processing;
 	static $done = FALSE;
-	if ( WP_DEBUG ) {
+
+	if ( CB2_DEBUG_SAVE ) {
 		if ( ! $done ) {
 			print( '<h1>CB2_DEBUG_SAVE is on in CB_Query.php</h1>' );
 			print( '<p>Debug info will be shown and redirect will be suppressed, but printed at the bottom</p>' );
-			krumo( $_POST );
+			print( '<div class="cb2-WP_DEBUG-small">post_save_processing->auto_draft_publish_transition ' . ( $post_save_processing->auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
+			krumo( $_POST, $post );
 		}
 		// Bug https://core.trac.wordpress.org/ticket/9968
 		// will prevent the next action (cb2_save_post_move_to_native)
@@ -155,25 +192,25 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 	//		 foreach ( $postarr['meta_input'] as $field => $value ) {
 	//	 	 	 update_post_meta( $post_ID, $field, $value );
 	//		 }
-	global $wpdb, $extra_processing_properties;
+	global $CB2_POST_PROPERTIES, $post_save_processing;
+	$native_ID = NULL;
 
-	$post_type = $post->post_type;
-	if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-		if ( $class_database_table = CB_Database::database_table( $Class ) ) {
-			if ( CB_Query::publishing_post( $post ) ) {
+	if ( $post_save_processing->auto_draft_publish_transition ) {
+		$post_type = $post->post_type;
+		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
 				// This post is currently a normal post in wp_posts
 				// with one of our post_types, but a small ID
 				// not an auto-draft request anymore so all its meta-data is saved and ready
 				// probably created by the Add New post process
 				// because we have not hooked in to the wp_insert_post(auto-draft) process
-				if ( CB2_DEBUG_SAVE ) print( "<h2>cb2_save_post_move_to_native( $Class/$post_type )</h2>" );
-				$cb2_post = CB_Query::ensure_correct_class( $post );
+				if ( CB2_DEBUG_SAVE ) print( "<h2>cb2_save_post_move_to_native( $class_database_table/$post_type )</h2>" );
 
-				// Move all extra metadata in to global object
+				// Move all extra metadata in to global $post_save_processing
 				// for later actions to use
-				$metadata = get_metadata( 'post', $post_id );
+				$metadata = get_metadata( 'post', $post->ID );
 				foreach ( $metadata as $name => $value_array ) {
-					if ( ! isset( CB2_POST_PROPERTIES[ $name ] ) ) {
+					if ( ! isset( $CB2_POST_PROPERTIES[ $name ] ) ) {
 						$is_system_meta = ( substr( $name, 0, 1 ) == '_' );
 
 						// Because we are defaulting to SINGLE
@@ -183,133 +220,61 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 						//   bit arrays are handled as unsigned
 						if ( ! $is_system_meta ) {
 							$value = $value_array[0];
-							$extra_processing_properties->$name = CB_Query::to_object( $name, $value );
+							$post_save_processing->$name = CB_Query::to_object( $name, $value );
 						}
 					}
 				}
-				if ( CB2_DEBUG_SAVE ) krumo( $metadata, $extra_processing_properties );
+				if ( CB2_DEBUG_SAVE ) krumo( $metadata, $post_save_processing );
 
-				// Create dependent objects before moving in to the native tables
-				// will also reset the metadata for $post, e.g.
-				//   $post->period_group_ID = CB2_CREATE_NEW => 800000034
-				//   meta: period_group_ID:   CB2_CREATE_NEW => 800000034
-				// pre_post_create() will not work on the correct ID
-				// because, by definition, it has not been created
-				// so do not call $this->id() as it will fail
-				$extra_processing_properties->dependency_depth++;
-				if ( method_exists( $cb2_post, 'pre_post_create' ) ) $cb2_post->pre_post_create();
-				$extra_processing_properties->dependency_depth--;
-
-				// Move any new values created to the main data array
-				$potential_table_data = (array) $cb2_post;
-				foreach ( $extra_processing_properties as $name => $value )
-					$potential_table_data[$name] = $value;
-
-				// Move this post into our structure
-				// Allow for main Class tables with no actual needed columns beyond the id
-				$result      = NULL;
-				$insert_data = CB_Database::sanitize_data_for_table( $class_database_table, $potential_table_data, $formats );
-				if ( CB2_DEBUG_SAVE ) krumo( $potential_table_data, $insert_data, $formats );
-				if ( count( $insert_data ) )
-					$result = $wpdb->insert( "$wpdb->prefix$class_database_table", $insert_data, $formats );
-				else
-					$result = $wpdb->query( "INSERT into `$wpdb->prefix$class_database_table` values()" );
-				if ( $result === FALSE ) {
-					print( "<div id='error-page'><p>$wpdb->last_error</p></div>" );
-					exit();
-				}
-				$native_id = $wpdb->insert_id;
-				$native_ID = CB_Query::ID_from_id_post_type( $native_id, $post_type );
+				// Important: $post->ID is the ID from wp_posts
+				// NULL ID this causes save() => create()
+				// we do not want it to try and update() the wp_posts ID
+				// do not set the $post->ID = NULL
+				// because it will not be able to get_metadata_assign()
+				$cb2_post     = CB_Query::ensure_correct_class( $post );
+				$cb2_post->ID = NULL;
+				$native_ID    = $cb2_post->save();
 
 				// Pass the newly created native_ID to the postmeta in wp_postmeta
 				// NOTE: this is set agaist the wp_posts ID, not the new one
 				// and the remaining save_post calls will be passed this native_id
-				$extra_processing_properties->native_ID = $native_ID;
-			} else {
-				// TODO: Updating post
-				// Maybe Quick Edit
+				if ( ! $native_ID ) throw new Exception( 'native_ID blank during immediate redirection' );
+				$post_save_processing->redirect_to_native_ID = $native_ID;
 			}
 		}
 	}
-}
 
-function cb2_save_post_post_actions( $post_id, $post, $update ) {
-	// Triggers AFTER cb2_save_post_move_to_native()
-	// $post_id can still be the wp_post ID
-	global $extra_processing_properties;
-
-	$post_type = $post->post_type;
-	if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-		if ( ! CB_Query::is_wp_auto_draft( $post ) ) {
-			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
-				// We NEED the correct ID
-				// so that update actions work on the correct database row
-				if ( property_exists( $extra_processing_properties, 'native_ID' ) )
-					$post->ID = $extra_processing_properties->native_ID;
-				foreach ( $extra_processing_properties as $name => $value )
-					$post->$name = $value;
-				$cb_post = CB_Query::ensure_correct_class( $post );
-
-				if ( method_exists( $cb_post, 'post_post_update' ) ) {
-					if ( CB2_DEBUG_SAVE ) {
-						print( "<h2>cb2_save_post_post_actions( $Class/$post_type/$post->ID/$post_id )</h2>" );
-						krumo( $cb_post, $post, $extra_processing_properties );
-					}
-					$cb_post->post_post_update();
-				}
-			}
-		}
-	}
+	return $native_ID;
 }
 
 function cb2_save_post_redirect_to_native_post( $post_id, $post, $update ) {
 	// Triggers AFTER cb2_save_post_move_to_native()
 	// Page reload!
-	global $wpdb, $extra_processing_properties;
+	global $post_save_processing;
 
-	$post_type = $post->post_type;
-	if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-		if ( $class_database_table = CB_Database::database_table( $Class ) ) {
-			// We NEED the correct ID
-			// so that update actions work on the correct database row
-			if ( ! $extra_processing_properties->dependency_depth ) {
-				if ( property_exists( $extra_processing_properties, 'native_ID' ) ) {
-					$post->ID = $extra_processing_properties->native_ID;
-					// We need to reset the ID for further edit screens
-					// to start using the native data post now as
-					// native post data has been created already by
-					// cb2_save_post_move_to_native()
-					$page      = 'cb-post-edit';
-					$action    = 'edit';
-					$URL       = admin_url( "admin.php?page=$page&post=$post->ID&post_type=$post_type&action=$action" );
+	if ( $post_save_processing->redirect_to_native_ID ) {
+		// We delete the auto-draft at the last moment
+		// before redirect
+		// TODO: wp_delete_post( $post_id, TRUE );
 
-					// if CB2_DEBUG_SAVE the redirect will be printed, not acted
-					wp_redirect( $URL );
-					exit();
-				}
-			}
-		}
-	}
-}
-
-function cb2_save_post_delete_auto_draft( $ID, $post, $update ) {
-	global $wpdb, $extra_processing_properties;
-
-	if ( $post && property_exists( $post, 'post_type' ) ) {
+		// We need to reset the ID for further edit screens
+		// to start using the native data post now as
+		// native post data has been created already by
+		// cb2_save_post_move_to_native()
+		if ( CB2_DEBUG_SAVE ) print( "<h2>cb2_save_post_redirect_to_native_post( $post_save_processing->redirect_to_native_ID )</h2>" );
+		$page      = 'cb-post-edit';
 		$post_type = $post->post_type;
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-			if ( $native_ID = get_post_meta( $ID, 'native_ID', TRUE ) ) {
-				// Remove the auto-draft
-				// TODO: this will cause the initial Add New -> further edits process to fail
-				// because it passes through the wrong id
-				// $wpdb->delete( "{$wpdb->prefix}posts", array( 'ID' => $ID ) );
-			}
-		}
+		$action    = 'edit';
+		$URL       = admin_url( "admin.php?page=$page&post=$post_save_processing->redirect_to_native_ID&post_type=$post_type&action=$action" );
+
+		// If CB2_DEBUG_SAVE the redirect will be printed, not acted
+		wp_redirect( $URL );
+		exit();
 	}
 }
 
 function cb2_get_post_metadata( $type, $post_id, $meta_key, $single ) {
-	global $wpdb;
+	global $wpdb, $post_save_processing;
 
 	$value = NULL; // Will cause the standard system to query metadata
 
@@ -318,22 +283,24 @@ function cb2_get_post_metadata( $type, $post_id, $meta_key, $single ) {
 		if ( $post = get_post( $post_id ) ) {
 			$post_type = $post->post_type;
 			if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-				if ( $postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub, $post_id ) ) {
-					if ( $native_ID = get_post_meta( $post_id, 'native_ID', TRUE ) )
-						$post->ID = $native_ID;
+				if ( ! $post_save_processing->auto_draft_publish_transition ) {
+					if ( $postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) ) {
+						if ( $native_ID = get_post_meta( $post_id, 'native_ID', TRUE ) )
+							$post->ID = $native_ID;
 
-					$query = $wpdb->prepare(
-						"SELECT `meta_value` FROM `$wpdb->prefix$postmeta_table` WHERE `meta_key` = %s AND `post_id` = %d",
-						array( $meta_key, $post->ID )
-					);
+						$query = $wpdb->prepare(
+							"SELECT `meta_value` FROM `$wpdb->prefix$postmeta_table` WHERE `meta_key` = %s AND `post_id` = %d",
+							array( $meta_key, $post->ID )
+						);
 
-					$value = $wpdb->get_var( $query );
-					// The caller calculates the single logic
-					//   if ( $single ) $value = $value[0];
-					// However, it has a bug
-					// so we make it choose an empty string if it cannot be found
-					if ( $single && is_array( $value ) && count( $value ) == 0 )
-						$value = array( '' );
+						$value = $wpdb->get_var( $query );
+						// The caller calculates the single logic
+						//   if ( $single ) $value = $value[0];
+						// However, it has a bug
+						// so we make it choose an empty string if it cannot be found
+						if ( $single && is_array( $value ) && count( $value ) == 0 )
+							$value = array( '' );
+					}
 				}
 			}
 		}
@@ -369,17 +336,28 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 	//		 foreach ( $postarr['meta_input'] as $field => $value ) {
 	//	 	 	 update_post_meta( $post_ID, $field, $value );
 	//		 }
-	global $wpdb;
+	// TODO: this is getting called 3 x times because all the hooks are linked here
+	// TODO: move this in to CB_PostNavigator
+	global $post_save_processing, $wpdb;
+	static $first = TRUE;
 
 	$prevent = FALSE;
 
-	// Ignore pseudo metadata, e.g. _edit_lock
-	if ( $meta_key && $meta_key[0] != '_' ) {
-		if ( $post = get_post( $ID ) ) {
-			$post_type = $post->post_type;
-			if ( ! CB_Query::is_wp_auto_draft( $post ) && CB_Query::is_custom_post_type_ID( $ID ) ) {
-				if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-					if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+	if ( $post = get_post( $ID ) ) {
+		$post_type = $post->post_type;
+		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+				if ( $meta_key && $meta_key[0] == '_' ) {
+					// Ignore pseudo metadata, e.g. _edit_lock
+					$prevent = TRUE;
+				} else {
+					if ( CB2_DEBUG_SAVE ) {
+						$table = ( $post_save_processing->auto_draft_publish_transition ? "<b class='cb2-warning'>{$wpdb->prefix}posts</b>" : 'native tables' );
+						if ( $first ) print( "<h2 class='cb2-WP_DEBUG'>update_meta_data($ID) => $table</h2>" );
+						print( "<b>$meta_key</b>=$meta_value, </li>" );
+						$first = FALSE;
+					}
+					if ( ! $post_save_processing->auto_draft_publish_transition ) {
 						if ( $id_field = CB_Database::id_field( $Class ) ) {
 							$post = CB_Query::ensure_correct_class( $post );
 							if ( empty( $meta_value ) ) $meta_value = NULL;
@@ -436,10 +414,10 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 // Framework integration
 function cb2_init_temp_debug_enqueue() {
 	// TODO: re-enable CB_Enqueue
-	wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles-admin',  plugins_url( 'admin/assets/css/admin.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
-	wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
-	wp_enqueue_script( CB2_TEXTDOMAIN . '-plugin-script', plugins_url( 'admin/assets/js/admin.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
-	wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles-cmb2', plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-admin',  plugins_url( 'admin/assets/css/admin.css',   CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+	wp_enqueue_script( CB2_TEXTDOMAIN . '-plugin-script',        plugins_url( 'admin/assets/js/admin.js',     CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
+	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-cmb2',   plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {
@@ -475,6 +453,8 @@ function cb2_init_register_post_types() {
 				'has_archive'        => TRUE,
 				'show_in_rest'       => TRUE,
 				'supports'           => $supports,
+				// TODO: change redirect_post() in our post.php instead?
+				'_edit_link' => "admin.php?page=cb-post-edit&post_type=$post_type&post=%d",
 			);
 			if ( property_exists( $Class, 'post_type_args' ) )
 				$args = array_merge( $args, $Class::$post_type_args );
@@ -509,35 +489,16 @@ function cb2_query_wrangler_date_filter_callback( $args, $filter ) {
 */
 
 function cb2_pre_get_posts_redirect_wpdb( &$wp_query ) {
-	global $wpdb;
-
-	// TODO: Reset the posts to the normal table necessary?
-	// maybe it will interfere with other plugins?
-	$wpdb->posts = "{$wpdb->prefix}posts";
-
+	// If the wp_query is for a managed post_type
+	// then redirect the wpdb prefix
 	if ( isset( $wp_query->query['post_type'] ) ) {
 		$post_type = $wp_query->query['post_type'];
-		if ( is_array( $post_type ) && count( $post_type ) ) $post_type = array_values( $post_type )[0];
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-			if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
-				// perioditem-global => perioditem
-				$post_type_stub = CB_Query::substring_before( $post_type );
-				if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
-					$post_type_stub = $Class::$posts_table;
-				$wp_query->old_wpdb_posts    = $wpdb->posts;
-				// cb2_view_periodoccurence_posts
-				$wpdb->posts    = "{$wpdb->prefix}cb2_view_{$post_type_stub}_posts";
-			}
-
-			if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
-				// perioditem-global => perioditem
-				$post_type_stub = CB_Query::substring_before( $post_type );
-				if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) )
-					$post_type_stub = $Class::$postmeta_table;
-				$wp_query->old_wpdb_postmeta = $wpdb->postmeta;
-				// cb2_view_periodoccurencemeta
-				$wpdb->postmeta = "{$wpdb->prefix}cb2_view_{$post_type_stub}meta";
-			}
+		if ( is_array( $post_type ) )
+			$post_type = ( count( $post_type ) ? array_values( $post_type )[0] : NULL );
+		if ( CB_Query::redirect_wpdb_for_post_type( $post_type ) ) {
+			// Subsequent posts will be annotated
+			// that they are from the native tables, not wp_post
+			$wp_query->cb2_redirected_post_request = TRUE;
 		}
 	}
 }
@@ -546,43 +507,6 @@ function cb2_post_results_unredirect_wpdb( $posts, &$wp_query ) {
 	global $wpdb;
 	if ( property_exists( $wp_query->old_wpdb_posts ) )    $wpdb->posts    = $wp_query->old_wpdb_posts;
 	if ( property_exists( $wp_query->old_wpdb_postmeta ) ) $wpdb->postmeta = $wp_query->old_wpdb_postmeta;
-}
-
-function cb2_wpdb_query_select( $query ) {
-	// Use wp_cb2_view_{$post_type}_posts instead of wp_posts
-	// ALL database queries come through this filter
-	// including insert and updates
-	global $wpdb;
-	if ( $Class = CB_Query::class_from_SELECT( $query ) ) {
-		// perioditem-global => perioditem
-		$post_type_stub = CB_Query::substring_before( $Class::$static_post_type );
-
-		// Move table requests to the views that include our custom post types
-		if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
-			$posts_table = "cb2_view_{$post_type_stub}_posts";
-			if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
-				$posts_table = $Class::$posts_table;
-			$query = preg_replace( "/([^a-z]){$wpdb->prefix}posts([^a-z])/im",    "$1$wpdb->prefix$posts_table$2", $query );
-		}
-
-		if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
-			$postmeta_table = "cb2_view_{$post_type_stub}meta";
-			if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) )
-				$postmeta_table = $Class::$postmeta_table;
-			$query = preg_replace( "/([^a-z]){$wpdb->prefix}postmeta([^a-z])/im", "$1$wpdb->prefix$postmeta_table$2",   $query );
-		}
-
-		if ( WP_DEBUG && FALSE ) {
-			$query_truncated = ( strlen( $query ) > 300 ? substr( $query, 0, 300 ) . '...' : $query );
-			print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;'>($Class/$post_type_stub) = $query_truncated</div>" );
-		}
-	}
-	else if ( WP_DEBUG && FALSE ) {
-		$query_truncated = ( strlen( $query ) > 300 ? substr( $query, 0, 300 ) . '...' : $query );
-		print( "<div class='cb2-debug cb2-low-debug' style='color:#777'>(IGNORED) = $query_truncated</div>" );
-	}
-
-	return $query;
 }
 
 function cb2_loop_start( &$wp_query ) {
@@ -596,17 +520,23 @@ function cb2_loop_start( &$wp_query ) {
 		// WP_Posts will be left unchanged
 		$wp_query->posts = CB_Query::ensure_correct_classes( $wp_query->posts );
 
+		// Indicate that the posts are from a redirected request
+		if ( property_exists( $wp_query, 'cb2_redirected_post_request' ) && $wp_query->cb2_redirected_post_request ) {
+			foreach ( $wp_query->posts as &$post )
+				$post->cb2_redirected_post_request = TRUE;
+		}
+
 		// Check to see which schema has been requested and switch it
 		if ( isset( $wp_query->query['date_query']['compare'] ) ) {
 			if ( $schema = $wp_query->query['date_query']['compare'] ) {
 				$wp_query->posts = CB_Query::schema_type_all_objects( $schema );
-
-				// Update WP_Query settings with our custom posts
-				$wp_query->post_count  = count( $wp_query->posts );
-				$wp_query->found_posts = (boolean) $wp_query->post_count;
-				$wp_query->post        = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
 			}
 		}
+
+		// Reset pointers
+		$wp_query->post_count  = count( $wp_query->posts );
+		$wp_query->found_posts = (boolean) $wp_query->post_count;
+		$wp_query->post = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
 	}
 }
 
@@ -616,8 +546,12 @@ function cb2_loop_start( &$wp_query ) {
 // Framework changes and fixes
 function cb2_query_debug( $query ) {
 	global $wp;
-	if ( CB2_DEBUG_SAVE && strstr( $_SERVER['REQUEST_URI'], 'post.php' ) )
-		print( "<div style='font-size:9px;color:#77a'>$query</div>" );
+	if ( CB2_DEBUG_SAVE && FALSE )
+		print( "<div class='cb2-WP_DEBUG-small'>$query</div>" );
+
+	//if ( trim( $query ) == 'SELECT * FROM wp_posts WHERE ID = 1100000002 LIMIT 1' )
+	//	throw new Exception( 'query ran' );
+
 	return $query;
 }
 
@@ -663,10 +597,7 @@ function cb2_pre_get_posts_query_string_extensions() {
 	if ( isset( $_GET[ 'period_status_type_name' ] ) ) $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_name', 'value' => $_GET[ 'period_status_type_name' ] );
 
 	if ( $meta_query_items ) {
-		// Include the auto-draft which do not have meta
-		$meta_query[ 'relation' ]       = 'OR';
-		$meta_query[ 'without_meta' ]   = CB_Query::$without_meta;
-		$meta_query_items[ 'relation' ] = 'AND';
+		if ( ! isset( $meta_query_items[ 'relation' ] ) ) $meta_query_items[ 'relation' ] = 'AND';
 		$meta_query[ 'items' ]          = $meta_query_items;
 		set_query_var( 'meta_query', $meta_query );
 	}

@@ -1,17 +1,11 @@
-<?php // echo "template : list-day.php <br>"; ?>
-<?php global $post; ?>
 <td id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 	<header class="entry-header">
-
-		<span class="cb-M"><?php echo $post->date->format('M');?></span>
-		<span class="cb-j"><?php echo $post->date->format('d');?></span>
-		
+		<?php the_title( '<h3 class="entry-title">', '</h3>' ); ?>
 	</header>
 	<div class="entry-content">
-		<div class="cb2-subposts">
-			<?php  the_inner_loop(); ?>
-
-		</div>
+		<table class="cb2-subposts"><tbody>
+			<?php the_inner_loop(); ?>
+		</tbody></table>
 	</div><!-- .entry-content -->
 </td>
 
