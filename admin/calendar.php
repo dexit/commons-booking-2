@@ -14,7 +14,6 @@ $period_status_type_ID = ( isset( $_GET['period_status_type_ID'] ) ? $_GET['peri
 $period_entity_ID = ( isset( $_GET['period_entity_ID'] ) ? $_GET['period_entity_ID'] : NULL );
 $schema_type      = ( isset( $_GET['schema_type'] )   ? $_GET['schema_type'] : CB_Week::$static_post_type );
 $template_part    = ( isset( $_GET['template_part'] ) ? $_GET['template_part'] : NULL );
-$no_auto_draft    = isset( $_GET['no_auto_draft'] );
 $show_debug       = isset( $_GET['show_debug'] );
 $output_type      = ( isset( $_GET['output_type'] ) ? $_GET['output_type'] : 'HTML' );
 $extended_class   = ( isset( $_GET['extended'] ) ? '' : 'none' );
@@ -22,8 +21,7 @@ $extended_class   = ( isset( $_GET['extended'] ) ? '' : 'none' );
 // --------------------------------------- Query
 $meta_query       = array();
 $meta_query_items = array();
-$post_status      = array( 'publish' );
-if ( ! $no_auto_draft ) array_push( $post_status, 'auto-draft' );
+$post_status      = array( CB2_PUBLISH );
 if ( $location_ID )
 	$meta_query_items[ 'location_clause' ] = array(
 		'key' => 'location_ID',
@@ -53,7 +51,7 @@ if ( $meta_query_items ) {
 
 $args = array(
 	'author'         => $user_ID,
-	'post_status'    => $post_status,   // auto-draft indicates the pseudo Period A created for each day
+	'post_status'    => $post_status,
 	'post_type'      => CB_PeriodItem::$all_post_types,
 	'posts_per_page' => -1,
 	'order'          => 'ASC',          // defaults to post_date
@@ -95,9 +93,8 @@ print( <<<HTML
 			Post Type:<select name="schema_type">$schema_options</select>
 			Template Part:<select name="template_part">$template_options</select>
 			<br/>
-			<input id='no_auto_draft' type='checkbox' name='no_auto_draft'/> <label for='no_auto_draft'>Exclude pseudo-periods (A)</label>
 			<input id='show_overridden_periods' type='checkbox' name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
-			<input id='show_debug' type='checkbox' name='show_debug' checked="1"/> <label for='show_debug'>show debug</label>
+			<input id='show_debug' type='checkbox' name='show_debug' checked="1"/> <label class='cb2-todo' for='show_debug'>show debug</label>
 			<br/>
 		</div>
 		<input class="cb2-submit button" type="submit" value="Filter"/>
@@ -121,7 +118,7 @@ if ( WP_DEBUG ) {
 		print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
 			<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
 			<div style='margin-left:5px;color:#448;'>$query->request</div></div>" );
-		krumo( $args );
+		krumo( $query );
 		print( "</div></div>" );
 	} else print( "<div>No posts returned!</div>" );
 }

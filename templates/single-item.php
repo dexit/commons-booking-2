@@ -25,14 +25,7 @@ $view_mode   = 'week'; // CB_Weeks
 // ask for item id AND anything without item ID
 
 $period_query = new WP_Query( array(
-	'post_status'    => array(
-		'publish',
-		// PeriodItem-automatic (CB_PeriodItem_Automatic)
-		// one is generated for each day between the dates
-		// very useful for iterating through to show a calendar
-		// They have a post_status = auto-draft
-		'auto-draft'
-	),
+	'post_status'    => CB2_PUBLISH,
 	// Although these PeriodItem-* are requested always
 	// The compare below will decide
 	// which generated CB_(Object) set will actually be the posts array
@@ -41,8 +34,8 @@ $period_query = new WP_Query( array(
 	'posts_per_page' => -1,
 	'order'          => 'ASC',        // defaults to post_date
 	'date_query'     => array(
-		'after'   => '2018-07-02',//$startdate->format( 'c' ),
-		'before'  => $enddate->format( 'c' ),
+		'after'   => '2018-07-02',//$startdate->format( CB_Query::$datetime_format ),
+		'before'  => $enddate->format( CB_Query::$datetime_format ),
 		// This sets which CB_(ObjectType) is the resultant primary posts array
 		// e.g. CB_Weeks generated from the CB_PeriodItem records
 		'compare' => $view_mode,

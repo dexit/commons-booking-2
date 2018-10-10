@@ -101,7 +101,8 @@ add_action( 'trashed_post',         'cb2_delete_post' );
 // --------------------------------------------- WP_Query Database redirect to views for custom posts
 // $wpdb->posts => wp_cb2_view_posts
 add_filter( 'pre_get_posts', 'cb2_pre_get_posts_redirect_wpdb' );
-add_filter( 'post_results',  'cb2_post_results_unredirect_wpdb', 10, 2 );
+add_filter( 'posts_results', 'cb2_post_results_unredirect_wpdb', 10, 2 );
+add_filter( 'posts_results', 'cb2_posts_results_add_automatic',  10, 2 );
 
 // --------------------------------------------- WP Loop control
 // Here we change the Wp_Query posts to the correct list
@@ -109,7 +110,8 @@ add_filter( 'loop_start',       'cb2_loop_start' );
 
 // --------------------------------------------- Custom post types and templates
 add_action( 'init', 'cb2_init_register_post_types' );
-add_action( 'init', 'cb2_init_temp_debug_enqueue' );
+add_action( 'wp_enqueue_scripts', 'cb2_init_temp_debug_enqueue' );
+add_action( 'admin_enqueue_scripts', 'cb2_init_temp_debug_enqueue' );
 
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
@@ -418,6 +420,8 @@ function cb2_init_temp_debug_enqueue() {
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 	wp_enqueue_script( CB2_TEXTDOMAIN . '-plugin-script',        plugins_url( 'admin/assets/js/admin.js',     CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-cmb2',   plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+
+	add_thickbox(); // TODO: should this be here?
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {
@@ -471,23 +475,6 @@ function cb2_init_register_post_types() {
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // WP_Query integration
-/*
-function cb2_query_wrangler_date_filter_callback( $args, $filter ) {
-	// Query Wrangler does not have date filter at the moment
-	// So we set it here using QW callback option
-	$args[ 'date_query' ] = array(
-		'after'   => '2018-07-01',
-		'before'  => '2018-08-01',
-		'compare' => 'week',
-	);
-	// Multiple post_status not available in QW yet
-	$args[ 'post_status' ] = array( 'publish', CB2_AUTODRAFT );
-	// perioditem-automatic will be missed unless we do this
-	$args[ 'post_type'   ] = CB_PeriodItem::$all_post_types;
-	return $args;
-}
-*/
-
 function cb2_pre_get_posts_redirect_wpdb( &$wp_query ) {
 	// If the wp_query is for a managed post_type
 	// then redirect the wpdb prefix
@@ -503,10 +490,63 @@ function cb2_pre_get_posts_redirect_wpdb( &$wp_query ) {
 	}
 }
 
-function cb2_post_results_unredirect_wpdb( $posts, &$wp_query ) {
+function cb2_post_results_unredirect_wpdb( $posts, $wp_query ) {
 	global $wpdb;
-	if ( property_exists( $wp_query->old_wpdb_posts ) )    $wpdb->posts    = $wp_query->old_wpdb_posts;
-	if ( property_exists( $wp_query->old_wpdb_postmeta ) ) $wpdb->postmeta = $wp_query->old_wpdb_postmeta;
+	if ( property_exists( $wp_query, 'old_wpdb_posts' ) )    {
+		$wpdb->posts    = $wp_query->old_wpdb_posts;
+		unset( $wp_query->old_wpdb_posts );
+	}
+	if ( property_exists( $wp_query, 'old_wpdb_postmeta' ) ) {
+		$wpdb->postmeta = $wp_query->old_wpdb_postmeta;
+		unset( $wp_query->old_wpdb_postmeta );
+	}
+	return $posts;
+}
+
+function cb2_posts_results_add_automatic( $posts, $wp_query ) {
+	// Add Automatic posts if requested
+	$post_type_auto = CB_PeriodItem_Automatic::$static_post_type;
+
+	if ( isset( $wp_query->query['post_type'] )
+		&& ( $post_type = $wp_query->query['post_type'] )
+		&& (
+			( is_array( $post_type ) && in_array( $post_type_auto, $post_type ) )
+			|| $post_type == $post_type_auto
+		)
+	) {
+		if ( isset( $wp_query->query['date_query'] )
+			&& isset( $wp_query->query['date_query']['after'] )
+			&& isset( $wp_query->query['date_query']['before'] )
+		) {
+			$startdate_string = $wp_query->query['date_query']['after'];
+			$enddate_string   = $wp_query->query['date_query']['before'];
+			if ( $startdate_string && $enddate_string ) {
+				$startdate = new DateTime( $startdate_string );
+				$enddate   = new DateTime( $enddate_string );
+				$startdate->setTime( 0, 0 );
+				$enddate->setTime( 23, 59 );
+
+				while ( $startdate < $enddate ) {
+					array_push( $posts,  CB_PeriodItem_Automatic::post_from_date( $startdate ) );
+					$startdate->add( new DateInterval( 'P1D' ));
+				}
+
+				usort( $posts, "cb2_posts_date_order" );
+
+				// Reset pointers
+				$wp_query->post_count  = count( $wp_query->posts );
+				$wp_query->found_posts = (boolean) $wp_query->post_count;
+				$wp_query->post = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
+			} else throw new Exception( "Cannot request [$post_type_auto] without date_query after and before" );
+		} else throw new Exception( "Cannot request [$post_type_auto] without date_query after and before" );
+	}
+
+	return $posts;
+}
+
+function cb2_posts_date_order( $post1, $post2 ) {
+	// Alphabetical order == date order
+  return strcmp( $post1->post_date, $post2->post_date );
 }
 
 function cb2_loop_start( &$wp_query ) {

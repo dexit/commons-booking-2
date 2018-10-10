@@ -42,20 +42,13 @@ class CB_PeriodInteractionStrategy {
 		$this->view_mode = $view_mode;
 
 		// Construct args
-		// PeriodItem-automatic (CB_PeriodItem_Automatic)
-		// one is generated for each day between the dates
-		// very useful for iterating through to show a calendar
-		// They have a post_status = auto-draft
-		if ( ! isset( $args['post_status'] ) ) $args['post_status'] = array(
-			'publish',
-			'auto-draft'
-		);
+		if ( ! isset( $args['post_status'] ) )    $args['post_status'] = CB2_PUBLISH;
 		if ( ! isset( $args['post_type'] ) )      $args['post_type'] = CB_PeriodItem::$all_post_types;
 		if ( ! isset( $args['posts_per_page'] ) ) $args['posts_per_page'] = -1;
 		if ( ! isset( $args['order'] ) )          $args['order'] = 'ASC'; // defaults to post_date
 		if ( ! isset( $args['date_query'] ) )     $args['date_query'] = array();
-		if ( ! isset( $args['date_query']['after'] ) )  $args['date_query']['after']  = $this->startdate->format( 'c' );
-		if ( ! isset( $args['date_query']['before'] ) ) $args['date_query']['before'] = $this->enddate->format( 'c' );
+		if ( ! isset( $args['date_query']['after'] ) )  $args['date_query']['after']  = $this->startdate->format( CB_Query::$datetime_format );
+		if ( ! isset( $args['date_query']['before'] ) ) $args['date_query']['before'] = $this->enddate->format( CB_Query::$datetime_format );
 		// This sets which CB_(ObjectType) is the resultant primary posts array
 		// e.g. CB_Weeks generated from the CB_PeriodItem records
 		if ( ! isset( $args['date_query']['compare'] ) ) $args['date_query']['compare'] = $this->view_mode;
