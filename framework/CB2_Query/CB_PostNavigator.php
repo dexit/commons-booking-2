@@ -6,11 +6,11 @@ class CB_PostNavigator {
     else                     $this->posts = &$posts;
 
     // WP_Post default values
-    if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = 'publish';
+    if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB2_PUBLISH;
     if ( ! property_exists( $this, 'post_password' ) ) $this->post_password = '';
     if ( ! property_exists( $this, 'post_author' ) )   $this->post_author   = 1;
-    if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( 'c' );
-    if ( ! property_exists( $this, 'post_modified' ) ) $this->post_modified = date( 'c' );
+    if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( CB_Query::$datetime_format );
+    if ( ! property_exists( $this, 'post_modified' ) ) $this->post_modified = date( CB_Query::$datetime_format );
     if ( ! property_exists( $this, 'post_excerpt' ) )  $this->post_excerpt  = $this->get_the_excerpt();
     if ( ! property_exists( $this, 'post_content' ) )  $this->post_content  = $this->get_the_content();
     if ( ! property_exists( $this, 'post_date_gmt' ) ) $this->post_date_gmt = $this->post_date;

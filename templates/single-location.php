@@ -19,13 +19,13 @@
 				$view_mode   = 'item';
 
 				$query       = new WP_Query( array(
-					'post_status'    => 'publish',
+					'post_status'    => CB2_PUBLISH,
 					'post_type'      => CB_PeriodItem::$all_post_types,
 					'posts_per_page' => -1,
 					'order'          => 'ASC',        // defaults to post_date
 					'date_query'     => array(
-						'after'   => '2018-07-01', //$startdate->format( 'c' ),
-						'before'  => $enddate->format( 'c' ),
+						'after'   => '2018-07-01', //$startdate->format( CB_Query::$datetime_format ),
+						'before'  => $enddate->format( CB_Query::$datetime_format ),
 						'compare' => $view_mode,
 					),
 					'meta_query' => array(
@@ -43,4 +43,3 @@
 				) );
 				the_inner_loop( $query, 'list' );
 
-				

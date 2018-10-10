@@ -403,7 +403,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 
   function manage_columns( $columns ) {
 		$columns['summary'] = 'Summary';
-		$columns['periodgroups'] = 'Period Groups';
+		$columns['periodgroups'] = 'Period Groups <a href="admin.php?page=cb2-period-groups">view all</a>';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}

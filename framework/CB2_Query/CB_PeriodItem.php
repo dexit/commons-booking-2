@@ -262,7 +262,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     $debug .= '<ul class="cb2-debug">';
 		foreach ( $this as $name => $value ) {
 			if ( $name ) {
-				if      ( $value instanceof DateTime ) $value = $value->format( 'c' );
+				if      ( $value instanceof DateTime ) $value = $value->format( CB_Query::$datetime_format );
 				else if ( is_array( $value ) )         $value = 'Array(' . count( $value ) . ')';
 				else if ( $value instanceof WP_Post )  $value = 'WP_Post(' . $value->post_title . ')';
 				else if ( $value instanceof WP_User )  $value = 'WP_User(' . $value->user_login . ')';
@@ -310,6 +310,52 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
   static $database_table = FALSE;
 
   function post_type() {return self::$static_post_type;}
+
+  static private $fake_ID = 300000000;
+  static function post_from_date( $date ) {
+		$startdate = ( clone $date )->setTime( 0, 0 );
+		$enddate   = ( clone $startdate )->setTime( 23, 59 );
+
+		return new WP_Post( (object) array(
+			'ID' => self::$fake_ID++,
+			'post_author'    => 1,
+			'post_date'      => $startdate->format( CB_Query::$datetime_format ),
+			'post_date_gmt'  => $startdate->format( CB_Query::$datetime_format ),
+			'post_content'   => '',
+			'post_title'     => 'automatic',
+			'post_excerpt'   => '',
+			'post_status'    => 'auto-draft',
+			'comment_status' => 'closed',
+			'ping_status'    => 'closed',
+			'post_password'  => '',
+			'post_name'      => 'automatic',
+			'to_ping' => '',
+			'pinged'  => '',
+			'post_modified'     => $enddate->format( CB_Query::$datetime_format ),
+			'post_modified_gmt' => $enddate->format( CB_Query::$datetime_format ),
+			'post_content_filtered' => '',
+			'post_parent' => NULL,
+			'guid'        => '',
+			'menu_order'  => 0,
+			'post_type'   => self::$static_post_type,
+			'post_mime_type'    => '',
+			'comment_count'     => 0,
+			'filter'            => 'raw',
+			'period_group_ID'   => 0,
+			'period_group_type' => 'automatic',
+			'period_ID'         => 0,
+			'recurrence_index'  => 0,
+			'timeframe_id'      => 0,
+			'period_entity_ID'  => 0,
+			'location_ID' => 0,
+			'item_ID' => 0,
+			'user_ID' => 0,
+			'period_status_type_ID' => 0,
+			'period_status_type_name' => '',
+			'datetime_period_item_start' => $startdate->format( CB_Query::$datetime_format ),
+			'datetime_period_item_end'   => $enddate->format( CB_Query::$datetime_format ),
+		) );
+	}
 
   function __construct(
 		$ID,

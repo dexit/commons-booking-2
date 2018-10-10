@@ -54,7 +54,7 @@ function cb2_admin_pages() {
 	// All %token_ID% ending in _ID are converted to posts and the post_title inserted instead of the ID
 	global $wpdb;
 
-	$basic_interface = array(
+	$menu_interface = array(
 		'cb2-holidays'      => array(
 			'page_title'    => 'Holidays %(for)% %location_ID%',
 			'menu_title'    => 'Holidays',
@@ -106,57 +106,64 @@ function cb2_admin_pages() {
 			'page_title'    => 'Calendar',
 			'function'      => 'cb2_calendar',
 		),
-	);
 
-	$advanced_interface = array(
+		// Advanced
 		'cb2-admin' => array(
 			'page_title'    => 'Admin',
 			'function'      => 'cb2_admin_page',
+			'first'         => TRUE,
+			'advanced'      => TRUE,
 		),
 		'cb2-periods' => array(
 			'page_title'    => 'Periods',
 			'wp_query_args' => 'post_type=period',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_periods",
+			'advanced'      => TRUE,
 		),
-
 		'cb2-period-globals' => array(
 			'indent'        => 1,
 			'page_title'    => 'Globals',
 			'wp_query_args' => 'post_type=periodent-global',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups",
+			'advanced'      => TRUE,
 		),
 		'cb2-period-locations' => array(
 			'indent'        => 1,
 			'page_title' => 'Locations',
 			'wp_query_args' => 'post_type=periodent-location',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups",
+			'advanced'      => TRUE,
 		),
 		'cb2-period-timeframes' => array(
 			'indent'        => 1,
 			'page_title' => 'Timeframes',
 			'wp_query_args' => 'post_type=periodent-timeframe',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups",
+			'advanced'      => TRUE,
 		),
 		'cb2-period-users' => array(
 			'indent'        => 1,
 			'page_title' => 'Users',
 			'wp_query_args' => 'post_type=periodent-user',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups",
+			'advanced'      => TRUE,
 		),
-
 		'cb2-period-groups' => array(
 			'page_title' => 'Period Groups',
 			'wp_query_args' => 'post_type=periodgroup',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_period_groups",
+			'advanced'      => TRUE,
 		),
 		'cb2-periodstatustypes' => array(
 			'page_title' => 'Period Status Types',
 			'wp_query_args' => 'post_type=periodstatustype',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_period_status_types",
+			'advanced'      => TRUE,
 		),
 		'cb2-reflection' => array(
 			'page_title'    => 'Reflection',
 			'function'      => 'cb2_reflection',
+			'advanced'      => TRUE,
 		),
 
 		// post-new.php (setup) => edit-form-advanced.php (form)
@@ -171,39 +178,14 @@ function cb2_admin_pages() {
 		'cb-post-new' => array(
 			'page_title'    => 'Add New',
 			'function'      => 'cb2_settings_post_new',
+			'advanced'      => TRUE,
 		),
 		'cb-post-edit' => array(
 			'page_title'    => 'Edit Post',
 			'function'      => 'cb2_settings_post_edit',
+			'advanced'      => TRUE,
 		),
 	);
-
-	// Admin advanced markup
-	$first = 'cb2-first';
-	foreach ( $advanced_interface as &$menu_item ) {
-		$menu_item['first']      = $first;
-		$menu_item['advanced']   = TRUE;
-		$first = '';
-	}
-
-	$menu_interface = $basic_interface;
-	if ( WP_DEBUG && TRUE ) $menu_interface = array_merge( $menu_interface, $advanced_interface );
-
-	// Menu adornments
-	foreach ( $menu_interface as &$menu_item ) {
-		if ( ! isset( $menu_item['menu_title'] ) ) $menu_item['menu_title'] = $menu_item['page_title'];
-		if ( isset( $menu_item['count'] ) ) {
-			$count       = $wpdb->get_var( $menu_item['count'] );
-			$count_class = ( isset( $menu_item['count_class'] ) ? "cb2-usage-count-$menu_item[count_class]" : 'cb2-usage-count-info' );
-			if ( $count ) $menu_item['menu_title'] .= " <span class='$count_class'>$count</span>";
-		}
-		if ( isset( $menu_item['indent'] ) )
-			$menu_item['menu_title'] = str_repeat( '&nbsp;&nbsp;', $menu_item['indent'] ) . '•&nbsp;' . $menu_item['menu_title'];
-		if ( isset( $menu_item['advanced'] ) )
-			$menu_item['menu_title'] = "<span class='cb2-advanced-menu-item $menu_item[first]'>$menu_item[menu_title]</span>";
-		if ( isset( $menu_item['description'] ) )
-			$menu_item['menu_title'] = "<span title='$menu_item[description]'>$menu_item[menu_title]</span>";
-	}
 
 	return $menu_interface;
 }
@@ -339,8 +321,24 @@ function cb2_admin_init_menus() {
 		$menu_title   = ( isset( $details['menu_title'] )   ? $details['menu_title']   : $page_title );
 		$capability   = ( isset( $details['capability'] )   ? $details['capability']   : $capability_default );
 		$function     = ( isset( $details['function'] )     ? $details['function']     : 'cb2_settings_list_page' );
-		$menu_visible = ( isset( $details['menu_visible'] ) ? $details['menu_visible'] : ! $details['advanced'] );
+		$advanced     = ( isset( $details['advanced'] )     ? $details['advanced']     : FALSE );
+		$first        = ( isset( $details['first'] )        ? $details['first']        : FALSE );
+		$menu_visible = ( isset( $details['menu_visible'] ) ? $details['menu_visible'] : ! $advanced );
 
+		// Menu adornments
+		if ( isset( $details['count'] ) ) {
+			$count       = $wpdb->get_var( $details['count'] );
+			$count_class = ( isset( $details['count_class'] ) ? "cb2-usage-count-$details[count_class]" : 'cb2-usage-count-info' );
+			if ( $count ) $menu_title .= " <span class='$count_class'>$count</span>";
+		}
+		if ( isset( $details['indent'] ) )
+			$menu_title = str_repeat( '&nbsp;&nbsp;', $details['indent'] ) . '•&nbsp;' . $menu_title;
+		if ( isset( $details['advanced'] ) )
+			$menu_title = "<span class='cb2-advanced-menu-item $first'>$menu_title</span>";
+		if ( isset( $details['description'] ) )
+			$menu_title = "<span title='$details[description]'>$menu_title</span>";
+
+		// Create
 		if ( $menu_visible ) {
 			add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function );
 		} else {
@@ -367,18 +365,29 @@ function cb2_options_page() {
 		$menu_title   = ( isset( $details['menu_title'] )   ? $details['menu_title']   : $page_title );
 		$capability   = ( isset( $details['capability'] )   ? $details['capability']   : $capability_default );
 		$function     = ( isset( $details['function'] )     ? $details['function']     : 'cb2_settings_list_page' );
-		$menu_visible = ( isset( $details['menu_visible'] ) ? $details['menu_visible'] : ! $details['advanced'] );
+		$advanced     = ( isset( $details['advanced'] )     ? $details['advanced']     : FALSE );
+		$first        = ( isset( $details['first'] )        ? $details['first']        : FALSE );
+		$menu_visible = ( isset( $details['menu_visible'] ) ? $details['menu_visible'] : ! $advanced );
 		$description  = ( isset( $details['description'] )  ? $details['description']  : FALSE );
 
-		$class = '';
+		// Menu adornments
+		$class        = '';
+		$indent       = '';
+		$count_bubble = '';
+		if ( isset( $details['count'] ) ) {
+			$count       = $wpdb->get_var( $details['count'] );
+			$count_class = ( isset( $details['count_class'] ) ? "cb2-usage-count-$details[count_class]" : 'cb2-usage-count-info' );
+			if ( $count ) $count_bubble .= " <span class='$count_class'>$count</span>";
+		}
+		if ( isset( $details['indent'] ) )   $indent = str_repeat( '&nbsp;&nbsp;', $details['indent'] ) . '•&nbsp;';
 		if ( isset( $details['first']) )     $class .= " $details[first]";
 		if ( isset( $details['advanced'] ) ) $class .= ' cb2-advanced-menu-item';
 		if ( current_user_can( $capability ) ) {
-			print( "<li><a class='$class' href='admin.php?page=$menu_slug'>$menu_title</a>" );
+			print( "<li>$indent<a class='$class' href='admin.php?page=$menu_slug'>$menu_title</a> $count_bubble" );
 		} else {
-		  print( "<li class='$class'>$menu_title" );
+		  print( "<li class='$class'>$indent$menu_title $count_bubble" );
 		}
-		if ( $description ) print( "<p class='cb2-description'>$description</p>" );
+		if ( $details['description'] ) print( "<p class='cb2-description'>$details[description]</p>" );
 		print( "</li>" );
 	}
 	print( '</ul>' );
@@ -497,7 +506,7 @@ function cb2_settings_list_page() {
 			$title = $details_page['page_title'];
 
 			// Append input query string to post_new
-			$post_new_file_custom = ( $details_page['post_new_page'] ? $details_page['post_new_page'] : 'admin.php?page=cb-post-new' );
+			$post_new_file_custom = ( isset( $details_page['post_new_page'] ) ? $details_page['post_new_page'] : 'admin.php?page=cb-post-new' );
 			if ( count( $_GET ) ) {
 				$existing_query_string = array();
 				if ( strchr( $post_new_file_custom, '?' ) ) {

@@ -13,7 +13,7 @@ function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_ty
 
 function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
 	global $post;
-	$outer_post = $post;
+	// TODO: necessary? $outer_post = $post;
 	$html = '';
 
 	if ( $context == 'single' )
@@ -21,16 +21,19 @@ function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $templat
 
 	if ( ! $post_navigator ) $post_navigator = $post;
 	if ( $post_navigator instanceof CB_PostNavigator || $post_navigator instanceof WP_Query ) {
-		while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
-			$html .= $before;
-			$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', array(), TRUE );
-			$html .= $after;
-		endwhile;
+		if ( $post_navigator->have_posts() ) {
+			while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
+				$html .= $before;
+				$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', array(), TRUE );
+				$html .= $after;
+			endwhile;
+			// https://codex.wordpress.org/Class_Reference/WP_Query
+			wp_reset_postdata();
+		}
 	} else {
 		throw new Exception( 'the_inner_loop() only available for CB_PostNavigator or WP_Query' );
 	}
-	wp_reset_query();
-	$post = $outer_post;
+	// $post = $outer_post;
 
 	return $html;
 }
