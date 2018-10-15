@@ -6,9 +6,10 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		$metaboxes = CB_Period::metaboxes();
 		array_push( $metaboxes,
 			array(
-				'title' => __( 'Status', 'commons-booking-2' ),
+				// TODO: link this in to the Publish meta-box status instead
+				'title' => __( 'Enabled', 'commons-booking-2' ),
 				'context' => 'side',
-				'show_names' => TRUE,
+				'show_names' => FALSE,
 				'closed'     => TRUE,
 				'fields' => array(
 					array(
@@ -59,7 +60,7 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		return $options;
 	}
 
-	static function &factory_from_wp_post( $post ) {
+	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		// The WP_Post may have all its metadata loaded already
 		// as the wordpress system adds all fields to the WP_Post dynamically
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
@@ -230,7 +231,7 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_wp_post( $post ) {
+	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		// The WP_Post may have all its metadata loaded already
 		// as the wordpress system adds all fields to the WP_Post dynamically
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
@@ -306,7 +307,7 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_wp_post( $post ) {
+	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		// The WP_Post may have all its metadata loaded already
 		// as the wordpress system adds all fields to the WP_Post dynamically
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
@@ -388,7 +389,7 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_wp_post( $post ) {
+	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		// The WP_Post may have all its metadata loaded already
 		// as the wordpress system adds all fields to the WP_Post dynamically
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
@@ -478,7 +479,7 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_wp_post( $post ) {
+	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		// The WP_Post may have all its metadata loaded already
 		// as the wordpress system adds all fields to the WP_Post dynamically
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post );

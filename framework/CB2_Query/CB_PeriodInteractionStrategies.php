@@ -55,6 +55,9 @@ class CB_PeriodInteractionStrategy {
 
 		$this->args = $args;
 		$this->query();
+
+		// Expost the private WP_Query in WP_DEBUG mode
+		if ( WP_DEBUG ) $this->debug_wp_query = $this->wp_query;
 	}
 
 	// -------------------------------------------- query functions
@@ -65,15 +68,17 @@ class CB_PeriodInteractionStrategy {
 		$this->request = $this->wp_query->request;
 
 		// Process here before any loop_start re-organiastion
-		//CB_Query::ensure_correct_classes( $this->wp_query->posts );
+		CB_Query::ensure_correct_classes( $this->wp_query->posts, $this );
 		$this->wp_query->post = ( count( $this->wp_query->posts ) ? $this->wp_query->posts[0] : NULL );
-		foreach ( $this->wp_query->posts as &$post ) {
-			if ( ! property_exists( $post, '_cb2_processed' ) ) {
-				//CB_Query::ensure_correct_class( $post );
-				//$post->priority = $this->process_post( $post );
-				//$post->_cb2_processed = TRUE;
+		/*
+		foreach ( $this->wp_query->posts as &$cb2_post ) {
+			if ( ! property_exists( $cb2_post, '_cb2_processed' ) ) {
+				$cb2_post->priority = $this->process_post( $cb2_post );
+				$cb2_post->_cb2_processed = TRUE;
 			}
 		}
+		*/
+		return $this->wp_query->post_count;
 	}
 
 	function have_posts() {
@@ -167,7 +172,7 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 	function dynamic_priority( $post ) {
 		$priority = 0;
 		if ( $post instanceof CB_PeriodItem_Timeframe ) {
-			print("<div>" . $post->summary() . '</div>');
+			if ( WP_DEBUG ) print("<div class='cb2-WP_DEBUG-small'>" . get_class( $this ) . "::dynamic_priority( <span class='cb2-classname'>" . $post->summary() . '</span> )</div>');
 		}
 		return $priority;
 	}

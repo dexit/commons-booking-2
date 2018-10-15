@@ -257,24 +257,6 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     return $html;
   }
 
-  function get_the_debug( $before = '', $after = '' ) {
-		$debug  = $before;
-    $debug .= '<ul class="cb2-debug">';
-		foreach ( $this as $name => $value ) {
-			if ( $name ) {
-				if      ( $value instanceof DateTime ) $value = $value->format( CB_Query::$datetime_format );
-				else if ( is_array( $value ) )         $value = 'Array(' . count( $value ) . ')';
-				else if ( $value instanceof WP_Post )  $value = 'WP_Post(' . $value->post_title . ')';
-				else if ( $value instanceof WP_User )  $value = 'WP_User(' . $value->user_login . ')';
-				$debug .= "<li><b>$name</b>: $value</li>";
-			}
-		}
-    $debug .= '</ul>';
-    $debug .= $after;
-
-    return $debug;
-  }
-
   function name_field() {
     return 'name';
   }
@@ -377,7 +359,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
     );
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		$object = self::factory(
 			$post->ID,
 			NULL, // period_entity
@@ -454,7 +436,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
     );
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Global requires a period_entity_ID' );
 		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Global requires a period_ID' );
@@ -532,7 +514,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     array_push( $this->posts, $this->period_entity->location );
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Location requires a period_entity_ID' );
 		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Location requires a period_ID' );
@@ -631,7 +613,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     $this->period_entity->item->add_perioditem( $this );
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Timeframe requires a period_entity_ID' );
 		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Timeframe requires a period_ID' );
@@ -750,7 +732,7 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     $this->period_entity->user->add_perioditem( $this );
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_entity_ID' );
 		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_ID' );

@@ -286,8 +286,15 @@ function cb2_notification_bubble_in_admin_menu() {
 add_action('admin_menu', 'cb2_notification_bubble_in_admin_menu', 110 );
 
 function cb2_custom_columns( $column ) {
-	global $post;
+	global $post, $wp_query;
 	if ( $post ) {
+		// We manually set the post here
+		// because WP_List_Table DOES NOT use a normal WP_Query loop
+		// so global $wp_query does not advance its post, or current_post
+		// inner_loop() therefore fails to reset properly when running
+		//   wp_reset_postdata()
+		$wp_query->post = $post;
+
 		$cb2_post = CB_Query::ensure_correct_class( $post );
 		if ( $cb2_post && method_exists( $cb2_post, 'custom_columns' ) )
 			print( $cb2_post->custom_columns( $column ) );
@@ -343,7 +350,7 @@ function cb2_admin_init_menus() {
 			add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function );
 		} else {
 			$priority = ( isset( $details['priority'] ) ? $details['priority'] : 10 );
-			add_submenu_page( $parent_slug, $page_title, NULL, $capability_default, $menu_slug );
+			add_submenu_page( $parent_slug, $page_title, "<div class='cb2-menu-invisible'/>", $capability_default, $menu_slug );
 			add_filter( "admin_page_$menu_slug", $function, 0, $priority );
 		}
 	}

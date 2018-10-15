@@ -191,7 +191,8 @@ class CB_Week extends CB_TimePostNavigator {
   }
 
   function add_day( $day ) {
-    if ( $day->weekinyear != $this->weekinyear ) throw new Exception( "day in wrong week [$this->weekinyear]" );
+    if ( $day->weekinyear != $this->weekinyear )
+			throw new Exception( "day in wrong week [$this->weekinyear]" );
     $this->days[ $day->dayofweek ] = $day;
     if ( $day->dayofweek < $this->first_day_num ) $this->first_day_num = $day->dayofweek;
     if ( $day->is_current ) $this->is_current = TRUE;
@@ -224,11 +225,11 @@ class CB_Day extends CB_TimePostNavigator {
 
     $this->date         = $date;
     $this->year         = (int) $date->format( 'Y' );
-    $this->weekinyear   = (int) $date->format( 'W' ); // Monday start day
+    $this->weekinyear   = (int) $date->format( 'W' ); // 1-52 Monday start day
     $this->monthinyear  = (int) $date->format( 'n' ); // 1-12
-    $this->monthname    = $date->format( 'F' ); // January - December
-    $this->dayinmonth   = (int) $date->format( 'j' ); // 0-31 day in month
-    $this->dayofweek    = (int) $date->format( 'w' ); // Sunday start day (see below)
+    $this->monthname    = $date->format( 'F' );       // January - December
+    $this->dayinmonth   = (int) $date->format( 'j' ); // 1-31 day in month
+    $this->dayofweek    = (int) $date->format( 'w' ); // 0-6 Sunday start day (see below)
     $this->dayofyear    = (int) $date->format( 'z' ); // 0-365
     $this->today        = ( $date->format( CB_Query::$date_format ) == (new DateTime())->format( CB_Query::$date_format ) );
     $this->is_current   = $this->today;
@@ -245,7 +246,7 @@ class CB_Day extends CB_TimePostNavigator {
 
     // WP_Post values
     $this->post_title    = $date->format( $title_format );
-    $this->ID            = $this->dayofyear;
+    $this->ID            = $this->dayofyear + 1;
     $this->post_type     = self::$static_post_type;
     parent::__construct( $this->perioditems );
   }

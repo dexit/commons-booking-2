@@ -1,15 +1,23 @@
 (function($) {
   'use strict';
   $(document).ready(function(){
-		$('.cb2-template-available .cb2-time-period').click(function(){
-			var checkbox = $(this).parent().find( '.cb2-perioditem-selector' );
+		$('.cb2-template-available').click(function(e){
+			var checkbox      = $(this).children('.cb2-perioditem-selector');
+			var cssClass      = $(this).attr('class').trim();
+			var target        = $(e.target);
+			var clicked_input = (target.is(checkbox));
+			var is_checked    = checkbox.attr('checked');
 
-			if (checkbox.attr('checked')) {
-				checkbox.removeAttr('checked');
-				$(this).attr( 'class', $(this).attr('class').replace(/cb2-booked/, '') );
+			// The default checkbox event will check the checkbox
+			// AFTER this action
+			if (clicked_input) is_checked = !is_checked;
+
+			if (is_checked) {
+				if (!clicked_input) checkbox.removeAttr('checked');
+				$(this).attr( 'class', cssClass.replace(/cb2-booked/, '') );
 			} else {
-				checkbox.attr('checked', '1');
-				$(this).attr( 'class', $(this).attr('class') + ' cb2-booked' );
+				if (!clicked_input) checkbox.attr('checked', '1');
+				$(this).attr( 'class', cssClass + ' cb2-booked' );
 			}
 		});
 

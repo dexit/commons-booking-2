@@ -50,32 +50,27 @@ class CB2_Shortcodes {
 		$args = shortcode_atts( $this->default_query_args, $atts, 'cb_calendar' );
 
 		$display_strategy = new CB_SingleItemAvailability( $post );
-		if ( WP_DEBUG && FALSE ) {
-			//krumo( $display_strategy );
-			print( "<div style='border:1px solid #000;padding:3px;font-size:10px;background-color:#fff;margin:1em 0em;'>$display_strategy->request</div>" );
-		}
+		if ( WP_DEBUG )
+			print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;font-size:10px;background-color:#fff;margin:1em 0em;'>$display_strategy->request</div>" );
 
-		if ($display_strategy->have_posts()) {
-			$html = '<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>
-				<table class="cb-calendar">';
+		$html = '<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>';
+		if ( $display_strategy->have_posts() ) {
+				$html = '<table class="cb-calendar">';
 					$html .= get_the_calendar_header( $display_strategy );
 					$html .= '<tbody>';
 
-					while($display_strategy->have_posts()) {
+					while ( $display_strategy->have_posts() ) {
 						$display_strategy->the_post();
-
-						// call ensure class
-						// cb2_the_content();
 						$html .= cb2_get_template_part(  CB2_TEXTDOMAIN, 'list', 'week-available', $args , true );
 					}
 
 					$html .= '</tbody>';
 					$html .= get_the_calendar_footer( $display_strategy );
-				$html .= '</table>
-			</div>';
+				$html .= '</table>';
+		} else {
+			$html .= '<div>No Results</div>';
 		}
-
-
+		$html .= '</div>';
 
 		// reset posts
 		wp_reset_postdata();

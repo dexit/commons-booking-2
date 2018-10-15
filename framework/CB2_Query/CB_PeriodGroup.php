@@ -33,7 +33,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 
   function post_type() {return self::$static_post_type;}
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 
 		// Retrieve all Periods

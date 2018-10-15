@@ -418,7 +418,6 @@ function cb2_init_temp_debug_enqueue() {
 	// TODO: re-enable CB_Enqueue
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-admin',  plugins_url( 'admin/assets/css/admin.css',   CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
-	wp_enqueue_script( CB2_TEXTDOMAIN . '-plugin-script',        plugins_url( 'admin/assets/js/admin.js',     CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-cmb2',   plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 
 	add_thickbox(); // TODO: should this be here?
@@ -558,7 +557,7 @@ function cb2_loop_start( &$wp_query ) {
 		// Create the CB_PeriodItem objects from the WP_Post results
 		// This will also create all the associated CB_* Objects like CB_Week
 		// WP_Posts will be left unchanged
-		$wp_query->posts = CB_Query::ensure_correct_classes( $wp_query->posts );
+		CB_Query::ensure_correct_classes( $wp_query->posts, $wp_query );
 
 		// Indicate that the posts are from a redirected request
 		if ( property_exists( $wp_query, 'cb2_redirected_post_request' ) && $wp_query->cb2_redirected_post_request ) {
@@ -576,7 +575,7 @@ function cb2_loop_start( &$wp_query ) {
 		// Reset pointers
 		$wp_query->post_count  = count( $wp_query->posts );
 		$wp_query->found_posts = (boolean) $wp_query->post_count;
-		$wp_query->post = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
+		$wp_query->post        = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
 	}
 }
 

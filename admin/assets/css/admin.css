@@ -66,6 +66,21 @@ body .cmb2-postbox .cmb-th+.cmb-td {
 	float:none;
 	width:auto;
 }
+.cb2-depth-0 {
+	list-style:none;
+}
+.cb2-depth-1 {
+	list-style:disc;
+}
+.cb2-classname {
+	font-style:italic;
+	background-color:#f7f7f7;
+	padding:0px 4px;
+}
+li.cb2-classname {
+	list-style:none;
+	margin-left:-4px;
+}
 .cb2-WP_DEBUG-small {
 	color:#555;
 	font-size:10px;
@@ -109,6 +124,9 @@ body .cmb2-postbox .cmb-th+.cmb-td {
 .cb2-invalidity {
 	color:#d44;
 	font-weight:bold;
+}
+.cb2-menu-invisible {
+	margin-bottom:-2em;
 }
 body .cb2-advanced-menu-item.cb2-first {
 	display:block;

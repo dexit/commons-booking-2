@@ -219,7 +219,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		);
 	}
 
-	static function &factory_from_wp_post( $post ) {
+	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		// The WP_Post may have all its metadata loaded already
 		// as the wordpress system adds all fields to the WP_Post dynamically
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post );

@@ -260,7 +260,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
     $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		$object = self::factory(
 			$post->ID
 		);
@@ -300,7 +300,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 				$wp_query = new WP_Query( array(
 					'post_type'   => 'periodent-timeframe',
 					'meta_query'  => array(
-						'location_clause' => array(
+						'location_ID_clause' => array(
 							'key'   => 'location_ID',
 							'value' => $this->ID,
 						),
@@ -327,7 +327,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 				$wp_query = new WP_Query( array(
 					'post_type'   => 'periodent-user',
 					'meta_query'  => array(
-						'location_clause' => array(
+						'location_ID_clause' => array(
 							'key'   => 'location_ID',
 							'value' => $this->ID,
 						),
@@ -365,7 +365,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 		$wp_query = new WP_Query( array(
 			'post_type'   => 'periodent-location',
 			'meta_query'  => array(
-				'item_clause' => array(
+				'location_ID_clause' => array(
 					'key'   => 'location_ID',
 					'value' => $this->ID,
 				),
@@ -421,7 +421,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
     $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		$object = self::factory(
 			$post->ID
 		);
@@ -460,7 +460,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 				$wp_query = new WP_Query( array(
 					'post_type'   => 'periodent-timeframe',
 					'meta_query'  => array(
-						'location_clause' => array(
+						'item_ID_clause' => array(
 							'key'   => 'item_ID',
 							'value' => $this->ID,
 						),
@@ -487,7 +487,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 				$wp_query = new WP_Query( array(
 					'post_type'   => 'periodent-user',
 					'meta_query'  => array(
-						'item_clause' => array(
+						'item_ID_clause' => array(
 							'key'   => 'item_ID',
 							'value' => $this->ID,
 						),

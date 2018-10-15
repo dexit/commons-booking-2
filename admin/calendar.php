@@ -65,6 +65,14 @@ $args = array(
 );
 $query = new WP_Query( $args );
 
+/*
+global $post;
+$query->the_post(); // Trigger loop_start -> ensure_correct_classes()
+$first_day = $query->posts[0];
+krumo($first_day);
+$query->current_post = -1;
+*/
+
 // --------------------------------------- Filter selection Form
 $location_options = CB_Forms::select_options( CB_Forms::location_options(), $location_ID );
 $item_options     = CB_Forms::select_options( CB_Forms::item_options(), $item_ID );

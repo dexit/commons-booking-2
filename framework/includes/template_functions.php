@@ -13,7 +13,6 @@ function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_ty
 
 function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
 	global $post;
-	// TODO: necessary? $outer_post = $post;
 	$html = '';
 
 	if ( $context == 'single' )
@@ -27,13 +26,19 @@ function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $templat
 				$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', array(), TRUE );
 				$html .= $after;
 			endwhile;
+			// NOTE: We have manually set the global $wp_query->post
+			// when looping on WP_List_Tables because
+			// WP_List_Tables does not use a normal post loop§
+			//
 			// https://codex.wordpress.org/Class_Reference/WP_Query
+			// wp_reset_postdata() => global $wp_query->reset_postdata();
+			//   global $post = global $wp_query->post;
+			//   $this->setup_postdata( global $wp_query->post );
 			wp_reset_postdata();
 		}
 	} else {
 		throw new Exception( 'the_inner_loop() only available for CB_PostNavigator or WP_Query' );
 	}
-	// $post = $outer_post;
 
 	return $html;
 }

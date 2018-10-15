@@ -103,7 +103,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 		if ( ! is_null( $ID ) ) self::$all[$ID] = $this;
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
 		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
 
 		if ( is_null( $post->priority ) ) throw new Exception( "post_status_type has no priority" );

@@ -38,7 +38,7 @@ $CB2_POST_PROPERTIES = array(
 	'post_date_gmt' => FALSE,
 	'post_content' => TRUE,
 	'post_title' => TRUE,
-	'post_excerpt' => TRUE,
+	'post_excerpt' => FALSE,
 	'post_status' => FALSE,
 	'comment_status' => FALSE,
 	'ping_status' => FALSE,
@@ -48,7 +48,7 @@ $CB2_POST_PROPERTIES = array(
 	'pinged' => FALSE,
 	'post_modified' => TRUE,
 	'post_modified_gmt' => FALSE,
-	'post_content_filtered' => TRUE,
+	'post_content_filtered' => FALSE,
 	'post_parent' => FALSE,
 	'guid' => FALSE,
 	'menu_order' => FALSE,
@@ -112,7 +112,7 @@ class CB_Query {
   //   wp_posts                ID = 1000000001 normal wordpress post
   //   wp_cb2_view_period_post ID = 1000000001 fake wordpress post
   // we set the post_type to indicate which post we are talking about
-	static function get_post_with_type( $post_type, $post_id, $output = OBJECT, $filter = 'raw' ) {
+	static function get_post_with_type( $post_type, $post_id, $output = OBJECT, $filter = 'raw', $instance_container = NULL ) {
 		// ALWAYS gets data from native tables
 		// get_post() wrapper
 		// loads metadata from native tables only
@@ -159,7 +159,7 @@ class CB_Query {
 		// Reset and Annotate
 		$post->cb2_redirected_post_request = $redirected_post_request;
 		$wpdb->posts = $old_wpdb_posts;
-		$post = self::ensure_correct_class( $post, TRUE ); // TRUE = prevent_auto_draft_publish_transition
+		$post = self::ensure_correct_class( $post, $instance_container, TRUE ); // TRUE = prevent_auto_draft_publish_transition
 
 		return $post;
 	}
@@ -171,45 +171,56 @@ class CB_Query {
 		return CB_User::factory( $wp_user->ID, $wp_user->user_login );
 	}
 
-	static function ensure_correct_classes( &$records, $prevent_auto_draft_publish_transition = FALSE ) {
-		// TODO: move static <Time class>::$all arrays on to the CB_Query
-		// so that several embedded queries can co-exist
-		// Currently, several queries happen in the page load (counts and things)
-		// which gives wrong results unless cleared each time:
-		CB_Week::$all = array();
+	static function ensure_correct_classes( &$posts, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE ) {
+		// TODO: Several embedded queries: move static <Time class>::$all arrays on to the $instance_container
+		// static CB_User::$all are ok, but CB_Time varies according to the query
+		// only a problem when using compare => view_mode
+		// Currently, if several DIFFERENT time queries happen in the page load
+		// the CB_Week::$all will have all of the times in
+		// However, this: will cause an error if no new CB_Week are generated:
+		//   CB_Week::$all = array();
 
 		// In place change the records
 		$post_classes = self::schema_types();
-		foreach ( $records as &$record )
-			$record = CB_Query::ensure_correct_class( $record, $prevent_auto_draft_publish_transition, $post_classes );
+		foreach ( $posts as &$post )
+			CB_Query::ensure_correct_class( $post, $instance_container = NULL, $prevent_auto_draft_publish_transition, $post_classes );
 
-		return $records;
+		return $posts;
   }
 
-	static function ensure_correct_class( &$record, $prevent_auto_draft_publish_transition = FALSE, $post_classes = NULL ) {
+	static function ensure_correct_class( &$post, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE, $post_classes = NULL ) {
     // Creation will aslo create the extra time based data structure
     global $post_save_processing;
 		if ( ! $post_classes ) $post_classes = self::schema_types();
 
-		if ( ! $record ) throw new Exception( 'ensure_correct_class() requires a valid object' );
+		if ( ! $post ) throw new Exception( 'ensure_correct_class() requires a valid object' );
 
-		if ( property_exists( $record, 'post_type' ) && isset( $post_classes[$record->post_type] ) ) {
-			$Class = $post_classes[$record->post_type];
+		if ( property_exists( $post, 'post_type' ) && isset( $post_classes[$post->post_type] ) ) {
+			$Class = $post_classes[$post->post_type];
 			// Do not re-create it if it already is!
-			if ( ! is_a( $record, $Class ) ) {
+			if ( ! is_a( $post, $Class ) ) {
 				if ( method_exists( $Class, 'factory_from_wp_post' ) ) {
 					$old_post_save_processing = $post_save_processing->auto_draft_publish_transition;
 					if ( $prevent_auto_draft_publish_transition )
 						$post_save_processing->auto_draft_publish_transition = FALSE;
-					$record = $Class::factory_from_wp_post( $record );
+					$post = $Class::factory_from_wp_post( $post, $instance_container );
 					$post_save_processing->auto_draft_publish_transition = $old_post_save_processing;
-					if ( is_null( $record ) )
+					if ( is_null( $post ) )
 						throw new Exception( "Failed to create [$Class] class from post" );
+
+					// Only cache set this if it is a fake native post
+					// pure pseudo classes like CB_Week are not accessed with get_post()
+					// thus caching is not relevant
+					$wp_cache = ( property_exists( $post, 'ID' ) && ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table ) );
+					if ( $wp_cache ) wp_cache_set( $post->ID, $post, 'posts' );
+
+					if ( WP_DEBUG && FALSE )
+						print( "<div class='cb2-WP_DEBUG-small'>Created a [$Class] for [$post->ID] wp_cache:[$wp_cache]</div>" );
 				}
 			}
 		}
 
-		return $record;
+		return $post;
 	}
 
 	static function get_post_types() {
