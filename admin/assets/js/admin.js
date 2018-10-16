@@ -42,8 +42,8 @@
 
 			switch ($(this).val()) {
 				case '__Null__': {
-					explanation.html('To create separate repeating slots see <b>Recurrence</b> below.'
-						+ 'For example: repeats Mon - Fri 8:00 - 18:00 should use Daily <b>Recurrence Type</b>'
+					explanation.html('To create separate repeating slots see <b>Recurrence</b> below. '
+						+ 'For example: repeats Mon - Fri 8:00 - 18:00 should use Daily <b>Recurrence Type</b> '
 						+ 'and Mon - Fri <b>Sequence</b>.');
 					break;
 				}

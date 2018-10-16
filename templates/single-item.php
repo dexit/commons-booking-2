@@ -25,7 +25,7 @@ $view_mode   = 'week'; // CB_Weeks
 // ask for item id AND anything without item ID
 
 $period_query = new WP_Query( array(
-	'post_status'    => CB2_PUBLISH,
+	'post_status'    => CB_Post::$PUBLISH,
 	// Although these PeriodItem-* are requested always
 	// The compare below will decide
 	// which generated CB_(Object) set will actually be the posts array

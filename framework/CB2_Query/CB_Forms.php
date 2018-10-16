@@ -106,7 +106,7 @@ class CB_Forms {
 				// TODO: disabled because WordPress escapes the %% as GUIDs
 				// CB_Database_Delete::factory( 'postmeta' )->add_condition( 'meta_key', '\_%%', $no_NULLs, 'LIKE' )->run();
 				// Remove all auto-drafts
-				CB_Database_Delete::factory( 'posts' )->add_condition( 'post_status', CB2_AUTODRAFT )->run();
+				CB_Database_Delete::factory( 'posts' )->add_condition( 'post_status', CB_Post::$AUTODRAFT )->run();
 				// Remove ALL non page/posts
 				CB_Database_Delete::factory( 'posts' )->add_condition( 'post_type', $post_types, $no_NULLs, 'IN', $no_prepare )->run();
 				// Clear up manual DRI

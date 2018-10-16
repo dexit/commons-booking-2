@@ -2,6 +2,7 @@
 /**
  * TODO: for template-tags use file template-tags.php?
  * similar with cb2_get_template_part.php?
+ * TODO: move all these in to static methods on CB_Template class?
  */
 
 // -------------------------------------------------------------------------------------
@@ -262,18 +263,6 @@ function is_list( $post = '' ) {
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
-// TODO: move functions to CB_Templates utilities files
-add_filter( 'the_content', 'cb2_the_content', 1 );
-//add_filter( 'the_content', 'cb2_template_include_custom_plugin_templates' );
-
-/*
-add_filter( "get_template_part_{$slug}", $slug, $name )
-add_action( 'get_template_part_template-parts/post/content', 'cb2_get_template_part', 10, 2 );
-function cb2_get_template_part( $slug, $name ) {
-	print( "cb2_get_template_part( $slug, $name )" );
-}
-*/
-
 function cb2_the_content( $content ) {
 	global $post;
 	if ( $post ) {
@@ -287,90 +276,9 @@ function cb2_the_content( $content ) {
 	}
 	return $content;
 }
+// TODO: move functions to CB_Templates utilities files
+add_filter( 'the_content', 'cb2_the_content', 1 );
 
 function cb2_template_path() {
 	return dirname( dirname( dirname( __FILE__ ) ) ) . '/templates';
 }
-
-function cb2_template_include_custom_plugin_templates( $content ) {
-	// Plugin provided default template partials
-	// CB_Class->templates() should provide templates in priority order
-	// e.g. $template = single-item.php (from theme or wordpress)
-	// $post->templates( wp_query ) = array( single-location.php, single.php )
-	// TODO: cache template dir listing
-	global $post;
-	$current_template_path = false;
-
-	if ( $post instanceof CB_PostNavigator ) {
-		if ( $current_template_path ) {
-			$current_template_stub     = substr( basename( $current_template_path ), 0, -4 );
-			// $current_is_theme_template = strstr( $current_template_path, 'content/themes/' );
-		}
-
-		// Get class templates and the current template suggestion
-		$post_template_suggestions = NULL;
-		$post_type                 = $post->post_type;
-
-		$context                   = CB_Query::template_loader_context();
-
-		if (is_single()) {
-			$context = "single";
-		} else {
-			$context = "list";
-		}
-
-			echo "context: " . $context;
-		$post_template_suggestions = $post->templates( $context );
-
-		// Read the plugin templates directory
-		// TODO: lazy cache this and check for contents:
-		// ! preg_match( '|Template Name:(.*)$|mi', file_get_contents( $full_path ), $header )
-		$plugin_templates   = array();
-		$templates_dir_path = cb2_template_path();
-		$templates_dir      = dir( $templates_dir_path );
-		while ( FALSE !== ( $template_name = $templates_dir->read() ) ) {
-			if ( substr( $template_name, -4 ) == '.php' && strchr( $template_name, '-' ) ) {
-				$template_stub = substr( $template_name, 0, -4 );
-				$plugin_templates[ $template_stub ] = "$templates_dir_path/$template_stub.php";
-			}
-		}
-
-		// For each priority order suggestion for this class and context
-		foreach ( $post_template_suggestions as $template_stub ) {
-			// 1) If the current template is already the priority suggestion then use it
-			if ( $current_template_path && $template_stub == $current_template_stub ) break;
-			// 2) If the plugin has a template for this priority suggesion then use it
-			else if ( isset( $plugin_templates[ $template_stub ] ) ) {
-				$current_template_path = $plugin_templates[ $template_stub ];
-				break;
-			}
-			// 3) Check for next priority
-		}
-
-
-
-
-	}
-
-	if ($current_template_path) {
-		ob_start ();
-        include $current_template_path;
-        $template = ob_get_contents ();
-        ob_end_clean();
-        $content .= $template;
-
-	}
-	return $content;
-
-
-}
-
-/*
-function cb2_form_elements( $form ) {
-  // Process all normal shortcodes in CF7 forms
-  // CF7 is not used for the booking form management now
-  // So this function is no longer necessary
-  return do_shortcode( $form );
-}
-add_filter( 'wpcf7_form_elements', 'cb2_form_elements' );
-*/

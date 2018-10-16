@@ -82,16 +82,20 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 		);
 	}
 
-  public function __construct(
-		$ID,
-    $name,
-    $colour,
-    $opacity,
-    $priority,
-    $return,
-    $collect,
-    $use,
-    $system
+  protected function __construct(
+		// With PeriodStatusTypes we also want to
+		// assume the existing ones, by id
+		// rather than load them completely from the Database
+		// thus creation by id is allowed without futher parameters
+		$ID        = CB2_CREATE_NEW,
+    $name      = NULL,
+    $colour    = NULL,
+    $opacity   = NULL,
+    $priority  = NULL,
+    $return    = NULL,
+    $collect   = NULL,
+    $use       = NULL,
+    $system    = NULL
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 		$this->system     = $system;
@@ -100,7 +104,7 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
     $this->post_title = $name;
 		$this->post_type  = self::$static_post_type;
 
-		if ( ! is_null( $ID ) ) self::$all[$ID] = $this;
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) self::$all[$ID] = $this;
   }
 
   static function &factory_from_wp_post( $post, $instance_container = NULL ) {
@@ -125,32 +129,35 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 		return $object;
 	}
 
-
   static function &factory(
-		$ID,
-    $name,
-    $colour,
-    $opacity,
-    $priority,
-    $return,
-    $collect,
-    $use,
-    $system
+		// With PeriodStatusTypes we also want to
+		// assume the existing ones, by id
+		// rather than load them completely from the Database
+		// thus creation by id is allowed without futher parameters
+		$ID        = CB2_CREATE_NEW,
+    $name      = NULL,
+    $colour    = NULL,
+    $opacity   = NULL,
+    $priority  = NULL,
+    $return    = NULL,
+    $collect   = NULL,
+    $use       = NULL,
+    $system    = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-    if ( ! is_null( $ID ) &&  isset( self::$all[$ID] ) )
+    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) )
 			$object = self::$all[$ID];
     else {
-      $Class = 'CB_PeriodStatusType';
+      $Class = 'CB_UserPeriodStatusType';
       $id    = CB_Query::id_from_ID_with_post_type( $ID, CB_PeriodStatusType::$static_post_type );
       // Hardcoded system status types
       switch ( $id ) {
-        case CB2_PERIOD_STATUS_TYPE_AVAILABLE: $Class = 'CB_PeriodStatusType_Available'; break;
-        case CB2_PERIOD_STATUS_TYPE_BOOKED:    $Class = 'CB_PeriodStatusType_Booked';    break;
-        case CB2_PERIOD_STATUS_TYPE_CLOSED:    $Class = 'CB_PeriodStatusType_Closed';    break;
-        case CB2_PERIOD_STATUS_TYPE_OPEN:      $Class = 'CB_PeriodStatusType_Open';      break;
-        case CB2_PERIOD_STATUS_TYPE_REPAIR:    $Class = 'CB_PeriodStatusType_Repair';    break;
-        case CB2_PERIOD_STATUS_TYPE_HOLIDAY:   $Class = 'CB_PeriodStatusType_Holiday';   break;
+        case CB_PeriodStatusType_Available::$id: $Class = 'CB_PeriodStatusType_Available'; break;
+        case CB_PeriodStatusType_Booked::$id:    $Class = 'CB_PeriodStatusType_Booked';    break;
+        case CB_PeriodStatusType_Closed::$id:    $Class = 'CB_PeriodStatusType_Closed';    break;
+        case CB_PeriodStatusType_Open::$id:      $Class = 'CB_PeriodStatusType_Open';      break;
+        case CB_PeriodStatusType_Repair::$id:    $Class = 'CB_PeriodStatusType_Repair';    break;
+        case CB_PeriodStatusType_Holiday::$id:   $Class = 'CB_PeriodStatusType_Holiday';   break;
       }
 
 			$reflection = new ReflectionClass( $Class );
@@ -228,36 +235,109 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 
 CB_Query::register_schema_type( 'CB_PeriodStatusType' );
 
+
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodStatusType_Available extends CB_PeriodStatusType {
+class CB_UserPeriodStatusType extends CB_PeriodStatusType {
 	public function __construct(...$args) {
-		call_user_func_array( array( get_parent_class(), '__construct' ), func_get_args() );
+		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
 }
-class CB_PeriodStatusType_Booked    extends CB_PeriodStatusType {
+
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+class CB_SystemPeriodStatusType extends CB_PeriodStatusType {
+	// These can be instanciated in 2 ways:
+	//   load from DB: from a wp_post, with all its arguments
+	//   save to DB:   from code to indicate the period status type to save
+	// period_status_type_id is FIXED in the DB
+	// so they are referred to by id
+	protected function __construct(...$args) {
+		if ( ! count( $args ) )
+			throw new Exception( 'CB_SystemPeriodStatusType requires an ID' );
+		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
+		if ( $this->ID == CB2_CREATE_NEW )
+			throw new Exception( 'CB_SystemPeriodStatusType cannot be CB2_CREATE_NEW' );
+		if ( $this->id() != $this::$id )
+			throw new Exception( 'CB_SystemPeriodStatusType id is incorrect' );
+		$this->system = TRUE;
+	}
+}
+
+
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+class CB_PeriodStatusType_Available extends CB_SystemPeriodStatusType {
+	static $id = 1;
 	public function __construct(...$args) {
-		call_user_func_array( array( get_parent_class(), '__construct' ), func_get_args() );
+		if ( ! count( $args ) ) {
+			// No ID sent through: created for save, without arguments
+			$ID   = CB_PostNavigator::ID_from_id_post_type( self::$id, CB_PeriodStatusType::$static_post_type );
+			$args = array( $ID );
+		}
+		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
 }
-class CB_PeriodStatusType_Closed    extends CB_PeriodStatusType {
+
+class CB_PeriodStatusType_Booked    extends CB_SystemPeriodStatusType {
+	static $id = 2;
 	public function __construct(...$args) {
-		call_user_func_array( array( get_parent_class(), '__construct' ), func_get_args() );
+		if ( ! count( $args ) ) {
+			// No ID sent through: created for save, without arguments
+			$ID   = CB_PostNavigator::ID_from_id_post_type( self::$id, CB_PeriodStatusType::$static_post_type );
+			$args = array( $ID );
+		}
+		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
 }
-class CB_PeriodStatusType_Open      extends CB_PeriodStatusType {
+
+class CB_PeriodStatusType_Closed    extends CB_SystemPeriodStatusType {
+	static $id = 3;
 	public function __construct(...$args) {
-		call_user_func_array( array( get_parent_class(), '__construct' ), func_get_args() );
+		if ( ! count( $args ) ) {
+			// No ID sent through: created for save, without arguments
+			$ID   = CB_PostNavigator::ID_from_id_post_type( self::$id, CB_PeriodStatusType::$static_post_type );
+			$args = array( $ID );
+		}
+		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
 }
-class CB_PeriodStatusType_Repair    extends CB_PeriodStatusType {
-	public function __construct() {
-		call_user_func_array( array( get_parent_class(), '__construct' ), func_get_args() );
+
+class CB_PeriodStatusType_Open      extends CB_SystemPeriodStatusType {
+	static $id = 4;
+	public function __construct(...$args) {
+		if ( ! count( $args ) ) {
+			// No ID sent through: created for save, without arguments
+			$ID   = CB_PostNavigator::ID_from_id_post_type( self::$id, CB_PeriodStatusType::$static_post_type );
+			$args = array( $ID );
+		}
+		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
 }
-class CB_PeriodStatusType_Holiday   extends CB_PeriodStatusType {
-	public function __construct() {
-		call_user_func_array( array( get_parent_class(), '__construct' ), func_get_args() );
+
+class CB_PeriodStatusType_Repair    extends CB_SystemPeriodStatusType {
+	static $id = 5;
+	public function __construct(...$args) {
+		if ( ! count( $args ) ) {
+			// No ID sent through: created for save, without arguments
+			$ID   = CB_PostNavigator::ID_from_id_post_type( self::$id, CB_PeriodStatusType::$static_post_type );
+			$args = array( $ID );
+		}
+		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
+	}
+}
+
+class CB_PeriodStatusType_Holiday   extends CB_SystemPeriodStatusType {
+	static $id = 6;
+	public function __construct(...$args) {
+		if ( ! count( $args ) ) {
+			// No ID sent through: created for save, without arguments
+			$ID   = CB_PostNavigator::ID_from_id_post_type( self::$id, CB_PeriodStatusType::$static_post_type );
+			$args = array( $ID );
+		}
+		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
 }

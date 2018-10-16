@@ -140,6 +140,14 @@ body .cb2-description {
 .cb2-calendar-krumo-show {
 	cursor:pointer;
 }
+
+.cb2-column-pagination {
+	float:right;
+}
+.cb2-column-actions {
+	float:left;
+}
+
 body.wp-admin .cb2-disabled,
 body.wp-admin .cb2-disabled span {
 	text-decoration:none;

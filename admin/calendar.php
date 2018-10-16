@@ -21,7 +21,7 @@ $extended_class   = ( isset( $_GET['extended'] ) ? '' : 'none' );
 // --------------------------------------- Query
 $meta_query       = array();
 $meta_query_items = array();
-$post_status      = array( CB2_PUBLISH );
+$post_status      = array( CB_Post::$PUBLISH );
 if ( $location_ID )
 	$meta_query_items[ 'location_clause' ] = array(
 		'key' => 'location_ID',

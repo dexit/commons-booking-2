@@ -60,7 +60,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
     parent::__construct();
 
-    if ( ! is_null( $ID ) ) self::$all[$ID] = $this;
+    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) self::$all[$ID] = $this;
   }
 
   static function factory_subclass(
@@ -233,8 +233,16 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 		return $name_value;
 	}
 
+	function period_status_type() {
+		return $this->period_entity->period_status_type;
+	}
+
+	function period_status_type_id() {
+		return ( $this->period_status_type() ? $this->period_status_type()->id() : NULL );
+	}
+
 	function period_status_type_name() {
-		return $this->period_entity->period_status_type->name;
+		return ( $this->period_status_type() ? $this->period_status_type()->name : NULL );
 	}
 
 	function get_the_time_period( $format = 'H:i' ) {
@@ -383,7 +391,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -464,7 +472,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) &&  isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -542,7 +550,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -641,7 +649,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -760,7 +768,7 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );

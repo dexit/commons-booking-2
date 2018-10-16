@@ -5,6 +5,25 @@
 		// console.log(pn_js_vars.alert);
 
 		$(document).ready(function(){
+			$('.cb2-template-available').click(function(e){
+				var checkbox      = $(this).children('.cb2-perioditem-selector');
+				var cssClass      = $(this).attr('class').trim();
+				var target        = $(e.target);
+				var clicked_input = (target.is(checkbox));
+				var is_checked    = checkbox.attr('checked');
+
+				// The default checkbox event will check the checkbox
+				// AFTER this action
+				if (clicked_input) is_checked = !is_checked;
+
+				if (is_checked) {
+					if (!clicked_input) checkbox.removeAttr('checked');
+					$(this).attr( 'class', cssClass.replace(/cb2-booked/, '') );
+				} else {
+					if (!clicked_input) checkbox.attr('checked', '1');
+					$(this).attr( 'class', cssClass + ' cb2-booked' );
+				}
+			});
 
 			window.cb2 = {}; // global commons booking object
 
@@ -46,7 +65,7 @@
 					html += '</ul></div>';
 
 					template.innerHTML = html;
-					
+
 					tippy('#' + template.id, {
 						appendTo : document.querySelector('.cb-calendar-grouped'),
 						arrow : true,
@@ -57,8 +76,8 @@
 					}); // need to polyfill MutationObserver for IE10 if planning to use dynamicTitle
 
 				});
-				
-				
+
+
 
 			};
 

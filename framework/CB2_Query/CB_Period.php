@@ -166,12 +166,12 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 
 	static function metabox_show_when_published() {
 		global $post;
-		return ( $post && $post->post_status == CB2_PUBLISH );
+		return ( $post && $post->post_status == CB_Post::$PUBLISH );
 	}
 
 	static function metabox_closed_when_published() {
 		global $post;
-		return ( $post && $post->post_status == CB2_PUBLISH );
+		return ( $post && $post->post_status == CB_Post::$PUBLISH );
 	}
 
 	static function cmb2_override_recurrence_sequence_meta_value( $data, $object_id, $a, $field ) {
@@ -263,7 +263,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		$period_group_IDs = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -298,7 +298,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 					&& $this->datetime_part_period_end->format(   'H:i:s' ) == '18:00:00'
 				 );
 
-    if ( ! is_null( $ID ) ) self::$all[$ID] = $this;
+    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) self::$all[$ID] = $this;
   }
 
   function not_used() {

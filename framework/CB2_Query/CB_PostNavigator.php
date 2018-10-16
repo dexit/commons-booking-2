@@ -1,21 +1,26 @@
 <?php
 class CB_PostNavigator {
   protected function __construct( &$posts = NULL ) {
-    $this->zeros = array();
+    $this->zeros = array(); // TODO: re-evaluate this: does it collect stuff?
     if ( is_null( $posts ) ) $this->posts = &$this->zeros;
     else                     $this->posts = &$posts;
 
     // WP_Post default values
-    if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB2_PUBLISH;
+    if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB_Post::$PUBLISH;
     if ( ! property_exists( $this, 'post_password' ) ) $this->post_password = '';
     if ( ! property_exists( $this, 'post_author' ) )   $this->post_author   = 1;
     if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( CB_Query::$datetime_format );
     if ( ! property_exists( $this, 'post_modified' ) ) $this->post_modified = date( CB_Query::$datetime_format );
-    if ( ! property_exists( $this, 'post_excerpt' ) )  $this->post_excerpt  = $this->get_the_excerpt();
-    if ( ! property_exists( $this, 'post_content' ) )  $this->post_content  = $this->get_the_content();
     if ( ! property_exists( $this, 'post_date_gmt' ) ) $this->post_date_gmt = $this->post_date;
     if ( ! property_exists( $this, 'post_modified_gmt' ) ) $this->post_modified_gmt = $this->post_modified;
 		if ( ! property_exists( $this, 'filter' ) )        $this->filter = 'suppress'; // Prevent WP_Query from converting objects to WP_Post
+		// We do not populate these here,
+		// they would be called explicitly
+		// populating them can cause loops
+		// because get_the_content() can also __contruct() this
+		// indirectly through contruct things that has-a
+    if ( ! property_exists( $this, 'post_excerpt' ) )  $this->post_excerpt  = NULL; //$this->get_the_excerpt();
+    if ( ! property_exists( $this, 'post_content' ) )  $this->post_content  = NULL; //$this->get_the_content();
 
     // This will cause subsequent WP_Post::get_instance() calls to return $this
     // rather than attempting to access the wp_posts table
@@ -33,7 +38,6 @@ class CB_PostNavigator {
 	}
 
   function get_the_debug( $before = '', $after = '', $depth = 0, $object_ids = array() ) {
-		global $CB2_POST_PROPERTIES;
 		$classname = get_class( $this );
 
 		if ( isset( $object_ids[$this->ID] ) ) {
@@ -48,7 +52,7 @@ class CB_PostNavigator {
 			$debug .= "<li class='cb2-classname'>$classname:</li>";
 			foreach ( $this as $name => $value ) {
 				if ( $name
-					&& ( ! isset( $CB2_POST_PROPERTIES[$name] ) || $CB2_POST_PROPERTIES[$name] )
+					&& ( ! isset( CB_Post::$POST_PROPERTIES[$name] ) || CB_Post::$POST_PROPERTIES[$name] )
 					&& ( ! in_array( $name, array( 'zeros', 'post_type' ) ) )
 				) {
 					if      ( $value instanceof DateTime ) $value = $value->format( CB_Query::$datetime_format );
@@ -100,6 +104,32 @@ class CB_PostNavigator {
 		wp_cache_set( $post->ID, $post, 'posts' );
     $this->setup_postdata( $post );
     return $post;
+  }
+
+  function set_create_new( $name = NULL, $deep = TRUE, Array $args = NULL ) {
+		// Set all IDs to CB2_CREATE_NEW so the whole object is re-created
+		// ready for saving
+		$copy = clone $this;
+		$copy->ID = CB2_CREATE_NEW;
+		if ( $name ) $copy->name = $name;
+		if ( is_array( $args ) )
+			foreach ( $args as $property_name => $value )
+				$copy->$property_name = $value;
+
+		if ( $deep ) {
+			foreach ( $copy as &$value ) {
+				if ( is_array( $value ) ) {
+					foreach ( $value as &$value2 ) {
+						if ( is_object( $value2 ) && method_exists( $value2, 'set_create_new' ) )
+							$value2 = $value2->set_create_new( $name );
+					}
+				} else if ( is_object( $value ) && method_exists( $value, 'set_create_new' ) ) {
+					$value = $value->set_create_new( $name );
+				}
+			}
+		}
+
+		return $copy;
   }
 
   // ------------------------------------------------- Properties
@@ -273,9 +303,42 @@ class CB_PostNavigator {
 		return '';
   }
 
-  function get_the_content() {
+	function get_the_after_content() {
 		return '';
-  }
+	}
+
+	function process_form( $action, $values, $user = NULL ) {
+		$html ='';
+		$handler_function = "process_form_{$action}";
+		if ( method_exists( $this, $handler_function ) ) {
+			// $_POST has happened for this item
+			$html = $this->$handler_function( $action, $values, $user );
+		} else if ( WP_DEBUG ) throw new Exception( "handler [$handler_function] not found" );
+		return $html;
+	}
+
+	function get_the_content() {
+		static $form_content = NULL; // Ensure this happens only once
+		$content = '';
+
+		if ( is_null( $form_content ) ) {
+			if ( $this->is_controller() ) {
+				$action   = ( isset( $_POST['action'] ) ? $_POST['action'] : NULL );
+				$user     = CB_User::factory_current();
+				$values   = array();
+				foreach ( $_POST as $name => $value ) {
+					$interpret_func = 'post_' . preg_replace( '/[^a-zA-Z0-9_]/', '_', $name ). '_interpret';
+					$values[$name]  = ( method_exists( $this, $interpret_func ) ? $this->$interpret_func( $value ) : $value );
+				}
+				$form_content = $this->process_form( $action, $values, $user );
+			}
+		}
+		$content .= $form_content;
+
+		if ( property_exists( $this, 'post_content' ) ) $content .= $this->post_content;
+		$content .= $this->get_the_after_content();
+		return $content;
+	}
 
   function classes() {
 		return '';
@@ -285,12 +348,11 @@ class CB_PostNavigator {
   function post_meta() {
 		// Default to this
 		// post_updated will sanitize the list against the database table columns and types
-		global $CB2_POST_PROPERTIES;
 		$meta = array();
 
 		foreach ( $this as $name => $value ) {
 			if ( ! is_null( $value )
-				&& ! isset( $CB2_POST_PROPERTIES[$name] )
+				&& ! isset( CB_Post::$POST_PROPERTIES[$name] )
 				&& ! in_array( $name, array( 'zeros', 'posts' ) ) // Inherited
 			) {
 				// meta value will get serialised if it is not a string
@@ -301,48 +363,40 @@ class CB_PostNavigator {
 		return $meta;
 	}
 
-	function post_auto_draft_args() {
-		return array(
-			'post_status' => CB2_AUTODRAFT,
-			'post_type'   => $this->post_type(),
-		);
-	}
-
-  function post_args() {
-		// Taken from https://developer.wordpress.org/reference/functions/wp_insert_post/
-		$args = array(
-			'post_title'  => ( property_exists( $this, 'name' ) ? $this->name : '' ),
-			'post_status' => CB2_PUBLISH,
-			'post_type'   => $this->post_type(),
-			// 'meta_input'  => $this->post_meta(), // We are using CMB2
-
-			/*
-			'post_author' => 1,
-			'post_content' => '',
-			'post_content_filtered' => '',
-			'post_excerpt' => '',
-			'comment_status' => '',
-			'ping_status' => '',
-			'post_password' => '',
-			'to_ping' =>  '',
-			'pinged' => '',
-			'post_parent' => 0,
-			'menu_order' => 0,
-			'guid' => '',
-			'import_id' => 0,
-			'context' => '',
-			*/
-		);
-
-		if ( property_exists( $this, 'ID' ) && $this->ID )
-			$args[ 'ID' ] = $this->ID;
-
-		return $args;
+  function is_controller() {
+		$is_controller = FALSE;
+		if ( ! property_exists( $this, '_was_controller' ) ) {
+			if ( isset( $_POST['controller'] ) && isset( $_POST['ID'] ) ) {
+				$controller    = $_POST['controller'];
+				$_POST_ID      = $_POST['ID'];
+				$Class         = get_class( $this );
+				$is_controller = ( $controller == $Class && $_POST_ID == $this->ID );
+				$this->_was_controller = TRUE;
+			}
+		}
+		return $is_controller;
   }
 
   function id( $why = '' ) {
 		return CB_Query::id_from_ID_with_post_type( $this->ID, $this->post_type() );
   }
+
+	function post_perioditem_user_IDs_interpret( $perioditem_user_IDs ) {
+		return $this->get_posts_with_type( $perioditem_user_IDs, 'perioditem-user' );
+	}
+
+	function post_perioditem_timeframe_IDs_interpret( $perioditem_timeframe_IDs ) {
+		return $this->get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-timeframe' );
+	}
+
+	function get_posts_with_type( $post_IDs, $post_type ) {
+		$objects = array();
+		foreach ( $post_IDs as $post_ID ) {
+			$object = CB_Query::get_post_with_type( $post_type, $post_ID );
+			array_push( $objects, $object );
+		}
+		return $objects;
+	}
 
 	static function ID_from_id_post_type( $id, $post_type ) {
 		// NULL return indicates that this post_type is not governed by CB2
@@ -376,7 +430,7 @@ class CB_PostNavigator {
 		// TODO: change the CB2_CREATE_NEW to be independent from the text in the select box!!!!
 		// Linking of 1-many sub-dependencies, e.g. PeriodGroup => Period,
 		// should be done in post_post_update()
-		global $CB2_POST_PROPERTIES, $post_save_processing;
+		global $post_save_processing;
 
 		foreach ( $post_save_processing as $name => $value ) {
 			$is_ID = ( substr( $name, -3 ) == '_ID' || substr( $name, -4 ) == '_IDs' );
@@ -395,9 +449,9 @@ class CB_PostNavigator {
 
 						// Construct the new input data for the new CB2_Object
 						// leave $new_post->ID so that create is triggered
-						// leave $new_post->post_status = CB2_PUBLISH because save() manages that
+						// leave $new_post->post_status = CB_Post::$PUBLISH because save() manages that
 						$new_post = new WP_Post( $post_save_processing );
-						foreach ( $CB2_POST_PROPERTIES as $this_name => $native_relevant ) {
+						foreach ( CB_Post::$POST_PROPERTIES as $this_name => $native_relevant ) {
 							if ( $native_relevant ) $new_post->$this_name = $this->$this_name;
 						}
 						$new_post->post_type = $post_type;

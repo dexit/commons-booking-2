@@ -83,6 +83,45 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		return $object;
 	}
 
+  protected static function factory_from_periodentity(
+		CB_PeriodEntity $periodentity,
+		$new_periodentity_Class,
+		$new_period_status_type_Class,
+		$name = NULL,
+
+		$copy_period_group = TRUE,
+		CB_Location $location = NULL,
+		CB_Item $item = NULL,
+		CB_User $user = NULL
+	) {
+		// PeriodGroup, Period and refrences
+		$period_group  = NULL;
+		if ( $copy_period_group ) {
+			// set_create_new() will recursively set IDs to CB2_CREATE_NEW
+			// thus saving will recursively create new versions
+			// of all dependent sub-objects
+			$period_group = $periodentity->period_group->set_create_new( $name );
+		} else {
+			// Linking means that:
+			// changing the original availability period will change the booking as well!
+			$period_group = $periodentity->period_group;
+		}
+
+		// new PeriodEntity
+		$new_period_entity = $new_periodentity_Class::factory(
+			CB2_CREATE_NEW,
+			$name,
+			$period_group,
+			new $new_period_status_type_Class(),
+
+			( $location ? $location : $periodentity->location ),
+			( $item     ? $item     : $periodentity->item ),
+			( $user     ? $user     : $periodentity->user )
+		);
+
+		return $new_period_entity;
+  }
+
   static function &factory(
 		$ID,
     $name,
@@ -95,7 +134,7 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		$user     = NULL
 	) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -265,7 +304,7 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
 		$user     = NULL
 	) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -343,7 +382,7 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -427,7 +466,7 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -522,7 +561,7 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -530,6 +569,25 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
     }
 
     return $object;
+  }
+
+  static function factory_booked_from_available_timeframe( CB_PeriodEntity_Timeframe $periodentity_available, CB_User $user, $name = 'booking', $copy_period_group = TRUE ) {
+		if ( ! $periodentity_available->period_status_type instanceof CB_PeriodStatusType_Available )
+			throw new Exception( 'Tried to morph into periodentity-user from non-available status [' . $periodentity_available->period_status_type->name . ']' );
+		if ( ! $user )
+			throw new Exception( 'Tried to morph into periodentity-user without user]' );
+
+		return CB_PeriodEntity::factory_from_periodentity(
+			$periodentity_available,
+			CB_PeriodEntity_Timeframe_User,
+			CB_PeriodStatusType_Booked,
+			$name,
+
+			$copy_period_group,
+			NULL, // Copy location from $periodentity_available
+			NULL, // Copy location from $periodentity_available
+			$user
+		);
   }
 
   public function __construct(

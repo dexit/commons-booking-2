@@ -60,7 +60,7 @@ function cb2_admin_pages() {
 			'menu_title'    => 'Holidays',
 			'wp_query_args' => 'post_type=periodent-global&period_status_type_ID=100000006&post_title=Holidays',
 			'description'   => 'Edit the global holidays, and holidays for specific locations.',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups where period_status_type_id = " . CB2_PERIOD_STATUS_TYPE_HOLIDAY,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups where period_status_type_id = " . CB_PeriodStatusType_Holiday::$id,
 		),
 		'cb2-items'         => array(
 			'page_title' => 'Items',
@@ -72,7 +72,7 @@ function cb2_admin_pages() {
 			'page_title' => 'Repairs %(for)% %location_ID% %item_ID%',
 			'menu_title' => 'Repairs',
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000005',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups where period_status_type_id = " . CB2_PERIOD_STATUS_TYPE_REPAIR,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups where period_status_type_id = " . CB_PeriodStatusType_Repair::$id,
 			'count_class'   => 'warning',
 		),
 		'cb2-locations'     => array(
@@ -85,14 +85,14 @@ function cb2_admin_pages() {
 			'page_title' => 'Opening Hours %(for)% %location_ID%',
 			'menu_title' => 'Opening Hours',
 			'wp_query_args' => 'post_type=periodent-location&recurrence_type=D&recurrence_type_show=no&period_status_type_ID=100000004&post_title=Opening Hours %(for)% %location_ID%',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where period_status_type_id = " . CB2_PERIOD_STATUS_TYPE_OPEN,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where period_status_type_id = " . CB_PeriodStatusType_Open::$id,
 		),
 		'cb2-timeframes'    => array(
 			'indent'      => 1,
 			'page_title' => 'Item availibility %(for)% %location_ID%',
 			'menu_title' => 'Item Availibility',
 			'wp_query_args' => 'post_type=periodent-timeframe&period_status_type_ID=100000001',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where period_status_type_id = " . CB2_PERIOD_STATUS_TYPE_AVAILABLE,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where period_status_type_id = " . CB_PeriodStatusType_Available::$id,
 		),
 		'cb2-bookings'    => array(
 			'indent'      => 1,

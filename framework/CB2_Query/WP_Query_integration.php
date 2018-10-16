@@ -110,15 +110,15 @@ add_filter( 'loop_start',       'cb2_loop_start' );
 
 // --------------------------------------------- Custom post types and templates
 add_action( 'init', 'cb2_init_register_post_types' );
-add_action( 'wp_enqueue_scripts', 'cb2_init_temp_debug_enqueue' );
-add_action( 'admin_enqueue_scripts', 'cb2_init_temp_debug_enqueue' );
+add_action( 'wp_enqueue_scripts',    'cb2_wp_enqueue_scripts' );
+add_action( 'admin_enqueue_scripts', 'cb2_admin_enqueue_scripts' );
 
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // Update/Delete integration
 function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
-	global $post_save_processing, $CB2_POST_PROPERTIES;
+	global $post_save_processing;
 
 	$consider_empty_post = FALSE;
 	$post_id     = ( isset( $postarr['ID'] ) ? $postarr['ID'] : NULL );
@@ -139,7 +139,7 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 					/* TODO: post_save_processing for pre_post_update()
 					if ( CB2_DEBUG_SAVE ) krumo( $postarr );
 					foreach ( $postarr as $name => $value ) {
-						if ( ! isset( $CB2_POST_PROPERTIES[ $name ] ) ) {
+						if ( ! isset( CB_Post::$POST_PROPERTIES[ $name ] ) ) {
 							$is_system_meta = ( substr( $name, 0, 1 ) == '_' );
 							if ( ! $is_system_meta ) {
 								$post_save_processing->$name = CB_Query::to_object( $name, $value );
@@ -194,7 +194,7 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 	//		 foreach ( $postarr['meta_input'] as $field => $value ) {
 	//	 	 	 update_post_meta( $post_ID, $field, $value );
 	//		 }
-	global $CB2_POST_PROPERTIES, $post_save_processing;
+	global $post_save_processing;
 	$native_ID = NULL;
 
 	if ( $post_save_processing->auto_draft_publish_transition ) {
@@ -212,7 +212,7 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// for later actions to use
 				$metadata = get_metadata( 'post', $post->ID );
 				foreach ( $metadata as $name => $value_array ) {
-					if ( ! isset( $CB2_POST_PROPERTIES[ $name ] ) ) {
+					if ( ! isset( CB_Post::$POST_PROPERTIES[ $name ] ) ) {
 						$is_system_meta = ( substr( $name, 0, 1 ) == '_' );
 
 						// Because we are defaulting to SINGLE
@@ -414,13 +414,18 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // Framework integration
-function cb2_init_temp_debug_enqueue() {
+function cb2_wp_enqueue_scripts() {
 	// TODO: re-enable CB_Enqueue
-	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-admin',  plugins_url( 'admin/assets/css/admin.css',   CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+	wp_enqueue_script(  CB2_TEXTDOMAIN . '-plugin-scripts-public', plugins_url( 'public/assets/js/public.js', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+	add_thickbox();
+}
+
+function cb2_admin_enqueue_scripts() {
+	// TODO: re-enable CB_Admin_Enqueue
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-cmb2',   plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 
-	add_thickbox(); // TODO: should this be here?
+	add_thickbox();
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {

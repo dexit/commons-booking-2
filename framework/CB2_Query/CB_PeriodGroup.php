@@ -65,7 +65,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		$periods = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && isset( self::$all[$ID] ) ) {
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -82,7 +82,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 		parent::__construct( $this->periods );
-		if ( ! is_null( $ID ) ) self::$all[$ID] = $this;
+		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) self::$all[$ID] = $this;
   }
 
   function add_period( $period ) {
@@ -112,7 +112,9 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 				print( ' | <a class="cb2-todo" href="admin.php?page=cb2-periods">attach existing period</a>' );
 				break;
 			case 'entities':
-				$wp_query = new WP_Query( array(
+				$wp_query_page_name = "paged-column-$column";
+				$current_page       = ( isset( $_GET[$wp_query_page_name] ) ? $_GET[$wp_query_page_name] : 1 );
+				$wp_query           = new WP_Query( array(
 					'post_type'   => array( 'periodent-global', 'periodent-location', 'periodent-timeframe', 'periodent-user' ),
 					'meta_query'  => array(
 						'period_group_ID_clause' => array(
@@ -120,6 +122,8 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 							'value' => $this->ID,
 						),
 					),
+					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
+					'page'           => $current_page,
 				) );
 
 				if ( $wp_query->have_posts() ) {
@@ -129,6 +133,13 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 				} else {
 					print( '<div>' . __( 'No Entities' ) . '</div>' );
 				}
+
+				print( '<div class="cb2-column-pagination">' . paginate_links( array(
+					'base'         => 'admin.php%_%',
+					'total'        => $wp_query->max_num_pages,
+					'current'      => $current_page,
+					'format'       => "?$wp_query_page_name=%#%",
+				) ) . '</div>' );
 				break;
 		}
 	}

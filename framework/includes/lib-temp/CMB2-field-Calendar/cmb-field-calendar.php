@@ -63,7 +63,7 @@ class CMB2_Field_Calendar {
 
         // Defaults
         $default_query    = array(
-					'post_status'    => CB2_PUBLISH,
+					'post_status'    => CB_Post::$PUBLISH,
 					'post_type'      => CB_PeriodItem::$all_post_types,
 					'posts_per_page' => -1,
 					'order'          => 'ASC',          // defaults to post_date

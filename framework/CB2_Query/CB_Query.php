@@ -13,50 +13,13 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE', WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
-
-// -------------------------------------------- System PERIOD_STATUS_TYPEs
-// a database trigger prevents deletion of these
-define( 'CB2_PERIOD_STATUS_TYPE_AVAILABLE', 1 );
-define( 'CB2_PERIOD_STATUS_TYPE_BOOKED',    2 );
-define( 'CB2_PERIOD_STATUS_TYPE_CLOSED',    3 ); // For overriding CB2_PERIOD_STATUS_TYPE_OPEN
-define( 'CB2_PERIOD_STATUS_TYPE_OPEN',      4 );
-define( 'CB2_PERIOD_STATUS_TYPE_REPAIR',    5 );
-define( 'CB2_PERIOD_STATUS_TYPE_HOLIDAY',   6 );
+define( 'CB2_DEBUG_SAVE', WP_DEBUG && ! defined( 'DOING_AJAX' ) && TRUE );
 
 // Native post create process
-// TODO: Remove dependency on -- create new -- text
+// TODO: Remove dependency on -- create new -- text!!!!
 define( 'CB2_CREATE_NEW',       '-- create new --' );
 define( 'CB2_ALLOW_CREATE_NEW', TRUE ); // Allows CB2_CREATE_NEW to be passed as a numeric ID
-define( 'CB2_PUBLISH',          'publish' );
-define( 'CB2_AUTODRAFT',        'auto-draft' );
-global $CB2_POST_PROPERTIES;
-$CB2_POST_PROPERTIES = array(
-	'ID' => FALSE,
-	'post_author' => TRUE,     // TRUE == Relevant to native records
-	'post_date' => TRUE,
-	'post_date_gmt' => FALSE,
-	'post_content' => TRUE,
-	'post_title' => TRUE,
-	'post_excerpt' => FALSE,
-	'post_status' => FALSE,
-	'comment_status' => FALSE,
-	'ping_status' => FALSE,
-	'post_password' => FALSE,
-	'post_name' => TRUE,
-	'to_ping' => FALSE,
-	'pinged' => FALSE,
-	'post_modified' => TRUE,
-	'post_modified_gmt' => FALSE,
-	'post_content_filtered' => FALSE,
-	'post_parent' => FALSE,
-	'guid' => FALSE,
-	'menu_order' => FALSE,
-	'post_type' => TRUE,
-	'post_mime_type' => FALSE,
-	'comment_count' => FALSE,
-	'filter' => FALSE,
-);
+define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
@@ -360,7 +323,7 @@ class CB_Query {
 					} else {
 						if ( $postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) ) {
 							$wpdb->$meta_table_stub = "$wpdb->prefix$postmeta_table";
-							if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>redirecting to " . $wpdb->$meta_table_stub . " for [$post_type]</div>" );
+							if ( WP_DEBUG && FALSE ) print( "<div class='cb2-WP_DEBUG-small'>redirecting to " . $wpdb->$meta_table_stub . " for [$post_type]</div>" );
 						}
 					}
 
@@ -563,21 +526,19 @@ class CB_Query {
 	static function copy_all_wp_post_properties( $post, $object, $overwrite = TRUE ) {
 		// Important to overwrite
 		// because these objects are CACHED
-		global $CB2_POST_PROPERTIES;
-
 		if ( is_null( $post ) )       throw new Exception( 'copy_all_wp_post_properties( $post null )' );
 		if ( is_array( $post ) )      throw new Exception( 'copy_all_wp_post_properties( $post is an array )' );
 		if ( ! is_object( $post ) )   throw new Exception( 'copy_all_wp_post_properties( $post not an object )' );
 		if ( ! is_object( $object ) ) throw new Exception( 'copy_all_wp_post_properties( $object not an object )' );
 
 		if ( WP_DEBUG ) {
-			foreach ( $CB2_POST_PROPERTIES as $name => $native_relevant )
+			foreach ( CB_Post::$POST_PROPERTIES as $name => $native_relevant )
 				if ( ! property_exists( $post, $name ) )
 					throw new Exception( "WP_Post->[$name] does not exist on source post" );
 		}
 
 		foreach ( $post as $name => $from_value ) {
-			$wp_is_post_property = isset( $CB2_POST_PROPERTIES[$name] );
+			$wp_is_post_property = isset( CB_Post::$POST_PROPERTIES[$name] );
 			if ( $wp_is_post_property ) {
 				try {
 					$new_value = self::to_object( $name, $from_value );
