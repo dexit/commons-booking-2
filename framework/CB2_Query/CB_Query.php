@@ -13,11 +13,12 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE', WP_DEBUG && ! defined( 'DOING_AJAX' ) && TRUE );
+define( 'CB2_DEBUG_SAVE', WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
 
 // Native post create process
-// TODO: Remove dependency on -- create new -- text!!!!
-define( 'CB2_CREATE_NEW',       '-- create new --' );
+define( 'CB2_CREATE_NEW', -1 );
+define( 'CB2_UPDATE', TRUE );
+define( 'GET_METADATA_ASSIGN', '_get_metadata_assign' );
 define( 'CB2_ALLOW_CREATE_NEW', TRUE ); // Allows CB2_CREATE_NEW to be passed as a numeric ID
 define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 
@@ -25,7 +26,8 @@ define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 class CB_Query {
-	private static $schema_types = array();
+	private static $schema_types         = array();
+	private static $database_table_types = array();
 
   public  static $javascript_date_format = 'Y-m-d H:i:s';
   public  static $date_format = 'Y-m-d';
@@ -34,14 +36,21 @@ class CB_Query {
 	public static $days = array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
 
   // -------------------------------------------------------------------- Reflection
-  // post_type to Class lookups
+  // Class lookups
   static function register_schema_type( $Class ) {
-		if ( ! property_exists( $Class, 'static_post_type' ) )
-			throw new Exception( "[$Class] requires a static static_post_type" );
-		if ( strlen( $Class::$static_post_type ) > 20 )
-			throw new Exception( 'post_type [' . $Class::$static_post_type . '] is longer than the WordPress maximum of 20 characters' );
+		$ReflectionClass = new ReflectionClass( $Class ); // PHP 5
 
-		self::$schema_types[ $Class::$static_post_type ] = $Class;
+		// Post types
+		if ( property_exists( $Class, 'static_post_type' ) ) {
+			if ( strlen( $Class::$static_post_type ) > 20 )
+				throw new Exception( 'post_type [' . $Class::$static_post_type . '] is longer than the WordPress maximum of 20 characters' );
+			self::$schema_types[ $Class::$static_post_type ] = $Class;
+		}
+
+		// Database table types
+		if ( $ReflectionClass->isSubclassOf( CB_DatabaseTable_PostNavigator ) ) {
+			self::$database_table_types[ $Class ] = $Class;
+		}
   }
 
   static function &schema_types() {
@@ -80,15 +89,19 @@ class CB_Query {
 		// get_post() wrapper
 		// loads metadata from native tables only
 		// This will use standard WP cacheing
-		global $post_save_processing, $wpdb;
+		global $wpdb;
 		$redirected_post_request = FALSE;
 
 		if ( ! is_string( $post_type ) )
 			throw new Exception( "get_post_with_type() \$post_type not a string" );
 		if ( ! is_numeric( $post_id ) )
 			throw new Exception( "get_post_with_type()[$post_type] \$post_id not numeric" );
-		if ( $post_type == 'user' )
-			throw new Exception( 'Use CB_Query::get_user() for CB_User.' );
+
+		// We divert here to make callig code simpler
+		if ( $post_type == CB_User::$static_post_type ) {
+			// throw new Exception( 'Use CB_Query::get_user() for CB_User.' );
+			return CB_Query::get_user( $post_id );
+		}
 
 		$Class = self::schema_type_class( $post_type );
 		if ( ! $Class )
@@ -113,6 +126,7 @@ class CB_Query {
 		// TODO: Can we intelligently wp_cache_delete() instead?
 		wp_cache_delete( $post_id, 'posts' );
 
+		// TODO: get_post() will populate ALL fields from the post table: take advantage of this
 		$post = get_post( $post_id, $output, $filter );
 		if ( is_null( $post ) )
 			throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
@@ -120,11 +134,12 @@ class CB_Query {
 			throw new Exception( "[$Class/$post_id] fetched a [$post->post_type] post_type from [$posts_table], not a [$post_type]" );
 
 		// Reset and Annotate
+		// This will make a get_metadata_assign() call
 		$post->cb2_redirected_post_request = $redirected_post_request;
 		$wpdb->posts = $old_wpdb_posts;
-		$post = self::ensure_correct_class( $post, $instance_container, TRUE ); // TRUE = prevent_auto_draft_publish_transition
+		$cb2_post    = self::ensure_correct_class( $post, $instance_container, TRUE ); // TRUE = prevent_auto_draft_publish_transition
 
-		return $post;
+		return $cb2_post;
 	}
 
 	static function get_user( $ID ) {
@@ -152,24 +167,36 @@ class CB_Query {
   }
 
 	static function ensure_correct_class( &$post, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE, $post_classes = NULL ) {
-    // Creation will aslo create the extra time based data structure
-    global $post_save_processing;
+    // factory()s will also create the extra CB_Time_Classes based OO data structures
+		// TODO: The WP_Post may have all its metadata loaded already
+		// as the wordpress system adds all fields to the WP_Post dynamically
+    global $auto_draft_publish_transition;
+
+		if ( ! $post )
+			throw new Exception( 'ensure_correct_class() requires a valid WP_Post object' );
+		if ( ! property_exists( $post, 'ID' ) )
+			throw new Exception( 'ensure_correct_class() requires a WP_Post->ID property' );
+		if ( ! property_exists( $post, 'post_type' ) )
+			throw new Exception( 'ensure_correct_class() requires a WP_Post->ID property' );
+
 		if ( ! $post_classes ) $post_classes = self::schema_types();
-
-		if ( ! $post ) throw new Exception( 'ensure_correct_class() requires a valid object' );
-
-		if ( property_exists( $post, 'post_type' ) && isset( $post_classes[$post->post_type] ) ) {
+		if ( isset( $post_classes[$post->post_type] ) ) {
 			$Class = $post_classes[$post->post_type];
 			// Do not re-create it if it already is!
 			if ( ! is_a( $post, $Class ) ) {
-				if ( method_exists( $Class, 'factory_from_wp_post' ) ) {
-					$old_post_save_processing = $post_save_processing->auto_draft_publish_transition;
-					if ( $prevent_auto_draft_publish_transition )
-						$post_save_processing->auto_draft_publish_transition = FALSE;
-					$post = $Class::factory_from_wp_post( $post, $instance_container );
-					$post_save_processing->auto_draft_publish_transition = $old_post_save_processing;
+				if ( method_exists( $Class, 'factory_from_properties' ) ) {
+					if ( $post->ID > 0 ) CB_Query::get_metadata_assign( $post );
+					$properties = (array) $post;
+
+					$old_auto_draft_publish_transition = $auto_draft_publish_transition;
+					if ( $prevent_auto_draft_publish_transition ) $auto_draft_publish_transition = FALSE;
+					$post = $Class::factory_from_properties( $properties, $instance_container );
+					$auto_draft_publish_transition = $old_auto_draft_publish_transition;
+
 					if ( is_null( $post ) )
 						throw new Exception( "Failed to create [$Class] class from post" );
+					if ( ! property_exists( $post, 'ID' ) )
+						throw new Exception( "[$Class::factory_from_properties()] return has no ID property (0 would be valid)" );
 
 					// Only cache set this if it is a fake native post
 					// pure pseudo classes like CB_Week are not accessed with get_post()
@@ -218,23 +245,6 @@ class CB_Query {
 		return $path;
 	}
 
-	static function id_from_ID_with_post_type( $ID, $post_type ) {
-		// NULL return indicates that this post_type is not governed by CB2
-		$id         = NULL;
-		$post_types = self::get_post_types();
-
-		if ( ! is_numeric( $ID ) ) throw new Exception( "Numeric ID required for id_from_ID_with_post_type($ID/$post_type)" );
-		if ( ! $post_type )        throw new Exception( "Post type required for id_from_ID_with_post_type($ID)" );
-
-		if ( isset( $post_types[$post_type] ) ) {
-			$details = $post_types[$post_type];
-			if ( $details->ID_base > $ID ) throw new Exception( "Negative id from ID [$ID/$post_type] with [$details->ID_base/$details->ID_multiplier]" );
-			$id      = ( $ID - $details->ID_base ) / $details->ID_multiplier;
-		}
-
-		return $id;
-	}
-
 	static function redirect_wpdb_for_post_type( $post_type, $meta_redirect = TRUE ) {
 		global $wpdb;
 		$redirected = FALSE;
@@ -242,8 +252,7 @@ class CB_Query {
 		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
 			// TODO: Reset the posts to the normal table necessary?
 			// maybe it will interfere with other plugins?
-			$wpdb->posts = "{$wpdb->prefix}posts";
-
+			$wpdb->posts    = "{$wpdb->prefix}posts";
 
 			if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
 				// perioditem-global => perioditem
@@ -266,88 +275,80 @@ class CB_Query {
 					// cb2_view_periodoccurencemeta
 					$postmeta_table = "{$wpdb->prefix}cb2_view_{$post_type_stub}meta";
 					$wpdb->postmeta = $postmeta_table;
-					//if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] =&gt; [$postmeta_table]</span>" );
+					if ( WP_DEBUG && FALSE )
+						print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] =&gt; [$postmeta_table]</span>" );
 				}
-			} //else if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] no meta redirect</span>" );
+			} else if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] no meta redirect</span>" );
 		}
 
 		return $redirected;
 	}
 
-	static function template_loader_context() {
-		// Copied and altered from template-loader.php
-		$context = FALSE;
-		if     ( is_embed()           ) $context = 'embed';
-		elseif ( is_404()             ) $context = '404';
-		elseif ( is_search()          ) $context = 'search';
-		elseif ( is_front_page()      ) $context = 'front_page';
-		elseif ( is_home()            ) $context = 'home';
-		elseif ( is_post_type_archive()  ) $context = 'post_type_archive';
-		elseif ( is_tax()             ) $context = 'taxonomy';
-		elseif ( is_attachment()      ) $context = 'attachment';
-		elseif ( is_single()          ) $context = 'single';
-		elseif ( is_page()            ) $context = 'page';
-		elseif ( is_singular()        ) $context = 'singular';
-		elseif ( is_category()        ) $context = 'category';
-		elseif ( is_tag()             ) $context = 'tag';
-		elseif ( is_author()          ) $context = 'author';
-		elseif ( is_date()            ) $context = 'date';
-		elseif ( is_archive()         ) $context = 'archive';
-
-		// Extra: set $wp_query->is_list = TRUE to activate this
-		if ( is_list() ) $context = 'list';
-
-		return $context;
-	}
-
 	static function get_metadata_assign( &$post ) {
 		// Switch base tables to our views
 		// Load all associated metadata and assign to the post object
-		global $post_save_processing, $wpdb;
-		$meta_type = 'post';
+		global $auto_draft_publish_transition, $wpdb;
 
-		if ( is_object( $post ) ) {
-			if ( ! $post->ID )        throw new Exception( 'get_metadata_assign: $post->ID required' );
-			if ( ! $post->post_type ) throw new Exception( 'get_metadata_assign: $post->post_type required' );
+		if ( ! is_object( $post ) )
+			throw new Exception( 'get_metadata_assign() post object required' );
+		if ( ! property_exists( $post, 'ID' )        || ! $post->ID )
+			throw new Exception( 'get_metadata_assign: $post->ID required' );
+		if ( ! property_exists( $post, 'post_type' ) || ! $post->post_type )
+			throw new Exception( 'get_metadata_assign: $post->post_type required' );
 
-			$ID        = $post->ID;
-			$post_type = $post->post_type;
-			if ( ! property_exists( $post, '_get_metadata_assign' ) ) {
-				if ( $Class = self::schema_type_class( $post_type ) ) {
-					// NOTE: if the sent $ID is a wp_posts id
-					// Then the postmeta_table will be set to wp_postmeta
-					// This happens when the post is still in the normal WP tables
-					// not been moved yet to the native structures and views
-					if ( $post_save_processing->auto_draft_publish_transition ) {
-						print( "<div class='cb2-WP_DEBUG-small'>using {$wpdb->prefix}postmeta for [$post_type]</div>" );
-					} else {
-						if ( $postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) ) {
-							$wpdb->$meta_table_stub = "$wpdb->prefix$postmeta_table";
-							if ( WP_DEBUG && FALSE ) print( "<div class='cb2-WP_DEBUG-small'>redirecting to " . $wpdb->$meta_table_stub . " for [$post_type]</div>" );
-						}
-					}
+		// WordPress standard settings for the wp_postmeta
+		// $wpdb->postmeta = wp_postmeta
+		$meta_type       = 'post';
+		$meta_table_stub = "{$meta_type}meta";
+		$postmeta_table  = $meta_table_stub;
 
-					// get_metadata( $meta_type, ... )
-					//   meta.php has _get_meta_table( $meta_type );
-					//   $table_name = $meta_type . 'meta';
-					// And remove pseudo meta like _edit_lock
-					$metadata = get_metadata( $meta_type, $ID );
-					foreach ( $metadata as $name => $value )
-						if ( substr( $name, 0, 1 ) == '_' ) unset( $metadata[$name] );
+		$ID        = $post->ID;
+		$post_type = $post->post_type;
 
+		if ( ! property_exists( $post, 'GET_METADATA_ASSIGN' ) || ! $post->{GET_METADATA_ASSIGN} ) {
+			if ( $Class = self::schema_type_class( $post_type ) ) {
+				// If $auto_draft_publish_transition is happening
+				// Then the primary $wpdb->postmeta table will be set to wp_postmeta
+				// This happens when the post is still in the normal WP tables
+				// not been moved yet to the native structures and views
+				if ( ! $auto_draft_publish_transition ) {
+					// postmeta_table() will return FALSE
+					// if the Class does not have its own postmeta
+					if ( $has_postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) )
+						$postmeta_table = $has_postmeta_table;
+				}
+				$wpdb->$meta_table_stub = "$wpdb->prefix$postmeta_table";
+				if ( WP_DEBUG && FALSE )
+					print( "<div class='cb2-WP_DEBUG-small'>using to \$wpdb->$meta_table_stub = {$wpdb->$meta_table_stub} for [$post_type/$meta_type/$auto_draft_publish_transition]</div>" );
+
+				// get_metadata( $meta_type, ... )
+				//   meta.php has _get_meta_table( $meta_type );
+				//   $table_name = $meta_type . 'meta';
+				// And remove pseudo meta like _edit_lock
+				$metadata = get_metadata( $meta_type, $ID );
+				foreach ( $metadata as $meta_key => &$meta_value_array ) {
+					$is_system_metadata = ( substr( $meta_key, 0, 1 ) == '_' );
+					if ( ! $is_system_metadata )
+						$post->$meta_key = CB_Query::to_object( $meta_key, $meta_value_array[0] );
+				}
+				// Register that all metadata is present
+				$post->{GET_METADATA_ASSIGN} = TRUE;
+
+				if ( WP_DEBUG ) {
 					// Check that some meta data is returned
-					if ( ! count( $metadata ) )
-						throw new Exception( "[$post_type/$meta_type] [$ID/$post_save_processing->auto_draft_publish_transition] returned no metadata" );
+					foreach ( $metadata as $meta_key => $meta_value_array ) {
+						$is_system_metadata = ( substr( $meta_key, 0, 1 ) == '_' );
+						if ( $is_system_metadata ) unset( $metadata[$meta_key] );
+					}
+					if ( ! count( $metadata ) && $meta_type != 'post' ) {
+						krumo( $wpdb );
+						throw new Exception( "[$post_type/$meta_type/$postmeta_table] [$ID/$auto_draft_publish_transition] returned no metadata" );
+					}
 					if ( CB2_DEBUG_SAVE && FALSE )
 						krumo( $ID, $post_type, $post->post_status, $meta_type, $postmeta_table, $metadata );
-
-					// Populate object
-					foreach ( $metadata as $this_meta_key => $meta_value )
-						$post->$this_meta_key = $meta_value[0];
-					$post->_get_metadata_assign = TRUE;
-				} else throw new Exception( "Cannot get_metadata_assign() to [$post_type] not governed by CB2" );
-			}
-		} else throw new Exception( 'get_metadata_assign() post required' );
+				}
+			} else throw new Exception( "Cannot get_metadata_assign() to [$post_type] not governed by CB2" );
+		}
 
 		//return $post; // Passed by reference, so no need to check result
   }
@@ -369,27 +370,30 @@ class CB_Query {
   }
 
   static function ensure_bitarray( $name, $object ) {
-		self::check_for_serialisation( $object, 'a' );
+		// This can also be an associative array:
+		// Array(
+		//   (string) '0' => 4,
+		//   (string) '1' => 16
+		// ) => 20
 
 		if ( is_null( $object ) ) {
 			$object = array();
 		} else if ( is_array( $object ) ) {
 			if ( self::array_has_associative( $object ) ) {
-				// This is an associative array:
-				// Array(
-				//   (string) '0' => 4,
-				//   (string) '1' => 16
-				// ) => 20
 				$object = array_sum( $object );
 				$object = CB_Database::int_to_bitarray( $object );
 			}
-		} else {
-			if ( is_numeric( $object ) ) {
+		} else if ( self::check_for_serialisation( $object, 'a' ) ) {
+			$object = unserialize( $object );
+			if ( self::array_has_associative( $object ) ) {
+				$object = array_sum( $object );
 				$object = CB_Database::int_to_bitarray( $object );
-			} else {
-				krumo( $object );
-				throw new Exception( "Cannot understand bit array value for [$name]" );
 			}
+		} else if ( is_numeric( $object ) ) {
+			$object = CB_Database::int_to_bitarray( $object );
+		} else {
+			krumo( $object );
+			throw new Exception( "Cannot understand bit array value for [$name]" );
 		}
 		return $object;
   }
@@ -446,10 +450,17 @@ class CB_Query {
 	static function ensure_ints( $name, $object, $allow_create_new = FALSE ) {
 		$array = array();
 		if ( ! is_null( $object ) ) {
-			self::check_for_serialisation( $object, 'a' );
-
 			if ( is_array( $object ) ) {
 				$array = $object;
+				foreach ( $array as &$value ) {
+					$value = self::ensure_int( $name, $value, $allow_create_new );
+				}
+			}
+			else if ( is_string( $object ) && empty( $object ) ) {
+				$array = array();
+			}
+			else if ( self::check_for_serialisation( $object, 'a' ) ) {
+				$array = unserialize( $object );
 				foreach ( $array as &$value ) {
 					$value = self::ensure_int( $name, $value, $allow_create_new );
 				}
@@ -462,9 +473,6 @@ class CB_Query {
 			}
 			else if ( is_numeric( $object ) ) {
 				$array = array( self::ensure_int( $name, $object, $allow_create_new ) );
-			}
-			else if ( is_string( $object ) && empty( $object ) ) {
-				$array = array();
 			}
 			else {
 				krumo( $object );
@@ -523,61 +531,35 @@ class CB_Query {
 		}
 	}
 
-	static function copy_all_wp_post_properties( $post, $object, $overwrite = TRUE ) {
-		// Important to overwrite
-		// because these objects are CACHED
-		if ( is_null( $post ) )       throw new Exception( 'copy_all_wp_post_properties( $post null )' );
-		if ( is_array( $post ) )      throw new Exception( 'copy_all_wp_post_properties( $post is an array )' );
-		if ( ! is_object( $post ) )   throw new Exception( 'copy_all_wp_post_properties( $post not an object )' );
-		if ( ! is_object( $object ) ) throw new Exception( 'copy_all_wp_post_properties( $object not an object )' );
-
-		if ( WP_DEBUG ) {
-			foreach ( CB_Post::$POST_PROPERTIES as $name => $native_relevant )
-				if ( ! property_exists( $post, $name ) )
-					throw new Exception( "WP_Post->[$name] does not exist on source post" );
-		}
-
-		foreach ( $post as $name => $from_value ) {
-			$wp_is_post_property = isset( CB_Post::$POST_PROPERTIES[$name] );
-			if ( $wp_is_post_property ) {
-				try {
-					$new_value = self::to_object( $name, $from_value );
-				} catch ( Exception $ex ) {
-					krumo( $post );
-					throw $ex;
-				}
-
-				if ( $overwrite || ! property_exists( $object, $name ) ) {
-					if ( WP_DEBUG && FALSE ) {
-						if ( property_exists( $object, $name ) ) {
-							$old_value = $object->$name;
-							if ( ! is_null( $old_value ) && $old_value != $new_value )
-								print( "copy_all_wp_post_properties( [$old_value] => [$new_value] )" );
-						}
-					}
-					$object->$name = $new_value;
-				}
-			}
-		}
-	}
-
 	static function to_object( $name, $value ) {
-		// Useful for assigning attributes of PHP Objects
-		// in __constructor()s
+		// Assigning attributes of PHP Objects
 		//   string => object
 		// based on the property name
 		//
+		// Plurals allow the follwing:
+		//   comma delimited integers,              e.g. 3453,34522,223
+		//   serialised arrays (must contain a { ), e.g. a:1:{i:0:... , ,}
+		// comma delimited strings are not permitted
+		// because they cannot be reliably differentiated from serialised arrays
+		//
 		// Used by:
-		//   copy_all_wp_post_properties()
-		//   assign_all_parameters()
+		//   copy_all_wp_post_properties(): post->*         => object
+		//   assign_all_parameters():       get_func_args() => object
+		//   get_metadata_assign():         meta-data       => object
+		//
+		// It is (optionally) the job of the object to:
+		// convert *_ID(s) => objects using
+		//   get_or_create_new(ids)
+		//
+		// TODO: document the naming conventions of course
+		// TODO: move all this in to the CB_DatabaseTable_PostNavigator Class
+		// to use the database schema knowledge instead :)
 		if ( ! is_null( $value ) ) {
-			self::check_for_serialisation( $value );
-
 			if      ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
 			else if ( $name == 'date' )                      $value = self::ensure_datetime( $name, $value );
+			else if ( $name == 'enabled' )                   $value = self::ensure_boolean(  $name, $value );
 			else if ( substr( $name, 0, 5 ) == 'time_' )     $value = self::ensure_time( $name, $value );
-			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_int( $name, $value );
-			else if ( $name == 'enabled' )                   $value = self::ensure_boolean( $name, $value );
+			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_int(  $name, $value );
 			else if ( substr( $name, -3 ) == '_id' )         $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW  );
 			else if ( substr( $name, -4 ) == '_ids' )        $value = self::ensure_ints( $name, $value, CB2_ALLOW_CREATE_NEW );
 			else if ( substr( $name, -3 ) == '_ID' )         $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
@@ -585,64 +567,13 @@ class CB_Query {
 			else if ( substr( $name, -6 ) == '_index' )      $value = self::ensure_int(  $name, $value );
 			else if ( $name == 'ID' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
 			else if ( $name == 'id' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
+
+			if ( self::check_for_serialisation( $value ) )
+				throw new Exception( "[$value] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
 		}
 
 		return $value;
 	}
-
-  static function to_string( &$name, $value ) {
-		// TODO: Refactor this in to the objects
-    if ( is_array( $value ) ) {
-			// periods = array(period, period)  => period_IDs = 200000238, 200000239
-			$string_value = '';
-			if ( substr( $name, -1 ) == 's' ) {
-				$sub_name = substr( $name, 0, -1 );
-				foreach ( $value as $sub_value ) {
-					if ( $string_value ) $string_value .= ',';
-					$string_value .= self::to_string( $sub_name, $sub_value );
-				}
-				$value = $string_value;
-			} else {
-				if ( WP_DEBUG && FALSE )
-					throw new Exception( "[$name] is not plural, but the value is an array" );
-			}
-    }
-
-    else if ( is_object( $value ) && $value instanceof CB_PostNavigator ) {
-			// period = period object => period_ID = 200000238
-			if ( property_exists( $value, 'ID' ) ) {
-				if ( $value->ID === CB2_CREATE_NEW ) throw new Exception( "[$name] WP_Post->ID value [CB2_CREATE_NEW] value should have been resolved" );
-				if ( ! is_numeric( $value->ID ) )    throw new Exception( "[$name] WP_Post->ID value [$value->ID] is not numeric" );
-				$name .= '_ID';
-				$value = (int) $value->ID;
-			} else throw new Exception( "This CB_Post / CB_PostNavigator object should have an ID for [$name] property" );
-		}
-
-		else if ( is_object( $value ) && $value instanceof DateTime ) {
-			// DateTime => 2018-06-10 12:34:23
-			$date_string = $value->format( CB_Database::$database_datetime_format );
-			if ( $value < new DateTime( '1970-01-01' ) ) throw new Exception( "Dodgy date [$date_string]" );
-			$value = $date_string;
-		}
-
-		else if ( is_object( $value ) && $value instanceof WP_Post ) {
-			if ( $value->ID === CB2_CREATE_NEW ) throw new Exception( "[$name] WP_Post->ID value [CB2_CREATE_NEW] value should have been resolved" );
-			if ( ! is_numeric( $value->ID ) )    throw new Exception( "[$name] WP_Post->ID value [$value->ID] is not numeric" );
-			$value = (int) $value->ID;
-		}
-
-		else if ( is_object( $value ) && method_exists( $value, '__toString' ) ) {
-			$value = (string) $value;
-		}
-
-		else {
-			$value = (string) $value;
-    }
-
-		self::check_for_serialisation( $value );
-
-    return $value;
-  }
 
   // ---------------------------------------------- General utilities
   static function substring_before( $string, $delimiter = '-' ) {
@@ -654,8 +585,7 @@ class CB_Query {
 	}
 
 	static function check_for_serialisation( $object, $type = 'a-z' ) {
-		if ( WP_DEBUG && is_string( $object ) && preg_match( "/^[$type]:[0-9]+:/", $object ) )
-			throw new Exception( "[$object] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
+		return ( is_string( $object ) && preg_match( "/^[$type]:[0-9]+:/", $object ) );
 	}
 
 	static function array_has_associative( $array ) {

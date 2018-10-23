@@ -5,7 +5,10 @@
 class CB_User extends CB_PostNavigator implements JsonSerializable {
   public static $all    = array();
   public static $schema = 'with-perioditems'; //this-only, with-perioditems
-  static $static_post_type     = 'user';
+  public static $posts_table    = FALSE;
+  public static $postmeta_table = FALSE;
+  public static $database_table = FALSE;
+  static $static_post_type = 'user'; // Pseudo, but required
 
 	static function selector_metabox() {
 		return array(
@@ -51,6 +54,17 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     self::$all[$ID] = $this;
   }
 
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+		$object = self::factory(
+			$properties['ID'],
+			$properties['user_login']
+		);
+
+		self::copy_all_wp_post_properties( $properties, $object );
+
+		return $object;
+  }
+
   static function factory_current() {
 		$cb_user = NULL;
 		$wp_user = wp_get_current_user();
@@ -63,7 +77,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     // Design Patterns: Factory Singleton with Multiton
     $object = NULL;
 
-    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) {
+    if ( $ID ) {
 			if ( isset( self::$all[$ID] ) ) $object = self::$all[$ID];
 			else $object = new self( $ID, $user_login );
 		}
@@ -246,12 +260,12 @@ class CB_Location extends CB_Post implements JsonSerializable {
     $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID
+			$properties['ID']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -261,7 +275,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
     $object = NULL;
     $key    = $ID;
 
-    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) {
+    if ( $ID ) {
 			if ( isset( self::$all[$ID] ) ) $object = self::$all[$ID];
 			else $object = new self( $ID );
 		}
@@ -426,12 +440,12 @@ class CB_Item extends CB_Post implements JsonSerializable {
     $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID
+			$properties['ID']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -440,7 +454,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
     // Design Patterns: Factory Singleton with Multiton
     $object = NULL;
 
-    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) {
+    if ( $ID ) {
 			if ( isset( self::$all[$ID] ) ) $object = self::$all[$ID];
 			else $object = new self( $ID );
 		}
@@ -486,20 +500,18 @@ class CB_Item extends CB_Post implements JsonSerializable {
 		$booked_perioditems = $values['perioditem_timeframe_IDs'];
 		$name               = 'booking'; // Default
 		$copy_period_group  = TRUE;      // Default
+		$count              = count( $booked_perioditems );
 		foreach ( $booked_perioditems as $booked_perioditem ) {
-			$perioditem_booking = CB_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe(
-				$booked_perioditem->period_entity,
+			$periodentity_booking = CB_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
+				$booked_perioditem,
 				$user,
 				$name,
 				$copy_period_group
 			);
-			krumo($perioditem_booking);
-			$perioditem_booking->save();
+			$periodentity_booking->save(); // Create objects only
 		}
 
-		// TODO: redirect to the booking complete screen
-
-		return '<div>processed</div>';
+		return "<div>processed ($count) perioditem availabile in to bookings</div>";
   }
 
   function manage_columns( $columns ) {
@@ -573,7 +585,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 				print( "<div class='cb2-column-actions'>" );
 				$add_link  = "admin.php?page=cb-post-new&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
 				print( " <a href='$add_link'>add new booking</a>" );
-				$view_link = "admin.php?page=cb2-calendar&location_ID=$this->ID&period_status_type_ID=100000002";
+				$view_link = "admin.php?page=cb2-calendar&item_ID=$this->ID&period_status_type_ID=100000002";
 				print( " | <a href='$view_link'>view in calendar</a>" );
 				print( '</div>' );
 				break;

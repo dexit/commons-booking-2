@@ -2,7 +2,7 @@
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
+class CB_PeriodStatusType extends CB_DatabaseTable_PostNavigator implements JsonSerializable {
   public  static $database_table = 'cb2_period_status_types';
   public  static $all = array();
   public  static $standard_fields = array( 'name' );
@@ -31,6 +31,24 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
 					'type' => 'title',
 				),
 			),
+		);
+	}
+
+  function database_table_name() { return self::$database_table; }
+
+  function database_table_schema() {
+		return array(
+			'name'    => self::$database_table,
+			'columns' => array(
+				`period_status_type_id` => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
+				`name`                  => array( VARCHAR, (1024), NULL,     NOT_NULL ),
+				`description`           => array( VARCHAR, (1024), NULL,     NULL,     NULL, NULL ),
+				`flags`                 => array( BIT,     (32),   NULL,     NOT_NULL, NULL, 0 ),
+				`colour`                => array( VARCHAR, (256),  NULL,     NULL,     NULL, NULL ),
+				`opacity`               => array( TINYINT, (1),    NULL,     NOT_NULL, NULL, 100 ),
+				`priority`              => array( INT,     (11),   NULL,     NOT_NULL, NULL, 1 ),
+			),
+			'primary key' => array('period_status_type_id'),
 		);
 	}
 
@@ -104,27 +122,23 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
     $this->post_title = $name;
 		$this->post_type  = self::$static_post_type;
 
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) self::$all[$ID] = $this;
+		if ( $ID ) self::$all[$ID] = $this;
   }
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-
-		if ( is_null( $post->priority ) ) throw new Exception( "post_status_type has no priority" );
-
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			$post->post_title,
-			$post->colour,
-			$post->opacity,
-			$post->priority,
-			( $post->return  != '0' ),
-			( $post->collect != '0' ),
-			( $post->use     != '0' ),
-			$post->system
+			$properties['ID'],
+			$properties['post_title'],
+			$properties['colour'],
+			$properties['opacity'],
+			$properties['priority'],
+			( $properties['return']  != '0' ),
+			( $properties['collect'] != '0' ),
+			( $properties['use']     != '0' ),
+			$properties['system']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
@@ -145,11 +159,11 @@ class CB_PeriodStatusType extends CB_PostNavigator implements JsonSerializable {
     $system    = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) )
+    if ( $ID && isset( self::$all[$ID] ) )
 			$object = self::$all[$ID];
     else {
       $Class = 'CB_UserPeriodStatusType';
-      $id    = CB_Query::id_from_ID_with_post_type( $ID, CB_PeriodStatusType::$static_post_type );
+      $id    = CB_PostNavigator::id_from_ID_with_post_type( $ID, CB_PeriodStatusType::$static_post_type );
       // Hardcoded system status types
       switch ( $id ) {
         case CB_PeriodStatusType_Available::$id: $Class = 'CB_PeriodStatusType_Available'; break;

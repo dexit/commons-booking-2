@@ -1,4 +1,18 @@
 <?php
+// TODO: move these to static Class properties in CB_Database?
+define( 'INT',      'INT' );
+define( 'TINYINT',  'TINYINT' );
+define( 'BIGINT',   'BIGINT' );
+define( 'VARCHAR',  'VARCHAR' );
+define( 'DATETIME', 'DATETIME' );
+define( 'CHAR',     'CHAR' );
+define( 'BIT',      'BIT' );
+
+define( 'CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP' );
+define( 'AUTO_INCREMENT',    'AUTO_INCREMENT' );
+define( 'NOT_NULL',          'NOT_NULL' );
+define( 'UNSIGNED',          'UNSIGNED' );
+
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
@@ -109,7 +123,6 @@ class CB_Database {
 		// https://developer.wordpress.org/reference/classes/wpdb/insert/
 		// A format is one of '%d', '%f', '%s' (integer, float, string).
 		// If omitted, all values in $data will be treated as strings...
-		global $post_save_processing;
 		$new_data   = array();
 		$columns    = self::columns( $table, TRUE );
 		if ( CB2_DEBUG_SAVE ) krumo( $columns );
@@ -159,7 +172,7 @@ class CB_Database {
 					&& $column_definition->Extra != 'auto_increment'
 				);
 				if ( $field_required && ! $update ) {
-					if ( CB2_DEBUG_SAVE ) krumo( $data, $post_save_processing );
+					if ( CB2_DEBUG_SAVE ) krumo( $data );
 					throw new Exception( "[$table::$column_name] is required" );
 				}
 			} else {

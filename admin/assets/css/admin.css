@@ -38,7 +38,8 @@
 
 ul.subsubsub,
 #posts-filter .search-box,
-body .cmb2-id-recurrence-sequence .cmb-multicheck-toggle {
+.cmb-type-multicheck-inline > .cmb-td > p,
+.cmb-type-multicheck > .cmb-td > p { /* Select all */
 	display:none;
 }
 

@@ -229,6 +229,7 @@ function cb2_post_row_actions( $actions, $post ) {
 		if ( isset( $actions['edit'] ) )
 			$actions['edit'] = "<a href='admin.php?page=cb-post-edit&post=$post->ID&post_type=$post->post_type&action=edit' aria-label='Edit &#8220;$post_title&#8221;'>Edit</a>";
 
+		CB_Query::get_metadata_assign( $post );
 		$post = CB_Query::ensure_correct_class( $post );
 		if ( $post instanceof CB_PostNavigator && method_exists( $post, 'add_actions' ) )
 			$post->add_actions( $actions, $post );
@@ -555,7 +556,8 @@ function cb2_settings_list_page() {
 }
 
 function cb2_settings_post_new() {
-	global $post_save_processing;
+	global $auto_draft_publish_transition;
+
 	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 	$title = 'Add New';
 	if ( isset( $_GET[ 'add_new_label' ] ) ) $title = $_GET[ 'add_new_label' ];
@@ -596,9 +598,9 @@ function cb2_settings_post_new() {
 	//   get_default_post_to_edit( $post_type, CREATE_IN_DB );
 	// and this will need to write to wp_posts
 	// an auto-draft
-	$post_save_processing->auto_draft_publish_transition = FALSE;
+	$auto_draft_publish_transition = FALSE;
 	if ( CB2_DEBUG_SAVE )
-		print( '<div class="cb2-WP_DEBUG-small">post_save_processing->auto_draft_publish_transition ' . ( $post_save_processing->auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
+		print( '<div class="cb2-WP_DEBUG-small">auto_draft_publish_transition ' . ( $auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
 
 	// This is a COPY of the normal wp-admin file
 	$screen = WP_Screen::get( $typenow );
@@ -607,7 +609,7 @@ function cb2_settings_post_new() {
 }
 
 function cb2_settings_post_edit() {
-	global $action, $post_save_processing; // post.php will wp_reset_vars(action)
+	global $action, $auto_draft_publish_transition; // post.php will wp_reset_vars(action)
 
 	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 	$title = 'Edit Post';
@@ -652,7 +654,7 @@ function cb2_settings_post_edit() {
 	// redirect the postmeta may cause the _edit_lock to fail
 	// TODO: move to get_post_type() in post.php? possibly with a conditional $redirect = TRUE parameter
 	// TODO: temporarily redirect and unredirect in post.php
-	if ( ! $post_save_processing->auto_draft_publish_transition ) {
+	if ( ! $auto_draft_publish_transition ) {
 		// Full normal redirected main get_post()
 		CB_Query::redirect_wpdb_for_post_type( $post_type, FALSE );
 		if ( CB2_DEBUG_SAVE )

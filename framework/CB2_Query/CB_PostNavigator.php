@@ -27,6 +27,134 @@ class CB_PostNavigator {
     if ( property_exists( $this, 'ID' ) ) wp_cache_add( $this->ID, $this, 'posts' );
   }
 
+  protected static function class_from_ID_property_name( $ID_property_name, &$property_name = FALSE, &$is_plural = NULL, $Class = FALSE ) {
+		// TODO: factory_subclass() for polymorphic pointers like period_entity_ID
+		$is_ID         = ( substr( $ID_property_name, -3 ) == '_ID' || substr( $ID_property_name, -4 ) == '_IDs' );
+		// If the caller was just asking about the property then only return FALSE
+		$no_excpeption = ( $property_name === FALSE );
+
+		if ( $is_ID ) {
+			$is_plural     = ( substr( $ID_property_name, -1 ) == 's' );
+			$base_name     = ( $is_plural ? substr( $ID_property_name, 0, -1 ) : $ID_property_name ); // period_group_ID
+			$property_type = substr( $base_name, 0, -3 );                // period_group
+			$property_name = $property_type . ( $is_plural ? 's' : '' ); // period_group(s)
+
+			if ( $Class === FALSE ) {
+				$post_type     = str_replace( '_', '', $property_type );     // periodgroup
+				$Class         = CB_Query::schema_type_class( $post_type );   // CB_PeriodGroup
+			}
+			if ( ! $Class && ! $no_excpeption )
+				throw new Exception( "[$ID_property_name/$post_type] has no direct Class" );
+		} else {
+			if ( ! $no_excpeption )
+				throw new Exception( "[$ID_property_name] is not an ID property name" );
+		}
+
+		// FALSE indicates not an ID thing
+		return $Class;
+  }
+
+  protected static function get_or_create_new( &$properties, $ID_property_name, &$instance_container = NULL, $Class = FALSE ) {
+		// "get":    the database record(s) exist already and we have their ID
+		// "create": create a placeholder object that will be saved to the database later, ID = 0
+		// If $ID_property_name is plural, an array will be returned
+		$TargetClass = CB_PostNavigator::class_from_ID_property_name( $ID_property_name, $object_property_name, $plural, $Class );
+
+		if ( ! isset( $properties[ $ID_property_name ] ) )
+			throw new Exception( "$ID_property_name required" );
+
+		$property_ID_value = $properties[ $ID_property_name ];
+
+		if ( is_object( $property_ID_value ) )
+			throw new Exception( "value for [$ID_property_name] is already an object. get_or_create_new() is for IDs" );
+
+		if ( $plural ) {
+			// -------------------------------------------------------- Plural
+			$object = array();
+
+			// Cumulative: if the object property is already set, then add to it
+			if ( isset( $properties[ $object_property_name ] ) ) {
+				$object = $properties[ $object_property_name ];
+				if ( ! is_array( $object ) ) {
+					krumo( $object );
+					throw new Exception( "existing $TargetClass::$object_property_name needs to be an array" );
+				}
+			}
+
+			if ( ! is_array( $property_ID_value ) ) {
+				krumo( $property_ID_value );
+				throw new Exception( "$ID_property_name needs to be an array" );
+			}
+			foreach ( $property_ID_value as $ID_value) {
+				if ( ! is_numeric( $ID_value ) ) {
+					krumo( $ID_value );
+					throw new Exception( "$ID_property_name must be numeric" );
+				}
+				$ID_value  = (int) $ID_value;
+
+				$subobject = ( $ID_value == CB2_CREATE_NEW
+					? $TargetClass::factory_from_properties( $properties, $instance_container )
+					: CB_Query::get_post_with_type( $TargetClass::$static_post_type, $ID_value, $instance_container )
+				);
+				array_push( $object, $subobject );
+			}
+		} else {
+			// -------------------------------------------------------- Singular
+			if ( ! is_numeric( $property_ID_value ) ) {
+				krumo( $property_ID_value );
+				throw new Exception( "$ID_property_name must be numeric" );
+			}
+			$property_ID_value = (int) $property_ID_value;
+			$object            = ( $property_ID_value == CB2_CREATE_NEW
+				? $TargetClass::factory_from_properties( $properties, $instance_container )
+				: CB_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container )
+			);
+		}
+
+		// Maybe plural = (array)
+		$properties[ $object_property_name ] = $object;
+
+		// Maybe array
+		return $object;
+	}
+
+	static function copy_all_wp_post_properties( $properties, $object, $overwrite = TRUE ) {
+		// Important to overwrite
+		// because these objects are CACHED
+		if ( is_null( $properties ) )    throw new Exception( 'copy_all_wp_post_properties( $properties null )' );
+		if ( is_object( $properties ) )  throw new Exception( 'copy_all_wp_post_properties( $properties is an object )' );
+		if ( ! is_array( $properties ) ) throw new Exception( 'copy_all_wp_post_properties( $properties is not an array )' );
+
+		if ( WP_DEBUG ) {
+			foreach ( CB_Post::$POST_PROPERTIES as $name => $native_relevant )
+				if ( ! isset( $properties, $name ) )
+					throw new Exception( "WP_Post->[$name] does not exist on source post" );
+		}
+
+		foreach ( $properties as $name => $from_value ) {
+			$wp_is_post_property = isset( CB_Post::$POST_PROPERTIES[$name] );
+			if ( $wp_is_post_property ) {
+				try {
+					$new_value = CB_Query::to_object( $name, $from_value );
+				} catch ( Exception $ex ) {
+					krumo( $properties );
+					throw $ex;
+				}
+
+				if ( $overwrite || ! property_exists( $object, $name ) ) {
+					if ( WP_DEBUG && FALSE ) {
+						if ( property_exists( $object, $name ) ) {
+							$old_value = $object->$name;
+							if ( ! is_null( $old_value ) && $old_value != $new_value )
+								print( "copy_all_wp_post_properties( [$old_value] => [$new_value] )" );
+						}
+					}
+					$object->$name = $new_value;
+				}
+			}
+		}
+	}
+
   public function __toString() {return (string) $this->ID;}
 
   public function __toStringFor( $column_data_type, $column_name ) {
@@ -106,7 +234,7 @@ class CB_PostNavigator {
     return $post;
   }
 
-  function set_create_new( $name = NULL, $deep = TRUE, Array $args = NULL ) {
+  function clone_with_create_new( $name = NULL, $deep = TRUE, Array $args = NULL ) {
 		// Set all IDs to CB2_CREATE_NEW so the whole object is re-created
 		// ready for saving
 		$copy = clone $this;
@@ -120,11 +248,11 @@ class CB_PostNavigator {
 			foreach ( $copy as &$value ) {
 				if ( is_array( $value ) ) {
 					foreach ( $value as &$value2 ) {
-						if ( is_object( $value2 ) && method_exists( $value2, 'set_create_new' ) )
-							$value2 = $value2->set_create_new( $name );
+						if ( is_object( $value2 ) && method_exists( $value2, 'clone_with_create_new' ) )
+							$value2 = $value2->clone_with_create_new( $name );
 					}
-				} else if ( is_object( $value ) && method_exists( $value, 'set_create_new' ) ) {
-					$value = $value->set_create_new( $name );
+				} else if ( is_object( $value ) && method_exists( $value, 'clone_with_create_new' ) ) {
+					$value = $value->clone_with_create_new( $name );
 				}
 			}
 		}
@@ -345,24 +473,6 @@ class CB_PostNavigator {
   }
 
   // ------------------------------------------------- Saving
-  function post_meta() {
-		// Default to this
-		// post_updated will sanitize the list against the database table columns and types
-		$meta = array();
-
-		foreach ( $this as $name => $value ) {
-			if ( ! is_null( $value )
-				&& ! isset( CB_Post::$POST_PROPERTIES[$name] )
-				&& ! in_array( $name, array( 'zeros', 'posts' ) ) // Inherited
-			) {
-				// meta value will get serialised if it is not a string
-				$meta[ $name ] = CB_Query::to_string( $name, $value );
-			}
-		}
-
-		return $meta;
-	}
-
   function is_controller() {
 		$is_controller = FALSE;
 		if ( ! property_exists( $this, '_was_controller' ) ) {
@@ -378,8 +488,25 @@ class CB_PostNavigator {
   }
 
   function id( $why = '' ) {
-		return CB_Query::id_from_ID_with_post_type( $this->ID, $this->post_type() );
+		return self::id_from_ID_with_post_type( $this->ID, $this->post_type() );
   }
+
+	static function id_from_ID_with_post_type( $ID, $post_type ) {
+		// NULL return indicates that this post_type is not governed by CB2
+		$id         = NULL;
+		$post_types = CB_Query::get_post_types();
+
+		if ( ! is_numeric( $ID ) ) throw new Exception( "Numeric ID required for id_from_ID_with_post_type($ID/$post_type)" );
+		if ( ! $post_type )        throw new Exception( "Post type required for id_from_ID_with_post_type($ID)" );
+
+		if ( isset( $post_types[$post_type] ) ) {
+			$details = $post_types[$post_type];
+			if ( $details->ID_base > $ID ) throw new Exception( "Negative id from ID [$ID/$post_type] with [$details->ID_base/$details->ID_multiplier]" );
+			$id      = ( $ID - $details->ID_base ) / $details->ID_multiplier;
+		}
+
+		return $id;
+	}
 
 	function post_perioditem_user_IDs_interpret( $perioditem_user_IDs ) {
 		return $this->get_posts_with_type( $perioditem_user_IDs, 'perioditem-user' );
@@ -413,173 +540,6 @@ class CB_PostNavigator {
 		}
 
 		return $ID;
-	}
-
-  function post_post_update() {
-  }
-
-  function pre_post_create( $instance_container = NULL ) {
-		// Automatic creation of all dependent objects
-		// indicated by property = CB2_CREATE_NEW
-		// using the properties attached to this post
-		// this-><object_name>_ID(s) == CB2_CREATE_NEW:
-		//   <object_name>     => new CB_<Class>(this)
-		//   <object_name>_ID  => object->ID
-		//   <object_name>_IDs => array( object->ID )
-		// TODO: plural collections: CB2_CREATE_NEW_COLLECTION? e.g. period_IDs
-		// TODO: change the CB2_CREATE_NEW to be independent from the text in the select box!!!!
-		// Linking of 1-many sub-dependencies, e.g. PeriodGroup => Period,
-		// should be done in post_post_update()
-		global $post_save_processing;
-
-		foreach ( $post_save_processing as $name => $value ) {
-			$is_ID = ( substr( $name, -3 ) == '_ID' || substr( $name, -4 ) == '_IDs' );
-
-			if ( $is_ID && $value == CB2_CREATE_NEW ) {
-				$is_plural    = ( substr( $name, -1 ) == 's' );
-				$base_name    = ( $is_plural ? substr( $name, 0, -1 ) : $name ); // period_group_ID
-				$plural_name  = $base_name . 's';                     // period_group_IDs
-				$object_name  = substr( $base_name, 0, -3 );          // period_group
-				$object_names = $object_name . 's';                   // period_groups
-				$post_type    = str_replace( '_', '', $object_name ); // periodgroup
-
-				if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-					if ( method_exists( $Class, 'factory_from_wp_post' ) ) {
-						if ( CB2_DEBUG_SAVE ) print( "<h2>CB_PostNavigator[" . get_class( $this ) . "]::pre_post_create() dependencies [$name]: $object_name => $Class</h2>" );
-
-						// Construct the new input data for the new CB2_Object
-						// leave $new_post->ID so that create is triggered
-						// leave $new_post->post_status = CB_Post::$PUBLISH because save() manages that
-						$new_post = new WP_Post( $post_save_processing );
-						foreach ( CB_Post::$POST_PROPERTIES as $this_name => $native_relevant ) {
-							if ( $native_relevant ) $new_post->$this_name = $this->$this_name;
-						}
-						$new_post->post_type = $post_type;
-
-						// The required instantiation properties should be all in the post_save_processing
-						// the Class::__construct() will complain / adjust if not
-						$object   = $Class::factory_from_wp_post( $new_post, $instance_container );
-						// save() will trigger pre_post_create() on this dependent object also
-						// so CB_PeriodGroup will create CB_Period
-						// Prevent any circular auto-creation
-						unset( $post_save_processing->$name );
-						$object->save();
-						if ( ! property_exists( $object, 'ID' ) || ! $object->ID ) {
-							krumo( $new_post, $object );
-							throw new Exception( "$Class::factory_from_wp_post() failed to populate the ID" );
-						}
-
-						// Set values on the post_save_processing
-						// for subsequent creation usage. ORDER is important!
-						// so dependent objects should both create reactively
-						$post_save_processing->$object_name  = $object;
-						$post_save_processing->$object_names = array( $object );
-						$post_save_processing->$base_name    = $object->ID;
-						$post_save_processing->$plural_name  = array( $object->ID );
-
-						// Set values on $this
-						// because it still has to save itself
-						$this->$object_name  = $object;
-						$this->$object_names = array( $object );
-						$this->$base_name    = $object->ID;
-						$this->$plural_name  = array( $object->ID );
-					} else throw new Exception( "Cannot create a new [$Class] from post because no factory_from_wp_post()" );
-				} else throw new Exception( "Cannot create a new [$post_type] for [$name] because cannot find the Class handler" );
-			}
-		}
-  }
-
-  function save() {
-		// Create dependent objects before moving in to the native tables
-		// will also reset the metadata for $post, e.g.
-		//   $post->period_group_ID = CB2_CREATE_NEW => 800000034
-		//   meta: period_group_ID:   CB2_CREATE_NEW => 800000034
-		// pre_post_create() will not work on the correct ID
-		// because, by definition, it has not been created
-		// so do not call $this->id() as it will fail
-		global $post_save_processing;
-
-		$native_ID            = NULL;
-		$class_database_table = CB_Database::database_table( get_class( $this ) );
-		if ( ! $class_database_table )
-			throw new Exception( get_class( $this ) . ' does not support save() because it has no database_table' );
-		$this->pre_post_create();
-
-		// Move any new values created by pre_post_create()
-		// to the main data array
-		// TODO: pass them out from pre_post_create()?
-		$potential_table_data = (array) $this;
-		foreach ( $post_save_processing as $name => $value )
-			$potential_table_data[$name] = $value;
-		if ( CB2_DEBUG_SAVE ) krumo( $potential_table_data );
-		$field_data = CB_Database::sanitize_data_for_table( $class_database_table, $potential_table_data, $formats );
-		if ( CB2_DEBUG_SAVE ) krumo( $field_data, $formats );
-
-		// Change Database data
-		if ( $this->ID ) {
-			$this->update( $field_data, $formats );
-		} else {
-			$native_ID = $this->create( $field_data, $formats );
-			$this->ID = $native_ID;
-		}
-
-		$this->post_post_update();
-
-		return $this->ID;
-	}
-
-	function update( $update_data, $formats = NULL ) {
-		global $wpdb;
-		$class_database_table = CB_Database::database_table( get_class( $this ) );
-		if ( ! $class_database_table )
-			throw new Exception( get_class( $this ) . ' does not support update() because it has no database_table' );
-
-		$full_table = "$wpdb->prefix$class_database_table";
-		$id_field   = CB_Database::id_field( get_class( $this ) );
-		$id         = $this->id();
-		$where      = array( $id_field => $id );
-		if ( CB2_DEBUG_SAVE ) print( '<div class="cb2-WP_DEBUG-small">' . get_class( $this ) . "::update($id_field=$id)</div>" );
-		$result   = $wpdb->update(
-			$full_table,
-			$update_data,
-			$where,
-			$formats
-		);
-		if ( $result === 0 )
-			if ( CB2_DEBUG_SAVE ) print( '<div class="cb2-WP_DEBUG-small cb2-warning">no rows updated</div>' );
-		else if ( is_wp_error( $result ) || $result === FALSE ) {
-			krumo( $result, $full_table, $update_data, $where, $formats );
-			throw new Exception( "Update Error: $wpdb->last_error" );
-		}
-
-		return $this->ID;
-	}
-
-	function create( $insert_data, $formats = NULL ) {
-		global $wpdb;
-		$result = NULL;
-		$class_database_table = CB_Database::database_table( get_class( $this ) );
-		if ( ! $class_database_table )
-			throw new Exception( get_class( $this ) . ' does not support create() because it has no database_table' );
-
-		$full_table = "$wpdb->prefix$class_database_table";
-
-		// Support completely empty inserts (just an auto-increment)
-		if ( CB2_DEBUG_SAVE ) print( '<div class="cb2-WP_DEBUG-small">' . get_class( $this ) . '::create()</div>' );
-		if ( count( $insert_data ) )
-			$result = $wpdb->insert( $full_table, $insert_data, $formats );
-		else
-			$result = $wpdb->query( "INSERT into `$full_table` values()" );
-		if ( is_wp_error( $result ) || $result === FALSE || $result === 0 ) {
-			krumo( $result, $insert_data, $formats );
-			throw new Exception( "Update Error: $wpdb->last_error" );
-		}
-
-		$native_id = $wpdb->insert_id;
-		$native_ID = self::ID_from_id_post_type( $native_id, $this->post_type() );
-		if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$class_database_table::$native_id =&gt; $native_ID</div>" );
-
-		return $native_ID;
 	}
 }
 

@@ -1,6 +1,29 @@
 <?php
-class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
+abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements JsonSerializable {
 	public static $all = array();
+
+  function database_table_schema_root( String $table_name, String $primary_id_column, Array $columns = array(), Array $constraints = array() ) {
+		$base_columns = array(
+			$primary_id_column      => array( BIGINT, (20), UNSIGNED, NOT_NULL, NULL, AUTO_INCREMENT ),
+			'period_group_id'       => array( INT,    (11), UNSIGNED, NOT_NULL ),
+			'period_status_type_id' => array( INT,    (11), UNSIGNED, NOT_NULL ),
+			'enabled'               => array( BIT,    (1),  NULL,     NOT_NULL, NULL, NULL, 1 ),
+		);
+		$columns = array_merge( $base_columns, $columns );
+
+		$base_constraints = array(
+			'period_group_id'       => array( 'cb2_period_groups',       'period_group_id' ),
+			'period_status_type_id' => array( 'cb2_period_status_types', 'period_status_type_id' ),
+		);
+		$constraints = array_merge( $base_constraints, $constraints );
+
+		return array(
+			'name'        => $table_name,
+			'columns'     => $columns,
+			'primary key' => array( $primary_id_column ),
+			'foreign key constraints' => $constraints,
+		);
+  }
 
 	static function metaboxes() {
 		$metaboxes = CB_Period::metaboxes();
@@ -60,51 +83,55 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		return $options;
 	}
 
-	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		// The WP_Post may have all its metadata loaded already
-		// as the wordpress system adds all fields to the WP_Post dynamically
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
-		if ( ! $post->period_status_type_ID ) throw new Exception( 'CB_PeriodEntity requires period_status_type_ID' );
-		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
-
-		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
-		//  period_group_ID can == <create new>
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
-
+	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			$post->post_title,
-			$period_group,
-			$period_status_type
+			$properties['ID'],
+			$properties['post_title'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container )
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
 
-  protected static function factory_from_periodentity(
-		CB_PeriodEntity $periodentity,
+  protected static function factory_from_perioditem(
+		CB_PeriodItem $perioditem,
 		$new_periodentity_Class,
 		$new_period_status_type_Class,
 		$name = NULL,
 
-		$copy_period_group = TRUE,
+		$copy_period_group    = TRUE,
 		CB_Location $location = NULL,
-		CB_Item $item = NULL,
-		CB_User $user = NULL
+		CB_Item     $item     = NULL,
+		CB_User     $user     = NULL
 	) {
+		$period_entity = $perioditem->period_entity;
+
 		// PeriodGroup, Period and refrences
 		$period_group  = NULL;
 		if ( $copy_period_group ) {
-			// set_create_new() will recursively set IDs to CB2_CREATE_NEW
-			// thus saving will recursively create new versions
-			// of all dependent sub-objects
-			$period_group = $periodentity->period_group->set_create_new( $name );
+			// We do not want to clone the period_group
+			// only the period item *instance*
+			// TODO: contiguous bookings
+			$datetime_now = new DateTime();
+			$period = new CB_Period(
+				CB2_CREATE_NEW,
+				$perioditem->name,
+				$perioditem->datetime_period_item_start, // datetime_part_period_start
+				$perioditem->datetime_period_item_end,   // datetime_part_period_end
+				$datetime_now                            // datetime_from
+			);
+			$period_group = new CB_PeriodGroup(
+				CB2_CREATE_NEW,
+				$perioditem->name,
+				array( $period ) // periods
+			);
 		} else {
 			// Linking means that:
 			// changing the original availability period will change the booking as well!
-			$period_group = $periodentity->period_group;
+			$period_group = $period_entity->period_group;
 		}
 
 		// new PeriodEntity
@@ -114,9 +141,9 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 			$period_group,
 			new $new_period_status_type_Class(),
 
-			( $location ? $location : $periodentity->location ),
-			( $item     ? $item     : $periodentity->item ),
-			( $user     ? $user     : $periodentity->user )
+			( $location ? $location : $period_entity->location ),
+			( $item     ? $item     : $period_entity->item ),
+			( $user     ? $user     : $period_entity->user )
 		);
 
 		return $new_period_entity;
@@ -134,7 +161,7 @@ class CB_PeriodEntity extends CB_PostNavigator implements JsonSerializable {
 		$user     = NULL
 	) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -268,26 +295,23 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
 		return parent::metaboxes();
 	}
 
+  function database_table_name() { return self::$database_table; }
+
+  function database_table_schema() {
+		return $this->database_table_schema_root( self::$database_table, 'global_period_group_id' );
+  }
+
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		// The WP_Post may have all its metadata loaded already
-		// as the wordpress system adds all fields to the WP_Post dynamically
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
-		if ( ! $post->period_status_type_ID ) throw new Exception( 'CB_PeriodEntity requires period_status_type_ID' );
-		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
-
-		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
-
+	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			$post->post_title,
-			$period_group,
-			$period_status_type
+			$properties['ID'],
+			$properties['post_title'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container )
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
@@ -304,7 +328,7 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
 		$user     = NULL
 	) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -344,30 +368,29 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 	}
 
 
+  function database_table_name() { return self::$database_table; }
+
+  function database_table_schema() {
+		return $this->database_table_schema_root( self::$database_table, 'location_period_group_id', array(
+			'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+		), array(
+			'location_ID' => array( 'posts', 'ID' ),
+		) );
+  }
+
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		// The WP_Post may have all its metadata loaded already
-		// as the wordpress system adds all fields to the WP_Post dynamically
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
-		if ( ! $post->period_status_type_ID ) throw new Exception( 'CB_PeriodEntity requires period_status_type_ID' );
-		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
-		if ( ! $post->location_ID )           throw new Exception( 'CB_PeriodEntity requires location_ID' );
-
-		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
-		$location           = CB_Query::get_post_with_type( CB_Location::$static_post_type, $post->location_ID );
-
+	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			$post->post_title,
-			$period_group,
-			$period_status_type,
+			$properties['ID'],
+			$properties['post_title'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
 
-			$location
+			CB_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container )
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
@@ -382,7 +405,7 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -426,32 +449,32 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 		return $metaboxes;
 	}
 
+  function database_table_name() { return self::$database_table; }
+
+  function database_table_schema() {
+		return $this->database_table_schema_root( self::$database_table, 'location_period_group_id', array(
+			'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+			'item_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+		), array(
+			'location_ID' => array( 'posts', 'ID' ),
+			'item_ID'     => array( 'posts', 'ID' ),
+		) );
+  }
+
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		// The WP_Post may have all its metadata loaded already
-		// as the wordpress system adds all fields to the WP_Post dynamically
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
-		if ( ! $post->period_status_type_ID ) throw new Exception( 'CB_PeriodEntity requires period_status_type_ID' );
-		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
-		if ( ! $post->location_ID )           throw new Exception( 'CB_PeriodEntity requires location_ID' );
-		if ( ! $post->item_ID )               throw new Exception( 'CB_PeriodEntity requires item_ID' );
-		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
-		$location           = CB_Query::get_post_with_type( CB_Location::$static_post_type,         $post->location_ID );
-		$item               = CB_Query::get_post_with_type( CB_Item::$static_post_type,             $post->item_ID );
-
+	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			$post->post_title,
-			$period_group,
-			$period_status_type,
+			$properties['ID'],
+			$properties['post_title'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
 
-			$location,
-			$item
+			CB_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
+			CB_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container )
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
@@ -466,7 +489,7 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -516,36 +539,35 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 		return $metaboxes;
 	}
 
+  function database_table_name() { return self::$database_table; }
+
+  function database_table_schema() {
+		return $this->database_table_schema_root( self::$database_table, 'location_period_group_id', array(
+			'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+			'item_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+			'user_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+		), array(
+			'location_ID' => array( 'posts', 'ID' ),
+			'item_ID'     => array( 'posts', 'ID' ),
+			'user_ID'     => array( 'users', 'ID' ),
+		) );
+  }
+
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		// The WP_Post may have all its metadata loaded already
-		// as the wordpress system adds all fields to the WP_Post dynamically
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
-		if ( ! $post->period_status_type_ID ) throw new Exception( 'CB_PeriodEntity requires period_status_type_ID' );
-		if ( ! $post->period_group_ID )       throw new Exception( 'CB_PeriodEntity requires period_group_ID' );
-		if ( ! $post->location_ID )           throw new Exception( 'CB_PeriodEntity requires location_ID' );
-		if ( ! $post->item_ID )               throw new Exception( 'CB_PeriodEntity requires item_ID' );
-		if ( ! $post->user_ID )               throw new Exception( 'CB_PeriodEntity requires user_ID' );
-
-		$period_status_type = CB_Query::get_post_with_type( CB_PeriodStatusType::$static_post_type, $post->period_status_type_ID );
-		$period_group = ( is_numeric( $post->period_group_ID ) ? CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $post->period_group_ID ) : NULL );
-		$location           = CB_Query::get_post_with_type( CB_Location::$static_post_type,         $post->location_ID );
-		$item               = CB_Query::get_post_with_type( CB_Item::$static_post_type,             $post->item_ID );
-		$user               = CB_Query::get_user( $post->user_ID );
-
+	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			$post->post_title,
-			$period_group,
-			$period_status_type,
+			$properties['ID'],
+			$properties['post_title'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
 
-			$location,
-			$item,
-			$user
+			CB_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
+			CB_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container ),
+			CB_PostNavigator::get_or_create_new( $properties, 'user_ID',               $instance_container )
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
@@ -561,7 +583,7 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -571,21 +593,21 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
     return $object;
   }
 
-  static function factory_booked_from_available_timeframe( CB_PeriodEntity_Timeframe $periodentity_available, CB_User $user, $name = 'booking', $copy_period_group = TRUE ) {
-		if ( ! $periodentity_available->period_status_type instanceof CB_PeriodStatusType_Available )
-			throw new Exception( 'Tried to morph into periodentity-user from non-available status [' . $periodentity_available->period_status_type->name . ']' );
+  static function factory_booked_from_available_timeframe_item( CB_PeriodItem_Timeframe $perioditem_available, CB_User $user, $name = 'booking', $copy_period_group = TRUE ) {
+		if ( ! $perioditem_available->period_entity->period_status_type instanceof CB_PeriodStatusType_Available )
+			throw new Exception( 'Tried to morph into perioditem-user from non-available status [' . $perioditem_available->period_status_type->name . ']' );
 		if ( ! $user )
 			throw new Exception( 'Tried to morph into periodentity-user without user]' );
 
-		return CB_PeriodEntity::factory_from_periodentity(
-			$periodentity_available,
+		return CB_PeriodEntity::factory_from_perioditem(
+			$perioditem_available,
 			CB_PeriodEntity_Timeframe_User,
 			CB_PeriodStatusType_Booked,
 			$name,
 
 			$copy_period_group,
-			NULL, // Copy location from $periodentity_available
-			NULL, // Copy location from $periodentity_available
+			NULL, // Copy location from $perioditem_available
+			NULL, // Copy location from $perioditem_available
 			$user
 		);
   }

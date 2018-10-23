@@ -34,6 +34,7 @@ require_once(CB2_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php'
 require_once('CB2_Query/CB_Query.php');
 require_once('CB2_Query/CB_Database.php');
 require_once('CB2_Query/CB_PostNavigator.php');
+require_once('CB2_Query/CB_DatabaseTable_PostNavigator.php');
 require_once('CB2_Query/CB_PeriodItem.php');
 require_once('CB2_Query/CB_Entities.php');
 require_once('CB2_Query/CB_PeriodEntity.php');

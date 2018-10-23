@@ -1,34 +1,34 @@
 <?php
 class CB_Forms {
-  static function location_options( $none = FALSE ) {
-    return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'location' AND post_status = 'publish'", $none );
+  static function location_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
+    return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'location' AND post_status = 'publish'", $none, $none_id );
   }
 
-  static function item_options( $none = FALSE ) {
-    return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'item' AND post_status = 'publish'", $none );
+  static function item_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
+    return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'item' AND post_status = 'publish'", $none, $none_id );
   }
 
-  static function user_options( $none = FALSE ) {
-    return self::get_options( 'users', NULL, 'ID', 'user_login', '1=1', $none );
+  static function user_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
+    return self::get_options( 'users', NULL, 'ID', 'user_login', '1=1', $none, $none_id );
   }
 
-  static function period_status_type_options( $none = FALSE ) {
-    return self::get_options( 'cb2_period_status_types', CB_PeriodStatusType::$static_post_type, 'period_status_type_id', 'name', '1=1', $none );
+  static function period_status_type_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
+    return self::get_options( 'cb2_period_status_types', CB_PeriodStatusType::$static_post_type, 'period_status_type_id', 'name', '1=1', $none, $none_id );
   }
 
-  static function period_group_options( $none = FALSE ) {
-    return self::get_options( 'cb2_period_groups', CB_PeriodGroup::$static_post_type, 'period_group_id', 'name', '1=1', $none );
+  static function period_group_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
+    return self::get_options( 'cb2_period_groups', CB_PeriodGroup::$static_post_type, 'period_group_id', 'name', '1=1', $none, $none_id );
   }
 
   static function period_entity_options( $none = FALSE ) {
     return self::get_options( 'cb2_view_periodent_posts' );
   }
 
-  static function period_options( $none = FALSE ) {
-    return self::get_options( 'cb2_periods', CB_Period::$static_post_type, 'period_id', 'name', '1=1', $none );
+  static function period_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
+    return self::get_options( 'cb2_periods', CB_Period::$static_post_type, 'period_id', 'name', '1=1', $none, $none_id );
   }
 
-  static function get_options( $table, $post_type = NULL, $id_field = 'ID', $name_field = 'post_title', $condition = '1=1', $none = FALSE ) {
+  static function get_options( $table, $post_type = NULL, $id_field = 'ID', $name_field = 'post_title', $condition = '1=1', $none = FALSE, $none_id = CB2_CREATE_NEW ) {
 		global $wpdb;
 
 		$cache_name = "CB_Forms::get_options($table, $post_type, $id_field, $name_field, $condition, $none)";
@@ -36,8 +36,8 @@ class CB_Forms {
 		if ( ! $options ) {
 			$options    = array();
 			if ( $none ) {
-				$none_string = ( $none === TRUE ? 'None' : $none);
-				$options[$none_string] = htmlspecialchars( $none_string );
+				$none_string       = ( $none === TRUE ? __( '-- create new --' ) : $none );
+				$options[$none_id] = htmlspecialchars( $none_string );
 			}
 
 			$sql = "select $id_field as ID, $name_field as name from $wpdb->prefix$table where $condition";

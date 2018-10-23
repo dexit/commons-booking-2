@@ -4,7 +4,7 @@ require_once( 'CB_PeriodGroup.php' );
 
 //add_filter( 'cmb2_override_recurrence_sequence_meta_value', array( 'CB_Period', 'cmb2_override_recurrence_sequence_meta_value' ), 10, 4 );
 
-class CB_Period extends CB_PostNavigator implements JsonSerializable {
+class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializable {
   public static $database_table = 'cb2_periods';
   public static $all = array();
   static $static_post_type = 'period';
@@ -13,6 +13,30 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
   );
 
   function post_type() {return self::$static_post_type;}
+
+  function database_table_name() { return self::$database_table; }
+
+  function database_table_schema() {
+		// TODO: PHP object property type assignment could work from this knowledge also
+		// however, pseudo fields like period_IDs that represent DRI
+		// with array(ints) would need guidance also
+		return array(
+			'name'    => self::$database_table,
+			'columns' => array(
+				'period_id' => array( INT, (11), UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
+				'name'      => array( VARCHAR, (1024), NULL, NOT_NULL, FALSE, 'period' ),
+				'description' => array( VARCHAR, (2048), NULL, NULL, FALSE, NULL ),
+				'datetime_part_period_start' => array( DATETIME, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
+				'datetime_part_period_end'   => array( DATETIME, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
+				'recurrence_type' => array( CHAR, (1), NULL, FALSE, NULL, 'recurrence_type:\nNULL - no recurrence\nD - daily recurrence (start and end time parts used only)\nW - weekly recurrence (day-of-week and start and end time parts used only)\nM - monthly recurrence (day-of-month and start and end time parts used only)\nY - yearly recurrence (full absolute start and end time parts used)' ),
+				'recurrence_frequency' => array( INT, (11), NOT_NULL, FALSE, '1', 'e.g. Every 2 weeks' ),
+				'datetime_from' => array( DATETIME, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Absolute date: when the period should start appearing in the calendar' ),
+				'datetime_to'   => array( DATETIME, NULL, NULL,     FALSE, NULL, 'Absolute date: when the period should stop appearing in the calendar' ),
+				'recurrence_sequence' => array( BIT, (32), NOT_NULL, FALSE, 0 ),
+			),
+			'primary key' => array('period_id'),
+		);
+  }
 
 	static function metaboxes() {
 		$now            = new DateTime();
@@ -198,10 +222,10 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 	}
 
   static function selector_metabox() {
-		$period_options       = CB_Forms::period_options( CB2_CREATE_NEW );
+		$period_options       = CB_Forms::period_options( TRUE );
 		$periods_count        = count( $period_options ) - 1;
 		return array(
-			'title'      => __( 'Current Period', 'commons-booking-2' ) .
+			'title'      => __( 'Periods', 'commons-booking-2' ) .
 												" <span class='cb2-usage-count-ok'>$periods_count</span>",
 			'show_names' => FALSE,
 			'context'    => 'side',
@@ -209,8 +233,8 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 			'fields'     => array(
 				array(
 					'name'    => __( 'Period', 'commons-booking-2' ),
-					'id'      => 'period_ID',
-					'type'    => 'radio',
+					'id'      => 'period_IDs',
+					'type'    => 'multicheck',
 					//'show_option_none' => TRUE,
 					'default' => ( isset( $_GET['period_ID'] ) ? $_GET['period_ID'] : CB2_CREATE_NEW ),
 					'options' => $period_options,
@@ -219,33 +243,29 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		);
 	}
 
-	static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		// The WP_Post may have all its metadata loaded already
-		// as the wordpress system adds all fields to the WP_Post dynamically
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post );
-
+	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		// This may not exist in post creation
 		// We do not create the CB_PeriodGroup objects here
 		// because it could create a infinite circular creation
 		// as the CB_PeriodGroups already create their associated CB_Periods
 		$period_group_IDs = array();
-		if ( property_exists( $post, 'period_group_IDs' ) )
-			$period_group_IDs = CB_Query::ensure_ints( 'period_group_IDs', $post->period_group_IDs, TRUE );
+		if ( isset( $properties['period_group_IDs'] ) )
+			$period_group_IDs = CB_Query::ensure_ints( 'period_group_IDs', $properties['period_group_IDs'], TRUE );
 
 		$object = self::factory(
-			$post->ID,
-			$post->post_title,
-			$post->datetime_part_period_start,
-			$post->datetime_part_period_end,
-			$post->datetime_from,
-			$post->datetime_to,
-			$post->recurrence_type,
-			$post->recurrence_frequency,
-			$post->recurrence_sequence,
+			$properties['ID'],
+			$properties['post_title'],
+			$properties['datetime_part_period_start'],
+			$properties['datetime_part_period_end'],
+			$properties['datetime_from'],
+			$properties['datetime_to'],
+			$properties['recurrence_type'],
+			$properties['recurrence_frequency'],
+			$properties['recurrence_sequence'],
 			$period_group_IDs
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
@@ -263,7 +283,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		$period_group_IDs = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -279,11 +299,11 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
     $datetime_part_period_start, // DateTime
     $datetime_part_period_end,   // DateTime
     $datetime_from,              // DateTime
-    $datetime_to,                // DateTime (NULL)
-    $recurrence_type,
-    $recurrence_frequency,
-    $recurrence_sequence,
-    $period_group_IDs = array()
+    $datetime_to = NULL,         // DateTime (NULL)
+    $recurrence_type      = NULL,
+    $recurrence_frequency = NULL,
+    $recurrence_sequence  = NULL,
+    $period_group_IDs     = array()
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
@@ -298,7 +318,7 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 					&& $this->datetime_part_period_end->format(   'H:i:s' ) == '18:00:00'
 				 );
 
-    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) self::$all[$ID] = $this;
+    if ( $ID ) self::$all[$ID] = $this;
   }
 
   function not_used() {
@@ -461,7 +481,10 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
   function post_post_update() {
 		global $wpdb;
 
-		if ( CB2_DEBUG_SAVE ) print( "<h2>" . get_class( $this ) . "::post_post_update($this->ID) dependencies</h2>" );
+		if ( CB2_DEBUG_SAVE ) {
+			$Class = get_class( $this );
+			print( "<div class='cb2-WP_DEBUG'>$Class::post_post_update($this->ID) dependencies</div>" );
+		}
 
 		// Remove previous relations
 		$table = "{$wpdb->prefix}cb2_period_group_period";
@@ -470,10 +493,9 @@ class CB_Period extends CB_PostNavigator implements JsonSerializable {
 		) );
 
 		// Link the Period to the PeriodGroup(s)
-		// id_from_ID_with_post_type() and id()
 		// will throw Exceptions if IDs cannot be found
 		foreach ( $this->period_group_IDs as $period_group_ID ) {
-			$period_group_id = CB_Query::id_from_ID_with_post_type( $period_group_ID, CB_PeriodGroup::$static_post_type );
+			$period_group_id = CB_PostNavigator::id_from_ID_with_post_type( $period_group_ID, CB_PeriodGroup::$static_post_type );
 			$wpdb->insert( $table, array(
 				'period_group_id' => $period_group_id,
 				'period_id'       => $this->id(),

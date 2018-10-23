@@ -60,7 +60,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
     parent::__construct();
 
-    if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) self::$all[$ID] = $this;
+    if ( $ID ) self::$all[$ID] = $this;
   }
 
   static function factory_subclass(
@@ -200,7 +200,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
   function add_actions( &$actions, $post ) {
 		$period_ID = $this->period->ID;
-		$actions[ 'edit-definition' ] = "<a href='/wp-admin/post.php?post=$period_ID&action=edit'>Edit definition</a>";
+		$actions[ 'edit-definition' ] = "<a href='admin.php?page=cb-post-edit&post=$period_ID&post_type=period&action=edit'>Edit definition</a>";
 		$actions[ 'trash occurence' ] = '<a href="#" class="submitdelete">Trash Occurence</a>';
 	}
 
@@ -367,17 +367,17 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
     );
   }
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
+			$properties['ID'],
 			NULL, // period_entity
 			NULL, // period
-			$post->recurrence_index,
-			$post->datetime_period_item_start,
-			$post->datetime_period_item_end
+			$properties['recurrence_index'],
+			$properties['datetime_period_item_start'],
+			$properties['datetime_period_item_end']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -391,7 +391,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -444,21 +444,17 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
     );
   }
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Global requires a period_entity_ID' );
-		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Global requires a period_ID' );
-
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			CB_Query::get_post_with_type( CB_PeriodEntity_Global::$static_post_type, $post->period_entity_ID ),
-			CB_Query::get_post_with_type( CB_Period::$static_post_type,              $post->period_ID ),
-			$post->recurrence_index,
-			$post->datetime_period_item_start,
-			$post->datetime_period_item_end
+			$properties['ID'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, CB_PeriodEntity_Global ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			$properties['recurrence_index'],
+			$properties['datetime_period_item_start'],
+			$properties['datetime_period_item_end']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -472,7 +468,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -522,21 +518,17 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     array_push( $this->posts, $this->period_entity->location );
   }
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Location requires a period_entity_ID' );
-		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Location requires a period_ID' );
-
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			CB_Query::get_post_with_type( CB_PeriodEntity_Location::$static_post_type, $post->period_entity_ID ),
-			CB_Query::get_post_with_type( CB_Period::$static_post_type,                $post->period_ID ),
-			$post->recurrence_index,
-			$post->datetime_period_item_start,
-			$post->datetime_period_item_end
+			$properties['ID'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, CB_PeriodEntity_Location ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			$properties['recurrence_index'],
+			$properties['datetime_period_item_start'],
+			$properties['datetime_period_item_end']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -550,7 +542,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -621,21 +613,17 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     $this->period_entity->item->add_perioditem( $this );
   }
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Timeframe requires a period_entity_ID' );
-		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Timeframe requires a period_ID' );
-
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			CB_Query::get_post_with_type( CB_PeriodEntity_Timeframe::$static_post_type, $post->period_entity_ID ),
-			CB_Query::get_post_with_type( CB_Period::$static_post_type,                 $post->period_ID ),
-			$post->recurrence_index,
-			$post->datetime_period_item_start,
-			$post->datetime_period_item_end
+			$properties['ID'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, CB_PeriodEntity_Timeframe ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			$properties['recurrence_index'],
+			$properties['datetime_period_item_start'],
+			$properties['datetime_period_item_end']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -649,7 +637,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -740,21 +728,17 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     $this->period_entity->user->add_perioditem( $this );
   }
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-		if ( ! $post->period_entity_ID ) throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_entity_ID' );
-		if ( ! $post->period_ID )        throw new Exception( 'CB_PeriodItem_Timeframe_User requires a period_ID' );
-
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			CB_Query::get_post_with_type( CB_PeriodEntity_Timeframe_User::$static_post_type, $post->period_entity_ID ),
-			CB_Query::get_post_with_type( CB_Period::$static_post_type,                      $post->period_ID ),
-			$post->recurrence_index,
-			$post->datetime_period_item_start,
-			$post->datetime_period_item_end
+			$properties['ID'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, CB_PeriodEntity_Timeframe_User ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			$properties['recurrence_index'],
+			$properties['datetime_period_item_start'],
+			$properties['datetime_period_item_end']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -768,7 +752,7 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     $datetime_period_item_end
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );

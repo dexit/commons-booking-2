@@ -1,5 +1,5 @@
 <?php
-class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
+class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSerializable {
   public static $database_table = 'cb2_period_groups';
 	public static $all = array();
   static $static_post_type = 'periodgroup';
@@ -10,17 +10,17 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   public $periods  = array();
 
   static function selector_metabox() {
-		$period_group_options = CB_Forms::period_group_options( CB2_CREATE_NEW );
+		$period_group_options = CB_Forms::period_group_options( TRUE );
 		$period_groups_count  = count( $period_group_options ) - 1;
 		return array(
-			'title'      => __( 'Existing Period Groups', 'commons-booking-2' ) .
+			'title'      => __( 'Period Group', 'commons-booking-2' ) .
 												" <span class='cb2-usage-count-ok'>$period_groups_count</span>",
 			'show_names' => FALSE,
 			'context'    => 'side',
 			'closed'     => TRUE,
 			'fields'     => array(
 				array(
-					'name'    => __( 'PeriodGroup', 'commons-booking-2' ),
+					'name'    => __( 'Period Group', 'commons-booking-2' ),
 					'id'      => 'period_group_ID',
 					'type'    => 'radio',
 					//'show_option_none' => TRUE,
@@ -31,30 +31,33 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		);
 	}
 
+  function database_table_name() { return self::$database_table; }
+
+  function database_table_schema() {
+		return array(
+			'name'    => self::$database_table,
+			'columns' => array(
+				'period_group_id' => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
+				'name'            => array( VARCHAR, (1024), NULL,     NOT_NULL, FALSE, 'period group' ),
+				'description'     => array( VARCHAR, (2048), NULL,     NULL,     FALSE, NULL ),
+			),
+			'primary key' => array('period_group_id'),
+			'many to many' => array(
+				'cb2_period_group_period' => 'cb2_periods', // TODO: this will create an extra table
+			),
+		);
+	}
+
   function post_type() {return self::$static_post_type;}
 
-  static function &factory_from_wp_post( $post, $instance_container = NULL ) {
-		if ( $post->ID ) CB_Query::get_metadata_assign( $post ); // Retrieves ALL meta values
-
-		// Retrieve all Periods
-		// 1-many
-		// This may not be present during post creation
-		$periods = array();
-		if ( property_exists( $post, 'period_IDs' ) && $post->period_IDs ) {
-			$period_IDs = CB_Query::ensure_ints( 'period_IDs', $post->period_IDs, TRUE );
-			foreach ( $period_IDs as $period_id ) {
-				$period = CB_Query::get_post_with_type( CB_Period::$static_post_type, $period_id );
-				array_push( $periods, $period );
-			}
-		}
-
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID,
-			$post->post_title,
-			$periods
+			$properties['ID'],
+			$properties['post_title'],
+			CB_PostNavigator::get_or_create_new( $properties, 'period_IDs', $instance_container )
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
@@ -65,7 +68,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
 		$periods = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -82,7 +85,7 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 		parent::__construct( $this->periods );
-		if ( ! is_null( $ID ) && $ID != CB2_CREATE_NEW ) self::$all[$ID] = $this;
+		if ( $ID ) self::$all[$ID] = $this;
   }
 
   function add_period( $period ) {
@@ -185,7 +188,10 @@ class CB_PeriodGroup extends CB_PostNavigator implements JsonSerializable {
   function post_post_update() {
 		global $wpdb;
 
-		if ( CB2_DEBUG_SAVE ) print( "<h2>" . get_class( $this ) . "::post_post_update($this->ID) dependencies</h2>" );
+		if ( CB2_DEBUG_SAVE ) {
+			$Class = get_class( $this );
+			print( "<div class='cb2-WP_DEBUG'>$Class::post_post_update($this->ID) dependencies</div>" );
+		}
 
 		// Link the Period to the PeriodGroup
 		$table = "{$wpdb->prefix}cb2_period_group_period";
