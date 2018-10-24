@@ -27,6 +27,19 @@ class CB_PostNavigator {
     if ( property_exists( $this, 'ID' ) ) wp_cache_add( $this->ID, $this, 'posts' );
   }
 
+  function is( CB_PostNavigator $post_navigator ) {
+		return $this->ID == $post_navigator->ID;
+  }
+
+  function remove_post( $post_remove ) {
+		$new_posts = array();
+		foreach ( $this->posts as $post ) {
+			$is_remove_post = ( $post instanceof CB_PostNavigator && $post->is( $post_remove ) );
+			if ( ! $is_remove_post ) array_push( $new_posts, $post );
+		}
+		$this->posts = $new_posts;
+  }
+
   protected static function class_from_ID_property_name( $ID_property_name, &$property_name = FALSE, &$is_plural = NULL, $Class = FALSE ) {
 		// TODO: factory_subclass() for polymorphic pointers like period_entity_ID
 		$is_ID         = ( substr( $ID_property_name, -3 ) == '_ID' || substr( $ID_property_name, -4 ) == '_IDs' );

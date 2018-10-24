@@ -182,6 +182,12 @@ body input.cb2-tick-only {
 	box-shadow: none;
 	cursor: default;
 }
+body input.cb2-tick-only:not([checked]):after {
+	content: '✘';
+	color:#ff5555;
+	position: relative;
+	top: 7px;
+}
 .cb2-colour-block {
 	height:20px;
 	width:80px;

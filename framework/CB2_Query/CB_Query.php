@@ -48,7 +48,7 @@ class CB_Query {
 		}
 
 		// Database table types
-		if ( $ReflectionClass->isSubclassOf( CB_DatabaseTable_PostNavigator ) ) {
+		if ( $ReflectionClass->isSubclassOf( 'CB_DatabaseTable_PostNavigator' ) ) {
 			self::$database_table_types[ $Class ] = $Class;
 		}
   }

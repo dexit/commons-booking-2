@@ -89,10 +89,6 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     array_push( $this->perioditems, $perioditem );
   }
 
-	function is( $user ) {
-		return ( $user instanceof CB_User && $user->ID == $this->ID );
-	}
-
   function jsonSerialize() {
     $array = array(
       'ID' => $this->ID,
@@ -181,10 +177,6 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
   function get_field_this( $class = '', $date_format = 'H:i' ) {
 		$permalink = get_the_permalink( $this );
 		return "<a href='$permalink' class='$class' title='view $this->post_title'>$this->post_title</a>";
-	}
-
-	function is( $post ) {
-		return ( $post instanceof CB_Post && $post->ID == $this->ID );
 	}
 
 	function summary() {

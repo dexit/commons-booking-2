@@ -39,11 +39,13 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
 		// Add the period to all the days it appears in
 		// CB_Day::factory() will lazy create singleton CB_Day's
+		$this->days = array();
 		if ( $this->datetime_period_item_start ) {
 			$date = clone $this->datetime_period_item_start;
 			do {
 				$day = CB_Day::factory( clone $date );
 				$day->add_perioditem( $this );
+				array_push( $this->days, $day );
 				$date->add( new DateInterval( 'P1D' ) );
 			} while ( $date < $this->datetime_period_item_end );
 
@@ -61,6 +63,20 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     parent::__construct();
 
     if ( $ID ) self::$all[$ID] = $this;
+  }
+
+  function is( CB_PostNavigator $perioditem ) {
+		return is_a( $perioditem, get_class( $this ) )
+			&& property_exists( $perioditem, 'period_entity' )
+			&& $perioditem->period_entity->is( $this->period_entity )
+			&& $perioditem->recurrence_index == $this->recurrence_index;
+  }
+
+  function remove() {
+		foreach ( $this->days as $day )
+			$day->remove_post( $this );
+
+		if ( $this->ID ) unset( self::$all[$this->ID] );
   }
 
   static function factory_subclass(
@@ -447,7 +463,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, CB_PeriodEntity_Global ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB_PeriodEntity_Global' ),
 			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
@@ -521,7 +537,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, CB_PeriodEntity_Location ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB_PeriodEntity_Location' ),
 			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
@@ -616,7 +632,7 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, CB_PeriodEntity_Timeframe ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB_PeriodEntity_Timeframe' ),
 			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
@@ -731,7 +747,7 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, CB_PeriodEntity_Timeframe_User ),
+			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB_PeriodEntity_Timeframe_User' ),
 			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],

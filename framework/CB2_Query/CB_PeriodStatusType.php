@@ -1,4 +1,9 @@
 <?php
+define( 'CB2_COLLECT', 1 );
+define( 'CB2_USE',     2 );
+define( 'CB2_RETURN',  4 );
+define( 'CB2_ANY_ACTION', CB2_COLLECT | CB2_USE | CB2_RETURN );
+
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
@@ -40,13 +45,13 @@ class CB_PeriodStatusType extends CB_DatabaseTable_PostNavigator implements Json
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
-				`period_status_type_id` => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
-				`name`                  => array( VARCHAR, (1024), NULL,     NOT_NULL ),
-				`description`           => array( VARCHAR, (1024), NULL,     NULL,     NULL, NULL ),
-				`flags`                 => array( BIT,     (32),   NULL,     NOT_NULL, NULL, 0 ),
-				`colour`                => array( VARCHAR, (256),  NULL,     NULL,     NULL, NULL ),
-				`opacity`               => array( TINYINT, (1),    NULL,     NOT_NULL, NULL, 100 ),
-				`priority`              => array( INT,     (11),   NULL,     NOT_NULL, NULL, 1 ),
+				'period_status_type_id' => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
+				'name'                  => array( VARCHAR, (1024), NULL,     NOT_NULL ),
+				'description'           => array( VARCHAR, (1024), NULL,     NULL,     NULL, NULL ),
+				'flags'                 => array( BIT,     (32),   NULL,     NOT_NULL, NULL, 0 ),
+				'colour'                => array( VARCHAR, (256),  NULL,     NULL,     NULL, NULL ),
+				'opacity'               => array( TINYINT, (1),    NULL,     NOT_NULL, NULL, 100 ),
+				'priority'              => array( INT,     (11),   NULL,     NOT_NULL, NULL, 1 ),
 			),
 			'primary key' => array('period_status_type_id'),
 		);
@@ -88,11 +93,11 @@ class CB_PeriodStatusType extends CB_DatabaseTable_PostNavigator implements Json
 					array(
 						'name' => __( 'Flags', 'commons-booking-2' ),
 						'id' => 'flags',
-						'type' => 'multicheck',
+						'type' => 'multicheck_inline',
 						'options' => array(
-							'1' => __( 'Collect', 'commons-booking-2' ),
-							'2' => __( 'Use',     'commons-booking-2' ),
-							'4' => __( 'Return',  'commons-booking-2' ),
+							CB2_COLLECT => __( 'Collect', 'commons-booking-2' ),
+							CB2_USE     => __( 'Use',     'commons-booking-2' ),
+							CB2_RETURN  => __( 'Return',  'commons-booking-2' ),
 						),
 					),
 				),
@@ -110,18 +115,17 @@ class CB_PeriodStatusType extends CB_DatabaseTable_PostNavigator implements Json
     $colour    = NULL,
     $opacity   = NULL,
     $priority  = NULL,
-    $return    = NULL,
-    $collect   = NULL,
-    $use       = NULL,
+    $flags     = NULL,
     $system    = NULL
   ) {
 		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
-		$this->system     = $system;
 
-    // WP_Post values
-    $this->post_title = $name;
-		$this->post_type  = self::$static_post_type;
+		// Flags: these are extensible
+    $this->collect   = $flags & CB2_COLLECT; // 1
+    $this->use       = $flags & CB2_USE;     // 2
+    $this->return    = $flags & CB2_RETURN;  // 4
 
+    parent::__construct();
 		if ( $ID ) self::$all[$ID] = $this;
   }
 
@@ -132,9 +136,7 @@ class CB_PeriodStatusType extends CB_DatabaseTable_PostNavigator implements Json
 			$properties['colour'],
 			$properties['opacity'],
 			$properties['priority'],
-			( $properties['return']  != '0' ),
-			( $properties['collect'] != '0' ),
-			( $properties['use']     != '0' ),
+			$properties['flags'],
 			$properties['system']
 		);
 
@@ -181,6 +183,10 @@ class CB_PeriodStatusType extends CB_DatabaseTable_PostNavigator implements Json
     return $object;
   }
 
+  function can( $actions ) {
+		return $this->flags & $actions;
+  }
+
   function styles() {
     $styles = '';
     if ( $this->colour   ) $styles .= 'color:#'  . $this->colour           . ';';
@@ -198,28 +204,34 @@ class CB_PeriodStatusType extends CB_DatabaseTable_PostNavigator implements Json
 	}
 
   function manage_columns( $columns ) {
-		$columns['collect']  = '<span class="cb2-todo">Collect</span>';
-		$columns['use']      = '<span class="cb2-todo">Use</span>';
-		$columns['return']   = '<span class="cb2-todo">Return</span>';
-		$columns['priority'] = '<span>Priority</span>';
-		$columns['colour']   = '<span>Colour</span>';
+		$columns['collect']  = 'Collect';
+		$columns['use']      = 'Use';
+		$columns['return']   = 'Return';
+		$columns['priority'] = 'Priority';
+		$columns['colour']   = 'Colour';
+		$columns['opacity']  = 'Opacity';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
 
 	function custom_columns( $column ) {
 		$html = '';
+		$css_opacity = ( is_numeric( $this->opacity ) ? $this->opacity / 100 : 1 );
 		switch ( $column ) {
 			case 'collect':
 			case 'use':
 			case 'return':
-				$html .= "<input class='cb2-tick-only' type='checkbox' checked='$this->$column' />";
+				$checked = ( $this->$column ? 'checked="1"' : '' );
+				$html   .= "<input class='cb2-tick-only' type='checkbox' $checked />";
 				break;
 			case 'priority':
 				$html .= "<span class='cb2-usage-count-ok' title='Higher priority Periods override each other'>$this->priority</span>";
 				break;
 			case 'colour':
-				$html .= "<div class='cb2-colour-block' style='background-color:$this->colour'></div>";
+				$html .= "<div class='cb2-colour-block' style='opacity:$css_opacity;background-color:$this->colour'></div>";
+				break;
+			case 'opacity':
+				$html .= "<div>$this->opacity%</div>";
 				break;
 		}
 		return $html;

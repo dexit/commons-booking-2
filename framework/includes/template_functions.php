@@ -130,6 +130,11 @@ function is_top_priority() {
 	return $top_priority || $show_overridden_periods;
 }
 
+function can_select() {
+	global $post;
+	return $post && ! property_exists( $post, 'no_select' );
+}
+
 function cb2_get_field( $field_name, $class = '', $date_format = 'H:i' ) {
 	global $post;
 	$object  = $post;
