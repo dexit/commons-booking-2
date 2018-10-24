@@ -231,8 +231,10 @@ function cb2_post_row_actions( $actions, $post ) {
 
 		CB_Query::get_metadata_assign( $post );
 		$post = CB_Query::ensure_correct_class( $post );
-		if ( $post instanceof CB_PostNavigator && method_exists( $post, 'add_actions' ) )
-			$post->add_actions( $actions, $post );
+		if ( $post instanceof CB_PostNavigator && method_exists( $post, 'add_actions' ) ) {
+			$add_actions = ( isset( $_GET['add_actions'] ) ? explode( ',', $_GET['add_actions'] ) : array() );
+			$post->add_actions( $actions, $post, $add_actions );
+		}
 
 		if ( basename( $_SERVER['PHP_SELF'] ) == 'admin.php' && isset( $_GET[ 'page' ] ) ) {
 			$page        = $_GET[ 'page' ];
@@ -357,6 +359,23 @@ function cb2_admin_init_menus() {
 	}
 }
 add_action( 'admin_menu', 'cb2_admin_init_menus' );
+
+function cb2_do_action() {
+	if ( isset( $_GET['do_action'] ) ) {
+		$do_action = explode( '::', $_GET['do_action'] );
+		if ( count( $do_action ) == 2 ) {
+			// SECURITY: limit which methods can be run
+			$Class  = $do_action[0];
+			$method = 'do_action_' . $do_action[1];
+			if ( method_exists( $Class, $method ) ) {
+				$args = $_GET;
+				array_shift( $args ); // Remove the page
+				call_user_func_array( array( $Class, $method ), $args );
+			}
+		}
+	}
+}
+add_action( 'init', 'cb2_do_action' );
 
 // ---------------------------------------------------------- Pages
 function cb2_options_page() {

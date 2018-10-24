@@ -26,7 +26,7 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
   }
 
 	static function metaboxes() {
-		$metaboxes = CB_Period::metaboxes();
+		$metaboxes = CB_Period::metaboxes( FALSE );
 		array_push( $metaboxes,
 			array(
 				// TODO: link this in to the Publish meta-box status instead
@@ -61,7 +61,7 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 			)
 		);
 		array_push( $metaboxes, CB_PeriodStatusType::selector_metabox() );
-		array_push( $metaboxes, CB_Period::selector_metabox() );
+		array_push( $metaboxes, CB_Period::selector_metabox( TRUE ) ); // Multiple
 
 		return $metaboxes;
 	}

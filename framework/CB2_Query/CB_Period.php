@@ -38,7 +38,7 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 		);
   }
 
-	static function metaboxes() {
+	static function metaboxes( $multiple_period_group = TRUE ) {
 		$now            = new DateTime();
 		$morning_format = CB_Query::$date_format . ' 08:00:00';
 		$evening_format = CB_Query::$date_format . ' 18:00:00';
@@ -180,7 +180,7 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 			),
 			*/
 
-			CB_PeriodGroup::selector_metabox(),
+			CB_PeriodGroup::selector_metabox( $multiple_period_group ),
 		);
 	}
 
@@ -221,22 +221,31 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 		return CB_Query::ensure_bitarray_integer( 'recurrence_sequence', $value );
 	}
 
-  static function selector_metabox() {
+  static function selector_metabox( $multiple = FALSE, $context_normal = FALSE ) {
 		$period_options       = CB_Forms::period_options( TRUE );
 		$periods_count        = count( $period_options ) - 1;
+		$plural  = ( $multiple ? 's' : '' );
+		$title   = "Period$plural";
+		$name    = "period_ID$plural";
+		$type    = ( $multiple ? 'multicheck' : 'radio' );
+		$default = ( isset( $_GET[$name] ) ? $_GET[$name] : CB2_CREATE_NEW );
+		if ( $multiple ) $default = explode( ',', $default );
+
+		$context = ( $context_normal ? 'normal' : 'side' );
+		$closed  = ! $context_normal;
+
 		return array(
-			'title'      => __( 'Periods', 'commons-booking-2' ) .
+			'title'      => __( $title, 'commons-booking-2' ) .
 												" <span class='cb2-usage-count-ok'>$periods_count</span>",
 			'show_names' => FALSE,
-			'context'    => 'side',
-			'closed'     => TRUE,
+			'context'    => $context,
+			'closed'     => $closed,
 			'fields'     => array(
 				array(
-					'name'    => __( 'Period', 'commons-booking-2' ),
-					'id'      => 'period_IDs',
-					'type'    => 'multicheck',
-					//'show_option_none' => TRUE,
-					'default' => ( isset( $_GET['period_ID'] ) ? $_GET['period_ID'] : CB2_CREATE_NEW ),
+					'name'    => __( $title, 'commons-booking-2' ),
+					'id'      => $name,
+					'type'    => $type,
+					'default' => $default,
 					'options' => $period_options,
 				),
 			),
@@ -416,9 +425,24 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 		return $summary;
 	}
 
-  function add_actions( &$actions, $post ) {
+  function add_actions( &$actions, $post, $add_actions = array() ) {
 		if ( $this->used() ) unset( $actions['trash'] );
 		unset( $actions['view'] );
+
+		if ( in_array( 'attach', $add_actions ) ) {
+			$period_group_IDs  = $_GET['period_group_IDs'];
+			$attach_text       = __( 'Attach' );
+			$cancel_text       = __( 'Cancel Attach' );
+			$page              = 'cb2-period-groups';
+			$do_action         = 'CB_PeriodGroup::attach';
+			$attach_link       = "admin.php?page=$page&period_ID=$this->ID&period_group_IDs=$period_group_IDs&do_action=$do_action";
+			$actions['attach'] = "<a href='$attach_link'>$attach_text</a>";
+			$actions['cancel'] = "<a style='color:red;' href='admin.php?page=cb2-periods'>$cancel_text</a>";
+
+			if ( ! $this->used() ) unset( $actions['trash'] );
+			unset( $actions['view'] );
+			unset( $actions['edit'] );
+		}
 	}
 
   function manage_columns( $columns ) {

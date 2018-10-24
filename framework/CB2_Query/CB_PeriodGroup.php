@@ -9,22 +9,28 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
   );
   public $periods  = array();
 
-  static function selector_metabox() {
+  static function selector_metabox( $multiple = FALSE ) {
 		$period_group_options = CB_Forms::period_group_options( TRUE );
 		$period_groups_count  = count( $period_group_options ) - 1;
+		$plural  = ( $multiple ? 's' : '' );
+		$title   = "Period Group$plural";
+		$name    = "period_group_ID$plural";
+		$type    = ( $multiple ? 'multicheck' : 'radio' );
+		$default = ( isset( $_GET[$name] ) ? $_GET[$name] : CB2_CREATE_NEW );
+		if ( $multiple ) $default = explode( ',', $default );
+
 		return array(
-			'title'      => __( 'Period Group', 'commons-booking-2' ) .
+			'title'      => __( $title, 'commons-booking-2' ) .
 												" <span class='cb2-usage-count-ok'>$period_groups_count</span>",
 			'show_names' => FALSE,
 			'context'    => 'side',
 			'closed'     => TRUE,
 			'fields'     => array(
 				array(
-					'name'    => __( 'Period Group', 'commons-booking-2' ),
-					'id'      => 'period_group_ID',
-					'type'    => 'radio',
-					//'show_option_none' => TRUE,
-					'default' => ( isset( $_GET['period_group_ID'] ) ? $_GET['period_group_ID'] : CB2_CREATE_NEW ),
+					'name'    => __( $title, 'commons-booking-2' ),
+					'id'      => $name,
+					'type'    => $type,
+					'default' => $default,
 					'options' => $period_group_options,
 				),
 			),
@@ -49,6 +55,12 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 	}
 
   function post_type() {return self::$static_post_type;}
+
+	static function metaboxes() {
+		$metaboxes = array();
+		array_push( $metaboxes, CB_Period::selector_metabox( TRUE, TRUE ) ); // Multiple, context primary
+		return $metaboxes;
+	}
 
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
@@ -93,11 +105,62 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
   }
 
   function add_actions( &$actions, $post ) {
-		unset( $actions['edit'] );
 		unset( $actions['view'] );
 	}
 
-  function manage_columns( $columns ) {
+	static function do_action_attach( $period_ID, $period_group_IDs ) {
+		// Link the Period to the PeriodGroup
+		global $wpdb;
+
+		// Convert inputs
+		$period_group_IDs = explode( ',', $period_group_IDs );
+		$period_group_ids = array();
+		foreach ( $period_group_IDs as $period_group_ID ) {
+			array_push( $period_group_ids, CB_PostNavigator::id_from_ID_with_post_type( $period_group_ID, self::$static_post_type ) );
+		}
+		$period_id = CB_PostNavigator::id_from_ID_with_post_type( $period_ID, CB_Period::$static_post_type );
+
+		// Delete existing
+		$table = "{$wpdb->prefix}cb2_period_group_period";
+		foreach ( $period_group_ids as $period_group_id ) {
+			$wpdb->delete( $table, array(
+				'period_group_id' => $period_group_id,
+				'period_id'       => $period_id,
+			) );
+		}
+
+		// Add
+		foreach ( $period_group_ids as $period_group_id ) {
+			$wpdb->insert( $table, array(
+				'period_group_id' => $period_group_id,
+				'period_id'       => $period_id,
+			) );
+		}
+	}
+
+	static function do_action_detach( $period_ID, $period_group_IDs ) {
+		// Link the Period to the PeriodGroup
+		global $wpdb;
+
+		// Convert inputs
+		$period_group_IDs = explode( ',', $period_group_IDs );
+		$period_group_ids = array();
+		foreach ( $period_group_IDs as $period_group_ID ) {
+			array_push( $period_group_ids, CB_PostNavigator::id_from_ID_with_post_type( $period_group_ID, self::$static_post_type ) );
+		}
+		$period_id = CB_PostNavigator::id_from_ID_with_post_type( $period_ID, CB_Period::$static_post_type );
+
+		// Delete existing
+		$table = "{$wpdb->prefix}cb2_period_group_period";
+		foreach ( $period_group_ids as $period_group_id ) {
+			$wpdb->delete( $table, array(
+				'period_group_id' => $period_group_id,
+				'period_id'       => $period_id,
+			) );
+		}
+	}
+
+	function manage_columns( $columns ) {
 		$columns['periods'] = 'Periods <a href="admin.php?page=cb2-periods">view all</a>';
 		$columns['entities'] = 'Entities';
 		$this->move_column_to_end( $columns, 'date' );
@@ -108,11 +171,14 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 		switch ( $column ) {
 			case 'periods':
 				print( $this->summary_periods() );
-				$page      = 'cb-post-new';
-				$post_type = 'period';
-				$add_link  = "admin.php?page=$page&period_group_ID=$this->ID&post_type=$post_type";
-				print( "<a class='cb2-todo' href='$add_link'>add new period</a>" );
-				print( ' | <a class="cb2-todo" href="admin.php?page=cb2-periods">attach existing period</a>' );
+				$add_new_text = __( 'add new period' );
+				$attach_text  = __( 'attach existing period' );
+				$page         = 'cb-post-new';
+				$post_type    = 'period';
+				$add_link     = "admin.php?page=$page&period_group_IDs=$this->ID&post_type=$post_type";
+				$attach_link  = "admin.php?page=cb2-periods&period_group_IDs=$this->ID&add_actions=attach";
+				print( "<a href='$add_link'>$add_new_text</a>" );
+				print( " | <a href='$attach_link'>$attach_text</a>" );
 				break;
 			case 'entities':
 				$wp_query_page_name = "paged-column-$column";
@@ -150,18 +216,15 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 	function summary_periods() {
 		$html = ( '<ul class="cb2-period-list">' );
 		$count = count( $this->periods );
+
 		foreach ( $this->periods as $period ) {
 			$edit_link   = $period->get_the_edit_post_link( 'edit' );
 
 			$detach_link = '';
 			if ( $count > 1 ) {
 				$detach_text = 'detach';
-				$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=periodgroup&action=detach";
-				if ( $period->usage_once() ) {
-					$detach_text = 'delete';
-					$detach_url  = "?page=cb-post-edit&post=$period->ID&post_type=period&action=delete";
-				}
-				$detach_link = " | <a class='cb2-todo' href='$detach_url'>$detach_text</a></li>";
+				$detach_url  = "?page=cb2-period-groups&period_ID=$period->ID&period_group_IDs=$this->ID&do_action=CB_PeriodGroup::detach";
+				$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";
 			}
 
 			$summary     = $period->summary();

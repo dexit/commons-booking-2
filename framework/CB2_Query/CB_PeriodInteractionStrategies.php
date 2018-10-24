@@ -349,7 +349,9 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 					$this->log( 'blocked by priority denial' );
 				}
 			}
-		} else if ( $perioditem instanceof CB_PeriodItem_Location ) {
+		}
+
+		else if ( $perioditem instanceof CB_PeriodItem_Location ) {
 			// ---------------------------------- Irrelevant location removal
 			$location = $perioditem->period_entity->location;
 
@@ -364,7 +366,9 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 				$priority = NULL; // Delete it
 				$this->log( 'irrelevant location period item' );
 			}
-		} else if ( $perioditem instanceof CB_PeriodItem_Timeframe
+		}
+
+		else if ( $perioditem instanceof CB_PeriodItem_Timeframe
 			|| $perioditem instanceof CB_PeriodItem_Timeframe_User
 		) {
 			// ---------------------------------- Item mismatch checks
