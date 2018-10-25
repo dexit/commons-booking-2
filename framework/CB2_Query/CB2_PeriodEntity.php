@@ -1,5 +1,5 @@
 <?php
-abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements JsonSerializable {
+abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implements JsonSerializable {
 	public static $all = array();
 
   function database_table_schema_root( String $table_name, String $primary_id_column, Array $columns = array(), Array $constraints = array() ) {
@@ -26,7 +26,7 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
   }
 
 	static function metaboxes() {
-		$metaboxes = CB_Period::metaboxes( FALSE );
+		$metaboxes = CB2_Period::metaboxes( FALSE );
 		array_push( $metaboxes,
 			array(
 				// TODO: link this in to the Publish meta-box status instead
@@ -49,19 +49,19 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 				'title'      => __( 'Calendar view', 'commons-booking-2' ),
 				'context'    => 'normal',
 				'show_names' => FALSE,
-				'show_on_cb' => array( 'CB_Period', 'metabox_show_when_published' ),
+				'show_on_cb' => array( 'CB2_Period', 'metabox_show_when_published' ),
 				'fields' => array(
 					array(
 						'name'    => __( 'Timeframe', 'commons-booking-2' ),
 						'id'      => 'calendar',
 						'type'    => 'calendar',
-						'options_cb' => array( 'CB_PeriodEntity', 'metabox_calendar_options_cb' ),
+						'options_cb' => array( 'CB2_PeriodEntity', 'metabox_calendar_options_cb' ),
 					),
 				),
 			)
 		);
-		array_push( $metaboxes, CB_PeriodStatusType::selector_metabox() );
-		array_push( $metaboxes, CB_Period::selector_metabox( TRUE ) ); // Multiple
+		array_push( $metaboxes, CB2_PeriodStatusType::selector_metabox() );
+		array_push( $metaboxes, CB2_Period::selector_metabox( TRUE ) ); // Multiple
 
 		return $metaboxes;
 	}
@@ -87,8 +87,8 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 		$object = self::factory(
 			$properties['ID'],
 			$properties['post_title'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -97,15 +97,15 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 	}
 
   protected static function factory_from_perioditem(
-		CB_PeriodItem $perioditem,
+		CB2_PeriodItem $perioditem,
 		$new_periodentity_Class,
 		$new_period_status_type_Class,
 		$name = NULL,
 
 		$copy_period_group    = TRUE,
-		CB_Location $location = NULL,
-		CB_Item     $item     = NULL,
-		CB_User     $user     = NULL
+		CB2_Location $location = NULL,
+		CB2_Item     $item     = NULL,
+		CB2_User     $user     = NULL
 	) {
 		$period_entity = $perioditem->period_entity;
 
@@ -116,14 +116,14 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 			// only the period item *instance*
 			// TODO: contiguous bookings
 			$datetime_now = new DateTime();
-			$period = new CB_Period(
+			$period = new CB2_Period(
 				CB2_CREATE_NEW,
 				$perioditem->name,
 				$perioditem->datetime_period_item_start, // datetime_part_period_start
 				$perioditem->datetime_period_item_end,   // datetime_part_period_end
 				$datetime_now                            // datetime_from
 			);
-			$period_group = new CB_PeriodGroup(
+			$period_group = new CB2_PeriodGroup(
 				CB2_CREATE_NEW,
 				$perioditem->name,
 				array( $period ) // periods
@@ -174,16 +174,16 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
   static function factory_subclass(
 		$ID,
 		$name,
-		$period_group,       // CB_PeriodGroup
-		$period_status_type, // CB_PeriodStatusType
+		$period_group,       // CB2_PeriodGroup
+		$period_status_type, // CB2_PeriodStatusType
 
-    $location = NULL,   // CB_Location
-    $item     = NULL,   // CB_Item
-    $user     = NULL    // CB_User
+    $location = NULL,   // CB2_Location
+    $item     = NULL,   // CB2_Item
+    $user     = NULL    // CB2_User
   ) {
 		// provides appropriate sub-class based on final object parameters
 		$object = NULL;
-		if      ( $user )     $object = CB_PeriodEntity_Timeframe_User::factory(
+		if      ( $user )     $object = CB2_PeriodEntity_Timeframe_User::factory(
 				$ID,
 				$name,
 				$period_group,
@@ -192,7 +192,7 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 				$item,
 				$user
 			);
-		else if ( $item )     $object = CB_PeriodEntity_Timeframe::factory(
+		else if ( $item )     $object = CB2_PeriodEntity_Timeframe::factory(
 				$ID,
 				$name,
 				$period_group,
@@ -201,7 +201,7 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 				$item,
 				$user
 			);
-		else if ( $location ) $object = CB_PeriodEntity_Location::factory(
+		else if ( $location ) $object = CB2_PeriodEntity_Location::factory(
 				$ID,
 				$name,
 				$period_group,
@@ -210,7 +210,7 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 				$item,
 				$user
 			);
-		else                  $object = CB_PeriodEntity_Global::factory(
+		else                  $object = CB2_PeriodEntity_Global::factory(
 				$ID,
 				$name,
 				$period_group,
@@ -226,8 +226,8 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
   public function __construct(
 		$ID,
     $name,
-		$period_group,              // CB_PeriodGroup {[CB_Period, ...]}
-    $period_status_type         // CB_PeriodStatusType
+		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
+    $period_status_type         // CB2_PeriodStatusType
   ) {
 		parent::__construct();
 
@@ -288,7 +288,7 @@ abstract class CB_PeriodEntity extends CB_DatabaseTable_PostNavigator implements
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodEntity_Global extends CB_PeriodEntity {
+class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
   public static $database_table = 'cb2_global_period_groups';
   static $static_post_type      = 'periodent-global';
 	static function metaboxes() {
@@ -307,8 +307,8 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
 		$object = self::factory(
 			$properties['ID'],
 			$properties['post_title'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -341,8 +341,8 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
   public function __construct(
 		$ID,
 		$name,
-		$period_group,              // CB_PeriodGroup {[CB_Period, ...]}
-    $period_status_type         // CB_PeriodStatusType
+		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
+    $period_status_type         // CB2_PeriodStatusType
   ) {
 		parent::__construct(
 			$ID,
@@ -352,18 +352,17 @@ class CB_PeriodEntity_Global extends CB_PeriodEntity {
     );
   }
 }
-CB_Query::register_schema_type( 'CB_PeriodEntity_Global' );
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodEntity_Location extends CB_PeriodEntity {
+class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
   public static $database_table = 'cb2_location_period_groups';
   static $static_post_type      = 'periodent-location';
 	static function metaboxes() {
 		$metaboxes = parent::metaboxes();
-		array_unshift( $metaboxes, CB_Location::selector_metabox() );
-		// array_push(    $metaboxes, CB_Location::summary_metabox() );
+		array_unshift( $metaboxes, CB2_Location::selector_metabox() );
+		// array_push(    $metaboxes, CB2_Location::summary_metabox() );
 		return $metaboxes;
 	}
 
@@ -384,10 +383,10 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
 		$object = self::factory(
 			$properties['ID'],
 			$properties['post_title'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
 
-			CB_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -418,10 +417,10 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
   public function __construct(
 		$ID,
 		$name,
-		$period_group,              // CB_PeriodGroup {[CB_Period, ...]}
-    $period_status_type,        // CB_PeriodStatusType
+		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
+    $period_status_type,        // CB2_PeriodStatusType
 
-    $location                   // CB_Location
+    $location                   // CB2_Location
   ) {
 		parent::__construct(
 			$ID,
@@ -434,18 +433,18 @@ class CB_PeriodEntity_Location extends CB_PeriodEntity {
     array_push( $this->posts, $this->location );
   }
 }
-CB_Query::register_schema_type( 'CB_PeriodEntity_Location' );
+
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
+class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
   public static $database_table = 'cb2_timeframe_period_groups';
   static $static_post_type      = 'periodent-timeframe';
 	static function metaboxes() {
 		$metaboxes = parent::metaboxes();
-		array_unshift( $metaboxes, CB_Item::selector_metabox() );
-		array_unshift( $metaboxes, CB_Location::selector_metabox() );
+		array_unshift( $metaboxes, CB2_Item::selector_metabox() );
+		array_unshift( $metaboxes, CB2_Location::selector_metabox() );
 		return $metaboxes;
 	}
 
@@ -467,11 +466,11 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
 		$object = self::factory(
 			$properties['ID'],
 			$properties['post_title'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
 
-			CB_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
-			CB_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -502,11 +501,11 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
   public function __construct(
 		$ID,
 		$name,
-		$period_group,              // CB_PeriodGroup {[CB_Period, ...]}
-    $period_status_type,        // CB_PeriodStatusType
+		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
+    $period_status_type,        // CB2_PeriodStatusType
 
-    $location,                  // CB_Location
-    $item                       // CB_Item
+    $location,                  // CB2_Location
+    $item                       // CB2_Item
   ) {
 		parent::__construct(
 			$ID,
@@ -523,19 +522,19 @@ class CB_PeriodEntity_Timeframe extends CB_PeriodEntity {
     array_push( $this->posts, $this->item );
   }
 }
-CB_Query::register_schema_type( 'CB_PeriodEntity_Timeframe' );
+
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
+class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
   public static $database_table = 'cb2_timeframe_user_period_groups';
   static $static_post_type      = 'periodent-user';
 	static function metaboxes() {
 		$metaboxes = parent::metaboxes();
-		array_unshift( $metaboxes, CB_User::selector_metabox() );
-		array_unshift( $metaboxes, CB_Item::selector_metabox() );
-		array_unshift( $metaboxes, CB_Location::selector_metabox() );
+		array_unshift( $metaboxes, CB2_User::selector_metabox() );
+		array_unshift( $metaboxes, CB2_Item::selector_metabox() );
+		array_unshift( $metaboxes, CB2_Location::selector_metabox() );
 		return $metaboxes;
 	}
 
@@ -559,12 +558,12 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 		$object = self::factory(
 			$properties['ID'],
 			$properties['post_title'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
 
-			CB_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
-			CB_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container ),
-			CB_PostNavigator::get_or_create_new( $properties, 'user_ID',               $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'user_ID',               $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -593,16 +592,16 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
     return $object;
   }
 
-  static function factory_booked_from_available_timeframe_item( CB_PeriodItem_Timeframe $perioditem_available, CB_User $user, $name = 'booking', $copy_period_group = TRUE ) {
-		if ( ! $perioditem_available->period_entity->period_status_type instanceof CB_PeriodStatusType_Available )
+  static function factory_booked_from_available_timeframe_item( CB2_PeriodItem_Timeframe $perioditem_available, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
+		if ( ! $perioditem_available->period_entity->period_status_type instanceof CB2_PeriodStatusType_Available )
 			throw new Exception( 'Tried to morph into perioditem-user from non-available status [' . $perioditem_available->period_status_type->name . ']' );
 		if ( ! $user )
 			throw new Exception( 'Tried to morph into periodentity-user without user]' );
 
-		return CB_PeriodEntity::factory_from_perioditem(
+		return CB2_PeriodEntity::factory_from_perioditem(
 			$perioditem_available,
-			CB_PeriodEntity_Timeframe_User,
-			CB_PeriodStatusType_Booked,
+			CB2_PeriodEntity_Timeframe_User,
+			CB2_PeriodStatusType_Booked,
 			$name,
 
 			$copy_period_group,
@@ -615,12 +614,12 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
   public function __construct(
 		$ID,
 		$name,
-		$period_group,              // CB_PeriodGroup {[CB_Period, ...]}
-    $period_status_type,        // CB_PeriodStatusType
+		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
+    $period_status_type,        // CB2_PeriodStatusType
 
-    $location,                  // CB_Location
-    $item,                      // CB_Item
-    $user                       // CB_User
+    $location,                  // CB2_Location
+    $item,                      // CB2_Item
+    $user                       // CB2_User
   ) {
 		parent::__construct(
 			$ID,
@@ -652,5 +651,3 @@ class CB_PeriodEntity_Timeframe_User extends CB_PeriodEntity {
 		return $actions;
 	}
 }
-CB_Query::register_schema_type( 'CB_PeriodEntity_Timeframe_User' );
-

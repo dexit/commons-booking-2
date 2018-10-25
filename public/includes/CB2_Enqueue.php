@@ -11,7 +11,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-class CB_Enqueue {
+class CB2_Enqueue {
 	/**
 	 * Initialize the class
 	 */
@@ -31,7 +31,7 @@ class CB_Enqueue {
 
 		/*
 		// create an API end point
-		$API = new CB_API;
+		$API = new CB2_API;
 		*/
 
 	}
@@ -69,31 +69,31 @@ class CB_Enqueue {
 		// items
 		if ( is_post_type_archive( 'cb_item' ) && in_the_loop() ) {
 			$args = array ( 'item_id' => get_the_id() );
-			$timeframe_object = new CB_Timeframes( $args );
-			$CB_Timeframes = $timeframe_object->get( );
-			cb2_get_template_part(  CB2_TEXTDOMAIN, 'item', 'list', $CB_Timeframes );
+			$timeframe_object = new CB2_Timeframes( $args );
+			$CB2_Timeframes = $timeframe_object->get( );
+			cb2_get_template_part(  CB2_TEXTDOMAIN, 'item', 'list', $CB2_Timeframes );
 		} elseif ( is_singular( 'cb_item' ) && in_the_loop() ) {
 			$args = array ( 'item_id' => get_the_id() );
-			$timeframe_object = new CB_Timeframes( $args );
-			$CB_Timeframes = $timeframe_object->get( );
-			cb2_get_template_part(  CB2_TEXTDOMAIN, 'item', 'single', $CB_Timeframes );
+			$timeframe_object = new CB2_Timeframes( $args );
+			$CB2_Timeframes = $timeframe_object->get( );
+			cb2_get_template_part(  CB2_TEXTDOMAIN, 'item', 'single', $CB2_Timeframes );
 		// locations
 		} elseif ( is_post_type_archive( 'cb_location' ) && in_the_loop() ) {
 			$args = array ( 'location_id' => get_the_id() );
-			$timeframe_object = new CB_Timeframes( $args );
-			$CB_Timeframes = $timeframe_object->get( );
-			cb2_get_template_part(  CB2_TEXTDOMAIN, 'location', 'list', $CB_Timeframes );
+			$timeframe_object = new CB2_Timeframes( $args );
+			$CB2_Timeframes = $timeframe_object->get( );
+			cb2_get_template_part(  CB2_TEXTDOMAIN, 'location', 'list', $CB2_Timeframes );
 		} elseif ( is_singular( 'cb_location') && in_the_loop() ) {
 			$args = array ( 'location_id' => get_the_id() );
-			$timeframe_object = new CB_Timeframes( $args );
-			$CB_Timeframes = $timeframe_object->get( );
-			cb2_get_template_part(  CB2_TEXTDOMAIN, 'location', 'single', $CB_Timeframes );
+			$timeframe_object = new CB2_Timeframes( $args );
+			$CB2_Timeframes = $timeframe_object->get( );
+			cb2_get_template_part(  CB2_TEXTDOMAIN, 'location', 'single', $CB2_Timeframes );
 		} else {
 			return $content;
 		}
 	}
 
 }
-$cb_enqueue = new CB_Enqueue();
+$cb_enqueue = new CB2_Enqueue();
 $cb_enqueue->initialize();
 do_action( 'commons_booking_cb_enqueue_instance', $cb_enqueue );

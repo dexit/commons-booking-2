@@ -92,7 +92,7 @@ class CB2_Holidays {
 		$holidays_array = array();
 
 		/* @TODO: pass locale instead of CB2_Settings holiday provider */
-		$holiday_provider = CB_Settings::get('calendar', 'holiday_provider');
+		$holiday_provider = CB2_Settings::get('calendar', 'holiday_provider');
 
 		if ( isset( $holiday_provider) && ! empty ( $holiday_provider ) ) {
 

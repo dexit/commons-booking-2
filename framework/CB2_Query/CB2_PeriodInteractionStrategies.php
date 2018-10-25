@@ -5,12 +5,12 @@ define( 'CB2_ANY_CLASS', NULL );
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodInteractionStrategy {
-	/* CB_PeriodInteractionStrategy deals with
+class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
+	/* CB2_PeriodInteractionStrategy deals with
 	 * the display of periods in the calendar
 	 * given:
 	 *   a UX display aim like show_single_item_availability
-	 *   parameters like an CB_Item
+	 *   parameters like an CB2_Item
 	 *   an output callback like book
 	 *
 	 * Provides methods to examine relevance of perioditems
@@ -24,7 +24,7 @@ class CB_PeriodInteractionStrategy {
 	 *   new WP_Query(
 	 *     ...
 	 *     'period-interaction' => array(
-	 *       'strategy' => 'CB_SingleItemAvailability',
+	 *       'strategy' => 'CB2_SingleItemAvailability',
 	 *       'item'     => $current_item,
 	 *       'require_location_open' => TRUE,
 	 *     )
@@ -32,11 +32,11 @@ class CB_PeriodInteractionStrategy {
 	 */
 	private $wp_query;
 
-	function __construct( $startdate = NULL, $enddate = NULL, $view_mode = NULL, $args = NULL ) {
+	function __construct( DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = NULL, Array $args = NULL ) {
 		// Defaults
 		if ( is_null( $startdate ) ) $startdate   = ( isset( $_GET['startdate'] ) ? new DateTime( $_GET['startdate'] ) : new DateTime() );
 		if ( is_null( $enddate ) )   $enddate     = ( isset( $_GET['enddate'] )   ? new DateTime( $_GET['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
-		if ( is_null( $view_mode ) ) $view_mode   = ( isset( $_GET['view_mode'] ) ? $_GET['view_mode'] : CB_Week::$static_post_type );
+		if ( is_null( $view_mode ) ) $view_mode   = ( isset( $_GET['view_mode'] ) ? $_GET['view_mode'] : CB2_Week::$static_post_type );
 		if ( is_null( $args ) )      $args        = array();
 
 		// Properties
@@ -45,15 +45,15 @@ class CB_PeriodInteractionStrategy {
 		$this->view_mode = $view_mode;
 
 		// Construct args
-		if ( ! isset( $args['post_status'] ) )    $args['post_status'] = CB_Post::$PUBLISH;
-		if ( ! isset( $args['post_type'] ) )      $args['post_type'] = CB_PeriodItem::$all_post_types;
+		if ( ! isset( $args['post_status'] ) )    $args['post_status'] = CB2_Post::$PUBLISH;
+		if ( ! isset( $args['post_type'] ) )      $args['post_type']   = CB2_PeriodItem::$all_post_types;
 		if ( ! isset( $args['posts_per_page'] ) ) $args['posts_per_page'] = -1;
 		if ( ! isset( $args['order'] ) )          $args['order'] = 'ASC'; // defaults to post_date
 		if ( ! isset( $args['date_query'] ) )     $args['date_query'] = array();
-		if ( ! isset( $args['date_query']['after'] ) )  $args['date_query']['after']  = $this->startdate->format( CB_Query::$datetime_format );
-		if ( ! isset( $args['date_query']['before'] ) ) $args['date_query']['before'] = $this->enddate->format( CB_Query::$datetime_format );
-		// This sets which CB_(ObjectType) is the resultant primary posts array
-		// e.g. CB_Weeks generated from the CB_PeriodItem records
+		if ( ! isset( $args['date_query']['after'] ) )  $args['date_query']['after']  = $this->startdate->format( CB2_Query::$datetime_format );
+		if ( ! isset( $args['date_query']['before'] ) ) $args['date_query']['before'] = $this->enddate->format( CB2_Query::$datetime_format );
+		// This sets which CB2_(ObjectType) is the resultant primary posts array
+		// e.g. CB2_Weeks generated from the CB2_PeriodItem records
 		if ( ! isset( $args['date_query']['compare'] ) ) $args['date_query']['compare'] = $this->view_mode;
 
 		$this->logs = array();
@@ -76,10 +76,10 @@ class CB_PeriodInteractionStrategy {
 		$this->request = $this->wp_query->request;
 
 		// Process here before any loop_start re-organiastion
-		CB_Query::ensure_correct_classes( $this->wp_query->posts, $this );
+		CB2_Query::ensure_correct_classes( $this->wp_query->posts, $this );
 		$new_posts = array();
 		foreach ( $this->wp_query->posts as $perioditem ) {
-			if ( ! $perioditem instanceof CB_PeriodItem_Automatic ) {
+			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
 				if ( WP_DEBUG ) {
 					$period_entity   = $perioditem->period_entity;
 					$Class           = get_class( $perioditem );
@@ -109,15 +109,20 @@ class CB_PeriodInteractionStrategy {
 		$this->wp_query->found_posts = (boolean) $this->wp_query->post_count;
 		$this->wp_query->post        = ( $this->wp_query->found_posts ? $this->wp_query->posts[0] : NULL );
 
-		return $this->wp_query->post_count;
+		// Some stats for inner_loop and things
+		$this->post_count  = $this->wp_query->post_count;
+		$this->found_posts = $this->wp_query->found_posts;
+
+		return $this->post_count;
 	}
 
 	function have_posts() {
 		return $this->wp_query->have_posts();
 	}
 
-	function the_post()   {
-		return $this->wp_query->the_post();
+	function &the_post()   {
+		$post = $this->wp_query->the_post();
+		return $post;
 	}
 
 	// -------------------------------------------- period analysis functions
@@ -259,7 +264,7 @@ class CB_PeriodInteractionStrategy {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Everything extends CB_PeriodInteractionStrategy {
+class CB2_Everything extends CB2_PeriodInteractionStrategy {
 	function __construct( $post ) {
 		parent::__construct();
 	}
@@ -269,8 +274,8 @@ class CB_Everything extends CB_PeriodInteractionStrategy {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
-	function __construct( $item = NULL, $startdate = NULL, $enddate = NULL, $view_mode = 'week', $args = array() ) {
+class CB2_SingleItemAvailability extends CB2_PeriodInteractionStrategy {
+	function __construct( CB2_Item $item = NULL, DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = 'week', Array $args = array() ) {
 		global $post;
 		$this->item = ( $item ? $item : $post );
 
@@ -284,11 +289,15 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 		parent::__construct( $startdate, $enddate, $view_mode, $args );
 	}
 
+	function factory_from_wp_query( $wp_query ) {
+		// TODO: factory_from_wp_query
+	}
+
 	function markup( &$perioditem ) {
 		$period_status_type = $perioditem->period_entity->period_status_type;
 
 		// Prevent any none-availability perioditems being selected
-		if ( ! $perioditem instanceof CB_PeriodItem_Timeframe
+		if ( ! $perioditem instanceof CB2_PeriodItem_Timeframe
 			|| ! $period_status_type->can( CB2_ANY_ACTION )
 		) {
 			$perioditem->no_select = TRUE;
@@ -322,7 +331,7 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 		$priority           = parent::dynamic_priority( $perioditem, $overlaps );
 		$period_status_type = $perioditem->period_entity->period_status_type;
 
-		if ( $perioditem instanceof CB_PeriodItem_Timeframe
+		if ( $perioditem instanceof CB2_PeriodItem_Timeframe
 			&& $period_status_type->can( CB2_ANY_ACTION )
 		) {
 			// ---------------------------------- Item availability
@@ -330,10 +339,10 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 			$item     = $perioditem->period_entity->item;
 
 			if ( ! $this->item->is( $item ) )
-				throw new Exception( 'CB_SingleItemAvailability: CB_PeriodItem_Timeframe for different item' );
+				throw new Exception( 'CB2_SingleItemAvailability: CB2_PeriodItem_Timeframe for different item' );
 
 			// Require THE location pickup / return period
-			$location_cans  = $this->filter_can( $overlaps, 'CB_PeriodItem_Location', CB2_ANY_ACTION );
+			$location_cans  = $this->filter_can( $overlaps, 'CB2_PeriodItem_Location', CB2_ANY_ACTION );
 			$location_cans  = $this->filter_entity( $location_cans, 'location', $location );
 			$perioditem     = $this->intersect( $perioditem, $location_cans );
 			if ( is_null( $perioditem ) ) {
@@ -351,7 +360,7 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 			}
 		}
 
-		else if ( $perioditem instanceof CB_PeriodItem_Location ) {
+		else if ( $perioditem instanceof CB2_PeriodItem_Location ) {
 			// ---------------------------------- Irrelevant location removal
 			$location = $perioditem->period_entity->location;
 
@@ -359,7 +368,7 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 			// note that we are allowing the possibility here
 			// of this single item being concurrently available in 2 separate locations
 			// at the same time
-			$availabilities = $this->filter_can( $overlaps, 'CB_PeriodItem_Timeframe', CB2_ANY_ACTION );
+			$availabilities = $this->filter_can( $overlaps, 'CB2_PeriodItem_Timeframe', CB2_ANY_ACTION );
 			$availabilities = $this->filter_entity( $availabilities, 'item',     $this->item );
 			$availabilities = $this->filter_entity( $availabilities, 'location', $location );
 			if ( ! count( $availabilities ) ) {
@@ -368,13 +377,13 @@ class CB_SingleItemAvailability extends CB_PeriodInteractionStrategy {
 			}
 		}
 
-		else if ( $perioditem instanceof CB_PeriodItem_Timeframe
-			|| $perioditem instanceof CB_PeriodItem_Timeframe_User
+		else if ( $perioditem instanceof CB2_PeriodItem_Timeframe
+			|| $perioditem instanceof CB2_PeriodItem_Timeframe_User
 		) {
 			// ---------------------------------- Item mismatch checks
 			$item = $perioditem->period_entity->item;
 			if ( $item != $this->item )
-				throw new Exception( 'CB_SingleItemAvailability: CB_PeriodItem_Timeframe for different item' );
+				throw new Exception( 'CB2_SingleItemAvailability: CB2_PeriodItem_Timeframe for different item' );
 		}
 
 		return $priority;

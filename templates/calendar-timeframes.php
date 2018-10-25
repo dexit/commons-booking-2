@@ -8,7 +8,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  *
- * @see       CB_Enqueue::cb_template_chooser()
+ * @see       CB2_Enqueue::cb_template_chooser()
  *
 */
 $cal = $template_args;
@@ -32,7 +32,7 @@ $cal = $template_args;
 										<?php $available_slot_count = 0 ;?>
 										<?php foreach ( $date['slots'] as $slot ) { ?>
 
-											<li id="<?php echo $slot['slot_id']; ?>" class="cb-slot" alt="<?php echo esc_html( $slot['description'] ); ?>" <?php echo CB_Gui::slot_attributes( $slot ); ?> >
+											<li id="<?php echo $slot['slot_id']; ?>" class="cb-slot" alt="<?php echo esc_html( $slot['description'] ); ?>" <?php echo CB2_Gui::slot_attributes( $slot ); ?> >
 
 												<span class="cb-item-dot"></span>
 												<!-- checkbox or similar here -->

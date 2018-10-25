@@ -37,7 +37,7 @@ function cb_get_pages_dropdown() {
 function cb_get_slot_templates_dropdown() {
 	// dropdown for page select
 
-	$obj = new CB_Slot_Templates();
+	$obj = new CB2_Slot_Templates();
 	$dropdown = array();
 
 	$slot_templates = $obj->get_slot_templates();
@@ -321,7 +321,7 @@ function cb_timeframe_exists( $id ) {
  */
 function cb_get_settings_field_name_prefixed( $group, $field_name ) {
 
-	$plugin_slug = CB_Settings::get_plugin_settings_slug();
+	$plugin_slug = CB2_Settings::get_plugin_settings_slug();
 
 	$field_name_prefixed = $plugin_slug . $group . '-' . $field_name;
 

@@ -10,7 +10,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  *
- * @see       CB_Enqueue::cb_template_chooser()
+ * @see       CB2_Enqueue::cb_template_chooser()
  */
 ?>
 <?php the_title(); ?>

@@ -1,10 +1,10 @@
 <?php
-require_once( 'CB_PeriodStatusType.php' );
-require_once( 'CB_PeriodGroup.php' );
+require_once( 'CB2_PeriodStatusType.php' );
+require_once( 'CB2_PeriodGroup.php' );
 
-//add_filter( 'cmb2_override_recurrence_sequence_meta_value', array( 'CB_Period', 'cmb2_override_recurrence_sequence_meta_value' ), 10, 4 );
+//add_filter( 'cmb2_override_recurrence_sequence_meta_value', array( 'CB2_Period', 'cmb2_override_recurrence_sequence_meta_value' ), 10, 4 );
 
-class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializable {
+class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializable {
   public static $database_table = 'cb2_periods';
   public static $all = array();
   static $static_post_type = 'period';
@@ -40,13 +40,13 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 
 	static function metaboxes( $multiple_period_group = TRUE ) {
 		$now            = new DateTime();
-		$morning_format = CB_Query::$date_format . ' 08:00:00';
-		$evening_format = CB_Query::$date_format . ' 18:00:00';
+		$morning_format = CB2_Query::$date_format . ' 08:00:00';
+		$evening_format = CB2_Query::$date_format . ' 18:00:00';
 
 		return array(
 			array(
 				'title' => __( 'Period', 'commons-booking-2' ),
-				'closed_cb' => array( 'CB_Period', 'metabox_closed_when_published' ),
+				'closed_cb' => array( 'CB2_Period', 'metabox_closed_when_published' ),
 				'fields' => array(
 					array(
 						'id'      => 'period_explanation',
@@ -61,14 +61,14 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 						'name' => __( 'Start', 'commons-booking-2' ),
 						'id' => 'datetime_part_period_start',
 						'type' => 'text_datetime_timestamp',
-						'date_format' => CB_Database::$database_date_format,
+						'date_format' => CB2_Database::$database_date_format,
 						'default' => $now->format( $morning_format ),
 					),
 					array(
 						'name' => __( 'End', 'commons-booking-2' ),
 						'id' => 'datetime_part_period_end',
 						'type' => 'text_datetime_timestamp',
-						'date_format' => CB_Database::$database_date_format,
+						'date_format' => CB2_Database::$database_date_format,
 						'default' => $now->format( $evening_format ),
 					),
 				),
@@ -76,7 +76,7 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 
 			array(
 				'title' => __( 'Recurrence', 'commons-booking-2' ) .
-					( CB_Period::metabox_recurrence_type_show() ? ' (optional)' : '' ),
+					( CB2_Period::metabox_recurrence_type_show() ? ' (optional)' : '' ),
 				'context' => 'normal',
 				'show_names' => TRUE,
 				'add_button'    => __( 'Add Another Entry', 'commons-booking-2' ),
@@ -87,10 +87,10 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 						'name' => __( 'Type', 'commons-booking-2' ),
 						'id' => 'recurrence_type',
 						'type' => 'radio_inline',
-						'classes' => ( CB_Period::metabox_recurrence_type_show() ? '' : 'hidden' ),
-						'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB_Database::$NULL_indicator ),
+						'classes' => ( CB2_Period::metabox_recurrence_type_show() ? '' : 'hidden' ),
+						'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB2_Database::$NULL_indicator ),
 						'options' => array(
-							CB_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
+							CB2_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
 							'D' => __( 'Daily', 'commons-booking-2' ),
 							'W' => __( 'Weekly', 'commons-booking-2' ),
 							'M' => __( 'Monthly', 'commons-booking-2' ),
@@ -101,8 +101,8 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 						'name' => __( 'Daily Sequence', 'commons-booking-2' ),
 						'id' => 'recurrence_sequence',
 						'type' => 'multicheck_inline',
-						'escape_cb'       => array( 'CB_Period', 'recurrence_sequence_escape' ),
-						'sanitization_cb' => array( 'CB_Period', 'recurrence_sequence_sanitization' ),
+						'escape_cb'       => array( 'CB2_Period', 'recurrence_sequence_escape' ),
+						'sanitization_cb' => array( 'CB2_Period', 'recurrence_sequence_sanitization' ),
 						// TODO: does not work default recurrence_sequence
 						'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
 						'options' => array(
@@ -121,8 +121,8 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 						'name' => __( 'Monthly Sequence', 'commons-booking-2' ),
 						'id' => 'recurrence_sequence',
 						'type' => 'multicheck',
-						'escape_cb'       => array( 'CB_Period', 'recurrence_sequence_escape' ),
-						'sanitization_cb' => array( 'CB_Period', 'recurrence_sequence_sanitization' ),
+						'escape_cb'       => array( 'CB2_Period', 'recurrence_sequence_escape' ),
+						'sanitization_cb' => array( 'CB2_Period', 'recurrence_sequence_sanitization' ),
 						// TODO: does not work default recurrence_sequence
 						'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
 						'options' => array(
@@ -153,14 +153,14 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 						'name' => __( 'Recurrence From Date', 'commons-booking-2' ),
 						'id' => 'datetime_from',
 						'type' => 'text_datetime_timestamp',
-						'date_format' => CB_Database::$database_date_format,
+						'date_format' => CB2_Database::$database_date_format,
 						'default' => $now->format( $morning_format ),
 					),
 					array(
 						'name' => __( 'Recurrence To Date (optional)', 'commons-booking-2' ),
 						'id' => 'datetime_to',
 						'type' => 'text_datetime_timestamp',
-						'date_format' => CB_Database::$database_date_format,
+						'date_format' => CB2_Database::$database_date_format,
 					),
 				),
 			),
@@ -180,7 +180,7 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 			),
 			*/
 
-			CB_PeriodGroup::selector_metabox( $multiple_period_group ),
+			CB2_PeriodGroup::selector_metabox( $multiple_period_group ),
 		);
 	}
 
@@ -190,12 +190,12 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 
 	static function metabox_show_when_published() {
 		global $post;
-		return ( $post && $post->post_status == CB_Post::$PUBLISH );
+		return ( $post && $post->post_status == CB2_Post::$PUBLISH );
 	}
 
 	static function metabox_closed_when_published() {
 		global $post;
-		return ( $post && $post->post_status == CB_Post::$PUBLISH );
+		return ( $post && $post->post_status == CB2_Post::$PUBLISH );
 	}
 
 	static function cmb2_override_recurrence_sequence_meta_value( $data, $object_id, $a, $field ) {
@@ -208,21 +208,21 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 		// Asking wp_cb2_view_periodmeta to return a serialised array representation of the bit field
 		// will also fail because CMB2 does not honour the array properly
 		$int = get_metadata( 'period', $object_id, 'recurrence_sequence', TRUE );
-		$int = CB_Query::ensure_int( 'recurrence_sequence', $int );
-		return CB_Query::ensure_assoc_bitarray( 'recurrence_sequence', $int );
+		$int = CB2_Query::ensure_int( 'recurrence_sequence', $int );
+		return CB2_Query::ensure_assoc_bitarray( 'recurrence_sequence', $int );
 	}
 
 	static function recurrence_sequence_escape( $value, $field_args, $field ) {
-		$value = CB_Query::ensure_int( 'recurrence_sequence', $value );
-		return CB_Query::ensure_assoc_bitarray( 'recurrence_sequence', $value );
+		$value = CB2_Query::ensure_int( 'recurrence_sequence', $value );
+		return CB2_Query::ensure_assoc_bitarray( 'recurrence_sequence', $value );
 	}
 
 	static function recurrence_sequence_sanitization( $value, $field_args, $field ) {
-		return CB_Query::ensure_bitarray_integer( 'recurrence_sequence', $value );
+		return CB2_Query::ensure_bitarray_integer( 'recurrence_sequence', $value );
 	}
 
   static function selector_metabox( $multiple = FALSE, $context_normal = FALSE ) {
-		$period_options       = CB_Forms::period_options( TRUE );
+		$period_options       = CB2_Forms::period_options( TRUE );
 		$periods_count        = count( $period_options ) - 1;
 		$plural  = ( $multiple ? 's' : '' );
 		$title   = "Period$plural";
@@ -254,12 +254,12 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 
 	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		// This may not exist in post creation
-		// We do not create the CB_PeriodGroup objects here
+		// We do not create the CB2_PeriodGroup objects here
 		// because it could create a infinite circular creation
-		// as the CB_PeriodGroups already create their associated CB_Periods
+		// as the CB2_PeriodGroups already create their associated CB2_Periods
 		$period_group_IDs = array();
 		if ( isset( $properties['period_group_IDs'] ) )
-			$period_group_IDs = CB_Query::ensure_ints( 'period_group_IDs', $properties['period_group_IDs'], TRUE );
+			$period_group_IDs = CB2_Query::ensure_ints( 'period_group_IDs', $properties['period_group_IDs'], TRUE );
 
 		$object = self::factory(
 			$properties['ID'],
@@ -314,7 +314,7 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
     $recurrence_sequence  = NULL,
     $period_group_IDs     = array()
   ) {
-		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
+		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
     $this->fullday = ( $this->datetime_part_period_start && $this->datetime_part_period_end )
 			&& ( 	 $this->datetime_part_period_start->format( 'H:i:s' ) == '00:00:00'
@@ -402,8 +402,8 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
   function summary_date_period( $format_date = 'M-d', $format_time = 'H:m' ) {
 		$summary = '';
 		$now     = new DateTime();
-		if ( $this->datetime_part_period_start->format( CB_Query::$date_format ) == $this->datetime_part_period_end->format( CB_Query::$date_format ) ) {
-			if ( $now->format( CB_Query::$date_format ) == $this->datetime_part_period_start->format( CB_Query::$date_format ) )
+		if ( $this->datetime_part_period_start->format( CB2_Query::$date_format ) == $this->datetime_part_period_end->format( CB2_Query::$date_format ) ) {
+			if ( $now->format( CB2_Query::$date_format ) == $this->datetime_part_period_start->format( CB2_Query::$date_format ) )
 				$summary .= 'Today';
 			else
 				$summary .= $this->summary_date( $this->datetime_part_period_start );
@@ -434,7 +434,7 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 			$attach_text       = __( 'Attach' );
 			$cancel_text       = __( 'Cancel Attach' );
 			$page              = 'cb2-period-groups';
-			$do_action         = 'CB_PeriodGroup::attach';
+			$do_action         = 'CB2_PeriodGroup::attach';
 			$attach_link       = "admin.php?page=$page&period_ID=$this->ID&period_group_IDs=$period_group_IDs&do_action=$do_action";
 			$actions['attach'] = "<a href='$attach_link'>$attach_text</a>";
 			$actions['cancel'] = "<a style='color:red;' href='admin.php?page=cb2-periods'>$cancel_text</a>";
@@ -464,13 +464,13 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 						$html .= 'No Period Group!';
 						break;
 					case 1:
-						$period_group = CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $this->period_group_IDs[0] );
+						$period_group = CB2_Query::get_post_with_type( CB2_PeriodGroup::$static_post_type, $this->period_group_IDs[0] );
 						$html .= $period_group->summary();
 						break;
 					default:
 						$html .= '<ul>';
 						foreach ( $this->period_group_IDs as $period_group_ID ) {
-							$period_group = CB_Query::get_post_with_type( CB_PeriodGroup::$static_post_type, $period_group_ID );
+							$period_group = CB2_Query::get_post_with_type( CB2_PeriodGroup::$static_post_type, $period_group_ID );
 							$html .= '<li>' . $period_group->summary() . '</li>';
 						}
 						$html .= '</ul>';
@@ -519,7 +519,7 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 		// Link the Period to the PeriodGroup(s)
 		// will throw Exceptions if IDs cannot be found
 		foreach ( $this->period_group_IDs as $period_group_ID ) {
-			$period_group_id = CB_PostNavigator::id_from_ID_with_post_type( $period_group_ID, CB_PeriodGroup::$static_post_type );
+			$period_group_id = CB2_PostNavigator::id_from_ID_with_post_type( $period_group_ID, CB2_PeriodGroup::$static_post_type );
 			$wpdb->insert( $table, array(
 				'period_group_id' => $period_group_id,
 				'period_id'       => $this->id(),
@@ -531,6 +531,3 @@ class CB_Period extends CB_DatabaseTable_PostNavigator implements JsonSerializab
 		return $this;
 	}
 }
-
-CB_Query::register_schema_type( 'CB_Period' );
-

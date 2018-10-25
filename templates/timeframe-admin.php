@@ -8,21 +8,21 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  *
- * @see       CB_Enqueue::cb_template_chooser()
+ * @see       CB2_Enqueue::cb_template_chooser()
  */
 ?>
 <?php	$timeframes = $template_args;
 	if ( is_array( $timeframes )) { ?>
     <?php foreach ( $timeframes as $tf ) { ?>
 			<?php // timeframe  ?>
-        <div id="timeframe-<?php echo $tf->timeframe_id; ?>" class="cb-timeframe <?php echo CB_Gui::timeframe_classes(  $tf ); ?>">
+        <div id="timeframe-<?php echo $tf->timeframe_id; ?>" class="cb-timeframe <?php echo CB2_Gui::timeframe_classes(  $tf ); ?>">
 					<div class="cb-location">
-							<h3 class="cb-location-title"><?php echo CB_Gui::post_link( $tf->location_id ); ?></h3>
-							<span class="cb-location-dates"><?php echo CB_Gui::timeframe_format_location_dates( $tf->date_start, $tf->date_end, $tf->has_end_date ); ?></span>
-							<span class="cb-location-opening-times"><?php echo CB_Gui::list_location_opening_times_html( $tf->location_id ); ?></span>
+							<h3 class="cb-location-title"><?php echo CB2_Gui::post_link( $tf->location_id ); ?></h3>
+							<span class="cb-location-dates"><?php echo CB2_Gui::timeframe_format_location_dates( $tf->date_start, $tf->date_end, $tf->has_end_date ); ?></span>
+							<span class="cb-location-opening-times"><?php echo CB2_Gui::list_location_opening_times_html( $tf->location_id ); ?></span>
 					</div> <? // end div.cb-location ?>
-					<span class="cb-slot-availability"><?php echo CB_Gui::col_format_availability( $tf->availability ); ?></span>
-					<?php CB_Gui::maybe_do_message ( $tf->message );	?>
+					<span class="cb-slot-availability"><?php echo CB2_Gui::col_format_availability( $tf->availability ); ?></span>
+					<?php CB2_Gui::maybe_do_message ( $tf->message );	?>
 					<?php // calendar ?>
             <ul class="cb-calendar">
               <?php if ( is_array( $tf->calendar )) { ?>
@@ -34,7 +34,7 @@
                       <?php if ( ! empty ( $date['slots'][$tf->timeframe_id] ) && is_array( $date['slots'][$tf->timeframe_id] ) ) {	?></span>
                         <ul class="cb-slots"></span>
 													<?php foreach ( $date['slots'][$tf->timeframe_id] as $slot ) { ?>
-															<li id="<?php echo $slot['slot_id']; ?>" class="cb-slot" alt="<?php echo esc_html( $slot['description'] ); ?>" <?php echo CB_Gui::slot_attributes( $slot ); ?>>
+															<li id="<?php echo $slot['slot_id']; ?>" class="cb-slot" alt="<?php echo esc_html( $slot['description'] ); ?>" <?php echo CB2_Gui::slot_attributes( $slot ); ?>>
 															</li>
                             <?php } // endforeach $slots ?>
                         	</ul>

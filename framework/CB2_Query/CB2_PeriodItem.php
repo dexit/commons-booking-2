@@ -1,7 +1,7 @@
 <?php
-require_once( 'CB_Period.php' );
+require_once( 'CB2_Period.php' );
 
-class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
+class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializable {
   public  static $all              = array();
   public  static $static_post_type = 'perioditem';
   public  static $postmeta_table   = FALSE;
@@ -31,19 +31,19 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     $datetime_period_item_start,
     $datetime_period_item_end
   ) {
-		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
+		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
 		// Some sanity checks
 		if ( $this->datetime_period_item_start > $this->datetime_period_item_end )
 			throw new Exception( 'datetime_period_item_start > datetime_period_item_end' );
 
 		// Add the period to all the days it appears in
-		// CB_Day::factory() will lazy create singleton CB_Day's
+		// CB2_Day::factory() will lazy create singleton CB2_Day's
 		$this->days = array();
 		if ( $this->datetime_period_item_start ) {
 			$date = clone $this->datetime_period_item_start;
 			do {
-				$day = CB_Day::factory( clone $date );
+				$day = CB2_Day::factory( clone $date );
 				$day->add_perioditem( $this );
 				array_push( $this->days, $day );
 				$date->add( new DateInterval( 'P1D' ) );
@@ -65,7 +65,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
     if ( $ID ) self::$all[$ID] = $this;
   }
 
-  function is( CB_PostNavigator $perioditem ) {
+  function is( CB2_PostNavigator $perioditem ) {
 		return is_a( $perioditem, get_class( $this ) )
 			&& property_exists( $perioditem, 'period_entity' )
 			&& $perioditem->period_entity->is( $this->period_entity )
@@ -81,15 +81,15 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 
   static function factory_subclass(
 		$ID,
-		$period_entity, // CB_PeriodEntity
-    $period,        // CB_Period
+		$period_entity, // CB2_PeriodEntity
+    $period,        // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end
   ) {
 		// provides appropriate sub-class based on final object parameters
 		$object = NULL;
-		if      ( $user )     $object = CB_PeriodItem_Timeframe_User::factory(
+		if      ( $user )     $object = CB2_PeriodItem_Timeframe_User::factory(
 				$ID,
 				$period_entity,
 				$period,
@@ -97,7 +97,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 				$datetime_period_item_start,
 				$datetime_period_item_end
 			);
-		else if ( $item )     $object = CB_PeriodItem_Timeframe::factory(
+		else if ( $item )     $object = CB2_PeriodItem_Timeframe::factory(
 				$ID,
 				$period_entity,
 				$period,
@@ -105,7 +105,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 				$datetime_period_item_start,
 				$datetime_period_item_end
 			);
-		else if ( $location ) $object = CB_PeriodItem_Location::factory(
+		else if ( $location ) $object = CB2_PeriodItem_Location::factory(
 				$ID,
 				$period_entity,
 				$period,
@@ -113,7 +113,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 				$datetime_period_item_start,
 				$datetime_period_item_end
 			);
-		else                  $object = CB_PeriodItem_Global::factory(
+		else                  $object = CB2_PeriodItem_Global::factory(
 				$ID,
 				$period_entity,
 				$period,
@@ -262,7 +262,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 	}
 
 	function get_the_time_period( $format = 'H:i' ) {
-		// TODO: all the_*() need to be namespaced. In CB_Query? or CB_TemplateFunctions::*()
+		// TODO: all the_*() need to be namespaced. In CB2_Query? or CB2_TemplateFunctions::*()
 		$time_period = $this->datetime_period_item_start->format( $format ) . ' - ' . $this->datetime_period_item_end->format( $format );
 		if ( $this->period->fullday ) $time_period = 'all day';
 		return $time_period;
@@ -290,10 +290,10 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
       'period_id' => $this->period_id,
       'recurrence_index' => $this->recurrence_index,
       'name' => $this->name,
-      'datetime_part_period_start' => $this->datetime_part_period_start->format( CB_Query::$javascript_date_format ),
-      'datetime_part_period_end' => $this->datetime_part_period_end->format( CB_Query::$javascript_date_format ),
-      'datetime_from' => $this->datetime_from->format( CB_Query::$javascript_date_format ),
-      'datetime_to' => ( $this->datetime_to ? $this->datetime_to->format( CB_Query::$javascript_date_format ) : '' ),
+      'datetime_part_period_start' => $this->datetime_part_period_start->format( CB2_Query::$javascript_date_format ),
+      'datetime_part_period_end' => $this->datetime_part_period_end->format( CB2_Query::$javascript_date_format ),
+      'datetime_from' => $this->datetime_from->format( CB2_Query::$javascript_date_format ),
+      'datetime_to' => ( $this->datetime_to ? $this->datetime_to->format( CB2_Query::$javascript_date_format ) : '' ),
       'period_status_type' => $this->period_entity->period_status_type,
       'recurrence_type' => $this->recurrence_type,
       'recurrence_frequency' => $this->recurrence_frequency,
@@ -311,7 +311,7 @@ class CB_PeriodItem extends CB_PostNavigator implements JsonSerializable {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodItem_Automatic extends CB_PeriodItem {
+class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
 	static public $static_post_type = 'perioditem-automatic';
   static $database_table = FALSE;
 
@@ -325,8 +325,8 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
 		return new WP_Post( (object) array(
 			'ID' => self::$fake_ID++,
 			'post_author'    => 1,
-			'post_date'      => $startdate->format( CB_Query::$datetime_format ),
-			'post_date_gmt'  => $startdate->format( CB_Query::$datetime_format ),
+			'post_date'      => $startdate->format( CB2_Query::$datetime_format ),
+			'post_date_gmt'  => $startdate->format( CB2_Query::$datetime_format ),
 			'post_content'   => '',
 			'post_title'     => 'automatic',
 			'post_excerpt'   => '',
@@ -337,8 +337,8 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
 			'post_name'      => 'automatic',
 			'to_ping' => '',
 			'pinged'  => '',
-			'post_modified'     => $enddate->format( CB_Query::$datetime_format ),
-			'post_modified_gmt' => $enddate->format( CB_Query::$datetime_format ),
+			'post_modified'     => $enddate->format( CB2_Query::$datetime_format ),
+			'post_modified_gmt' => $enddate->format( CB2_Query::$datetime_format ),
 			'post_content_filtered' => '',
 			'post_parent' => NULL,
 			'guid'        => '',
@@ -358,8 +358,8 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
 			'user_ID' => 0,
 			'period_status_type_ID' => 0,
 			'period_status_type_name' => '',
-			'datetime_period_item_start' => $startdate->format( CB_Query::$datetime_format ),
-			'datetime_period_item_end'   => $enddate->format( CB_Query::$datetime_format ),
+			'datetime_period_item_start' => $startdate->format( CB2_Query::$datetime_format ),
+			'datetime_period_item_end'   => $enddate->format( CB2_Query::$datetime_format ),
 		) );
 	}
 
@@ -401,7 +401,7 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
   static function &factory(
 		$ID,
 		$period_entity,
-    $period,     // CB_Period
+    $period,     // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end
@@ -425,12 +425,12 @@ class CB_PeriodItem_Automatic extends CB_PeriodItem {
 		return NULL;
   }
 }
-CB_Query::register_schema_type( 'CB_PeriodItem_Automatic' );
+
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodItem_Global extends CB_PeriodItem {
+class CB2_PeriodItem_Global extends CB2_PeriodItem {
   static $name_field = 'period_group_name';
   static $database_table = 'cb2_global_period_groups';
   public  static $post_type_args = array(
@@ -463,8 +463,8 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB_PeriodEntity_Global' ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Global' ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
 			$properties['datetime_period_item_end']
@@ -478,7 +478,7 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
   static function &factory(
 		$ID,
 		$period_entity,
-    $period,     // CB_Period
+    $period,     // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end
@@ -498,12 +498,12 @@ class CB_PeriodItem_Global extends CB_PeriodItem {
     return self::$name_field;
   }
 }
-CB_Query::register_schema_type( 'CB_PeriodItem_Global' );
+
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodItem_Location extends CB_PeriodItem {
+class CB2_PeriodItem_Location extends CB2_PeriodItem {
   static $name_field = 'location';
   static $database_table = 'cb2_location_period_groups';
 	static public $static_post_type = 'perioditem-location';
@@ -537,8 +537,8 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB_PeriodEntity_Location' ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Location' ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
 			$properties['datetime_period_item_end']
@@ -552,7 +552,7 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
   static function &factory(
 		$ID,
 		$period_entity,
-    $period,     // CB_Period
+    $period,     // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end
@@ -590,12 +590,12 @@ class CB_PeriodItem_Location extends CB_PeriodItem {
     return $array;
   }
 }
-CB_Query::register_schema_type( 'CB_PeriodItem_Location' );
+
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodItem_Timeframe extends CB_PeriodItem {
+class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
   static $name_field = array( 'location', 'item' );
   static $database_table = 'cb2_timeframe_period_groups';
   static $database_options_table = 'cb2_timeframe_options';
@@ -632,8 +632,8 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB_PeriodEntity_Timeframe' ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe' ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
 			$properties['datetime_period_item_end']
@@ -646,8 +646,8 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 
   static function &factory(
 		$ID,
-		$period_entity, // CB_PeriodEntity
-    $period,        // CB_Period
+		$period_entity, // CB2_PeriodEntity
+    $period,        // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end
@@ -688,7 +688,8 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
 
   function update_option( $option, $new_value, $autoload = TRUE ) {
 		// TODO: complete update_option()
-    $update = CB_Database_UpdateInsert::factory( self::$database_options_table );
+		throw new Exception( 'NOT_COMPLETE' );
+    $update = CB2_Database_UpdateInsert::factory( self::$database_options_table );
     $update->add_field(     'option_name',  $option );
     $update->add_field(     'option_value', $new_value );
     $update->add_condition( 'timeframe_id', $this->id() );
@@ -704,13 +705,12 @@ class CB_PeriodItem_Timeframe extends CB_PeriodItem {
     return $array;
   }
 }
-CB_Query::register_schema_type( 'CB_PeriodItem_Timeframe' );
 
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
+class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
   static $name_field             = array( 'location', 'item', 'user' );
   static $database_table         = 'cb2_timeframe_user_period_groups';
   public  static $post_type_args = array(
@@ -747,8 +747,8 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
   static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB_PeriodEntity_Timeframe_User' ),
-			CB_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe_User' ),
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
 			$properties['datetime_period_item_end']
@@ -761,8 +761,8 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
 
   static function &factory(
 		$ID,
-		$period_entity, // CB_PeriodEntity
-    $period,        // CB_Period
+		$period_entity, // CB2_PeriodEntity
+    $period,        // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
     $datetime_period_item_end
@@ -802,4 +802,3 @@ class CB_PeriodItem_Timeframe_User extends CB_PeriodItem {
     return $array;
   }
 }
-CB_Query::register_schema_type( 'CB_PeriodItem_Timeframe_User' );

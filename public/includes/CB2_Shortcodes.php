@@ -17,7 +17,7 @@ class CB2_Shortcodes {
 		'location_id'      => FALSE,
 		'item_id'          => FALSE,
 		'view_mode'        => 'week',
-		'display-strategy' => 'CB_Everything',
+		'display-strategy' => 'CB2_Everything',
 
 	);
 

@@ -1,28 +1,62 @@
 <?php
-abstract class CB_DatabaseTable_PostNavigator extends CB_PostNavigator {
+abstract class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 	abstract function database_table_name();
 	abstract function database_table_schema();
 
-  private function runSQL() {
+  private static function runSQL( $sql ) {
+		global $wpdb;
+		print( "<pre>$sql</pre>" ); exit();
+		return $wpdb->query( $sql );
   }
 
-  private function install() {
+  private static function install() {
 		$table_name = database_table_name();
 		$definition = database_table_schema();
-		$sql = "CREATE $table_name ";
+		$sql = "CREATE `$table_name` (\n";
 		foreach ( $definition['columns'] as $column ) {
+			// `period_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+			$count    = count( $column );
+			$name     = $column[0];
+			$type     = $column[1];
+
+			// Optional
+			$size     = ( $count > 2 && $column[2] ? "($column[2])" : '' );
+			$unsigned = ( $count > 3 && $column[3] ? 'UNSIGNED' : '' );
+			$not_null = ( $count > 4 && $column[4] ? 'NOT NULL' : '' );
+			$auto     = ( $count > 5 && $column[5] ? 'AUTO_INCREMENT' : '' );
+			$comment  = ( $count > 7 && $column[7] ? "COMMENT '$column[7]'" : '' );
+			$default  = ( $count > 6 && $column[6] ? $column[6] : NULL );
+			switch ( $default ) {
+				case NULL:
+					break;
+				case 'CURRENT_TIMESTAMP':
+				case 'NULL':
+					$default = "DEFAULT $default";
+					break;
+				default:
+					$default = "DEFAULT '$default'";
+			}
+
+			// Syntax
+			$sql .= "`$name` $type($size) $unsigned $not_null $auto $default $comment,\n";
 		}
+		if ( $definition['primary key'] ) {
+			$sql .= "PRIMARY KEY (";
+			foreach ( $definition['primary key'] as $column ) $sql .= "`$column`, ";
+			$sql .= ")\n";
+		}
+		$sql .= ");";
 		return $this->runSQL( $sql );
   }
 
-  private function uninstall() {
+  private static function uninstall() {
 		$table_name = database_table_name();
-		$sql = "DROP TABLE $table_name";
+		$sql = "DROP TABLE $table_name;";
 		return $this->runSQL( $sql );
 	}
 
   function save( $update = FALSE, $depth = 0 ) {
-		// TODO: mvoe this in to the CB_DatabaseTable_PostNavigator Class
+		// TODO: mvoe this in to the CB2_DatabaseTable_PostNavigator Class
 		// Save dependent leaf objects before saving this
 		// will also reset the metadata for $post, e.g.
 		//   $post->period_group_ID = CB2_CREATE_NEW => 800000034
@@ -35,7 +69,7 @@ abstract class CB_DatabaseTable_PostNavigator extends CB_PostNavigator {
 		if ( isset( $properties['posts'] ) ) unset( $properties['posts'] );
 		if ( isset( $properties['zeros'] ) ) unset( $properties['zeros'] );
 
-		$class_database_table = CB_Database::database_table( $Class );
+		$class_database_table = CB2_Database::database_table( $Class );
 		if ( ! $class_database_table )
 			throw new Exception( "$Class [$this->ID/$depth] does not support save() because it has no database_table" );
 
@@ -62,14 +96,14 @@ abstract class CB_DatabaseTable_PostNavigator extends CB_PostNavigator {
 			if ( is_array( $value ) ) {
 				$new_array = array();
 				foreach ( $value as $name2 => $value2 ) {
-					if ( $value2 instanceof CB_DatabaseTable_PostNavigator ) {
+					if ( $value2 instanceof CB2_DatabaseTable_PostNavigator ) {
 						$value2->save( $update, $depth + 1 );
 					}
 					array_push( $new_array, $value2 );
 				}
 				$value = $new_array;
 			} else {
-				if ( $value instanceof CB_DatabaseTable_PostNavigator )
+				if ( $value instanceof CB2_DatabaseTable_PostNavigator )
 					$value->save( $update, $depth + 1 );
 			}
 
@@ -79,7 +113,7 @@ abstract class CB_DatabaseTable_PostNavigator extends CB_PostNavigator {
 		// ----------------------------------------- Outer-object creation
 		// Change Database data
 		if ( $this->ID == CB2_CREATE_NEW ) {
-			$field_data = CB_Database::sanitize_data_for_table( $class_database_table, $properties, $formats );
+			$field_data = CB2_Database::sanitize_data_for_table( $class_database_table, $properties, $formats );
 			if ( CB2_DEBUG_SAVE ) krumo( $field_data, $formats );
 			$ID         = $this->create( $field_data, $formats );
 			$this->ID   = $ID;
@@ -91,7 +125,7 @@ abstract class CB_DatabaseTable_PostNavigator extends CB_PostNavigator {
 			// because fields like name are everywhere
 			// PHP object creation needs more intention annotation
 			if ( $update ) {
-				$field_data = CB_Database::sanitize_data_for_table( $class_database_table, $properties, $formats );
+				$field_data = CB2_Database::sanitize_data_for_table( $class_database_table, $properties, $formats );
 				if ( CB2_DEBUG_SAVE ) krumo( $field_data, $formats );
 				$this->update( $field_data, $formats );
 				if ( CB2_DEBUG_SAVE )
@@ -113,12 +147,12 @@ abstract class CB_DatabaseTable_PostNavigator extends CB_PostNavigator {
 
 	protected function update( $update_data, $formats = NULL ) {
 		global $wpdb;
-		$class_database_table = CB_Database::database_table( get_class( $this ) );
+		$class_database_table = CB2_Database::database_table( get_class( $this ) );
 		if ( ! $class_database_table )
 			throw new Exception( get_class( $this ) . ' does not support update() because it has no database_table' );
 
 		$full_table = "$wpdb->prefix$class_database_table";
-		$id_field   = CB_Database::id_field( get_class( $this ) );
+		$id_field   = CB2_Database::id_field( get_class( $this ) );
 		$id         = $this->id();
 		$where      = array( $id_field => $id );
 		if ( CB2_DEBUG_SAVE ) print( '<div class="cb2-WP_DEBUG-small">' . get_class( $this ) . "::update($id_field=$id)</div>" );
@@ -141,7 +175,7 @@ abstract class CB_DatabaseTable_PostNavigator extends CB_PostNavigator {
 	protected function create( $insert_data, $formats = NULL ) {
 		global $wpdb;
 		$result = NULL;
-		$class_database_table = CB_Database::database_table( get_class( $this ) );
+		$class_database_table = CB2_Database::database_table( get_class( $this ) );
 		if ( ! $class_database_table )
 			throw new Exception( get_class( $this ) . ' does not support create() because it has no database_table' );
 

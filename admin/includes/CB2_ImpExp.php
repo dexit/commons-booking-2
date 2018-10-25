@@ -11,7 +11,7 @@
 /**
  * Provide Import and Export of the settings of the plugin
  */
-class CB_ImpExp {
+class CB2_ImpExp {
 	/**
 	 * Initialize the plugin by loading admin scripts & styles and adding a
 	 * settings page and menu.
@@ -86,4 +86,4 @@ class CB_ImpExp {
 		exit;
 	}
 }
-new CB_ImpExp();
+new CB2_ImpExp();

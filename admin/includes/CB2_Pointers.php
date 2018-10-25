@@ -10,7 +10,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-class CB_Pointers {
+class CB2_Pointers {
 	/**
 	 * Initialize the Pointers.
 	 *
@@ -45,4 +45,4 @@ class CB_Pointers {
 				) );
 	}
 }
-new CB_Pointers();
+new CB2_Pointers();

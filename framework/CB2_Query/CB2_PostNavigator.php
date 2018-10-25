@@ -1,16 +1,16 @@
 <?php
-class CB_PostNavigator {
+class CB2_PostNavigator {
   protected function __construct( &$posts = NULL ) {
     $this->zeros = array(); // TODO: re-evaluate this: does it collect stuff?
     if ( is_null( $posts ) ) $this->posts = &$this->zeros;
     else                     $this->posts = &$posts;
 
     // WP_Post default values
-    if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB_Post::$PUBLISH;
+    if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB2_Post::$PUBLISH;
     if ( ! property_exists( $this, 'post_password' ) ) $this->post_password = '';
     if ( ! property_exists( $this, 'post_author' ) )   $this->post_author   = 1;
-    if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( CB_Query::$datetime_format );
-    if ( ! property_exists( $this, 'post_modified' ) ) $this->post_modified = date( CB_Query::$datetime_format );
+    if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( CB2_Query::$datetime_format );
+    if ( ! property_exists( $this, 'post_modified' ) ) $this->post_modified = date( CB2_Query::$datetime_format );
     if ( ! property_exists( $this, 'post_date_gmt' ) ) $this->post_date_gmt = $this->post_date;
     if ( ! property_exists( $this, 'post_modified_gmt' ) ) $this->post_modified_gmt = $this->post_modified;
 		if ( ! property_exists( $this, 'filter' ) )        $this->filter = 'suppress'; // Prevent WP_Query from converting objects to WP_Post
@@ -27,17 +27,55 @@ class CB_PostNavigator {
     if ( property_exists( $this, 'ID' ) ) wp_cache_add( $this->ID, $this, 'posts' );
   }
 
-  function is( CB_PostNavigator $post_navigator ) {
+  function is( CB2_PostNavigator $post_navigator ) {
 		return $this->ID == $post_navigator->ID;
   }
 
   function remove_post( $post_remove ) {
 		$new_posts = array();
 		foreach ( $this->posts as $post ) {
-			$is_remove_post = ( $post instanceof CB_PostNavigator && $post->is( $post_remove ) );
+			$is_remove_post = ( $post instanceof CB2_PostNavigator && $post->is( $post_remove ) );
 			if ( ! $is_remove_post ) array_push( $new_posts, $post );
 		}
 		$this->posts = $new_posts;
+  }
+
+  // -------------------------------------------------------------------- Reflection
+  // Class lookups
+  static function post_type_Class( $post_type ) {
+		$post_types = self::post_type_classes();
+		return isset( $post_types[$post_type] ) ? $post_types[$post_type] : NULL;
+  }
+
+  static function post_type_all_objects( $post_type, $values_only = TRUE ) {
+		$all = NULL;
+		if ( $Class = self::post_type_Class( $post_type ) ) {
+			if ( property_exists( $Class, 'all' ) ) {
+				if ( $values_only ) $all = array_values( $Class::$all );
+				else $all = $Class::$all;
+			}
+		}
+		return $all;
+  }
+
+  static function post_type_classes() {
+		static $schema_types = NULL;
+
+		if ( is_null( $schema_types ) ) {
+			$schema_types = array();
+			foreach ( get_declared_classes() as $Class ) { // PHP 4
+				$ReflectionClass = new ReflectionClass( $Class );
+				if ( $ReflectionClass->isSubclassOf( 'CB2_PostNavigator' ) // PHP 5
+					&& property_exists( $Class, 'static_post_type' )
+				) {
+					if ( strlen( $Class::$static_post_type ) > 20 )
+						throw new Exception( 'post_type [' . $Class::$static_post_type . '] is longer than the WordPress maximum of 20 characters' );
+					$schema_types[ $Class::$static_post_type ] = $Class;
+				}
+			}
+    }
+
+    return $schema_types;
   }
 
   protected static function class_from_ID_property_name( $ID_property_name, &$property_name = FALSE, &$is_plural = NULL, $Class = FALSE ) {
@@ -54,7 +92,7 @@ class CB_PostNavigator {
 
 			if ( $Class === FALSE ) {
 				$post_type     = str_replace( '_', '', $property_type );     // periodgroup
-				$Class         = CB_Query::schema_type_class( $post_type );   // CB_PeriodGroup
+				$Class         = self::post_type_Class( $post_type );   // CB2_PeriodGroup
 			}
 			if ( ! $Class && ! $no_excpeption )
 				throw new Exception( "[$ID_property_name/$post_type] has no direct Class" );
@@ -71,7 +109,7 @@ class CB_PostNavigator {
 		// "get":    the database record(s) exist already and we have their ID
 		// "create": create a placeholder object that will be saved to the database later, ID = 0
 		// If $ID_property_name is plural, an array will be returned
-		$TargetClass = CB_PostNavigator::class_from_ID_property_name( $ID_property_name, $object_property_name, $plural, $Class );
+		$TargetClass = self::class_from_ID_property_name( $ID_property_name, $object_property_name, $plural, $Class );
 
 		if ( ! isset( $properties[ $ID_property_name ] ) )
 			throw new Exception( "$ID_property_name required" );
@@ -107,7 +145,7 @@ class CB_PostNavigator {
 
 				$subobject = ( $ID_value == CB2_CREATE_NEW
 					? $TargetClass::factory_from_properties( $properties, $instance_container )
-					: CB_Query::get_post_with_type( $TargetClass::$static_post_type, $ID_value, $instance_container )
+					: CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $ID_value, $instance_container )
 				);
 				array_push( $object, $subobject );
 			}
@@ -120,7 +158,7 @@ class CB_PostNavigator {
 			$property_ID_value = (int) $property_ID_value;
 			$object            = ( $property_ID_value == CB2_CREATE_NEW
 				? $TargetClass::factory_from_properties( $properties, $instance_container )
-				: CB_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container )
+				: CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container )
 			);
 		}
 
@@ -139,16 +177,16 @@ class CB_PostNavigator {
 		if ( ! is_array( $properties ) ) throw new Exception( 'copy_all_wp_post_properties( $properties is not an array )' );
 
 		if ( WP_DEBUG ) {
-			foreach ( CB_Post::$POST_PROPERTIES as $name => $native_relevant )
+			foreach ( CB2_Post::$POST_PROPERTIES as $name => $native_relevant )
 				if ( ! isset( $properties, $name ) )
 					throw new Exception( "WP_Post->[$name] does not exist on source post" );
 		}
 
 		foreach ( $properties as $name => $from_value ) {
-			$wp_is_post_property = isset( CB_Post::$POST_PROPERTIES[$name] );
+			$wp_is_post_property = isset( CB2_Post::$POST_PROPERTIES[$name] );
 			if ( $wp_is_post_property ) {
 				try {
-					$new_value = CB_Query::to_object( $name, $from_value );
+					$new_value = CB2_Query::to_object( $name, $from_value );
 				} catch ( Exception $ex ) {
 					krumo( $properties );
 					throw $ex;
@@ -193,10 +231,10 @@ class CB_PostNavigator {
 			$debug .= "<li class='cb2-classname'>$classname:</li>";
 			foreach ( $this as $name => $value ) {
 				if ( $name
-					&& ( ! isset( CB_Post::$POST_PROPERTIES[$name] ) || CB_Post::$POST_PROPERTIES[$name] )
+					&& ( ! isset( CB2_Post::$POST_PROPERTIES[$name] ) || CB2_Post::$POST_PROPERTIES[$name] )
 					&& ( ! in_array( $name, array( 'zeros', 'post_type' ) ) )
 				) {
-					if      ( $value instanceof DateTime ) $value = $value->format( CB_Query::$datetime_format );
+					if      ( $value instanceof DateTime ) $value = $value->format( CB2_Query::$datetime_format );
 					else if ( is_array( $value ) ) {
 						/*
 						$debug .= "<ul>";
@@ -238,7 +276,7 @@ class CB_PostNavigator {
     global $post;
     $post = $this->next_post();
     // Some abstract post have equal IDs
-    // e.g. CB_Week->ID 1 == CB_Day->ID 1
+    // e.g. CB2_Week->ID 1 == CB2_Day->ID 1
     // thus, we need to reset which one we are talking about constantly
     // the_title() => get_post() calls
     // will call get_instance(ID) and return our current post by pre-setting the cache
@@ -380,7 +418,7 @@ class CB_PostNavigator {
 			array_push( $templates, $post_sub_type );
 
 			if ( strpos( $post_sub_type, '-' ) === FALSE ) $post_sub_type = NULL;
-			else $post_sub_type = CB_Query::substring_before( $post_sub_type );
+			else $post_sub_type = CB2_Query::substring_before( $post_sub_type );
 		} while ( $post_sub_type );
 
 		// Sanitize
@@ -465,7 +503,7 @@ class CB_PostNavigator {
 		if ( is_null( $form_content ) ) {
 			if ( $this->is_controller() ) {
 				$action   = ( isset( $_POST['action'] ) ? $_POST['action'] : NULL );
-				$user     = CB_User::factory_current();
+				$user     = CB2_User::factory_current();
 				$values   = array();
 				foreach ( $_POST as $name => $value ) {
 					$interpret_func = 'post_' . preg_replace( '/[^a-zA-Z0-9_]/', '_', $name ). '_interpret';
@@ -500,6 +538,16 @@ class CB_PostNavigator {
 		return $is_controller;
   }
 
+	static function get_post_type_setup() {
+		global $wpdb;
+		static $post_types = NULL;
+
+		if ( is_null( $post_types ) )
+			$post_types = $wpdb->get_results( "SELECT post_type, ID_multiplier, ID_base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC", OBJECT_K );
+
+		return $post_types;
+	}
+
   function id( $why = '' ) {
 		return self::id_from_ID_with_post_type( $this->ID, $this->post_type() );
   }
@@ -507,7 +555,7 @@ class CB_PostNavigator {
 	static function id_from_ID_with_post_type( $ID, $post_type ) {
 		// NULL return indicates that this post_type is not governed by CB2
 		$id         = NULL;
-		$post_types = CB_Query::get_post_types();
+		$post_types = self::get_post_type_setup();
 
 		if ( ! is_numeric( $ID ) ) throw new Exception( "Numeric ID required for id_from_ID_with_post_type($ID/$post_type)" );
 		if ( ! $post_type )        throw new Exception( "Post type required for id_from_ID_with_post_type($ID)" );
@@ -532,7 +580,7 @@ class CB_PostNavigator {
 	function get_posts_with_type( $post_IDs, $post_type ) {
 		$objects = array();
 		foreach ( $post_IDs as $post_ID ) {
-			$object = CB_Query::get_post_with_type( $post_type, $post_ID );
+			$object = CB2_Query::get_post_with_type( $post_type, $post_ID );
 			array_push( $objects, $object );
 		}
 		return $objects;
@@ -541,7 +589,7 @@ class CB_PostNavigator {
 	static function ID_from_id_post_type( $id, $post_type ) {
 		// NULL return indicates that this post_type is not governed by CB2
 		$ID         = NULL;
-		$post_types = CB_Query::get_post_types();
+		$post_types = self::get_post_type_setup();
 
 		if ( ! is_numeric( $id ) ) throw new Exception( "Numeric ID required for id_from_ID_with_post_type($id/$post_type)" );
 		if ( ! $post_type )        throw new Exception( "Post type required for id_from_ID_with_post_type($id)" );

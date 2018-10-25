@@ -1,5 +1,5 @@
 <?php
-class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSerializable {
+class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSerializable {
   public static $database_table = 'cb2_period_groups';
 	public static $all = array();
   static $static_post_type = 'periodgroup';
@@ -10,7 +10,7 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
   public $periods  = array();
 
   static function selector_metabox( $multiple = FALSE ) {
-		$period_group_options = CB_Forms::period_group_options( TRUE );
+		$period_group_options = CB2_Forms::period_group_options( TRUE );
 		$period_groups_count  = count( $period_group_options ) - 1;
 		$plural  = ( $multiple ? 's' : '' );
 		$title   = "Period Group$plural";
@@ -58,7 +58,7 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 
 	static function metaboxes() {
 		$metaboxes = array();
-		array_push( $metaboxes, CB_Period::selector_metabox( TRUE, TRUE ) ); // Multiple, context primary
+		array_push( $metaboxes, CB2_Period::selector_metabox( TRUE, TRUE ) ); // Multiple, context primary
 		return $metaboxes;
 	}
 
@@ -66,7 +66,7 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 		$object = self::factory(
 			$properties['ID'],
 			$properties['post_title'],
-			CB_PostNavigator::get_or_create_new( $properties, 'period_IDs', $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_IDs', $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -95,7 +95,7 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 		$name,
 		$periods = array()
   ) {
-		CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
+		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 		parent::__construct( $this->periods );
 		if ( $ID ) self::$all[$ID] = $this;
   }
@@ -116,9 +116,9 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 		$period_group_IDs = explode( ',', $period_group_IDs );
 		$period_group_ids = array();
 		foreach ( $period_group_IDs as $period_group_ID ) {
-			array_push( $period_group_ids, CB_PostNavigator::id_from_ID_with_post_type( $period_group_ID, self::$static_post_type ) );
+			array_push( $period_group_ids, CB2_PostNavigator::id_from_ID_with_post_type( $period_group_ID, self::$static_post_type ) );
 		}
-		$period_id = CB_PostNavigator::id_from_ID_with_post_type( $period_ID, CB_Period::$static_post_type );
+		$period_id = CB2_PostNavigator::id_from_ID_with_post_type( $period_ID, CB2_Period::$static_post_type );
 
 		// Delete existing
 		$table = "{$wpdb->prefix}cb2_period_group_period";
@@ -146,9 +146,9 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 		$period_group_IDs = explode( ',', $period_group_IDs );
 		$period_group_ids = array();
 		foreach ( $period_group_IDs as $period_group_ID ) {
-			array_push( $period_group_ids, CB_PostNavigator::id_from_ID_with_post_type( $period_group_ID, self::$static_post_type ) );
+			array_push( $period_group_ids, CB2_PostNavigator::id_from_ID_with_post_type( $period_group_ID, self::$static_post_type ) );
 		}
-		$period_id = CB_PostNavigator::id_from_ID_with_post_type( $period_ID, CB_Period::$static_post_type );
+		$period_id = CB2_PostNavigator::id_from_ID_with_post_type( $period_ID, CB2_Period::$static_post_type );
 
 		// Delete existing
 		$table = "{$wpdb->prefix}cb2_period_group_period";
@@ -223,7 +223,7 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 			$detach_link = '';
 			if ( $count > 1 ) {
 				$detach_text = 'detach';
-				$detach_url  = "?page=cb2-period-groups&period_ID=$period->ID&period_group_IDs=$this->ID&do_action=CB_PeriodGroup::detach";
+				$detach_url  = "?page=cb2-period-groups&period_ID=$period->ID&period_group_IDs=$this->ID&do_action=CB2_PeriodGroup::detach";
 				$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";
 			}
 
@@ -273,5 +273,3 @@ class CB_PeriodGroup extends CB_DatabaseTable_PostNavigator implements JsonSeria
 		return $this;
 	}
 }
-
-CB_Query::register_schema_type( 'CB_PeriodGroup' );

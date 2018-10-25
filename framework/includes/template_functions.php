@@ -2,7 +2,7 @@
 /**
  * TODO: for template-tags use file template-tags.php?
  * similar with cb2_get_template_part.php?
- * TODO: move all these in to static methods on CB_Template class?
+ * TODO: move all these in to static methods on CB2_Template class?
  */
 
 // -------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $templat
 		throw new Exception( 'the_inner_loop() should never be called with context [single]' );
 
 	if ( ! $post_navigator ) $post_navigator = $post;
-	if ( $post_navigator instanceof CB_PostNavigator || $post_navigator instanceof WP_Query ) {
+	if ( $post_navigator instanceof CB2_PostNavigator || $post_navigator instanceof WP_Query ) {
 		if ( $post_navigator->have_posts() ) {
 			while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 				$html .= $before;
@@ -38,7 +38,7 @@ function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $templat
 			wp_reset_postdata();
 		}
 	} else {
-		throw new Exception( 'the_inner_loop() only available for CB_PostNavigator or WP_Query' );
+		throw new Exception( 'the_inner_loop() only available for CB2_PostNavigator or WP_Query' );
 	}
 
 	return $html;
@@ -66,10 +66,10 @@ function get_the_calendar_header( $query = NULL, $classes = '', $type = 'th', $b
 		$schema_type = $query->query['date_query']['compare'];
 
 	switch ( $schema_type ) {
-		case CB_Week::$static_post_type:
+		case CB2_Week::$static_post_type:
 			// TODO: wordpress WeekStartsOn
 			$html .= ( $before );
-			foreach ( CB_Query::$days as $dayname ) {
+			foreach ( CB2_Query::$days as $dayname ) {
 				$html .= ( "<$type>$dayname</$type>" );
 			}
 			$html .= ( $after );
@@ -110,7 +110,7 @@ function get_the_time_period( $format = 'H:i' ) {
 
 function is_current() {
 	// Indicates if the time post contains the current time
-	// e.g. if the CB_Day is today, or the CB_Week contains today
+	// e.g. if the CB2_Day is today, or the CB2_Week contains today
 	global $post;
 	return is_object( $post ) && property_exists( $post, 'is_current' ) && $post->is_current;
 }
@@ -235,7 +235,7 @@ function cb2_post_class( $classes, $class, $ID ) {
 	}
 
 	if ( $post_type ) {
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 			if ( property_exists( $Class, 'all' ) ) {
 				$lookup = $Class::$all;
 				if ( isset( $lookup[$ID] ) ) {
@@ -272,8 +272,8 @@ function cb2_the_content( $content ) {
 	global $post;
 	if ( $post ) {
 		$post_type = $post->post_type;
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-			$post_class = CB_Query::ensure_correct_class( $post );
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+			$post_class = CB2_Query::ensure_correct_class( $post );
 			$post       = &$post_class;
 			if ( method_exists( $post, 'get_the_content' ) )
 				$content = $post->get_the_content();
@@ -281,7 +281,7 @@ function cb2_the_content( $content ) {
 	}
 	return $content;
 }
-// TODO: move functions to CB_Templates utilities files
+// TODO: move functions to CB2_Templates utilities files
 add_filter( 'the_content', 'cb2_the_content', 1 );
 
 function cb2_template_path() {

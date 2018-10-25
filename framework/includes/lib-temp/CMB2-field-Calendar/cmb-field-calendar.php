@@ -57,14 +57,14 @@ class CMB2_Field_Calendar {
         // Inputs
         $url              = $_SERVER['REQUEST_URI'];
         $options          = $field->options();
-				$startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : $yesterday->format(  CB_Query::$date_format ) );
-				$enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : $next2month->format( CB_Query::$date_format ) );
-        $view             = ( isset( $_GET['view'] ) ? $_GET['view'] : CB_Week::$static_post_type );
+				$startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : $yesterday->format(  CB2_Query::$date_format ) );
+				$enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : $next2month->format( CB2_Query::$date_format ) );
+        $view             = ( isset( $_GET['view'] ) ? $_GET['view'] : CB2_Week::$static_post_type );
 
         // Defaults
         $default_query    = array(
-					'post_status'    => CB_Post::$PUBLISH,
-					'post_type'      => CB_PeriodItem::$all_post_types,
+					'post_status'    => CB2_Post::$PUBLISH,
+					'post_type'      => CB2_PeriodItem::$all_post_types,
 					'posts_per_page' => -1,
 					'order'          => 'ASC',          // defaults to post_date
 					'date_query'     => array(
@@ -106,17 +106,17 @@ class CMB2_Field_Calendar {
         $nextpage_start = (clone $enddate);
         $nextpage_end   = (clone $nextpage_start);
         $nextpage_end->add( $pagesize );
-        $nextpage_start_string = $nextpage_start->format( CB_Query::$date_format );
-        $nextpage_end_string   = $nextpage_end->format( CB_Query::$date_format );
+        $nextpage_start_string = $nextpage_start->format( CB2_Query::$date_format );
+        $nextpage_end_string   = $nextpage_end->format( CB2_Query::$date_format );
 
         $prevpage_start = (clone $startdate);
         $prevpage_end   = (clone $prevpage_start);
         $prevpage_start->sub( $pagesize );
-        $prevpage_start_string = $prevpage_start->format( CB_Query::$date_format );
-        $prevpage_end_string   = $prevpage_end->format( CB_Query::$date_format );
+        $prevpage_start_string = $prevpage_start->format( CB2_Query::$date_format );
+        $prevpage_end_string   = $prevpage_end->format( CB2_Query::$date_format );
 
         // View handling
-        $view_is_calendar_class = ( $view == CB_Week::$static_post_type ? 'selected' : 'unselected' );
+        $view_is_calendar_class = ( $view == CB2_Week::$static_post_type ? 'selected' : 'unselected' );
         $view_is_list_class     = ( $view == '' ? 'selected' : 'unselected' );
         $viewless_url = preg_replace( '/&view=[^&]*/', '', $url );
 
@@ -124,7 +124,7 @@ class CMB2_Field_Calendar {
         // TODO: the wp_cb2_view_sequence_date is limited to 1000 days at the moment
         // can we auto-extend this where necessary?
 				print( "
-				<div class='cb2-calendar'>
+				<form method='POST'><div class='cb2-calendar'>
 					<div class='entry-header'>
 						<div class='cb2-todo alignright actions bulkactions'>
 							<label for='bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label>
@@ -146,7 +146,7 @@ class CMB2_Field_Calendar {
 						</div>
 					</div>
 					<div class='cb2-calendar'>
-						<div class='cb2-todo entry-content clear'>
+						<div class='entry-content clear'>
 							<table class='cb2-subposts'>" );
 				the_calendar_header( $query );
 				print( '<tbody>' );
@@ -162,7 +162,7 @@ class CMB2_Field_Calendar {
 							| <a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
 						</div>
 					</div>
-				</div>" );
+				</div></form>" );
 
         $field_type_object->_desc( true, true );
     }

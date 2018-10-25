@@ -29,19 +29,19 @@ require_once(CB2_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php'
 
 
 /**
- * Includes - CB_Query period framework
+ * Includes - CB2_Query period framework
  */
-require_once('CB2_Query/CB_Query.php');
-require_once('CB2_Query/CB_Database.php');
-require_once('CB2_Query/CB_PostNavigator.php');
-require_once('CB2_Query/CB_DatabaseTable_PostNavigator.php');
-require_once('CB2_Query/CB_PeriodItem.php');
-require_once('CB2_Query/CB_Entities.php');
-require_once('CB2_Query/CB_PeriodEntity.php');
-require_once('CB2_Query/CB_PeriodInteractionStrategies.php');
-require_once('CB2_Query/CB_Time_Classes.php');
+require_once('CB2_Query/CB2_Query.php');
+require_once('CB2_Query/CB2_Database.php');
+require_once('CB2_Query/CB2_PostNavigator.php');
+require_once('CB2_Query/CB2_DatabaseTable_PostNavigator.php');
+require_once('CB2_Query/CB2_PeriodItem.php');
+require_once('CB2_Query/CB2_Entities.php');
+require_once('CB2_Query/CB2_PeriodEntity.php');
+require_once('CB2_Query/CB2_PeriodInteractionStrategies.php');
+require_once('CB2_Query/CB2_Time_Classes.php');
 require_once('CB2_Query/WP_Query_integration.php');
-require_once('CB2_Query/CB_Forms.php');
+require_once('CB2_Query/CB2_Forms.php');
 
 /**
  * Includes - Classes

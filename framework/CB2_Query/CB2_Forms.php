@@ -1,5 +1,5 @@
 <?php
-class CB_Forms {
+class CB2_Forms {
   static function location_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
     return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'location' AND post_status = 'publish'", $none, $none_id );
   }
@@ -13,11 +13,11 @@ class CB_Forms {
   }
 
   static function period_status_type_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
-    return self::get_options( 'cb2_period_status_types', CB_PeriodStatusType::$static_post_type, 'period_status_type_id', 'name', '1=1', $none, $none_id );
+    return self::get_options( 'cb2_period_status_types', CB2_PeriodStatusType::$static_post_type, 'period_status_type_id', 'name', '1=1', $none, $none_id );
   }
 
   static function period_group_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
-    return self::get_options( 'cb2_period_groups', CB_PeriodGroup::$static_post_type, 'period_group_id', 'name', '1=1', $none, $none_id );
+    return self::get_options( 'cb2_period_groups', CB2_PeriodGroup::$static_post_type, 'period_group_id', 'name', '1=1', $none, $none_id );
   }
 
   static function period_entity_options( $none = FALSE ) {
@@ -25,13 +25,13 @@ class CB_Forms {
   }
 
   static function period_options( $none = FALSE, $none_id = CB2_CREATE_NEW ) {
-    return self::get_options( 'cb2_periods', CB_Period::$static_post_type, 'period_id', 'name', '1=1', $none, $none_id );
+    return self::get_options( 'cb2_periods', CB2_Period::$static_post_type, 'period_id', 'name', '1=1', $none, $none_id );
   }
 
   static function get_options( $table, $post_type = NULL, $id_field = 'ID', $name_field = 'post_title', $condition = '1=1', $none = FALSE, $none_id = CB2_CREATE_NEW ) {
 		global $wpdb;
 
-		$cache_name = "CB_Forms::get_options($table, $post_type, $id_field, $name_field, $condition, $none)";
+		$cache_name = "CB2_Forms::get_options($table, $post_type, $id_field, $name_field, $condition, $none)";
 		$options    = wp_cache_get( $cache_name );
 		if ( ! $options ) {
 			$options    = array();
@@ -58,6 +58,16 @@ class CB_Forms {
 		return $options;
   }
 
+  static function subclasses( $BaseClass ) {
+    $subclasses = array();
+    foreach ( get_declared_classes() as $Class ) { // PHP 4
+			$ReflectionClass = new ReflectionClass( $Class );
+			if ( $ReflectionClass->isSubclassOf( $BaseClass ) ) // PHP 5
+				array_push( $subclasses, $Class );
+    }
+    return $subclasses;
+	}
+
   static function select_options( $records, $current_value = NULL, $add_none = TRUE, $by_name = FALSE ) {
     $html = '';
     if ( $add_none ) $html .= "<option value=''>--none--</option>";
@@ -72,45 +82,48 @@ class CB_Forms {
 
   static function schema_options() {
 		$post_types = array();
-		$classes    = CB_Query::schema_types();
+		$classes    = CB2_PostNavigator::post_type_classes();
 		foreach ( $classes as $post_type => $Class )
 			$post_types[ $post_type ] = $post_type;
     return $post_types;
   }
 
+  static function truncate_table( $table_name, $id_field ) {
+		global $wpdb;
+		return $wpdb->query( "DELETE from $wpdb->prefix$table_name WHERE $id_field >= 0" );
+  }
+
   static function reset_data( $pass, $and_posts = FALSE ) {
-    global $wpdb;
-    $cleared      = FALSE;
-    $post_types   = "'periodgroup','period','periodent-global','periodent-location','periodent-timeframe','periodent-user'";
-		$post_IDs_SQL = "select ID from {$wpdb->prefix}posts where not post_type IN($post_types)";
-		$no_NULLs     = FALSE;
-		$no_prepare   = FALSE; // SQL clause in parameter
-		$NOT          = TRUE;
-		$exists       = 'exists(select * from wp_posts where ID = post_id)';
+		global $wpdb;
+    $cleared = FALSE;
+    $post_types_array = array(
+			CB2_PeriodGroup::$static_post_type,
+			CB2_Period::$static_post_type,
+			CB2_PeriodEntity_Global::$static_post_type,
+			CB2_PeriodEntity_Location::$static_post_type,
+			CB2_PeriodEntity_Timeframe::$static_post_type,
+			CB2_PeriodEntity_Timeframe_User::$static_post_type,
+		);
+		$post_types_string = "'" . implode( "','", $post_types_array ) . "'";
 
     if ( WP_DEBUG && $pass == 'fryace4' ) {
 			// Native leaves
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_options', 'option_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_global_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_timeframe_user_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_location_period_groups', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_period_group_period', 'period_group_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_periods', 'period_id' )->run();
-			CB_Database_Truncate::factory_truncate( 'cb2_period_groups', 'period_group_id' )->run();
+			self::truncate_table( 'cb2_timeframe_options', 'option_id' );
+			self::truncate_table( 'cb2_global_period_groups', 'period_group_id' );
+			self::truncate_table( 'cb2_timeframe_period_groups', 'period_group_id' );
+			self::truncate_table( 'cb2_timeframe_user_period_groups', 'period_group_id' );
+			self::truncate_table( 'cb2_location_period_groups', 'period_group_id' );
+			self::truncate_table( 'cb2_period_group_period', 'period_group_id' );
+			self::truncate_table( 'cb2_periods', 'period_id' );
+			self::truncate_table( 'cb2_period_groups', 'period_group_id' );
 
 			if ( $and_posts ) {
-				// Remove all non-page/post metadata
-				CB_Database_Delete::factory( 'postmeta' )->add_condition( 'post_id', $post_IDs_SQL, $no_NULLs, 'IN', $no_prepare )->run();
-				// Remove all _edit_locks etc.
-				// TODO: disabled because WordPress escapes the %% as GUIDs
-				// CB_Database_Delete::factory( 'postmeta' )->add_condition( 'meta_key', '\_%%', $no_NULLs, 'LIKE' )->run();
 				// Remove all auto-drafts
-				CB_Database_Delete::factory( 'posts' )->add_condition( 'post_status', CB_Post::$AUTODRAFT )->run();
+				$wpdb->query( "delete from {$wpdb->prefix}posts where post_status = 'auto-draft'" );
 				// Remove ALL non page/posts
-				CB_Database_Delete::factory( 'posts' )->add_condition( 'post_type', $post_types, $no_NULLs, 'IN', $no_prepare )->run();
+				$wpdb->query( "delete from {$wpdb->prefix}posts where post_type IN($post_types_string)" );
 				// Clear up manual DRI
-				CB_Database_Delete::factory( 'postmeta' )->add_condition( $exists, NULL, $no_NULLs, NULL, $no_prepare, $NOT )->run();
+				$wpdb->query( "delete from {$wpdb->prefix}postmeta where NOT exists(select * from wp_posts where ID = post_id)" );
 			}
 			$cleared = TRUE;
     }

@@ -13,13 +13,12 @@
  *
  * ---- Class Handlers
  * A special registered Class MUST handle the resultant posts
- * registering itself using CB_Query::register_schema_type( <Class name> )
  * which will cause the global $post iterator
  * with have_posts(), the_post() and global $post
  * to iterate through <Class name>s instead of WP_Posts
  * This can also be achieved manually with
- *      CB_Query::get_post_with_type( $post_ID )
- *   or CB_Query::ensure_correct_classes( $posts )
+ *      CB2_Query::get_post_with_type( $post_ID )
+ *   or CB2_Query::ensure_correct_classes( $posts )
  *
  * ---- Generated Fake Posts
  * Generated custom posts have post ID ranges to avoid conflict with normal WordPress posts
@@ -122,15 +121,15 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 
 	if ( $update ) {
 		if ( ! $auto_draft_publish_transition ) {
-			if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-				if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+				if ( $class_database_table = CB2_Database::database_table( $Class ) ) {
 					// Prevent Class::factory_from_properties()
 					//  get_metadata_assign() calling for the old meta-data
 					// BECAUSE this is not a wp_post
 					// TODO: a more elegant way to indicate that the meta-data is already assigned?
 					$post->{GET_METADATA_ASSIGN} = TRUE;
 
-					$cb2_post = CB_Query::ensure_correct_class( $post );
+					$cb2_post = CB2_Query::ensure_correct_class( $post );
 					$cb2_post->save( TRUE ); // TRUE = Update
 
 					// Prevent post.php wp_insert_post() from continuing
@@ -154,7 +153,7 @@ function cb2_save_post_debug( $post_id, $post, $update ) {
 
 	if ( CB2_DEBUG_SAVE ) {
 		if ( ! $done ) {
-			print( '<h1>CB2_DEBUG_SAVE is on in CB_Query.php</h1>' );
+			print( '<h1>CB2_DEBUG_SAVE is on in CB2_Query.php</h1>' );
 			print( '<p>Debug info will be shown and redirect will be suppressed, but printed at the bottom</p>' );
 			print( '<div class="cb2-WP_DEBUG-small">auto_draft_publish_transition ' . ( $auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
 			krumo( $_POST, $post );
@@ -180,8 +179,8 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 
 	if ( $auto_draft_publish_transition ) {
 		$post_type = $post->post_type;
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+			if ( $class_database_table = CB2_Database::database_table( $Class ) ) {
 				if ( ! method_exists( $Class, 'factory_from_properties' ) )
 					throw new Exception( "$Class::factory_from_properties not present" );
 
@@ -200,7 +199,7 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				//   ID lists are stored as comma delimited for example
 				//   bit arrays are handled as unsigned
 				if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>include wp_post meta-data</div>" );
-				CB_Query::get_metadata_assign( $post );
+				CB2_Query::get_metadata_assign( $post );
 				$properties = (array) $post;
 
 				// ----------------------------------------------------- save() => pre_post_create() recursive
@@ -244,9 +243,9 @@ function cb2_get_post_metadata( $type, $post_id, $meta_key, $single ) {
 	if ( $meta_key && $meta_key[0] != '_' && $meta_key != 'native_ID' ) {
 		if ( $post = get_post( $post_id ) ) {
 			$post_type = $post->post_type;
-			if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 				if ( ! $auto_draft_publish_transition ) {
-					if ( $postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) ) {
+					if ( $postmeta_table = CB2_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) ) {
 						if ( $native_ID = get_post_meta( $post_id, 'native_ID', TRUE ) )
 							$post->ID = $native_ID;
 
@@ -299,7 +298,7 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 	//	 	 	 update_post_meta( $post_ID, $field, $value );
 	//		 }
 	// TODO: this is getting called 3 x times because all the hooks are linked here
-	// TODO: move this in to CB_PostNavigator
+	// TODO: move this in to CB2_PostNavigator
 	global $auto_draft_publish_transition, $wpdb;
 	static $first = TRUE;
 
@@ -307,8 +306,8 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 
 	if ( $post = get_post( $ID ) ) {
 		$post_type = $post->post_type;
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-			if ( $class_database_table = CB_Database::database_table( $Class ) ) {
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+			if ( $class_database_table = CB2_Database::database_table( $Class ) ) {
 				if ( $meta_key && $meta_key[0] == '_' ) {
 					// Ignore pseudo metadata, e.g. _edit_lock
 					$prevent = TRUE;
@@ -320,15 +319,15 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 						$first = FALSE;
 					}
 					if ( ! $auto_draft_publish_transition ) {
-						if ( $id_field = CB_Database::id_field( $Class ) ) {
-							$cb2_post = CB_Query::ensure_correct_class( $post );
+						if ( $id_field = CB2_Database::id_field( $Class ) ) {
+							$cb2_post = CB2_Query::ensure_correct_class( $post );
 							if ( empty( $meta_value ) ) $meta_value = NULL;
 							$data = array( $meta_key => $meta_value );
 
 							if ( method_exists( $cb2_post, 'sanitize_data_for_table' ) )
 								$data = $cb2_post->sanitize_data_for_table( $data, $formats );
 							else
-								$data = CB_Database::sanitize_data_for_table( $class_database_table, $data, $formats, TRUE );
+								$data = CB2_Database::sanitize_data_for_table( $class_database_table, $data, $formats, TRUE );
 
 							if ( CB2_DEBUG_SAVE ) {
 								if ( ! is_string( $meta_value ) && ! is_numeric( $meta_value ) )
@@ -375,13 +374,13 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 // ------------------------------------------------------------------------------------------
 // Framework integration
 function cb2_wp_enqueue_scripts() {
-	// TODO: re-enable CB_Enqueue
+	// TODO: re-enable CB2_Enqueue
 	wp_enqueue_script(  CB2_TEXTDOMAIN . '-plugin-scripts-public', plugins_url( 'public/assets/js/public.js', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 	add_thickbox();
 }
 
 function cb2_admin_enqueue_scripts() {
-	// TODO: re-enable CB_Admin_Enqueue
+	// TODO: re-enable CB2_Admin_Enqueue
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-cmb2',   plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 
@@ -389,14 +388,14 @@ function cb2_admin_enqueue_scripts() {
 }
 
 function cb2_add_post_type_actions( $action, $priority = 10, $nargs = 1 ) {
-	foreach ( CB_Query::schema_types() as $post_type => $Class ) {
+	foreach ( CB2_PostNavigator::post_type_classes() as $post_type => $Class ) {
 		$action_post_type = "{$action}_{$post_type}";
 		add_action( $action_post_type, "cb2_{$action}", $priority, $nargs );
 	}
 }
 
 function cb2_init_register_post_types() {
-	foreach ( CB_Query::schema_types() as $post_type => $Class ) {
+	foreach ( CB2_PostNavigator::post_type_classes() as $post_type => $Class ) {
 		if ( method_exists( $Class, 'manage_columns' ) ) {
 			// Functions handled in the WP_admin_integration
 			add_filter( "manage_{$post_type}_columns",  'cb2_manage_columns' );
@@ -446,7 +445,7 @@ function cb2_pre_get_posts_redirect_wpdb( &$wp_query ) {
 		$post_type = $wp_query->query['post_type'];
 		if ( is_array( $post_type ) )
 			$post_type = ( count( $post_type ) ? array_values( $post_type )[0] : NULL );
-		if ( CB_Query::redirect_wpdb_for_post_type( $post_type ) ) {
+		if ( CB2_Query::redirect_wpdb_for_post_type( $post_type ) ) {
 			// Subsequent posts will be annotated
 			// that they are from the native tables, not wp_post
 			$wp_query->cb2_redirected_post_request = TRUE;
@@ -469,7 +468,7 @@ function cb2_post_results_unredirect_wpdb( $posts, $wp_query ) {
 
 function cb2_posts_results_add_automatic( $posts, $wp_query ) {
 	// Add Automatic posts if requested
-	$post_type_auto = CB_PeriodItem_Automatic::$static_post_type;
+	$post_type_auto = CB2_PeriodItem_Automatic::$static_post_type;
 
 	if ( isset( $wp_query->query['post_type'] )
 		&& ( $post_type = $wp_query->query['post_type'] )
@@ -491,7 +490,7 @@ function cb2_posts_results_add_automatic( $posts, $wp_query ) {
 				$enddate->setTime( 23, 59 );
 
 				while ( $startdate < $enddate ) {
-					array_push( $posts,  CB_PeriodItem_Automatic::post_from_date( $startdate ) );
+					array_push( $posts,  CB2_PeriodItem_Automatic::post_from_date( $startdate ) );
 					$startdate->add( new DateInterval( 'P1D' ));
 				}
 
@@ -514,15 +513,15 @@ function cb2_posts_date_order( $post1, $post2 ) {
 }
 
 function cb2_loop_start( &$wp_query ) {
-	// Convert the WP_Query CB post_type results from WP_Post in to CB_* objects
+	// Convert the WP_Query CB post_type results from WP_Post in to CB2_* objects
 	if ( $wp_query instanceof WP_Query
 		&& property_exists( $wp_query, 'posts' )
 		&& is_array( $wp_query->posts )
 	) {
-		// Create the CB_PeriodItem objects from the WP_Post results
-		// This will also create all the associated CB_* Objects like CB_Week
+		// Create the CB2_PeriodItem objects from the WP_Post results
+		// This will also create all the associated CB2_* Objects like CB2_Week
 		// WP_Posts will be left unchanged
-		CB_Query::ensure_correct_classes( $wp_query->posts, $wp_query );
+		CB2_Query::ensure_correct_classes( $wp_query->posts, $wp_query );
 
 		// Indicate that the posts are from a redirected request
 		if ( property_exists( $wp_query, 'cb2_redirected_post_request' ) && $wp_query->cb2_redirected_post_request ) {
@@ -533,7 +532,7 @@ function cb2_loop_start( &$wp_query ) {
 		// Check to see which schema has been requested and switch it
 		if ( isset( $wp_query->query['date_query']['compare'] ) ) {
 			if ( $schema = $wp_query->query['date_query']['compare'] ) {
-				$wp_query->posts = CB_Query::schema_type_all_objects( $schema );
+				$wp_query->posts = CB2_PostNavigator::post_type_all_objects( $schema );
 			}
 		}
 

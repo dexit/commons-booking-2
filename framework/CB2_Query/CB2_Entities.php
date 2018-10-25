@@ -2,7 +2,7 @@
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_User extends CB_PostNavigator implements JsonSerializable {
+class CB2_User extends CB2_PostNavigator implements JsonSerializable {
   public static $all    = array();
   public static $schema = 'with-perioditems'; //this-only, with-perioditems
   public static $posts_table    = FALSE;
@@ -20,7 +20,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
 					'id'      => 'user_ID',
 					'type'    => 'select',
 					'default' => ( isset( $_GET['user_ID'] ) ? $_GET['user_ID'] : NULL ),
-					'options' => CB_Forms::user_options(),
+					'options' => CB2_Forms::user_options(),
 				),
 			),
 		);
@@ -32,7 +32,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
 	}
 
 	public function __toIntFor( $column_data_type, $column_name ) {
-		// CB_Post only has 1 id for any data
+		// CB2_Post only has 1 id for any data
 		// although it should be an _ID column
 		return $this->id();
 	}
@@ -100,12 +100,11 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     return $array;
   }
 }
-CB_Query::register_schema_type( 'CB_User' );
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Post extends CB_PostNavigator implements JsonSerializable {
+class CB2_Post extends CB2_PostNavigator implements JsonSerializable {
   public static $all = array();
   public static $PUBLISH        = 'publish';
   public static $AUTODRAFT      = 'auto-draft';
@@ -150,7 +149,7 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
 	}
 
 	public function __toIntFor( $column_data_type, $column_name ) {
-		// CB_Post only has 1 id for any data
+		// CB2_Post only has 1 id for any data
 		// although it should be an _ID column
 		return $this->id();
 	}
@@ -198,7 +197,7 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Location extends CB_Post implements JsonSerializable {
+class CB2_Location extends CB2_Post implements JsonSerializable {
   static $static_post_type  = 'location';
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-tools',
@@ -214,7 +213,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 					'id'      => 'location_ID',
 					'type'    => 'select',
 					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
-					'options' => CB_Forms::location_options(),
+					'options' => CB2_Forms::location_options(),
 				),
 			),
 		);
@@ -303,7 +302,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 						'relation' => 'AND',
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
-							'value' => CB_PeriodStatusType_Available::$id,
+							'value' => CB2_PeriodStatusType_Available::$id,
 						),
 					),
 					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
@@ -334,7 +333,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 						'relation' => 'AND',
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
-							'value' => CB_PeriodStatusType_Booked::$id,
+							'value' => CB2_PeriodStatusType_Booked::$id,
 						),
 					),
 					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
@@ -383,7 +382,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
 				'relation' => 'AND',
 				'period_status_type_clause' => array(
 					'key'   => 'period_status_type_id',
-					'value' => CB_PeriodStatusType_Open::$id,
+					'value' => CB2_PeriodStatusType_Open::$id,
 				),
 			),
 		) );
@@ -397,12 +396,11 @@ class CB_Location extends CB_Post implements JsonSerializable {
 		$actions[ 'manage_opening_hours' ] = $action;
 	}
 }
-CB_Query::register_schema_type( 'CB_Location' );
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Item extends CB_Post implements JsonSerializable {
+class CB2_Item extends CB2_Post implements JsonSerializable {
   static $static_post_type   = 'item';
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-video-alt',
@@ -417,7 +415,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 					'id'      => 'item_ID',
 					'type'    => 'select',
 					'default' => ( isset( $_GET['item_ID'] ) ? $_GET['item_ID'] : NULL ),
-					'options' => CB_Forms::item_options(),
+					'options' => CB2_Forms::item_options(),
 				),
 			),
 		);
@@ -461,7 +459,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 		$action     = '';
 		$submit     = __( 'book the' ) . " $this->post_title";
 		$controller_action = 'book';
-		$display_strategy  = 'CB_SingleItemAvailability';
+		$display_strategy  = 'CB2_SingleItemAvailability';
 
 		// TODO: Needs to be configurable
 		// package a form plugin with CB2, e.g. ContactForm 7
@@ -480,7 +478,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 		";
 	}
 
-  function process_form_book( $action, Array $values, CB_User $user ) {
+  function process_form_book( $action, Array $values, CB2_User $user ) {
 		// The booking times are based on the perioditems selected
 		if ( ! isset( $values['perioditem_timeframe_IDs'] ) )
 			throw new Exception( "perioditem_timeframe_IDs required during [$action]" );
@@ -494,7 +492,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 		$copy_period_group  = TRUE;      // Default
 		$count              = count( $booked_perioditems );
 		foreach ( $booked_perioditems as $booked_perioditem ) {
-			$periodentity_booking = CB_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
+			$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
 				$booked_perioditem,
 				$user,
 				$name,
@@ -529,7 +527,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 						'relation' => 'AND',
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
-							'value' => CB_PeriodStatusType_Available::$id,
+							'value' => CB2_PeriodStatusType_Available::$id,
 						),
 					),
 					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
@@ -560,7 +558,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 						'relation' => 'AND',
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
-							'value' => CB_PeriodStatusType_Booked::$id,
+							'value' => CB2_PeriodStatusType_Booked::$id,
 						),
 					),
 					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
@@ -602,7 +600,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 				'relation' => 'AND',
 				'period_status_type_clause' => array(
 					'key'   => 'period_status_type_id',
-					'value' => CB_PeriodStatusType_Repair::$id,
+					'value' => CB2_PeriodStatusType_Repair::$id,
 				),
 			),
 		) );
@@ -616,5 +614,4 @@ class CB_Item extends CB_Post implements JsonSerializable {
 		$actions[ 'manage_repairs' ] = $action;
 	}
 }
-CB_Query::register_schema_type( 'CB_Item' );
 

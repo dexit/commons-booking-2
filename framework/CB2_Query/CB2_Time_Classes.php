@@ -2,7 +2,7 @@
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_TimePostNavigator extends CB_PostNavigator implements JsonSerializable {
+class CB2_TimePostNavigator extends CB2_PostNavigator implements JsonSerializable {
   public static $posts_table    = FALSE;
   public static $postmeta_table = FALSE;
   public static $database_table = FALSE;
@@ -16,14 +16,14 @@ class CB_TimePostNavigator extends CB_PostNavigator implements JsonSerializable 
 	}
 
 	function jsonSerialize() {
-		throw new Exception( 'CB_TimePostNavigator::jsonSerialize() is a pure abstract method' );
+		throw new Exception( 'CB2_TimePostNavigator::jsonSerialize() is a pure abstract method' );
 	}
 }
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Year extends CB_TimePostNavigator {
+class CB2_Year extends CB2_TimePostNavigator {
   static $all                   = array();
   static $static_post_type      = 'year';
   public $is_current            = FALSE;
@@ -81,12 +81,12 @@ class CB_Year extends CB_TimePostNavigator {
     ];
   }
 }
-CB_Query::register_schema_type( 'CB_Year' );
+
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Month extends CB_TimePostNavigator {
+class CB2_Month extends CB2_TimePostNavigator {
   static $all = array();
   static $static_post_type = 'month';
   public $is_current = FALSE;
@@ -143,12 +143,12 @@ class CB_Month extends CB_TimePostNavigator {
     ];
   }
 }
-CB_Query::register_schema_type( 'CB_Month' );
+
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Week extends CB_TimePostNavigator {
+class CB2_Week extends CB2_TimePostNavigator {
   static $all = array();
   static $static_post_type = 'week';
   public $is_current = FALSE;
@@ -207,12 +207,12 @@ class CB_Week extends CB_TimePostNavigator {
     ];
   }
 }
-CB_Query::register_schema_type( 'CB_Week' );
+
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Day extends CB_TimePostNavigator {
+class CB2_Day extends CB2_TimePostNavigator {
   static $all = array();
   static $static_post_type = 'day';
   public $is_current = FALSE;
@@ -231,7 +231,7 @@ class CB_Day extends CB_TimePostNavigator {
     $this->dayinmonth   = (int) $date->format( 'j' ); // 1-31 day in month
     $this->dayofweek    = (int) $date->format( 'w' ); // 0-6 Sunday start day (see below)
     $this->dayofyear    = (int) $date->format( 'z' ); // 0-365
-    $this->today        = ( $date->format( CB_Query::$date_format ) == (new DateTime())->format( CB_Query::$date_format ) );
+    $this->today        = ( $date->format( CB2_Query::$date_format ) == (new DateTime())->format( CB2_Query::$date_format ) );
     $this->is_current   = $this->today;
     $this->title        = $date->format( $title_format );
     $this->first        = ($this->dayinmonth == 1);
@@ -240,9 +240,9 @@ class CB_Day extends CB_TimePostNavigator {
     // http://php.net/manual/en/function.date.php
     if ( $this->dayofweek == 0 ) $this->dayofweek = 7;
 
-    $this->week  = CB_Week::factory(  $this );
-    $this->month = CB_Month::factory( $this );
-    $this->year  = CB_Year::factory(  $this );
+    $this->week  = CB2_Week::factory(  $this );
+    $this->month = CB2_Month::factory( $this );
+    $this->year  = CB2_Year::factory(  $this );
 
     // WP_Post values
     $this->post_title    = $date->format( $title_format );
@@ -286,7 +286,7 @@ class CB_Day extends CB_TimePostNavigator {
 
   function jsonSerialize() {
     return [
-      'date'        => $this->date->format( CB_Query::$javascript_date_format ),
+      'date'        => $this->date->format( CB2_Query::$javascript_date_format ),
       'year'        => $this->year,
       'weekinyear'  => $this->weekinyear,
       'monthinyear' => $this->monthinyear,
@@ -298,6 +298,3 @@ class CB_Day extends CB_TimePostNavigator {
     ];
   }
 }
-
-CB_Query::register_schema_type( 'CB_Day' );
-

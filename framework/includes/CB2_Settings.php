@@ -397,7 +397,7 @@ class CB2_Settings
             return $options_array;
         } else {
             // @TODO rework message system, so it does not block usage.
-            // CB_Object::throw_error( __FILE__, $options_page . ' is not a valid setting');
+            // CB2_Object::throw_error( __FILE__, $options_page . ' is not a valid setting');
         }
     }
     /**
@@ -617,7 +617,7 @@ class CB2_Settings
      *
      * @since 2.0.0
      *
-     * @uses CB_Strings
+     * @uses CB2_Strings
      *
      * @return array
      */

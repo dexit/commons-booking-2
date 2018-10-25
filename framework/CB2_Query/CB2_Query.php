@@ -25,57 +25,12 @@ define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
-class CB_Query {
-	private static $schema_types         = array();
-	private static $database_table_types = array();
-
-  public  static $javascript_date_format = 'Y-m-d H:i:s';
-  public  static $date_format = 'Y-m-d';
-  public  static $datetime_format = 'Y-m-d H:i:s';
-  public  static $meta_NULL = 'NULL';
-	public static $days = array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
-
-  // -------------------------------------------------------------------- Reflection
-  // Class lookups
-  static function register_schema_type( $Class ) {
-		$ReflectionClass = new ReflectionClass( $Class ); // PHP 5
-
-		// Post types
-		if ( property_exists( $Class, 'static_post_type' ) ) {
-			if ( strlen( $Class::$static_post_type ) > 20 )
-				throw new Exception( 'post_type [' . $Class::$static_post_type . '] is longer than the WordPress maximum of 20 characters' );
-			self::$schema_types[ $Class::$static_post_type ] = $Class;
-		}
-
-		// Database table types
-		if ( $ReflectionClass->isSubclassOf( 'CB_DatabaseTable_PostNavigator' ) ) {
-			self::$database_table_types[ $Class ] = $Class;
-		}
-  }
-
-  static function &schema_types() {
-    return self::$schema_types;
-  }
-
-  static function post_types() {
-    return array_keys( self::$schema_types );
-  }
-
-  static function schema_type_class( $post_type ) {
-		$post_types = self::schema_types();
-		return isset( $post_types[$post_type] ) ? $post_types[$post_type] : NULL;
-  }
-
-  static function schema_type_all_objects( $post_type, $values_only = TRUE ) {
-		$all = NULL;
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
-			if ( property_exists( $Class, 'all' ) ) {
-				if ( $values_only ) $all = array_values( $Class::$all );
-				else $all = $Class::$all;
-			}
-		}
-		return $all;
-  }
+class CB2_Query {
+  public static $javascript_date_format = 'Y-m-d H:i:s';
+  public static $date_format     = 'Y-m-d';
+  public static $datetime_format = 'Y-m-d H:i:s';
+  // TODO: make configurable: follow wordpress setting
+	public static $days            = array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
 
   // -------------------------------------------------------------------- WordPress integration
   // Complementary to WordPress
@@ -98,18 +53,18 @@ class CB_Query {
 			throw new Exception( "get_post_with_type()[$post_type] \$post_id not numeric" );
 
 		// We divert here to make callig code simpler
-		if ( $post_type == CB_User::$static_post_type ) {
-			// throw new Exception( 'Use CB_Query::get_user() for CB_User.' );
-			return CB_Query::get_user( $post_id );
+		if ( $post_type == CB2_User::$static_post_type ) {
+			// throw new Exception( 'Use CB2_Query::get_user() for CB2_User.' );
+			return CB2_Query::get_user( $post_id );
 		}
 
-		$Class = self::schema_type_class( $post_type );
+		$Class = CB2_PostNavigator::post_type_Class( $post_type );
 		if ( ! $Class )
 			throw new Exception( "[$post_type] not managed" );
 
 		// Redirect
 		$old_wpdb_posts = $wpdb->posts;
-		if ( $posts_table = CB_Database::posts_table( $Class ) ) {
+		if ( $posts_table = CB2_Database::posts_table( $Class ) ) {
 			$wpdb->posts = "$wpdb->prefix$posts_table";
 			$redirected_post_request = TRUE;
 		} else {
@@ -146,28 +101,28 @@ class CB_Query {
 		if ( ! $ID )      throw new Exception( "User [$ID] blank" );
 		$wp_user = get_user_by( 'ID', $ID );
 		if ( ! $wp_user ) throw new Exception( "User [$ID] not found" );
-		return CB_User::factory( $wp_user->ID, $wp_user->user_login );
+		return CB2_User::factory( $wp_user->ID, $wp_user->user_login );
 	}
 
 	static function ensure_correct_classes( &$posts, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE ) {
 		// TODO: Several embedded queries: move static <Time class>::$all arrays on to the $instance_container
-		// static CB_User::$all are ok, but CB_Time varies according to the query
+		// static CB2_User::$all are ok, but CB2_Time varies according to the query
 		// only a problem when using compare => view_mode
 		// Currently, if several DIFFERENT time queries happen in the page load
-		// the CB_Week::$all will have all of the times in
-		// However, this: will cause an error if no new CB_Week are generated:
-		//   CB_Week::$all = array();
+		// the CB2_Week::$all will have all of the times in
+		// However, this: will cause an error if no new CB2_Week are generated:
+		//   CB2_Week::$all = array();
 
 		// In place change the records
-		$post_classes = self::schema_types();
+		$post_classes = CB2_PostNavigator::post_type_classes();
 		foreach ( $posts as &$post )
-			CB_Query::ensure_correct_class( $post, $instance_container = NULL, $prevent_auto_draft_publish_transition, $post_classes );
+			CB2_Query::ensure_correct_class( $post, $instance_container = NULL, $prevent_auto_draft_publish_transition, $post_classes );
 
 		return $posts;
   }
 
 	static function ensure_correct_class( &$post, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE, $post_classes = NULL ) {
-    // factory()s will also create the extra CB_Time_Classes based OO data structures
+    // factory()s will also create the extra CB2_Time_Classes based OO data structures
 		// TODO: The WP_Post may have all its metadata loaded already
 		// as the wordpress system adds all fields to the WP_Post dynamically
     global $auto_draft_publish_transition;
@@ -179,13 +134,13 @@ class CB_Query {
 		if ( ! property_exists( $post, 'post_type' ) )
 			throw new Exception( 'ensure_correct_class() requires a WP_Post->ID property' );
 
-		if ( ! $post_classes ) $post_classes = self::schema_types();
+		if ( ! $post_classes ) $post_classes = CB2_PostNavigator::post_type_classes();
 		if ( isset( $post_classes[$post->post_type] ) ) {
 			$Class = $post_classes[$post->post_type];
 			// Do not re-create it if it already is!
 			if ( ! is_a( $post, $Class ) ) {
 				if ( method_exists( $Class, 'factory_from_properties' ) ) {
-					if ( $post->ID > 0 ) CB_Query::get_metadata_assign( $post );
+					if ( $post->ID > 0 ) CB2_Query::get_metadata_assign( $post );
 					$properties = (array) $post;
 
 					$old_auto_draft_publish_transition = $auto_draft_publish_transition;
@@ -199,7 +154,7 @@ class CB_Query {
 						throw new Exception( "[$Class::factory_from_properties()] return has no ID property (0 would be valid)" );
 
 					// Only cache set this if it is a fake native post
-					// pure pseudo classes like CB_Week are not accessed with get_post()
+					// pure pseudo classes like CB2_Week are not accessed with get_post()
 					// thus caching is not relevant
 					$wp_cache = ( property_exists( $post, 'ID' ) && ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table ) );
 					if ( $wp_cache ) wp_cache_set( $post->ID, $post, 'posts' );
@@ -213,16 +168,6 @@ class CB_Query {
 		return $post;
 	}
 
-	static function get_post_types() {
-		global $wpdb;
-		$post_types = wp_cache_get( 'cb2-post-types' );
-		if ( ! $post_types ) {
-			$post_types = $wpdb->get_results( "SELECT post_type, ID_multiplier, ID_base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC", OBJECT_K );
-			wp_cache_set( 'cb2-post-types', $post_types );
-		}
-		return $post_types;
-	}
-
 	static function pass_through_query_string( $path, $additional_parameters = array(), $remove_parameters = array() ) {
 		$get = array_merge( $_GET, $additional_parameters );
 		foreach ( $remove_parameters as $name ) unset( $get[$name] );
@@ -232,7 +177,7 @@ class CB_Query {
 			if ( strchr( $path, '?' ) ) {
 				$existing_query_string_pairs = explode( '&', explode( '?', $path, 2 )[1] );
 				foreach ( $existing_query_string_pairs as $value )
-					$existing_query_string[ CB_Query::substring_before( $value, '=' ) ] = 1;
+					$existing_query_string[ CB2_Query::substring_before( $value, '=' ) ] = 1;
 			}
 			foreach ( $get as $name => $value ) {
 				if ( ! isset( $existing_query_string[ $name ] ) ) {
@@ -249,14 +194,14 @@ class CB_Query {
 		global $wpdb;
 		$redirected = FALSE;
 
-		if ( $Class = CB_Query::schema_type_class( $post_type ) ) {
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 			// TODO: Reset the posts to the normal table necessary?
 			// maybe it will interfere with other plugins?
 			$wpdb->posts    = "{$wpdb->prefix}posts";
 
 			if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
 				// perioditem-global => perioditem
-				$post_type_stub = CB_Query::substring_before( $post_type );
+				$post_type_stub = CB2_Query::substring_before( $post_type );
 				if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
 					$post_type_stub = $Class::$posts_table;
 				// cb2_view_periodoccurence_posts
@@ -269,7 +214,7 @@ class CB_Query {
 			if ( $meta_redirect ) {
 				if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
 					// perioditem-global => perioditem
-					$post_type_stub = CB_Query::substring_before( $post_type );
+					$post_type_stub = CB2_Query::substring_before( $post_type );
 					if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) )
 						$post_type_stub = $Class::$postmeta_table;
 					// cb2_view_periodoccurencemeta
@@ -306,7 +251,7 @@ class CB_Query {
 		$post_type = $post->post_type;
 
 		if ( ! property_exists( $post, 'GET_METADATA_ASSIGN' ) || ! $post->{GET_METADATA_ASSIGN} ) {
-			if ( $Class = self::schema_type_class( $post_type ) ) {
+			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 				// If $auto_draft_publish_transition is happening
 				// Then the primary $wpdb->postmeta table will be set to wp_postmeta
 				// This happens when the post is still in the normal WP tables
@@ -314,7 +259,7 @@ class CB_Query {
 				if ( ! $auto_draft_publish_transition ) {
 					// postmeta_table() will return FALSE
 					// if the Class does not have its own postmeta
-					if ( $has_postmeta_table = CB_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) )
+					if ( $has_postmeta_table = CB2_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) )
 						$postmeta_table = $has_postmeta_table;
 				}
 				$wpdb->$meta_table_stub = "$wpdb->prefix$postmeta_table";
@@ -329,7 +274,7 @@ class CB_Query {
 				foreach ( $metadata as $meta_key => &$meta_value_array ) {
 					$is_system_metadata = ( substr( $meta_key, 0, 1 ) == '_' );
 					if ( ! $is_system_metadata )
-						$post->$meta_key = CB_Query::to_object( $meta_key, $meta_value_array[0] );
+						$post->$meta_key = CB2_Query::to_object( $meta_key, $meta_value_array[0] );
 				}
 				// Register that all metadata is present
 				$post->{GET_METADATA_ASSIGN} = TRUE;
@@ -357,7 +302,7 @@ class CB_Query {
   // meta-data => objects
   static function ensure_bitarray_integer( $name, $object ) {
 		$object = self::ensure_bitarray( $name, $object );
-		return CB_Database::bitarray_to_int( $object );
+		return CB2_Database::bitarray_to_int( $object );
   }
 
   static function ensure_assoc_bitarray( $name, $object ) {
@@ -381,16 +326,16 @@ class CB_Query {
 		} else if ( is_array( $object ) ) {
 			if ( self::array_has_associative( $object ) ) {
 				$object = array_sum( $object );
-				$object = CB_Database::int_to_bitarray( $object );
+				$object = CB2_Database::int_to_bitarray( $object );
 			}
 		} else if ( self::check_for_serialisation( $object, 'a' ) ) {
 			$object = unserialize( $object );
 			if ( self::array_has_associative( $object ) ) {
 				$object = array_sum( $object );
-				$object = CB_Database::int_to_bitarray( $object );
+				$object = CB2_Database::int_to_bitarray( $object );
 			}
 		} else if ( is_numeric( $object ) ) {
-			$object = CB_Database::int_to_bitarray( $object );
+			$object = CB2_Database::int_to_bitarray( $object );
 		} else {
 			krumo( $object );
 			throw new Exception( "Cannot understand bit array value for [$name]" );
@@ -486,7 +431,7 @@ class CB_Query {
 		// Take all function parameters
 		// And make them properties of the class
 		// Typical usage:
-		//   CB_Query::assign_all_parameters( $this, func_get_args(), __class__ );
+		//   CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 		if ( ! $class_name ) $class_name = get_class( $object );
 		$reflection            = new ReflectionMethod( $class_name, $method ); // PHP 5, PHP 7
 		$parameters            = $reflection->getParameters();
@@ -509,14 +454,14 @@ class CB_Query {
 
 			if ( WP_DEBUG && FALSE ) {
 				print( "<i>assign_all_parameters($class_name)->$name</i>: <b>" );
-				if      ( $value instanceof DateTime ) print( $value->format( CB_Database::$database_datetime_format ) );
+				if      ( $value instanceof DateTime ) print( $value->format( CB2_Database::$database_datetime_format ) );
 				else if ( is_object( $value ) ) krumo( $value );
 				else if ( is_array(  $value ) ) krumo( $value );
 				else print( $value );
 				$new_value = self::to_object( $name, $value );
 				if ( $new_value !== $value ) {
 					print( ' =&gt; ' );
-					if      ( $new_value instanceof DateTime ) print( 'new DateTime(' . $new_value->format( CB_Database::$database_datetime_format ) . ')' );
+					if      ( $new_value instanceof DateTime ) print( 'new DateTime(' . $new_value->format( CB2_Database::$database_datetime_format ) . ')' );
 					else if ( is_object( $new_value ) ) krumo( $new_value );
 					else if ( is_array(  $new_value ) ) krumo( $new_value );
 					else print( $new_value );
@@ -552,7 +497,7 @@ class CB_Query {
 		//   get_or_create_new(ids)
 		//
 		// TODO: document the naming conventions of course
-		// TODO: move all this in to the CB_DatabaseTable_PostNavigator Class
+		// TODO: move all this in to the CB2_DatabaseTable_PostNavigator Class
 		// to use the database schema knowledge instead :)
 		if ( ! is_null( $value ) ) {
 			if      ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
