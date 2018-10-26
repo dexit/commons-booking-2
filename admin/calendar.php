@@ -138,11 +138,11 @@ switch ( $output_type ) {
 		<div class="cb2-calendar">
 			<div class="entry-content">
 				<table class="cb2-subposts" style="width:98%;">
-					<?php the_calendar_header( $query ); ?>
+					<?php CB2::the_calendar_header( $query ); ?>
 					<tbody>
-						<?php the_inner_loop( $query, 'list', $template_part ); ?>
+						<?php CB2::the_inner_loop( $query, 'list', $template_part ); ?>
 					</tbody>
-					<?php the_calendar_footer( $query ); ?>
+					<?php CB2::the_calendar_footer( $query ); ?>
 				</table>
 			</div><!-- .entry-content -->
 		</div>

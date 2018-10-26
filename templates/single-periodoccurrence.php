@@ -1,5 +1,3 @@
-<?php echo "template : single-periodoccurence.php <br>"; ?>
-
 <?php
 /**
  * The template for displaying all single posts

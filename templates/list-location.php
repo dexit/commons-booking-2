@@ -1,5 +1,3 @@
-<?php echo "template : list-location.php <br>"; ?>
-
 <?php
 /**
  * Locations in archives (lists) template

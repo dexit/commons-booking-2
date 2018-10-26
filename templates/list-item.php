@@ -1,5 +1,3 @@
-<?php echo "template : list-item.php <br>"; ?>
-
 <?php
 /**
  * Items in archives, list timeframes below item excerpt.
@@ -18,7 +16,7 @@
 <div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">calendar</h1></header>
 	<div class="entry-content">
 		<table class="cb2-subposts"><tbody>
-			<?php the_inner_loop(); ?>
+			<?php CB2::the_inner_loop(); ?>
 		</tbody></table>
 	</div>
 </div>

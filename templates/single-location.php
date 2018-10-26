@@ -1,4 +1,3 @@
-<?php echo "template : single-location.php <br>"; ?>
 <?php
 /**
  * The template for displaying all single posts
@@ -41,5 +40,5 @@
 						'without_meta_item_ID' => CB2_Query::$without_meta,
 					)
 				) );
-				the_inner_loop( $query, 'list' );
+				CB2::the_inner_loop( $query, 'list' );
 

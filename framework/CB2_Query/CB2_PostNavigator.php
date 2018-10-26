@@ -445,7 +445,7 @@ class CB2_PostNavigator {
 
 		// Sanitize
 		$templates_valid   = array();
-		$cb2_template_path = cb2_template_path();
+		$cb2_template_path = CB2::template_path();
 		foreach ( $templates as $template ) {
 			$template_path = "$cb2_template_path/$template.php";
 			if ( file_exists( $template_path ) )

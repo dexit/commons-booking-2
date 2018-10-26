@@ -1,1 +1,1 @@
-<li><?php the_summary(); ?></li>
+<li><?php CB2::the_summary(); ?></li>

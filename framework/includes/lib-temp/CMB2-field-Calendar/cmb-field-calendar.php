@@ -148,11 +148,11 @@ class CMB2_Field_Calendar {
 					<div class='cb2-calendar'>
 						<div class='entry-content clear'>
 							<table class='cb2-subposts'>" );
-				the_calendar_header( $query );
+				CB2::the_calendar_header( $query );
 				print( '<tbody>' );
-				the_inner_loop( $query, $context, $template );
+				CB2::the_inner_loop( $query, $context, $template );
 				print( '</tbody>' );
-				the_calendar_footer( $query );
+				CB2::the_calendar_footer( $query );
 				print( "</table>
 						</div>
 					</div>

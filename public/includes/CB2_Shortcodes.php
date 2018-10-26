@@ -63,7 +63,7 @@ class CB2_Shortcodes {
 		$html = '<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>';
 		if ( $display_strategy->have_posts() ) {
 				$html = '<table class="cb2-calendar">';
-					$html .= get_the_calendar_header( $display_strategy );
+					$html .= CB2::get_the_calendar_header( $display_strategy );
 					$html .= '<tbody>';
 
 					while ( $display_strategy->have_posts() ) {
@@ -72,7 +72,7 @@ class CB2_Shortcodes {
 					}
 
 					$html .= '</tbody>';
-					$html .= get_the_calendar_footer( $display_strategy );
+					$html .= CB2::get_the_calendar_footer( $display_strategy );
 				$html .= '</table>';
 		} else {
 			$html .= '<div>No Results</div>';

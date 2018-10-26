@@ -311,7 +311,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Item Availability' ) . '</div>' );
@@ -342,7 +342,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );
@@ -536,7 +536,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Item Availability' ) . '</div>' );
@@ -567,7 +567,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );

@@ -197,7 +197,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Entities' ) . '</div>' );

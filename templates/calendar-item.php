@@ -1,5 +1,3 @@
-<?php echo "template : calendar-item.php <br>"; ?>
-
 <?php
 /**
  * Calendar of items
@@ -28,7 +26,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<?php the_inner_loop($post, 'list'); ?>
+			<?php CB2::the_inner_loop($post, 'list'); ?>
 		</tbody>
 	</table>
 </div>

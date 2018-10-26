@@ -1,5 +1,3 @@
-
-<?php // echo "template : single-item.php <br>"; ?>
 <?php
 /**
  * The template for displaying all single posts
@@ -65,11 +63,11 @@ $period_query = new WP_Query( array(
 if ( $period_query->have_posts() ) { ?>
 
 	<table class="cb2-calendar">
-		<?php the_calendar_header(); ?>
+		<?php CB2::the_calendar_header(); ?>
 		<tbody>
-			<?php the_inner_loop($period_query, 'list'); ?>
+			<?php CB2::the_inner_loop($period_query, 'list'); ?>
 		</tbody>
-		<?php the_calendar_header(); ?>
+		<?php CB2::the_calendar_header(); ?>
 	</table>
 
 
