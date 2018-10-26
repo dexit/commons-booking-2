@@ -216,7 +216,7 @@ class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializable {
 
   function add_actions( &$actions, $post ) {
 		$period_ID = $this->period->ID;
-		$actions[ 'edit-definition' ] = "<a href='admin.php?page=cb-post-edit&post=$period_ID&post_type=period&action=edit'>Edit definition</a>";
+		$actions[ 'edit-definition' ] = "<a href='admin.php?page=cb2-post-edit&post=$period_ID&post_type=period&action=edit'>Edit definition</a>";
 		$actions[ 'trash occurence' ] = '<a href="#" class="submitdelete">Trash Occurence</a>';
 	}
 

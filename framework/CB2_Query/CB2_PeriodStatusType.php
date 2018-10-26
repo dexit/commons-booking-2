@@ -39,9 +39,9 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		);
 	}
 
-  function database_table_name() { return self::$database_table; }
+  static function database_table_name() { return self::$database_table; }
 
-  function database_table_schema() {
+  static function database_table_schema() {
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
@@ -56,6 +56,18 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 			'primary key' => array('period_status_type_id'),
 		);
 	}
+
+	static function database_table_install_data() {
+		return array(
+			array( '1', 'available', '', '7', '#', '100', '2' ),
+			array( '2', 'booked', NULL, '0', '#dd3333', '50', '6' ),
+			array( '3', 'closed', 'rrr', '2', '#f7f7f7', '50', '3' ),
+			array( '4', 'open', '', '7', '#456', '100', '1' ),
+			array( '5', 'repair', NULL, '0', '#999', '100', '4' ),
+			array( '6', 'holiday', ' ', '2', '#a7a7a7', '100', '5' ),
+		);
+	}
+
 
   function post_type() {return self::$static_post_type;}
 

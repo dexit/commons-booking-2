@@ -16,7 +16,7 @@
 <?php global $post; ?>
 <div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>
 
-	<table class="cb-calendar">
+	<table class="cb2-calendar">
 		<thead>
 			<tr>
 				<?php

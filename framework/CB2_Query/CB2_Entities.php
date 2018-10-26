@@ -317,7 +317,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Item Availability' ) . '</div>' );
 				}
 				print( "<div class='cb2-column-actions'>" );
-				$add_link = "admin.php?page=cb-post-new&location_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
+				$add_link = "admin.php?page=cb2-post-new&location_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
 				print( " <a href='$add_link'>add new item availability</a>" );
 				print( '</div>' );
 				break;
@@ -348,7 +348,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );
 				}
 				print( "<div class='cb2-column-actions'>" );
-				$add_link  = "admin.php?page=cb-post-new&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
+				$add_link  = "admin.php?page=cb2-post-new&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
 				print( " <a href='$add_link'>add new booking</a>" );
 				$view_link = "admin.php?page=cb2-calendar&location_ID=$this->ID&period_status_type_ID=100000002";
 				print( " | <a href='$view_link'>view in calendar</a>" );
@@ -542,7 +542,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Item Availability' ) . '</div>' );
 				}
 				print( "<div class='cb2-column-actions'>" );
-				$add_link = "admin.php?page=cb-post-new&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
+				$add_link = "admin.php?page=cb2-post-new&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
 				print( "<a href='$add_link'>add new item availability</a>" );
 				print( '</div>' );
 				break;
@@ -573,7 +573,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );
 				}
 				print( "<div class='cb2-column-actions'>" );
-				$add_link  = "admin.php?page=cb-post-new&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
+				$add_link  = "admin.php?page=cb2-post-new&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
 				print( " <a href='$add_link'>add new booking</a>" );
 				$view_link = "admin.php?page=cb2-calendar&item_ID=$this->ID&period_status_type_ID=100000002";
 				print( " | <a href='$view_link'>view in calendar</a>" );

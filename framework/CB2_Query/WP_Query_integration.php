@@ -221,7 +221,7 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// We need to reset the ID for further edit screens
 				// to start using the native data post now
 				if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>redirect_to_native_post [$native_ID]</div>" );
-				$page      = 'cb-post-edit';
+				$page      = 'cb2-post-edit';
 				$action    = 'edit';
 				$URL       = admin_url( "admin.php?page=$page&post=$native_ID&post_type=$post_type&action=$action" );
 				// If CB2_DEBUG_SAVE the redirect will be printed, not acted
@@ -421,7 +421,7 @@ function cb2_init_register_post_types() {
 				'show_in_rest'       => TRUE,
 				'supports'           => $supports,
 				// TODO: change redirect_post() in our post.php instead?
-				'_edit_link' => "admin.php?page=cb-post-edit&post_type=$post_type&post=%d",
+				'_edit_link' => "admin.php?page=cb2-post-edit&post_type=$post_type&post=%d",
 			);
 			if ( property_exists( $Class, 'post_type_args' ) )
 				$args = array_merge( $args, $Class::$post_type_args );

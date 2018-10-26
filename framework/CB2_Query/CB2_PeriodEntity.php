@@ -2,7 +2,7 @@
 abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implements JsonSerializable {
 	public static $all = array();
 
-  function database_table_schema_root( String $table_name, String $primary_id_column, Array $columns = array(), Array $constraints = array() ) {
+  protected static function database_table_schema_root( String $table_name, String $primary_id_column, Array $columns = array(), Array $constraints = array() ) {
 		$base_columns = array(
 			$primary_id_column      => array( BIGINT, (20), UNSIGNED, NOT_NULL, NULL, AUTO_INCREMENT ),
 			'period_group_id'       => array( INT,    (11), UNSIGNED, NOT_NULL ),
@@ -274,7 +274,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
 	function summary_actions() {
 		$post_type = $this->post_type();
-		$page      = 'cb-post-edit';
+		$page      = 'cb2-post-edit';
 		$action    = 'edit';
 		$edit_link = "?page=$page&post=$this->ID&post_type=$post_type&action=$action";
 		return " <a href='$edit_link'>edit</a>";
@@ -295,10 +295,10 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 		return parent::metaboxes();
 	}
 
-  function database_table_name() { return self::$database_table; }
+  static function database_table_name() { return self::$database_table; }
 
-  function database_table_schema() {
-		return $this->database_table_schema_root( self::$database_table, 'global_period_group_id' );
+  static function database_table_schema() {
+		return CB2_PeriodEntity::database_table_schema_root( self::$database_table, 'global_period_group_id' );
   }
 
   function post_type() {return self::$static_post_type;}
@@ -367,10 +367,10 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 	}
 
 
-  function database_table_name() { return self::$database_table; }
+  static function database_table_name() { return self::$database_table; }
 
-  function database_table_schema() {
-		return $this->database_table_schema_root( self::$database_table, 'location_period_group_id', array(
+  static function database_table_schema() {
+		return CB2_PeriodEntity::database_table_schema_root( self::$database_table, 'location_period_group_id', array(
 			'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
 		), array(
 			'location_ID' => array( 'posts', 'ID' ),
@@ -448,10 +448,10 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 		return $metaboxes;
 	}
 
-  function database_table_name() { return self::$database_table; }
+  static function database_table_name() { return self::$database_table; }
 
-  function database_table_schema() {
-		return $this->database_table_schema_root( self::$database_table, 'location_period_group_id', array(
+  static function database_table_schema() {
+		return CB2_PeriodEntity::database_table_schema_root( self::$database_table, 'location_period_group_id', array(
 			'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
 			'item_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
 		), array(
@@ -538,10 +538,10 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 		return $metaboxes;
 	}
 
-  function database_table_name() { return self::$database_table; }
+  static function database_table_name() { return self::$database_table; }
 
-  function database_table_schema() {
-		return $this->database_table_schema_root( self::$database_table, 'location_period_group_id', array(
+  static function database_table_schema() {
+		return CB2_PeriodEntity::database_table_schema_root( self::$database_table, 'location_period_group_id', array(
 			'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
 			'item_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
 			'user_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
@@ -551,6 +551,12 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 			'user_ID'     => array( 'users', 'ID' ),
 		) );
   }
+
+  static function database_views() {
+		return array(
+			'cb2_view_future_bookings' => "select `po`.`timeframe_id` AS `timeframe_id`,`po`.`period_id` AS `period_id` from `wp_cb2_view_perioditem_entities` `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`period_group_type` = 'user') and (`po`.`period_status_type_id` = 2)) group by `po`.`timeframe_id`,`po`.`period_id`",
+		);
+	}
 
   function post_type() {return self::$static_post_type;}
 

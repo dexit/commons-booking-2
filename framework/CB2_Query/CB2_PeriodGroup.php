@@ -37,9 +37,9 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		);
 	}
 
-  function database_table_name() { return self::$database_table; }
+  static function database_table_name() { return self::$database_table; }
 
-  function database_table_schema() {
+  static function database_table_schema() {
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
@@ -49,7 +49,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			),
 			'primary key' => array('period_group_id'),
 			'many to many' => array(
-				'cb2_period_group_period' => 'cb2_periods', // TODO: this will create an extra table
+				'cb2_period_group_period' => array( 'period_group_id', 'cb2_periods', 'period_id' ),
 			),
 		);
 	}
@@ -173,7 +173,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 				print( $this->summary_periods() );
 				$add_new_text = __( 'add new period' );
 				$attach_text  = __( 'attach existing period' );
-				$page         = 'cb-post-new';
+				$page         = 'cb2-post-new';
 				$post_type    = 'period';
 				$add_link     = "admin.php?page=$page&period_group_IDs=$this->ID&post_type=$post_type";
 				$attach_link  = "admin.php?page=cb2-periods&period_group_IDs=$this->ID&add_actions=attach";

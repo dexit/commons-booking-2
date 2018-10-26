@@ -521,6 +521,14 @@ class CB2_Query {
 	}
 
   // ---------------------------------------------- General utilities
+  static function has_own_method( $Class, $method ) {
+		$ReflectionClass = new ReflectionClass( $Class );
+		return ( $ReflectionClass->hasMethod( $method )
+			&& ( $method_object = $ReflectionClass->getMethod( $method ) )
+			&& $method_object->class == $Class
+		);
+  }
+
   static function substring_before( $string, $delimiter = '-' ) {
 		return ( strpos( $string, $delimiter ) === FALSE ? $string : substr( $string, 0, strpos( $string, $delimiter ) ) );
 	}

@@ -8,7 +8,7 @@
  * @copyright 2015 wielebenwir
  */
 
-#cb-bookingbar {
+#cb2-bookingbar {
   z-index: 99;
   position: fixed;
   height: auto;
@@ -18,11 +18,11 @@
   @include transition(all .3s ease);
 
 
-  .cb-inner {
-    @extend .cb-floating-shadow;
+  .cb2-inner {
+    @extend .cb2-floating-shadow;
 
   }
-  .cb-userinfo {
+  .cb2-userinfo {
     display: block;
     margin-bottom: 10px;
   }
@@ -34,7 +34,7 @@
       width: 30%;
       float: right;
     }
-    div#cb-bookingbar-msg, ul#bookingbar-dates {
+    div#cb2-bookingbar-msg, ul#bookingbar-dates {
       margin: 0;
       padding: 0;
     }
@@ -46,18 +46,18 @@
         padding: 0;
         display: inline-block;
         margin-right: $padding;
-        .cb-item-dot{
+        .cb2-item-dot{
           display: none;
         }
-        .cb-j, .cb-M {
+        .cb2-j, .cb2-M {
           font-weight: bold;
           color: $black;
         }
       }
   }
-  #cb-submit {
+  #cb2-submit {
     text-align: right;
-    a.cb-button {
+    a.cb2-button {
       width: auto;
       display: inline-block;
     }
@@ -65,8 +65,8 @@
   }
 }
 
-#cb-bookingbar-error {
-  @extend .cb-message;
+#cb2-bookingbar-error {
+  @extend .cb2-message;
   margin-bottom: $padding / 2;
   background: red;
   list-style: none;
@@ -76,9 +76,9 @@
   }
 }
 
-#cb-booking-process-popup {
+#cb2-booking-process-popup {
   display: none;
-  @extend .cb-floating-shadow;
+  @extend .cb2-floating-shadow;
   position: fixed;
   top: 0;
   left: 0;

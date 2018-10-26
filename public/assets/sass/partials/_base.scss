@@ -11,25 +11,25 @@
 .padding { padding: $padding; }
 .align-right { float: right; }
 .align-left { float: left; }
-.cb-small { font-size: 0.8em; }
-.cb-big { font-size: 1.2em; font-weight: bold; color: $highlight-color; margin-bottom: $padding / 2; }
+.cb2-small { font-size: 0.8em; }
+.cb2-big { font-size: 1.2em; font-weight: bold; color: $highlight-color; margin-bottom: $padding / 2; }
 .border { border-top: 1px solid $grey; display: block; }
-.cb-headline {
-  @extend .cb-big;
+.cb2-headline {
+  @extend .cb2-big;
   a { color: $highlight-color }
 }
-.cb-hidden {
+.cb2-hidden {
   display: none;
 }
 
 
-/* all individual elements (timeframes, items, etc) are grouped with cb-box */
-.cb-wrapper {
-  // @extend .cb-box;
+/* all individual elements (timeframes, items, etc) are grouped with cb2-box */
+.cb2-wrapper {
+  // @extend .cb2-box;
 }
 
-/* all individual elements (timeframes, items, etc) are grouped with cb-box */
-.cb-box {
+/* all individual elements (timeframes, items, etc) are grouped with cb2-box */
+.cb2-box {
 
     @extend .padding;
     overflow: hidden;
@@ -39,19 +39,19 @@
     margin-bottom: $padding * 2;
   }
 
-.cb-big a {
+.cb2-big a {
   color: $highlight-color;
   text-decoration: none;
   border-bottom: none;
 }
-.cb-floating-shadow {
-  @extend .cb-box;
+.cb2-floating-shadow {
+  @extend .cb2-box;
   @include rounded($radius);
   @include box-shadow( 0, 0, 70px, 1px, #AFAFAF );
   margin: 0;
   background: $bg-color;
   color: $blue;
-  @extend .cb-big;
+  @extend .cb2-big;
 }
 
 
@@ -59,10 +59,10 @@
 
 
 
-.cb-table {
+.cb2-table {
   margin-bottom: $padding;
   display: block;
-  .cb-row {
+  .cb2-row {
     color: $dark-grey;
     border-top: 1px solid $border-inner-color;
     padding: $padding / 2;
@@ -81,43 +81,43 @@
        @include border-radiuses($radius, $radius, $radius, $radius );
 
     }
-    .cb-row-title {
+    .cb2-row-title {
       font-weight: bold;
       margin-right: $padding;
     }
-    .cb-big {
+    .cb2-big {
       display: block;
     }
-    .cb-button {
+    .cb2-button {
         margin: 1em 0 1em 1em;
     }
   }
 }
 
 /* Bookings */
-.cb-user-bar {
+.cb2-user-bar {
   margin-bottom: $padding * 2;
-  a.cb-button {
-    @extend .cb-small;
+  a.cb2-button {
+    @extend .cb2-small;
     background: $highlight-color;
    }
 }
 
-.cb-timeframe-title  {
+.cb2-timeframe-title  {
   display: none;
 }
 
-.entry-content .cb-box h2 {
+.entry-content .cb2-box h2 {
     margin-top: 0;
 }
 
-.cb-location-name {
+.cb2-location-name {
   display: block;
   color: $highlight-color;
   font-weight: bold;
 }
 
-.cb-list-item-description {
+.cb2-list-item-description {
   margin-bottom: $padding;
   display:block;
   overflow: hidden;
@@ -127,7 +127,7 @@
   }
 }
 
-a.cb-button, input#wp-submit, input#wp-submit-comment {
+a.cb2-button, input#wp-submit, input#wp-submit-comment {
   @include transition(all .3s ease);
   white-space: nowrap;
   display: block;
@@ -148,7 +148,7 @@ a.cb-button, input#wp-submit, input#wp-submit-comment {
     // border: 1px solid $highlight-color;
     color: $white;
   }
-  &.cb-small {
+  &.cb2-small {
     background: $highlight-color;
     border: 1px solid $grey;
   }
@@ -161,14 +161,14 @@ a.cb-button, input#wp-submit, input#wp-submit-comment {
   }
 }
 
-.cb-row,
-.cb-user-bar {
-  a.cb-button {
+.cb2-row,
+.cb2-user-bar {
+  a.cb2-button {
     padding: 5px 10px;
   }
 }
 
-.cb-booking-code  strong{
+.cb2-booking-code  strong{
   padding: 5px;
   display:block;
   font-family: Courier, monospaced;
@@ -181,7 +181,7 @@ a.cb-button, input#wp-submit, input#wp-submit-comment {
  *
  */
 
-.cb-message {
+.cb2-message {
   display: block;
   margin-bottom: $padding * 2;
   padding: $padding / 2 $padding ;
@@ -198,11 +198,11 @@ a.cb-button, input#wp-submit, input#wp-submit-comment {
   }
 }
 
-.cb-description {
+.cb2-description {
   margin-bottom: 2em;
 }
 
-.cb-tooltipster {
+.cb2-tooltipster {
   background: $highlight-color-dark;
 }
 
@@ -212,13 +212,13 @@ a.cb-button, input#wp-submit, input#wp-submit-comment {
   display: none;
 }
 
-.cb-booking-comment {
+.cb2-booking-comment {
   background: $light-grey;
   padding: $padding;
   @include rounded($radius);
   margin-bottom: $padding;
   overflow: hidden;
-  form#cb-comment-form {
+  form#cb2-comment-form {
   }
   input {
     margin-top: $padding;

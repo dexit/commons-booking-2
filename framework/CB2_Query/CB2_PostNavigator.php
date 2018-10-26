@@ -1,5 +1,27 @@
 <?php
 class CB2_PostNavigator {
+  public static $database_table = 'cb2_post_types';
+
+  static function database_table_name() { return self::$database_table; }
+
+  static function database_table_schema() {
+		return array(
+			'name'    => self::$database_table,
+			'columns' => array(
+				'post_type_id'  => array( INT,     (11), UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
+				'post_type'     => array( VARCHAR, (20), NULL,     NOT_NULL ),
+				'ID_base'       => array( BIGINT,  (20), UNSIGNED, NOT_NULL ),
+				'ID_multiplier' => array( BIGINT,  (20), UNSIGNED, NOT_NULL, NULL, '1' ),
+			),
+			'primary key' => array( 'post_type_id' ),
+			'unique keys' => array(
+				'post_type',
+				'post_type_id',
+				'ID_base'
+			),
+		);
+	}
+
   protected function __construct( &$posts = NULL ) {
     $this->zeros = array(); // TODO: re-evaluate this: does it collect stuff?
     if ( is_null( $posts ) ) $this->posts = &$this->zeros;
@@ -40,7 +62,7 @@ class CB2_PostNavigator {
 		$this->posts = $new_posts;
   }
 
-  // -------------------------------------------------------------------- Reflection
+	// -------------------------------------------------------------------- Reflection
   // Class lookups
   static function post_type_Class( $post_type ) {
 		$post_types = self::post_type_classes();

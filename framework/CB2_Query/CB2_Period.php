@@ -14,9 +14,9 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 
   function post_type() {return self::$static_post_type;}
 
-  function database_table_name() { return self::$database_table; }
+  static function database_table_name() { return self::$database_table; }
 
-  function database_table_schema() {
+  static function database_table_schema() {
 		// TODO: PHP object property type assignment could work from this knowledge also
 		// however, pseudo fields like period_IDs that represent DRI
 		// with array(ints) would need guidance also
@@ -26,8 +26,8 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 				'period_id' => array( INT, (11), UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
 				'name'      => array( VARCHAR, (1024), NULL, NOT_NULL, FALSE, 'period' ),
 				'description' => array( VARCHAR, (2048), NULL, NULL, FALSE, NULL ),
-				'datetime_part_period_start' => array( DATETIME, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
-				'datetime_part_period_end'   => array( DATETIME, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
+				'datetime_part_period_start' => array( DATETIME, NULL, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
+				'datetime_part_period_end'   => array( DATETIME, NULL, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
 				'recurrence_type' => array( CHAR, (1), NULL, FALSE, NULL, 'recurrence_type:\nNULL - no recurrence\nD - daily recurrence (start and end time parts used only)\nW - weekly recurrence (day-of-week and start and end time parts used only)\nM - monthly recurrence (day-of-month and start and end time parts used only)\nY - yearly recurrence (full absolute start and end time parts used)' ),
 				'recurrence_frequency' => array( INT, (11), NOT_NULL, FALSE, '1', 'e.g. Every 2 weeks' ),
 				'datetime_from' => array( DATETIME, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Absolute date: when the period should start appearing in the calendar' ),

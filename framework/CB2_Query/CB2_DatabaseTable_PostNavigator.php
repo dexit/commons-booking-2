@@ -1,31 +1,46 @@
 <?php
-abstract class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
-	abstract function database_table_name();
-	abstract function database_table_schema();
+class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
+  public static function install_SQL() {
+		$sql = '';
+		// Tables and data
+		foreach ( get_declared_classes() as $Class ) { // PHP 4
+			if ( CB2_Query::has_own_method( $Class, 'database_table_schema' ) )
+				$sql .= self::install_Class_SQL( $Class );
+		}
 
-  private static function runSQL( $sql ) {
-		global $wpdb;
-		print( "<pre>$sql</pre>" ); exit();
-		return $wpdb->query( $sql );
+		// Views
+		/*
+		foreach ( get_declared_classes() as $Class ) { // PHP 4
+			if ( CB2_Query::has_own_method( $Class, 'database_table_schema' ) )
+				$sql .= self::install_Class_SQL( $Class );
+		}
+
+		// Constraints
+		...
+		*/
+
+		return $sql;
   }
 
-  private static function install() {
-		$table_name = database_table_name();
-		$definition = database_table_schema();
-		$sql = "CREATE `$table_name` (\n";
-		foreach ( $definition['columns'] as $column ) {
-			// `period_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  private static function install_Class_SQL( $Class ) {
+		global $wpdb;
+
+		$table_name = $Class::database_table_name();
+		$definition = $Class::database_table_schema();
+		$sql  = "# ------------------------------------ $Class::$table_name\n";
+		$sql .= "CREATE `$wpdb->prefix$table_name` (\n";
+
+		foreach ( $definition['columns'] as $name => $column ) {
 			$count    = count( $column );
-			$name     = $column[0];
-			$type     = $column[1];
+			$type     = $column[0];
 
 			// Optional
-			$size     = ( $count > 2 && $column[2] ? "($column[2])" : '' );
-			$unsigned = ( $count > 3 && $column[3] ? 'UNSIGNED' : '' );
-			$not_null = ( $count > 4 && $column[4] ? 'NOT NULL' : '' );
-			$auto     = ( $count > 5 && $column[5] ? 'AUTO_INCREMENT' : '' );
-			$comment  = ( $count > 7 && $column[7] ? "COMMENT '$column[7]'" : '' );
-			$default  = ( $count > 6 && $column[6] ? $column[6] : NULL );
+			$size     = ( $count > 1 && $column[1] ? "($column[1])" : '' );
+			$unsigned = ( $count > 2 && $column[2] ? 'UNSIGNED' : '' );
+			$not_null = ( $count > 3 && $column[3] ? 'NOT NULL' : '' );
+			$auto     = ( $count > 4 && $column[4] ? 'AUTO_INCREMENT' : '' );
+			$default  = ( $count > 5 && $column[5] ? $column[5] : NULL );
+			$comment  = ( $count > 6 && $column[6] ? "COMMENT '$column[6]'" : '' );
 			switch ( $default ) {
 				case NULL:
 					break;
@@ -37,22 +52,83 @@ abstract class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 					$default = "DEFAULT '$default'";
 			}
 
-			// Syntax
-			$sql .= "`$name` $type($size) $unsigned $not_null $auto $default $comment,\n";
+			$syntax = "`$name` $type$size $unsigned $not_null $auto $default $comment";
+			$syntax = trim( preg_replace( '/ {2,}/', ' ', $syntax ) );
+			$sql   .= "$syntax,\n";
 		}
+
 		if ( $definition['primary key'] ) {
 			$sql .= "PRIMARY KEY (";
-			foreach ( $definition['primary key'] as $column ) $sql .= "`$column`, ";
-			$sql .= ")\n";
+			foreach ( $definition['primary key'] as $column ) $sql .= "`$column`,";
+			$sql = substr( $sql, 0, -1 );
+			$sql .= "),\n";
 		}
-		$sql .= ");";
-		return $this->runSQL( $sql );
+
+		if ( $definition['unique keys'] ) {
+			foreach ( $definition['unique keys'] as $name )
+				$sql .= "UNIQUE KEY `{$name}_UNIQUE` (`$name`),\n";
+		}
+
+		if ( $definition['foreign key constraints'] ) {
+			$i = 1;
+			foreach ( $definition['foreign key constraints'] as $column => $constraint ) {
+				$foreign_table  = "$wpdb->prefix$constraint[0]";
+				$foreign_column = $constraint[1];
+				$fk_name = "fk_$wpdb->prefix{$table_name}_$i";
+				$sql .= "CONSTRAINT `$fk_name` FOREIGN KEY (`$column`) REFERENCES `$foreign_table` (`$foreign_column`) ON DELETE NO ACTION ON UPDATE NO ACTION,\n";
+				$i++;
+			}
+		}
+
+		$sql = substr( $sql, 0, -2 ) . "\n";
+		$sql .= ");\n";
+
+		if ( $definition['many to many'] ) {
+			foreach ( $definition['many to many'] as $m2m_table => $details ) {
+				$column_name   = $details[0];
+				$column        = $definition['columns'][$column_name];
+				$target_table  = "$wpdb->prefix$details[1]";
+				$target_column = $details[2];
+				$type          = "$column[0]($column[1])";
+
+				$sql .= "CREATE `$wpdb->prefix$m2m_table` (\n";
+				$sql .= "`$column_name` $type NOT NULL,\n";
+				$sql .= "`$target_column` $type NOT NULL\n";
+
+				$fk_name_base = "fk_$wpdb->prefix{$m2m_table}";
+				$sql .= "CONSTRAINT `{$fk_name_base}_1` FOREIGN KEY (`$column_name`) REFERENCES `$wpdb->prefix$table_name` (`$column_name`) ON DELETE NO ACTION ON UPDATE NO ACTION,\n";
+				$sql .= "CONSTRAINT `{$fk_name_base}_2` FOREIGN KEY (`$target_column`) REFERENCES `$target_table` (`$target_column`) ON DELETE NO ACTION ON UPDATE NO ACTION,\n";
+				$sql .= ");\n";
+			}
+		}
+
+		// TODO: dependency order
+		if ( method_exists( $Class, 'database_views' ) ) {
+			$views = $Class::database_views();
+			foreach ( $views as $name => $view )
+				$sql .= "CREATE VIEW `$wpdb->prefix$name` AS\n$view;\n";
+		}
+
+		if ( method_exists( $Class, 'database_table_install_data' ) ) {
+			$data = $Class::database_table_install_data();
+			foreach ( $data as $row ) {
+				$sql .= "INSERT INTO `$wpdb->prefix$table_name` values(";
+				foreach ( $row as $value )
+					$sql .= "'$value',";
+				$sql  = substr( $sql, 0, -1 );
+				$sql .= ");\n";
+			}
+		}
+
+		$sql .= "\n\n";
+		return $sql;
   }
 
-  private static function uninstall() {
-		$table_name = database_table_name();
-		$sql = "DROP TABLE $table_name;";
-		return $this->runSQL( $sql );
+  private static function uninstall_SQL( $Class ) {
+		global $wpdb;
+
+		$table_name = $Class::database_table_name();
+		return "DROP TABLE `$wpdb->prefix$table_name`;";
 	}
 
   function save( $update = FALSE, $depth = 0 ) {

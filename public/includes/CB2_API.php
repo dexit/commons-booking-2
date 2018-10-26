@@ -2,7 +2,7 @@
 /**
  * API
  *
- * Reachable via mysite.de/cb-api/
+ * Reachable via mysite.de/cb2-api/
  *
  * @package   CommonsBooking2
  * @author
@@ -12,7 +12,7 @@
  */
 class CB2_API {
 
-	public $api_uri = 'cb-api';
+	public $api_uri = 'cb2-api';
 	public $query_args = array();
 
 	/**

@@ -29,25 +29,25 @@
 
 			cb2.calendarStyles = function() { // manage style of calendar by calendar size, not window width
 
-				if ($('.cb-calendar-grouped').length < 1) {
+				if ($('.cb2-calendar-grouped').length < 1) {
 					return;
 				}
 
-				if ($('.cb-calendar-grouped').outerWidth() >= 450) {
-					$('.cb-calendar-grouped').addClass('cb-calendar-grouped-large');
+				if ($('.cb2-calendar-grouped').outerWidth() >= 450) {
+					$('.cb2-calendar-grouped').addClass('cb2-calendar-grouped-large');
 				} else {
-					$('.cb-calendar-grouped').removeClass('cb-calendar-grouped-large');
+					$('.cb2-calendar-grouped').removeClass('cb2-calendar-grouped-large');
 				}
 
 			};
 
 			cb2.calendarTooltips = function() {
 
-				if ($('.cb-calendar-grouped').length < 1) {
+				if ($('.cb2-calendar-grouped').length < 1) {
 					return;
 				}
 
-				$('.cb-slot[data-state="allow-booking"] ').parents('li.cb-date').each(function(i, elem) {
+				$('.cb2-slot[data-state="allow-booking"] ').parents('li.cb2-date').each(function(i, elem) {
 					var template = document.createElement('div');
 					template.id = $(elem).attr('id');
 					var html = '<div><ul>';
@@ -67,11 +67,11 @@
 					template.innerHTML = html;
 
 					tippy('#' + template.id, {
-						appendTo : document.querySelector('.cb-calendar-grouped'),
+						appendTo : document.querySelector('.cb2-calendar-grouped'),
 						arrow : true,
 						html: template,
 						interactive : true,
-						theme: 'cb-calendar',
+						theme: 'cb2-calendar',
 						trigger: 'click'
 					}); // need to polyfill MutationObserver for IE10 if planning to use dynamicTitle
 

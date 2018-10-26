@@ -8,7 +8,7 @@
  * @copyright 2015 wielebenwir
  */
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/admin\.scss}line{font-family:\0000311}}
-.cb-form-danger {
+.cb2-form-danger {
   color: red;
 }
 
@@ -28,13 +28,13 @@
 }
 
 /* ---------------------- admin screen */
-.admin_page_cb-post-edit #preview-action,
-.admin_page_cb-post-edit .misc-pub-visibility,
-.admin_page_cb-post-edit #minor-publishing-actions,
+.admin_page_cb2-post-edit #preview-action,
+.admin_page_cb2-post-edit .misc-pub-visibility,
+.admin_page_cb2-post-edit #minor-publishing-actions,
 
-.admin_page_cb-post-new #preview-action,
-.admin_page_cb-post-new .misc-pub-visibility,
-.admin_page_cb-post-new #minor-publishing-actions,
+.admin_page_cb2-post-new #preview-action,
+.admin_page_cb2-post-new .misc-pub-visibility,
+.admin_page_cb2-post-new #minor-publishing-actions,
 
 ul.subsubsub,
 #posts-filter .search-box,

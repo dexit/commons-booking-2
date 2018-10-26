@@ -64,7 +64,7 @@ $period_query = new WP_Query( array(
 
 if ( $period_query->have_posts() ) { ?>
 
-	<table class="cb-calendar">
+	<table class="cb2-calendar">
 		<?php the_calendar_header(); ?>
 		<tbody>
 			<?php the_inner_loop($period_query, 'list'); ?>

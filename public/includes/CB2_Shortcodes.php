@@ -62,7 +62,7 @@ class CB2_Shortcodes {
 
 		$html = '<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>';
 		if ( $display_strategy->have_posts() ) {
-				$html = '<table class="cb-calendar">';
+				$html = '<table class="cb2-calendar">';
 					$html .= get_the_calendar_header( $display_strategy );
 					$html .= '<tbody>';
 

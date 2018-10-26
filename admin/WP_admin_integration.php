@@ -170,12 +170,12 @@ function cb2_admin_pages() {
 		// Sending through ?post_type seems to prevent the submenu_page from working
 		// This hook, in combination with the capability in the add_submenu_page() call
 		// allows the page to load
-		'cb-post-new' => array(
+		'cb2-post-new' => array(
 			'page_title'    => 'Add New',
 			'function'      => 'cb2_settings_post_new',
 			'advanced'      => TRUE,
 		),
-		'cb-post-edit' => array(
+		'cb2-post-edit' => array(
 			'page_title'    => 'Edit Post',
 			'function'      => 'cb2_settings_post_edit',
 			'advanced'      => TRUE,
@@ -222,7 +222,7 @@ function cb2_post_row_actions( $actions, $post ) {
 	if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 		// Move all edit actions to our custom screens
 		if ( isset( $actions['edit'] ) )
-			$actions['edit'] = "<a href='admin.php?page=cb-post-edit&post=$post->ID&post_type=$post->post_type&action=edit' aria-label='Edit &#8220;$post_title&#8221;'>Edit</a>";
+			$actions['edit'] = "<a href='admin.php?page=cb2-post-edit&post=$post->ID&post_type=$post->post_type&action=edit' aria-label='Edit &#8220;$post_title&#8221;'>Edit</a>";
 
 		CB2_Query::get_metadata_assign( $post );
 		$post = CB2_Query::ensure_correct_class( $post );
@@ -490,7 +490,7 @@ function cb2_settings_list_page() {
 			$title = $details_page['page_title'];
 
 			// Append input query string to post_new
-			$post_new_file_custom = ( isset( $details_page['post_new_page'] ) ? $details_page['post_new_page'] : 'admin.php?page=cb-post-new' );
+			$post_new_file_custom = ( isset( $details_page['post_new_page'] ) ? $details_page['post_new_page'] : 'admin.php?page=cb2-post-new' );
 			if ( count( $_GET ) ) {
 				$existing_query_string = array();
 				if ( strchr( $post_new_file_custom, '?' ) ) {
@@ -562,7 +562,7 @@ function cb2_settings_post_new() {
 	// post_type will be passed through
 	$remove_parameters  = array( 'post_ID' );
 	$add_parameters     = array( 'auto_draft_publish_transition' => 1 );
-	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb-post-edit' );
+	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb2-post-edit' );
 	$post_submit_custom = CB2_Query::pass_through_query_string( $post_submit_custom, $add_parameters, $remove_parameters );
 
 	// Global params used in included file
@@ -613,13 +613,13 @@ function cb2_settings_post_edit() {
 
 	// Append input query string to post_new
 	// post.php altered to accept $post_new_file_custom
-	$post_new_file_custom = ( isset( $_GET[ 'post_new_file_custom' ] ) ? $_GET[ 'post_new_file_custom' ] : 'admin.php?page=cb-post-new' );
+	$post_new_file_custom = ( isset( $_GET[ 'post_new_file_custom' ] ) ? $_GET[ 'post_new_file_custom' ] : 'admin.php?page=cb2-post-new' );
 	$post_new_file_custom = CB2_Query::pass_through_query_string( $post_new_file_custom );
 
 	// edit-form-advanced.php altered to accept $post_submit_custom
 	// post_type will be passed through
 	$remove_parameters  = array( 'post', 'action', 'auto_draft_publish_transition' );
-	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb-post-edit' );
+	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb2-post-edit' );
 	$post_submit_custom = CB2_Query::pass_through_query_string( $post_submit_custom, array(), $remove_parameters );
 
 	// Global params used in included file

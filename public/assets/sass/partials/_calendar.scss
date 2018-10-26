@@ -18,17 +18,17 @@
   display: inline-block;
 }
 
-.cb-timeframe {
+.cb2-timeframe {
 
-  @extend .cb-box;
+  @extend .cb2-box;
 
-  .cb-location-info {
+  .cb2-location-info {
     display: block;
     overflow: hidden;
   }
 }
 
-span.cb-item-dot { // dot representing the items
+span.cb2-item-dot { // dot representing the items
   @extend .item-circle;
 }
 
@@ -37,9 +37,9 @@ span.cb-item-dot { // dot representing the items
   li a {
     display: block;
     white-space:nowrap;
-    @extend .cb-button;
+    @extend .cb2-button;
     margin-bottom: 5px;
-    span.cb-item-dot {
+    span.cb2-item-dot {
       margin-right: 3px;
     }
   }
@@ -56,7 +56,7 @@ span.cb-item-dot { // dot representing the items
 }
 
   /* Calendar */
-  table.cb-calendar {
+  table.cb2-calendar {
 
     margin: 1em 0 1em 0;
     padding: 0;
@@ -90,8 +90,8 @@ span.cb-item-dot { // dot representing the items
 
           }
 
-          .cb-j { /* date */
-            @extend .cb-big;
+          .cb2-j { /* date */
+            @extend .cb2-big;
 						display: block;
             margin:0;
             padding: 0;
@@ -101,8 +101,8 @@ span.cb-item-dot { // dot representing the items
             }
           }
 
-          .cb-M, .cb-D { /* day name (mon, tue, ...) */
-            @extend .cb-small;
+          .cb2-M, .cb2-D { /* day name (mon, tue, ...) */
+            @extend .cb2-small;
             color: $grey;
           }
 
@@ -115,7 +115,7 @@ span.cb-item-dot { // dot representing the items
           }
 
 
-          ul.cb-slots { // container for the calendar day items ( dots )
+          ul.cb2-slots { // container for the calendar day items ( dots )
 
             position: absolute;
             height: auto;
@@ -127,14 +127,14 @@ span.cb-item-dot { // dot representing the items
             z-index: 98;
             text-align:center;
 
-            li.cb-slot { // 1 item, for calendar-full only (showing only 1 item;
+            li.cb2-slot { // 1 item, for calendar-full only (showing only 1 item;
 
               display: inline-block;
 
               @include transition(all .3s ease);
 
               &.j-selected-only, &.j-selected-first, &.j-selected-last, &.j-between {
-                .cb-j, .cb-M {
+                .cb2-j, .cb2-M {
                   color: white;
                 }
               }
@@ -162,13 +162,13 @@ span.cb-item-dot { // dot representing the items
 
               &[data-state="allow-booking"] { // selectable dates
                 color: $action-color;
-                span.cb-item-dot {
+                span.cb2-item-dot {
                   border-color: transparent !important;
                   background-color: $action-color;
                 }
               }
               &[data-state="blocked"] {
-                span.cb-item-dot {
+                span.cb2-item-dot {
                   display: none;
                   background-color: #FFFFFF;
                 }
@@ -178,7 +178,7 @@ span.cb-item-dot { // dot representing the items
 
     }
 
-    li.cb-calendar-day, li.cb-weekday-row ul li {
+    li.cb2-calendar-day, li.cb2-weekday-row ul li {
 
       @include transition(background .3s ease);
 
@@ -187,7 +187,7 @@ span.cb-item-dot { // dot representing the items
         color: $action-color;
 
 
-        .cb-cal-inner:hover {
+        .cb2-cal-inner:hover {
           background: $highlight-color-dark;
           color: $bg-color;
         }
@@ -201,14 +201,14 @@ span.cb-item-dot { // dot representing the items
       }
       &.selected-first {
         @include selection-start-round($radius);
-        .cb-cal-inner {
+        .cb2-cal-inner {
           color: $bg-color;
           background: $highlight-color-dark;
         }
       }
       &.selected-last {
         @include selection-end-round($radius);
-        .cb-cal-inner {
+        .cb2-cal-inner {
           color: $bg-color;
           background: $highlight-color-dark;
         }
@@ -217,7 +217,7 @@ span.cb-item-dot { // dot representing the items
       &.booked {
         cursor: not-allowed;
         color: $error-color-dark;
-        .cb-cal-inner {
+        .cb2-cal-inner {
           // background: $grey;
           // color: $error-color-dark;
           background: $error-color-dark;
@@ -227,7 +227,7 @@ span.cb-item-dot { // dot representing the items
       &.closed {
         cursor: not-allowed;
         color: darken( $inactive-color, 20%);
-        .cb-cal-inner {
+        .cb2-cal-inner {
           background: $bg-inner-color;
         }
           &.overbooking {
@@ -237,7 +237,7 @@ span.cb-item-dot { // dot representing the items
       }
     }
 
-    li.cb-date:first-of-type { // add left margin to the k entry to move day to correct cell
+    li.cb2-date:first-of-type { // add left margin to the k entry to move day to correct cell
       &.weekday_1 {margin-left: 0; }
       &.weekday_2 {margin-left: $cellwidth; }
       &.weekday_3 {margin-left: $cellwidth * 2; }
@@ -249,35 +249,35 @@ span.cb-item-dot { // dot representing the items
 
   }
 
-  ul.cb-calendar-grouped {
-    li.cb-date {
-      ul.cb-slots {
-        li.cb-slot {
+  ul.cb2-calendar-grouped {
+    li.cb2-date {
+      ul.cb2-slots {
+        li.cb2-slot {
           display: none;
         }
-        li.cb-slot[data-state="allow-booking"] {
+        li.cb2-slot[data-state="allow-booking"] {
           &:nth-child(1) {
             display: inline-block;
           }
 
         }
-        li.cb-slot-count {
+        li.cb2-slot-count {
           display: none;
         }
       }
     }
   }
 
-  ul.cb-calendar-grouped-large {
-    li.cb-date {
-      ul.cb-slots {
-        li.cb-slot[data-state="allow-booking"] {
+  ul.cb2-calendar-grouped-large {
+    li.cb2-date {
+      ul.cb2-slots {
+        li.cb2-slot[data-state="allow-booking"] {
           &:nth-child(1),&:nth-child(2),&:nth-child(3) {
             display: inline-block;
           }
 
         }
-        li.cb-slot-count {
+        li.cb2-slot-count {
           display: inline-block;
           font-size:14px;
         }
@@ -287,7 +287,7 @@ span.cb-item-dot { // dot representing the items
   /*
   Tooltips
   */
-  .cb-calendar-theme {
+  .cb2-calendar-theme {
     &.tippy-tooltip {
       box-shadow: 0px 0px 15px rgba(0,0,0,.2);
       background-color: $white;
@@ -320,7 +320,7 @@ span.cb-item-dot { // dot representing the items
     }
   }
 
-  .cb-calendar-grouped {
+  .cb2-calendar-grouped {
     .tippy-popper[x-placement^=top] .tippy-arrow {
         border-top: 7px solid $white;
     }

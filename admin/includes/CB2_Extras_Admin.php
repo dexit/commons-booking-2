@@ -77,7 +77,7 @@ class CB2_Extras_Admin {
 	 */
 	public function show_build_info($admin_bar){
 			$admin_bar->add_menu( array(
-				'id'    => 'cb-build',
+				'id'    => 'cb2-build',
 				'title' => 'CB' . CB2_VERSION . '-' . CB2_DEV_BUILD,
 				'href'  => '#',
 				'meta'  => array(
