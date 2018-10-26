@@ -1,10 +1,10 @@
 <?php
-class CB2_PostNavigator {
+abstract class CB2_PostNavigator {
   public static $database_table = 'cb2_post_types';
 
   static function database_table_name() { return self::$database_table; }
 
-  static function database_table_schema() {
+  static function database_table_schema( $prefix ) {
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
@@ -19,6 +19,23 @@ class CB2_PostNavigator {
 				'post_type_id',
 				'ID_base'
 			),
+		);
+	}
+
+	static function database_data() {
+		return array(
+			array( '1', 'period', '200000000', '1' ),
+			array( '2', 'periodgroup', '800000000', '1' ),
+			array( '3', 'perioditem-automatic', '300000000', '10000' ),
+			array( '4', 'perioditem-global', '400000000', '10000' ),
+			array( '5', 'perioditem-location', '500000000', '10000' ),
+			array( '6', 'perioditem-timeframe', '600000000', '10000' ),
+			array( '7', 'perioditem-user', '700000000', '10000' ),
+			array( '8', 'periodstatustype', '100000000', '1' ),
+			array( '12', 'periodent-global', '900000000', '1' ),
+			array( '13', 'periodent-location', '1000000000', '1' ),
+			array( '14', 'periodent-timeframe', '1100000000', '1' ),
+			array( '15', 'periodent-user', '1200000000', '1' ),
 		);
 	}
 

@@ -193,11 +193,9 @@ body input.cb2-tick-only:not([checked]):after {
 	width:80px;
 }
 .cb2-usage-count-warning {
-	vertical-align: super;
 	font-size: 80%;
 
 	display: inline-block;
-	vertical-align: top;
 	margin: 1px 0 0 2px;
 	padding: 0 5px;
 	min-width: 7px;
@@ -210,11 +208,9 @@ body input.cb2-tick-only:not([checked]):after {
 	text-align: center;
 }
 .cb2-usage-count-ok {
-	vertical-align: super;
 	font-size: 80%;
 
 	display: inline-block;
-	vertical-align: top;
 	margin: 1px 0 0 2px;
 	padding: 0 5px;
 	min-width: 7px;
@@ -227,11 +223,9 @@ body input.cb2-tick-only:not([checked]):after {
 	text-align: center;
 }
 .cb2-usage-count-info {
-	vertical-align: super;
 	font-size: 80%;
 
 	display: inline-block;
-	vertical-align: top;
 	margin: 1px 0 0 2px;
 	padding: 0 5px;
 	min-width: 7px;

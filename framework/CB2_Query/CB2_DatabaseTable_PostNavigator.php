@@ -1,36 +1,76 @@
 <?php
 class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
   public static function install_SQL() {
-		$sql = '';
-		// Tables and data
-		foreach ( get_declared_classes() as $Class ) { // PHP 4
-			if ( CB2_Query::has_own_method( $Class, 'database_table_schema' ) )
-				$sql .= self::install_Class_SQL( $Class );
-		}
+		$date = (new DateTime())->format( 'c' );
+		$host = $_SERVER['HTTP_HOST'];
+		$sql  = "# ------------------------------ $date\n";
+		$sql .= "# host: $host\n";
+		$sql .= "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n";
+		$sql .= "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n";
+		$sql .= "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n";
+		$sql .= "/*!40101 SET NAMES utf8 */;\n";
+		$sql .= "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n";
+		$sql .= "/*!40103 SET TIME_ZONE='+00:00' */;\n";
+		$sql .= "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n";
+		$sql .= "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n";
+		$sql .= "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n";
+		$sql .= "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n";
+		$sql .= "\n\n";
 
-		// Views
-		/*
+		// Tables
+		$sql .= "# ------------------------------ TABLES\n";
 		foreach ( get_declared_classes() as $Class ) { // PHP 4
 			if ( CB2_Query::has_own_method( $Class, 'database_table_schema' ) )
-				$sql .= self::install_Class_SQL( $Class );
+				$sql .= self::database_table_schema_SQL( $Class );
 		}
+		$sql .= "\n\n";
+
+		// Data
+		$sql .= "# ------------------------------ DATA\n";
+		foreach ( get_declared_classes() as $Class ) { // PHP 4
+			if ( CB2_Query::has_own_method( $Class, 'database_data' ) )
+				$sql .= self::database_data_SQL( $Class );
+		}
+		$sql .= "\n\n";
 
 		// Constraints
-		...
-		*/
+		$sql .= "# ------------------------------ CONSTRAINTS\n";
+		foreach ( get_declared_classes() as $Class ) { // PHP 4
+			if ( CB2_Query::has_own_method( $Class, 'database_table_schema' ) )
+				$sql .= self::database_table_constraints_SQL( $Class );
+		}
+		$sql .= "\n\n";
+
+		// Views
+		$sql .= "# ------------------------------ VIEWS\n";
+		foreach ( get_declared_classes() as $Class ) { // PHP 4
+			if ( CB2_Query::has_own_method( $Class, 'database_views' ) )
+				$sql .= self::database_views_SQL( $Class );
+		}
+		$sql .= "\n\n";
+
+		$sql .= "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n";
+		$sql .= "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n";
+		$sql .= "/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;\n";
+		$sql .= "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n";
+		$sql .= "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n";
+		$sql .= "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n";
+		$sql .= "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n";
 
 		return $sql;
   }
 
-  private static function install_Class_SQL( $Class ) {
+  private static function database_table_schema_SQL( $Class ) {
 		global $wpdb;
+		static $i = 1;
 
 		$table_name = $Class::database_table_name();
-		$definition = $Class::database_table_schema();
-		$sql  = "# ------------------------------------ $Class::$table_name\n";
-		$sql .= "CREATE `$wpdb->prefix$table_name` (\n";
+		$definition = $Class::database_table_schema( $wpdb->prefix );
 
+		$sql  = "DROP TABLE IF EXISTS `$wpdb->prefix$table_name`;\n";
+		$sql .= "CREATE TABLE `$wpdb->prefix$table_name` (\n";
 		foreach ( $definition['columns'] as $name => $column ) {
+			// TYPE, (SIZE), UNSIGNED, NOT NULL, AUTO_INCREMENT, DEFAULT, COMMENT
 			$count    = count( $column );
 			$type     = $column[0];
 
@@ -49,39 +89,39 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 					$default = "DEFAULT $default";
 					break;
 				default:
-					$default = "DEFAULT '$default'";
+					if ( is_string( $default ) )
+						$default = "'" . str_replace( "'", "\\\'", $default ) . "'";
+					$default = "DEFAULT $default";
 			}
 
 			$syntax = "`$name` $type$size $unsigned $not_null $auto $default $comment";
 			$syntax = trim( preg_replace( '/ {2,}/', ' ', $syntax ) );
-			$sql   .= "$syntax,\n";
+			$sql   .= "  $syntax,\n";
 		}
 
 		if ( $definition['primary key'] ) {
-			$sql .= "PRIMARY KEY (";
+			$sql .= "  PRIMARY KEY (";
 			foreach ( $definition['primary key'] as $column ) $sql .= "`$column`,";
 			$sql = substr( $sql, 0, -1 );
 			$sql .= "),\n";
 		}
 
 		if ( $definition['unique keys'] ) {
-			foreach ( $definition['unique keys'] as $name )
-				$sql .= "UNIQUE KEY `{$name}_UNIQUE` (`$name`),\n";
-		}
-
-		if ( $definition['foreign key constraints'] ) {
-			$i = 1;
-			foreach ( $definition['foreign key constraints'] as $column => $constraint ) {
-				$foreign_table  = "$wpdb->prefix$constraint[0]";
-				$foreign_column = $constraint[1];
-				$fk_name = "fk_$wpdb->prefix{$table_name}_$i";
-				$sql .= "CONSTRAINT `$fk_name` FOREIGN KEY (`$column`) REFERENCES `$foreign_table` (`$foreign_column`) ON DELETE NO ACTION ON UPDATE NO ACTION,\n";
+			foreach ( $definition['unique keys'] as $name ) {
+				$sql .= "  UNIQUE KEY `uk_$i` (`$name`),\n";
 				$i++;
 			}
 		}
 
-		$sql = substr( $sql, 0, -2 ) . "\n";
-		$sql .= ");\n";
+		if ( $definition['keys'] ) {
+			foreach ( $definition['keys'] as $name ) {
+				$sql .= "  KEY `idx_$i` (`$name`),\n";
+				$i++;
+			}
+		}
+
+		$sql = substr( $sql, 0, -2 ); // Trailing comma
+		$sql .= "\n);\n";
 
 		if ( $definition['many to many'] ) {
 			foreach ( $definition['many to many'] as $m2m_table => $details ) {
@@ -89,44 +129,126 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 				$column        = $definition['columns'][$column_name];
 				$target_table  = "$wpdb->prefix$details[1]";
 				$target_column = $details[2];
-				$type          = "$column[0]($column[1])";
 
-				$sql .= "CREATE `$wpdb->prefix$m2m_table` (\n";
-				$sql .= "`$column_name` $type NOT NULL,\n";
-				$sql .= "`$target_column` $type NOT NULL\n";
+				$count         = count( $column );
+				$type          = $column[0];
+				$size          = ( $count > 1 && $column[1] ? "($column[1])" : '' );
+				$unsigned      = ( $count > 2 && $column[2] ? 'UNSIGNED' : '' );
+
+				$sql .= "# many-to-many directive $m2m_table:\n";
+				$sql .= "DROP TABLE IF EXISTS `$wpdb->prefix$m2m_table`;\n";
+				$sql .= "CREATE TABLE `$wpdb->prefix$m2m_table` (\n";
+				$sql .= "  `$column_name`   $type$size $unsigned NOT NULL,\n";
+				$sql .= "  `$target_column` $type$size $unsigned NOT NULL,\n";
+				$sql .= "  PRIMARY KEY( `$column_name`, `$target_column` )\n";
+				$sql .= ");\n";
+			}
+		}
+
+		$sql .= "\n";
+		return $sql;
+	}
+
+	private static function database_table_constraints_SQL( $Class ) {
+		global $wpdb;
+		static $i = 1;
+
+		$table_name = $Class::database_table_name();
+		$definition = $Class::database_table_schema( $wpdb->prefix );
+		$sql = "# Constraints for $table_name\n";
+
+		if ( $definition['many to many'] ) {
+			foreach ( $definition['many to many'] as $m2m_table => $details ) {
+				$column_name   = $details[0];
+				$column        = $definition['columns'][$column_name];
+				$target_table  = "$wpdb->prefix$details[1]";
+				$target_column = $details[2];
 
 				$fk_name_base = "fk_$wpdb->prefix{$m2m_table}";
-				$sql .= "CONSTRAINT `{$fk_name_base}_1` FOREIGN KEY (`$column_name`) REFERENCES `$wpdb->prefix$table_name` (`$column_name`) ON DELETE NO ACTION ON UPDATE NO ACTION,\n";
-				$sql .= "CONSTRAINT `{$fk_name_base}_2` FOREIGN KEY (`$target_column`) REFERENCES `$target_table` (`$target_column`) ON DELETE NO ACTION ON UPDATE NO ACTION,\n";
-				$sql .= ");\n";
+				$sql .= "ALTER TABLE `$wpdb->prefix$m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column_name`) REFERENCES `$wpdb->prefix$table_name` (`$column_name`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
+				$i++;
+				$sql .= "ALTER TABLE `$wpdb->prefix$m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$target_column`) REFERENCES `$target_table` (`$target_column`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
+				$i++;
+
+				// many-to-many can have triggers also
+				if ( $details['triggers'] ) {
+					$sql .= "DELIMITER ;;\n";
+					foreach ( $details['triggers'] as $type => $triggers ) {
+						foreach ( $triggers as $body ) {
+							if ( FALSE ) $body .= "\n					insert into {$prefix}cb2_debug( `event`, rows_affected ) values( @@TRIGGER_NAME@@, ROW_COUNT() );\n";
+							$body = str_replace( "@@TRIGGER_NAME@@", "'tr_$i'", $body );
+
+							$sql .= "CREATE TRIGGER `tr_$i` $type ON `$wpdb->prefix$m2m_table` FOR EACH ROW\n";
+							$sql .= "BEGIN\n$body\nEND;;\n";
+							$i++;
+						}
+					}
+					$sql .= "DELIMITER ;\n";
+				}
 			}
 		}
 
-		// TODO: dependency order
-		if ( method_exists( $Class, 'database_views' ) ) {
-			$views = $Class::database_views();
-			foreach ( $views as $name => $view )
-				$sql .= "CREATE VIEW `$wpdb->prefix$name` AS\n$view;\n";
-		}
-
-		if ( method_exists( $Class, 'database_table_install_data' ) ) {
-			$data = $Class::database_table_install_data();
-			foreach ( $data as $row ) {
-				$sql .= "INSERT INTO `$wpdb->prefix$table_name` values(";
-				foreach ( $row as $value )
-					$sql .= "'$value',";
-				$sql  = substr( $sql, 0, -1 );
-				$sql .= ");\n";
+		if ( $definition['foreign key constraints'] ) {
+			foreach ( $definition['foreign key constraints'] as $column => $constraint ) {
+				$foreign_table  = "$wpdb->prefix$constraint[0]";
+				$foreign_column = $constraint[1];
+				$sql .= "ALTER TABLE `$wpdb->prefix$table_name` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column`) REFERENCES `$foreign_table` (`$foreign_column`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
+				$i++;
 			}
 		}
 
-		$sql .= "\n\n";
+		if ( $definition['triggers'] ) {
+			$sql .= "DELIMITER ;;\n";
+			foreach ( $definition['triggers'] as $type => $triggers ) {
+				foreach ( $triggers as $body ) {
+					if ( FALSE ) $body .= "\n					insert into {$prefix}cb2_debug( `event`, rows_affected ) values( @@TRIGGER_NAME@@, ROW_COUNT() );\n";
+					$body = str_replace( "@@TRIGGER_NAME@@", "'tr_$i'", $body );
+
+					$sql .= "CREATE TRIGGER `tr_$i` $type ON `$wpdb->prefix$table_name` FOR EACH ROW\n";
+					$sql .= "BEGIN\n$body\nEND;;\n";
+					$i++;
+				}
+			}
+			$sql .= "DELIMITER ;\n";
+		}
+
+		return $sql;
+	}
+
+	private static function database_views_SQL( $Class ) {
+		global $wpdb;
+
+		$sql = "# Views for $Class\n";
+		foreach ( $Class::database_views() as $name => $view ) {
+			$sql .= "DROP VIEW IF EXISTS `$wpdb->prefix$name`;\n";
+			$sql .= "CREATE VIEW `$wpdb->prefix$name` AS\n  $view;\n";
+		}
+		$sql .= "\n";
+
+		return $sql;
+	}
+
+	private static function database_data_SQL( $Class ) {
+		global $wpdb;
+
+		$table_name = $Class::database_table_name();
+
+		$sql = "# Data for $table_name\n";
+		foreach ( $Class::database_data() as $row ) {
+			$sql .= "INSERT INTO `$wpdb->prefix$table_name` values(";
+			foreach ( $row as $value )
+				$sql .= "'$value',";
+			$sql  = substr( $sql, 0, -1 );
+			$sql .= ");\n";
+		}
+		$sql .= "\n";
+
 		return $sql;
   }
 
   private static function uninstall_SQL( $Class ) {
 		global $wpdb;
-
+		// TODO: uninstall_SQL()
 		$table_name = $Class::database_table_name();
 		return "DROP TABLE `$wpdb->prefix$table_name`;";
 	}

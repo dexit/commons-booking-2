@@ -62,7 +62,3 @@ function cb_load_plugin_textdomain()
 	load_textdomain(CB2_TEXTDOMAIN, trailingslashit(WP_PLUGIN_DIR) . CB2_TEXTDOMAIN . '/languages/' . CB2_TEXTDOMAIN . '-' . $locale . '.mo');
 }
 add_action('plugins_loaded', 'cb_load_plugin_textdomain', 1);
-
-
-//print( '<pre>' . CB2_DatabaseTable_PostNavigator::install_SQL() . '</pre>' );
-//exit();

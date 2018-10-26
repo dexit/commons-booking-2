@@ -4,8 +4,9 @@ define( 'INT',      'INT' );
 define( 'TINYINT',  'TINYINT' );
 define( 'BIGINT',   'BIGINT' );
 define( 'VARCHAR',  'VARCHAR' );
-define( 'DATETIME', 'DATETIME' );
 define( 'CHAR',     'CHAR' );
+define( 'LONGTEXT', 'LONGTEXT' );
+define( 'DATETIME', 'DATETIME' );
 define( 'BIT',      'BIT' );
 
 define( 'CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP' );
@@ -20,6 +21,11 @@ class CB2_Database {
   static $database_date_format     = 'Y-m-d';
   static $database_datetime_format = 'Y-m-d H:i:s';
   static $NULL_indicator           = '__Null__';
+	static $safe_updates_off     = "
+					set @safe_updates = @@sql_safe_updates;
+					set @@sql_safe_updates = 0;";
+	static $safe_updates_restore = "
+					SET @@sql_safe_updates = @safe_updates;";
 
   // -------------------------------- Utilities
   static function bitarray_to_int( $bit_array ) {
@@ -76,7 +82,7 @@ class CB2_Database {
   }
 
   static function has_column( $table, $column ) {
-		return in_array( $column, self::columns( $table ) );
+		return isset( self::columns( $table )[$column] );
   }
 
   static function tables() {

@@ -80,6 +80,9 @@ $display_strategys = CB2_Forms::select_options( CB2_Forms::subclasses( 'CB2_Peri
 $class_WP_DEBUG    = ( WP_DEBUG ? '' : 'hidden' );
 $show_overridden_periods_checked = ( $show_overridden_periods ? 'checked="1"' : '' );
 
+$period_status_type_options_html = count_options( CB2_Forms::period_status_type_options() );
+$period_entity_options_html      = count_options( CB2_Forms::period_entity_options() );
+
 print( "<h1>Calendar <a class='cb2-WP_DEBUG $class_WP_DEBUG' href='admin.php?page=cb2-calendar&amp;extended=1'>" . basename( __FILE__ ) . ": extended debug form</a></h1>" );
 print( <<<HTML
 	<form>
@@ -89,14 +92,18 @@ print( <<<HTML
 		Location:<select name="location_ID">$location_options</select>
 		Item:<select name="item_ID">$item_options</select>
 		User:<select name="user_ID">$user_options</select>
-		Period Status:<select name="period_status_type_ID">$period_status_type_options</select>
 		<div style='display:$extended_class'>
 			<input type="hidden" name="extended$extended_class" value="1"/>
-			Period Entity:<select name="period_entity_ID">$period_entity_options</select>
+			Period Status:
+				$period_status_type_options_html
+				<select name="period_status_type_ID">$period_status_type_options</select>
+			Period Entity:
+				$period_entity_options_html
+				<select name="period_entity_ID">$period_entity_options</select>
+			<br/>
 			Output type:<select name="output_type">$output_options</select>
 			Post Type:<select name="schema_type">$schema_options</select>
 			Template Part:<select name="template_part">$template_options</select>
-			<br/>
 			<span class="cb2-todo">Display Strategy</span>:<select name="display_strategy">$display_strategys</select>
 			<input id='show_overridden_periods' type='checkbox' $show_overridden_periods_checked name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
 		</div>
@@ -148,5 +155,10 @@ switch ( $output_type ) {
 		</div>
 	<?php
 		break;
+}
+
+function count_options( $array, $class = 'ok' ) {
+	$count = count( $array );
+	return "<span class='cb2-usage-count-$class'>$count</span>";
 }
 ?>

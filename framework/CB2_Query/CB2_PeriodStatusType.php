@@ -41,23 +41,43 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 
   static function database_table_name() { return self::$database_table; }
 
-  static function database_table_schema() {
+  static function database_table_schema( $prefix ) {
+		$id_field = CB2_Database::id_field( __class__ );
+
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
-				'period_status_type_id' => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
-				'name'                  => array( VARCHAR, (1024), NULL,     NOT_NULL ),
-				'description'           => array( VARCHAR, (1024), NULL,     NULL,     NULL, NULL ),
-				'flags'                 => array( BIT,     (32),   NULL,     NOT_NULL, NULL, 0 ),
-				'colour'                => array( VARCHAR, (256),  NULL,     NULL,     NULL, NULL ),
-				'opacity'               => array( TINYINT, (1),    NULL,     NOT_NULL, NULL, 100 ),
-				'priority'              => array( INT,     (11),   NULL,     NOT_NULL, NULL, 1 ),
+				// TYPE, (SIZE), UNSIGNED, NOT NULL, AUTO_INCREMENT, DEFAULT, COMMENT
+				$id_field     => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
+				'name'        => array( VARCHAR, (1024), NULL,     NOT_NULL ),
+				'description' => array( VARCHAR, (1024), NULL,     NULL,     NULL, NULL ),
+				'flags'       => array( BIT,     (32),   NULL,     NOT_NULL, NULL, 0 ),
+				'colour'      => array( VARCHAR, (256),  NULL,     NULL,     NULL, NULL ),
+				'opacity'     => array( TINYINT, (1),    NULL,     NOT_NULL, NULL, 100 ),
+				'priority'    => array( INT,     (11),   NULL,     NOT_NULL, NULL, 1 ),
 			),
-			'primary key' => array('period_status_type_id'),
+			'primary key' => array( $id_field ),
+			'triggers'    => array(
+				'BEFORE UPDATE' => array( "
+					if old.$id_field <= 6 then
+						if not old.$id_field = new.$id_field then
+							signal sqlstate '45000' set message_text = 'system period status type IDs cannot be updated';
+						end if;
+						if not old.name = new.name then
+							signal sqlstate '45001' set message_text = 'system period status type names cannot be updated';
+						end if;
+					end if;"
+				),
+				'BEFORE DELETE' => array( "
+					if old.$id_field <= 6 then
+						signal sqlstate '45000' set message_text = 'system period status types cannot be removed';
+					end if;"
+				),
+			),
 		);
 	}
 
-	static function database_table_install_data() {
+	static function database_data() {
 		return array(
 			array( '1', 'available', '', '7', '#', '100', '2' ),
 			array( '2', 'booked', NULL, '0', '#dd3333', '50', '6' ),
@@ -68,6 +88,12 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		);
 	}
 
+  static function database_views() {
+		return array(
+			'cb2_view_periodstatustype_posts' => "select (`p`.`period_status_type_id` + `pt`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'description' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,`p`.`name` AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,'periodstatustype' AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_status_type_id` AS `period_status_type_id`,`p`.`name` AS `name`,`p`.`description` AS `description`,`p`.`flags` AS `flags`,`p`.`colour` AS `colour`,`p`.`opacity` AS `opacity`,`p`.`priority` AS `priority`,(`p`.`period_status_type_id` <= 6) AS `system` from (`wp_cb2_period_status_types` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = 'periodstatustype')))",
+			'cb2_view_periodstatustypemeta'   => "select ((`pst`.`period_status_type_id` * 10) + `pt`.`ID_base`) AS `meta_id`,`pst`.`ID` AS `post_id`,`pst`.`ID` AS `periodstatustype_id`,'flags' AS `meta_key`,cast(`pst`.`flags` as unsigned) AS `meta_value` from (`wp_cb2_view_periodstatustype_posts` `pst` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `pst`.`post_type`))) union all select (((`pst`.`period_status_type_id` * 10) + `pt`.`ID_base`) + 1) AS `meta_id`,`pst`.`ID` AS `post_id`,`pst`.`ID` AS `periodstatustype_id`,'colour' AS `meta_key`,`pst`.`colour` AS `meta_value` from (`wp_cb2_view_periodstatustype_posts` `pst` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `pst`.`post_type`))) union all select (((`pst`.`period_status_type_id` * 10) + `pt`.`ID_base`) + 2) AS `meta_id`,`pst`.`ID` AS `post_id`,`pst`.`ID` AS `periodstatustype_id`,'opacity' AS `meta_key`,`pst`.`opacity` AS `meta_value` from (`wp_cb2_view_periodstatustype_posts` `pst` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `pst`.`post_type`))) union all select (((`pst`.`period_status_type_id` * 10) + `pt`.`ID_base`) + 3) AS `meta_id`,`pst`.`ID` AS `post_id`,`pst`.`ID` AS `periodstatustype_id`,'priority' AS `meta_key`,`pst`.`priority` AS `meta_value` from (`wp_cb2_view_periodstatustype_posts` `pst` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `pst`.`post_type`)))",
+		);
+	}
 
   function post_type() {return self::$static_post_type;}
 
