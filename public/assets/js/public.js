@@ -5,30 +5,49 @@
 		// console.log(pn_js_vars.alert);
 
 		$(document).ready(function(){
+			$('.cb2-template-available').click(function(e){
+				var checkbox      = $(this).children('.cb2-perioditem-selector');
+				var cssClass      = $(this).attr('class').trim();
+				var target        = $(e.target);
+				var clicked_input = (target.is(checkbox));
+				var is_checked    = checkbox.attr('checked');
+
+				// The default checkbox event will check the checkbox
+				// AFTER this action
+				if (clicked_input) is_checked = !is_checked;
+
+				if (is_checked) {
+					if (!clicked_input) checkbox.removeAttr('checked');
+					$(this).attr( 'class', cssClass.replace(/cb2-booked/, '') );
+				} else {
+					if (!clicked_input) checkbox.attr('checked', '1');
+					$(this).attr( 'class', cssClass + ' cb2-booked' );
+				}
+			});
 
 			window.cb2 = {}; // global commons booking object
 
 			cb2.calendarStyles = function() { // manage style of calendar by calendar size, not window width
 
-				if ($('.cb-calendar-grouped').length < 1) {
+				if ($('.cb2-calendar-grouped').length < 1) {
 					return;
 				}
 
-				if ($('.cb-calendar-grouped').outerWidth() >= 450) {
-					$('.cb-calendar-grouped').addClass('cb-calendar-grouped-large');
+				if ($('.cb2-calendar-grouped').outerWidth() >= 450) {
+					$('.cb2-calendar-grouped').addClass('cb2-calendar-grouped-large');
 				} else {
-					$('.cb-calendar-grouped').removeClass('cb-calendar-grouped-large');
+					$('.cb2-calendar-grouped').removeClass('cb2-calendar-grouped-large');
 				}
 
 			};
 
 			cb2.calendarTooltips = function() {
 
-				if ($('.cb-calendar-grouped').length < 1) {
+				if ($('.cb2-calendar-grouped').length < 1) {
 					return;
 				}
 
-				$('.cb-slot[data-state="allow-booking"] ').parents('li.cb-date').each(function(i, elem) {
+				$('.cb2-slot[data-state="allow-booking"] ').parents('li.cb2-date').each(function(i, elem) {
 					var template = document.createElement('div');
 					template.id = $(elem).attr('id');
 					var html = '<div><ul>';
@@ -46,19 +65,19 @@
 					html += '</ul></div>';
 
 					template.innerHTML = html;
-					
+
 					tippy('#' + template.id, {
-						appendTo : document.querySelector('.cb-calendar-grouped'),
+						appendTo : document.querySelector('.cb2-calendar-grouped'),
 						arrow : true,
 						html: template,
 						interactive : true,
-						theme: 'cb-calendar',
+						theme: 'cb2-calendar',
 						trigger: 'click'
 					}); // need to polyfill MutationObserver for IE10 if planning to use dynamicTitle
 
 				});
-				
-				
+
+
 
 			};
 

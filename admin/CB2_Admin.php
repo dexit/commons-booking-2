@@ -34,7 +34,7 @@ class CB2_Admin {
 		// /*
 		// * All the extras functions
 		// */
-		// require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB_Extras_Admin.php' );
+		// require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Extras_Admin.php' );
 
 		/* @TODO: add all filters & functions from WP_Admin_Integration */
 

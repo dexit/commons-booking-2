@@ -2,10 +2,13 @@
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_User extends CB_PostNavigator implements JsonSerializable {
+class CB2_User extends CB2_PostNavigator implements JsonSerializable {
   public static $all    = array();
   public static $schema = 'with-perioditems'; //this-only, with-perioditems
-  static $static_post_type     = 'user';
+  public static $posts_table    = FALSE;
+  public static $postmeta_table = FALSE;
+  public static $database_table = FALSE;
+  static $static_post_type = 'user'; // Pseudo, but required
 
 	static function selector_metabox() {
 		return array(
@@ -17,7 +20,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
 					'id'      => 'user_ID',
 					'type'    => 'select',
 					'default' => ( isset( $_GET['user_ID'] ) ? $_GET['user_ID'] : NULL ),
-					'options' => CB_Forms::user_options(),
+					'options' => CB2_Forms::user_options(),
 				),
 			),
 		);
@@ -29,7 +32,7 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
 	}
 
 	public function __toIntFor( $column_data_type, $column_name ) {
-		// CB_Post only has 1 id for any data
+		// CB2_Post only has 1 id for any data
 		// although it should be an _ID column
 		return $this->id();
 	}
@@ -51,11 +54,30 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     self::$all[$ID] = $this;
   }
 
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+		$object = self::factory(
+			$properties['ID'],
+			$properties['user_login']
+		);
+
+		self::copy_all_wp_post_properties( $properties, $object );
+
+		return $object;
+  }
+
+  static function factory_current() {
+		$cb_user = NULL;
+		$wp_user = wp_get_current_user();
+		if ( $wp_user instanceof WP_User && $wp_user->ID )
+			$cb_user = new self( $wp_user->ID, $wp_user->user_login );
+		return $cb_user;
+	}
+
   static function factory( $ID, $user_login = NULL ) {
     // Design Patterns: Factory Singleton with Multiton
     $object = NULL;
 
-    if ( ! is_null( $ID ) ) {
+    if ( $ID ) {
 			if ( isset( self::$all[$ID] ) ) $object = self::$all[$ID];
 			else $object = new self( $ID, $user_login );
 		}
@@ -66,10 +88,6 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
   function add_perioditem( &$perioditem ) {
     array_push( $this->perioditems, $perioditem );
   }
-
-	function is( $user ) {
-		return ( $user instanceof CB_User && $user->ID == $this->ID );
-	}
 
   function jsonSerialize() {
     $array = array(
@@ -82,13 +100,14 @@ class CB_User extends CB_PostNavigator implements JsonSerializable {
     return $array;
   }
 }
-CB_Query::register_schema_type( 'CB_User' );
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Post extends CB_PostNavigator implements JsonSerializable {
+class CB2_Post extends CB2_PostNavigator implements JsonSerializable {
   public static $all = array();
+  public static $PUBLISH        = 'publish';
+  public static $AUTODRAFT      = 'auto-draft';
   public static $schema         = 'with-perioditems'; //this-only, with-perioditems
   public static $posts_table    = FALSE;
   public static $postmeta_table = FALSE;
@@ -98,13 +117,39 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
 		'editor',
 		'thumbnail',
 	);
+	static $POST_PROPERTIES = array(
+		'ID' => FALSE,
+		'post_author' => TRUE,     // TRUE == Relevant to native records
+		'post_date' => TRUE,
+		'post_date_gmt' => FALSE,
+		'post_content' => TRUE,
+		'post_title' => TRUE,
+		'post_excerpt' => FALSE,
+		'post_status' => FALSE,
+		'comment_status' => FALSE,
+		'ping_status' => FALSE,
+		'post_password' => FALSE,
+		'post_name' => TRUE,
+		'to_ping' => FALSE,
+		'pinged' => FALSE,
+		'post_modified' => TRUE,
+		'post_modified_gmt' => FALSE,
+		'post_content_filtered' => FALSE,
+		'post_parent' => FALSE,
+		'guid' => FALSE,
+		'menu_order' => FALSE,
+		'post_type' => TRUE,
+		'post_mime_type' => FALSE,
+		'comment_count' => FALSE,
+		'filter' => FALSE,
+	);
 
   public function __toStringFor( $column_data_type, $column_name ) {
 		return (string) $this->__toIntFor( $column_data_type, $column_name );
 	}
 
 	public function __toIntFor( $column_data_type, $column_name ) {
-		// CB_Post only has 1 id for any data
+		// CB2_Post only has 1 id for any data
 		// although it should be an _ID column
 		return $this->id();
 	}
@@ -133,21 +178,6 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
 		return "<a href='$permalink' class='$class' title='view $this->post_title'>$this->post_title</a>";
 	}
 
-	function get_the_calendar() {
-		return '';
-	}
-
-	function get_the_content() {
-		$content = '';
-		if ( property_exists( $this, 'post_content' ) ) $content .= $this->post_content;
-		$content .= $this->get_the_calendar();
-		return $content;
-	}
-
-	function is( $post ) {
-		return ( $post instanceof CB_Post && $post->ID == $this->ID );
-	}
-
 	function summary() {
 		return ucfirst( $this->post_type() ) . "($this->ID)";
 	}
@@ -167,7 +197,7 @@ class CB_Post extends CB_PostNavigator implements JsonSerializable {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Location extends CB_Post implements JsonSerializable {
+class CB2_Location extends CB2_Post implements JsonSerializable {
   static $static_post_type  = 'location';
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-tools',
@@ -183,50 +213,11 @@ class CB_Location extends CB_Post implements JsonSerializable {
 					'id'      => 'location_ID',
 					'type'    => 'select',
 					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
-					'options' => CB_Forms::location_options(),
+					'options' => CB2_Forms::location_options(),
 				),
 			),
 		);
 	}
-
-	/*
-	static function summary_metabox() {
-		// TODO: CB_Location::summary_metabox()
-		return array(
-			'title' => __( 'Location Summary', 'commons-booking-2' ),
-			'context' => 'side',
-			'show_names' => FALSE,
-			'fields' => array(
-				array(
-					'name'    => __( 'Location', 'commons-booking-2' ),
-					'id'      => 'location_ID',
-					'type'    => 'select',
-					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
-					'options' => CB_Forms::location_options(),
-				),
-				array(
-					'name'    => __( 'Holidays', 'commons-booking-2' ),
-					'id'      => 'holidays',
-					'type'    => 'select',
-					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
-					'options' => array(),
-				),
-				array(
-					'name'    => __( 'Opening Hours', 'commons-booking-2' ),
-					'id'      => 'opening_hours',
-					'type'    => 'select',
-					'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
-					'options' => array(),
-				),
-				array(
-					'name'    => __( '<a href="#">edit</a>', 'commons-booking-2' ),
-					'id'      => 'edit',
-					'type'    => 'title',
-				),
-			),
-		);
-	}
-	*/
 
 	static function metaboxes() {
 		return array(
@@ -260,12 +251,12 @@ class CB_Location extends CB_Post implements JsonSerializable {
     $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID
+			$properties['ID']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -275,7 +266,7 @@ class CB_Location extends CB_Post implements JsonSerializable {
     $object = NULL;
     $key    = $ID;
 
-    if ( ! is_null( $ID ) ) {
+    if ( $ID ) {
 			if ( isset( self::$all[$ID] ) ) $object = self::$all[$ID];
 			else $object = new self( $ID );
 		}
@@ -283,75 +274,94 @@ class CB_Location extends CB_Post implements JsonSerializable {
     return $object;
   }
 
-	function get_the_calendar() {
-		return "[cb2_calendar location_id=$this->ID]";
+	function get_the_after_content() {
+		$ID     = $this->ID;
+		return "[cb2_calendar location_id=$ID]";
 	}
 
   function manage_columns( $columns ) {
-		$columns['item_availability'] = 'Item Availability';
-		$columns['bookings']          = 'Bookings';
+		$columns['item_availability'] = 'Item Availability <a href="admin.php?page=cb2-timeframes">view all</a>';
+		$columns['bookings']          = 'Bookings <a href="admin.php?page=cb2-bookings">view all</a>';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
 
 	function custom_columns( $column ) {
+		$wp_query_page_name = "paged-column-$column";
+		$current_page       = ( isset( $_GET[$wp_query_page_name] ) ? $_GET[$wp_query_page_name] : 1 );
+
 		switch ( $column ) {
 			case 'item_availability':
 				$wp_query = new WP_Query( array(
 					'post_type'   => 'periodent-timeframe',
 					'meta_query'  => array(
-						'location_clause' => array(
+						'location_ID_clause' => array(
 							'key'   => 'location_ID',
 							'value' => $this->ID,
 						),
 						'relation' => 'AND',
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
-							'value' => CB2_PERIOD_STATUS_TYPE_AVAILABLE,
+							'value' => CB2_PeriodStatusType_Available::$id,
 						),
 					),
+					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
+					'page'           => $current_page,
 				) );
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Item Availability' ) . '</div>' );
 				}
-				$add_link = "admin.php?page=cb-post-new&location_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
+				print( "<div class='cb2-column-actions'>" );
+				$add_link = "admin.php?page=cb2-post-new&location_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
 				print( " <a href='$add_link'>add new item availability</a>" );
+				print( '</div>' );
 				break;
 
 			case 'bookings':
 				$wp_query = new WP_Query( array(
 					'post_type'   => 'periodent-user',
 					'meta_query'  => array(
-						'location_clause' => array(
+						'location_ID_clause' => array(
 							'key'   => 'location_ID',
 							'value' => $this->ID,
 						),
 						'relation' => 'AND',
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
-							'value' => CB2_PERIOD_STATUS_TYPE_BOOKED,
+							'value' => CB2_PeriodStatusType_Booked::$id,
 						),
 					),
+					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
+					'page'           => $current_page,
 				) );
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );
 				}
-				$add_link  = "admin.php?page=cb-post-new&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
+				print( "<div class='cb2-column-actions'>" );
+				$add_link  = "admin.php?page=cb2-post-new&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
 				print( " <a href='$add_link'>add new booking</a>" );
 				$view_link = "admin.php?page=cb2-calendar&location_ID=$this->ID&period_status_type_ID=100000002";
 				print( " | <a href='$view_link'>view in calendar</a>" );
+				print( '</div>' );
 				break;
 		}
+
+		print( '<div class="cb2-column-pagination">' . paginate_links( array(
+			'base'         => 'admin.php%_%',
+			'total'        => $wp_query->max_num_pages,
+			'current'      => $current_page,
+			'format'       => "?$wp_query_page_name=%#%",
+		) ) . '</div>' );
 	}
 
   function jsonSerialize() {
@@ -365,14 +375,14 @@ class CB_Location extends CB_Post implements JsonSerializable {
 		$wp_query = new WP_Query( array(
 			'post_type'   => 'periodent-location',
 			'meta_query'  => array(
-				'item_clause' => array(
+				'location_ID_clause' => array(
 					'key'   => 'location_ID',
 					'value' => $this->ID,
 				),
 				'relation' => 'AND',
 				'period_status_type_clause' => array(
 					'key'   => 'period_status_type_id',
-					'value' => CB2_PERIOD_STATUS_TYPE_OPEN,
+					'value' => CB2_PeriodStatusType_Open::$id,
 				),
 			),
 		) );
@@ -386,12 +396,11 @@ class CB_Location extends CB_Post implements JsonSerializable {
 		$actions[ 'manage_opening_hours' ] = $action;
 	}
 }
-CB_Query::register_schema_type( 'CB_Location' );
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB_Item extends CB_Post implements JsonSerializable {
+class CB2_Item extends CB2_Post implements JsonSerializable {
   static $static_post_type   = 'item';
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-video-alt',
@@ -406,7 +415,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 					'id'      => 'item_ID',
 					'type'    => 'select',
 					'default' => ( isset( $_GET['item_ID'] ) ? $_GET['item_ID'] : NULL ),
-					'options' => CB_Forms::item_options(),
+					'options' => CB2_Forms::item_options(),
 				),
 			),
 		);
@@ -421,12 +430,12 @@ class CB_Item extends CB_Post implements JsonSerializable {
     $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_wp_post( $post ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
 		$object = self::factory(
-			$post->ID
+			$properties['ID']
 		);
 
-		CB_Query::copy_all_wp_post_properties( $post, $object );
+		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
@@ -435,7 +444,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
     // Design Patterns: Factory Singleton with Multiton
     $object = NULL;
 
-    if ( ! is_null( $ID ) ) {
+    if ( $ID ) {
 			if ( isset( self::$all[$ID] ) ) $object = self::$all[$ID];
 			else $object = new self( $ID );
 		}
@@ -443,75 +452,140 @@ class CB_Item extends CB_Post implements JsonSerializable {
     return $object;
   }
 
-	function get_the_calendar() {
-		return "[cb2_calendar item_id=$this->ID]";
+	function get_the_after_content() {
+		// Booking form
+		$ID         = $this->ID;
+		$controller = get_class( $this );
+		$action     = '';
+		$submit     = __( 'book the' ) . " $this->post_title";
+		$controller_action = 'book';
+		$display_strategy  = 'CB2_SingleItemAvailability';
+
+		// TODO: WP_Query of the shortcode needs to be configurable
+		// package a form plugin with CB2, e.g. ContactForm 7
+		// e.g. default period to show
+		// package Query Wrangler with CB2
+		// POC already done
+		return "<form action='$action' method='POST'><div>
+				<input type='hidden' name='ID' value='$ID' />
+				<input type='hidden' name='controller' value='$controller' />
+				<input type='hidden' name='action' value='$controller_action' />
+				<input type='submit' name='submit' value='$submit' />
+				[cb2_calendar view_mode=Week display-strategy=$display_strategy]
+				<input type='submit' name='submit' value='$submit' />
+			</div></form>
+		";
 	}
 
+  function process_form_book( $action, Array $values, CB2_User $user ) {
+		// The booking times are based on the perioditems selected
+		if ( ! isset( $values['perioditem_timeframe_IDs'] ) )
+			throw new Exception( "perioditem_timeframe_IDs required during [$action]" );
+		if ( ! $user )
+			throw new Exception( "user required during [$action]" );
+
+		// Book these availabilities
+		// TODO: should these be combined?
+		$booked_perioditems = $values['perioditem_timeframe_IDs'];
+		$name               = 'booking'; // Default
+		$copy_period_group  = TRUE;      // Default
+		$count              = count( $booked_perioditems );
+		foreach ( $booked_perioditems as $booked_perioditem ) {
+			$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
+				$booked_perioditem,
+				$user,
+				$name,
+				$copy_period_group
+			);
+			$periodentity_booking->save(); // Create objects only
+		}
+
+		return "<div>processed ($count) perioditem availabile in to bookings</div>";
+  }
+
   function manage_columns( $columns ) {
-		$columns['availability'] = 'Availability';
-		$columns['bookings']     = 'Bookings';
+		$columns['availability'] = 'Availability <a href="admin.php?page=cb2-timeframes">view all</a>';
+		$columns['bookings']     = 'Bookings <a href="admin.php?page=cb2-bookings">view all</a>';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
 
 	function custom_columns( $column ) {
+		$wp_query_page_name = "paged-column-$column";
+		$current_page       = ( isset( $_GET[$wp_query_page_name] ) ? $_GET[$wp_query_page_name] : 1 );
+
 		switch ( $column ) {
 			case 'availability':
-				$wp_query = new WP_Query( array(
+				$wp_query           = new WP_Query( array(
 					'post_type'   => 'periodent-timeframe',
 					'meta_query'  => array(
-						'location_clause' => array(
+						'item_ID_clause' => array(
 							'key'   => 'item_ID',
 							'value' => $this->ID,
 						),
 						'relation' => 'AND',
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
-							'value' => CB2_PERIOD_STATUS_TYPE_AVAILABLE,
+							'value' => CB2_PeriodStatusType_Available::$id,
 						),
 					),
+					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
+					'page'           => $current_page,
 				) );
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Item Availability' ) . '</div>' );
 				}
-				$add_link = "admin.php?page=cb-post-new&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
-				print( " <a href='$add_link'>add new item availability</a>" );
+				print( "<div class='cb2-column-actions'>" );
+				$add_link = "admin.php?page=cb2-post-new&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
+				print( "<a href='$add_link'>add new item availability</a>" );
+				print( '</div>' );
 				break;
 
 			case 'bookings':
 				$wp_query = new WP_Query( array(
 					'post_type'   => 'periodent-user',
 					'meta_query'  => array(
-						'item_clause' => array(
+						'item_ID_clause' => array(
 							'key'   => 'item_ID',
 							'value' => $this->ID,
 						),
 						'relation' => 'AND',
 						'period_status_type_clause' => array(
 							'key'   => 'period_status_type_id',
-							'value' => CB2_PERIOD_STATUS_TYPE_BOOKED,
+							'value' => CB2_PeriodStatusType_Booked::$id,
 						),
 					),
+					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
+					'page'           => $current_page,
 				) );
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );
 				}
-				$add_link  = "admin.php?page=cb-post-new&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
+				print( "<div class='cb2-column-actions'>" );
+				$add_link  = "admin.php?page=cb2-post-new&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
 				print( " <a href='$add_link'>add new booking</a>" );
-				$view_link = "admin.php?page=cb2-calendar&location_ID=$this->ID&period_status_type_ID=100000002";
+				$view_link = "admin.php?page=cb2-calendar&item_ID=$this->ID&period_status_type_ID=100000002";
 				print( " | <a href='$view_link'>view in calendar</a>" );
+				print( '</div>' );
 				break;
 		}
+
+		print( '<div class="cb2-column-pagination">' . paginate_links( array(
+			'base'         => 'admin.php%_%',
+			'total'        => $wp_query->max_num_pages,
+			'current'      => $current_page,
+			'format'       => "?$wp_query_page_name=%#%",
+		) ) . '</div>' );
 	}
 
 	function add_actions( &$actions, $post ) {
@@ -525,7 +599,7 @@ class CB_Item extends CB_Post implements JsonSerializable {
 				'relation' => 'AND',
 				'period_status_type_clause' => array(
 					'key'   => 'period_status_type_id',
-					'value' => CB2_PERIOD_STATUS_TYPE_REPAIR,
+					'value' => CB2_PeriodStatusType_Repair::$id,
 				),
 			),
 		) );
@@ -539,5 +613,4 @@ class CB_Item extends CB_Post implements JsonSerializable {
 		$actions[ 'manage_repairs' ] = $action;
 	}
 }
-CB_Query::register_schema_type( 'CB_Item' );
 

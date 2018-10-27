@@ -1,5 +1,3 @@
-<?php echo "template : list-location.php <br>"; ?>
-
 <?php
 /**
  * Locations in archives (lists) template
@@ -12,7 +10,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  *
- * @see       CB_Enqueue::cb_template_chooser()
+ * @see       CB2_Enqueue::cb_template_chooser()
  *
  * @since 2.0.0
  */

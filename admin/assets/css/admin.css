@@ -8,7 +8,7 @@
  * @copyright 2015 wielebenwir
  */
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/admin\.scss}line{font-family:\0000311}}
-.cb-form-danger {
+.cb2-form-danger {
   color: red;
 }
 
@@ -28,17 +28,18 @@
 }
 
 /* ---------------------- admin screen */
-.admin_page_cb-post-edit #preview-action,
-.admin_page_cb-post-edit .misc-pub-visibility,
-.admin_page_cb-post-edit #minor-publishing-actions,
+.admin_page_cb2-post-edit #preview-action,
+.admin_page_cb2-post-edit .misc-pub-visibility,
+.admin_page_cb2-post-edit #minor-publishing-actions,
 
-.admin_page_cb-post-new #preview-action,
-.admin_page_cb-post-new .misc-pub-visibility,
-.admin_page_cb-post-new #minor-publishing-actions,
+.admin_page_cb2-post-new #preview-action,
+.admin_page_cb2-post-new .misc-pub-visibility,
+.admin_page_cb2-post-new #minor-publishing-actions,
 
 ul.subsubsub,
 #posts-filter .search-box,
-body .cmb2-id-recurrence-sequence .cmb-multicheck-toggle {
+.cmb-type-multicheck-inline > .cmb-td > p,
+.cmb-type-multicheck > .cmb-td > p { /* Select all */
 	display:none;
 }
 
@@ -65,6 +66,21 @@ body .cmb2-postbox .cmb-th+.cmb-td {
 	/* TODO: this is probably not  good idea allow paragraph to wrap around fields better */
 	float:none;
 	width:auto;
+}
+.cb2-depth-0 {
+	list-style:none;
+}
+.cb2-depth-1 {
+	list-style:disc;
+}
+.cb2-classname {
+	font-style:italic;
+	background-color:#f7f7f7;
+	padding:0px 4px;
+}
+li.cb2-classname {
+	list-style:none;
+	margin-left:-4px;
 }
 .cb2-WP_DEBUG-small {
 	color:#555;
@@ -110,6 +126,9 @@ body .cmb2-postbox .cmb-th+.cmb-td {
 	color:#d44;
 	font-weight:bold;
 }
+.cb2-menu-invisible {
+	margin-bottom:-2em;
+}
 body .cb2-advanced-menu-item.cb2-first {
 	display:block;
 	border-top:1px dotted #d7d7d7;
@@ -122,6 +141,14 @@ body .cb2-description {
 .cb2-calendar-krumo-show {
 	cursor:pointer;
 }
+
+.cb2-column-pagination {
+	float:right;
+}
+.cb2-column-actions {
+	float:left;
+}
+
 body.wp-admin .cb2-disabled,
 body.wp-admin .cb2-disabled span {
 	text-decoration:none;
@@ -155,16 +182,20 @@ body input.cb2-tick-only {
 	box-shadow: none;
 	cursor: default;
 }
+body input.cb2-tick-only:not([checked]):after {
+	content: '✘';
+	color:#ff5555;
+	position: relative;
+	top: 7px;
+}
 .cb2-colour-block {
 	height:20px;
 	width:80px;
 }
 .cb2-usage-count-warning {
-	vertical-align: super;
 	font-size: 80%;
 
 	display: inline-block;
-	vertical-align: top;
 	margin: 1px 0 0 2px;
 	padding: 0 5px;
 	min-width: 7px;
@@ -177,11 +208,9 @@ body input.cb2-tick-only {
 	text-align: center;
 }
 .cb2-usage-count-ok {
-	vertical-align: super;
 	font-size: 80%;
 
 	display: inline-block;
-	vertical-align: top;
 	margin: 1px 0 0 2px;
 	padding: 0 5px;
 	min-width: 7px;
@@ -194,11 +223,9 @@ body input.cb2-tick-only {
 	text-align: center;
 }
 .cb2-usage-count-info {
-	vertical-align: super;
 	font-size: 80%;
 
 	display: inline-block;
-	vertical-align: top;
 	margin: 1px 0 0 2px;
 	padding: 0 5px;
 	min-width: 7px;

@@ -13,10 +13,11 @@
 class CB2_Shortcodes {
 
 	private $default_query_args = array(
-		'period_id'   => false,
-		'location_id' => false,
-		'item_id'     => false,
-		'view_mode'   => 'week',
+		'period_id'        => FALSE,
+		'location_id'      => FALSE,
+		'item_id'          => FALSE,
+		'view_mode'        => 'week',
+		'display-strategy' => 'CB2_Everything',
 
 	);
 
@@ -40,42 +41,43 @@ class CB2_Shortcodes {
 			'startdate',
 			'enddate',
 			'view_mode',
+			'display-strategy',
 		);
 
+		/* TODO: is this for multiple value input?
 		foreach($array_atts_fields as $field) {
 			if (isset($atts[$field])) {
 				$atts[$field] = explode(',', $atts[$field]);
 			}
 		}
+		*/
 		$args = shortcode_atts( $this->default_query_args, $atts, 'cb_calendar' );
+		$display_strategy_classname = $args['display-strategy'];
 
-		$display_strategy = new CB_SingleItemAvailability( $post );
-		if ( WP_DEBUG && FALSE ) {
-			//krumo( $display_strategy );
-			print( "<div style='border:1px solid #000;padding:3px;font-size:10px;background-color:#fff;margin:1em 0em;'>$display_strategy->request</div>" );
+		$display_strategy = new $display_strategy_classname( $post );
+		if ( WP_DEBUG ) {
+			krumo( $display_strategy );
+			print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;font-size:10px;background-color:#fff;margin:1em 0em;'>$display_strategy->request</div>" );
 		}
 
-		if ($display_strategy->have_posts()) {
-			$html = '<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>
-				<table class="cb-calendar">';
-					$html .= get_the_calendar_header( $display_strategy );
+		$html = '<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>';
+		if ( $display_strategy->have_posts() ) {
+				$html = '<table class="cb2-calendar">';
+					$html .= CB2::get_the_calendar_header( $display_strategy );
 					$html .= '<tbody>';
 
-					while($display_strategy->have_posts()) {
+					while ( $display_strategy->have_posts() ) {
 						$display_strategy->the_post();
-
-						// call ensure class
-						// cb2_the_content();
 						$html .= cb2_get_template_part(  CB2_TEXTDOMAIN, 'list', 'week-available', $args , true );
 					}
 
 					$html .= '</tbody>';
-					$html .= get_the_calendar_footer( $display_strategy );
-				$html .= '</table>
-			</div>';
+					$html .= CB2::get_the_calendar_footer( $display_strategy );
+				$html .= '</table>';
+		} else {
+			$html .= '<div>No Results</div>';
 		}
-
-
+		$html .= '</div>';
 
 		// reset posts
 		wp_reset_postdata();

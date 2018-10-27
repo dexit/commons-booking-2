@@ -7,9 +7,9 @@
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
- * @see 			CB_Cronplus
+ * @see 			CB2_Cronplus
  */
-class CB_Cron {
+class CB2_Cron {
 
 	/**
 	 * Constructor
@@ -20,22 +20,22 @@ class CB_Cron {
 	/**
 	 * Cron job: Extend the timeframes that have no defined ending to the cal_limit
 	 *
-	 * @uses CB_Timeframes
-	 * @uses CB_Settings
+	 * @uses CB2_Timeframes
+	 * @uses CB2_Settings
 	 */
 	public function extend_timeframes() {
 
 		global $wpdb;
-		$timeframes_table = $wpdb->prefix . CB_TIMEFRAMES_TABLE;
+		$timeframes_table = $wpdb->prefix . CB2_TIMEFRAMES_TABLE;
 
 		// 1. get timeframes that have no end date
 		$timeframe_args = array ( 'has_end_date' => 0, 'scope' => '' );
 
-		$timeframes_object = new CB_Timeframes( $timeframe_args );
+		$timeframes_object = new CB2_Timeframes( $timeframe_args );
 		$timeframes = $timeframes_object->get();
 
 		// 2. get cal limit from settings, calculate how many days to add
-		$cal_limit =  intval ( CB_Settings::get( 'calendar', 'limit' ) );
+		$cal_limit =  intval ( CB2_Settings::get( 'calendar', 'limit' ) );
 		$new_end_date = date ( 'Y-m-d', strtotime( '+' . $cal_limit . 'days' ) );
 		$new_mod_date = date( 'Y-m-d H:i:s' );
 
@@ -70,7 +70,7 @@ class CB_Cron {
 
 							$tf->date_end = $new_end_date;
 							// 4. create slots
-							$slots = new CB_Slots( $tf->timeframe_id );
+							$slots = new CB2_Slots( $tf->timeframe_id );
 							$generate_slots_result = $slots->re_generate_slots_function( $tf );
 						} // end if update successful
 

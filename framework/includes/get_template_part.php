@@ -85,6 +85,10 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
 			ob_start();
 			$return_template = require( $template );
 			$data = ob_get_clean();
+			if ( WP_DEBUG ) {
+				global $post;
+				$data = "<!-- " . get_class( $post ) . ' => ' . basename($template) . " -->" . $data;
+			}
 
 			do_action( 'end_operation', 'cb_template_part::' . $file_handle );
 

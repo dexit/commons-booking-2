@@ -4,7 +4,7 @@
 	</header>
 	<div class="entry-content">
 		<table class="cb2-subposts"><tbody>
-			<?php the_inner_loop(); ?>
+			<?php CB2::the_inner_loop(); ?>
 		</tbody></table>
 	</div><!-- .entry-content -->
 </td>

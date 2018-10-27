@@ -7,5 +7,5 @@
     }
   ?>
 
-  <?php the_inner_loop( NULL, 'list', 'available' ); ?>
+  <?php CB2::the_inner_loop( NULL, 'list', 'available' ); ?>
 </tr>

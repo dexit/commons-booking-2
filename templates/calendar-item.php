@@ -1,5 +1,3 @@
-<?php echo "template : calendar-item.php <br>"; ?>
-
 <?php
 /**
  * Calendar of items
@@ -10,13 +8,13 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  *
- * @see       CB_Enqueue::cb_template_chooser()
+ * @see       CB2_Enqueue::cb_template_chooser()
  */
 ?>
 <?php global $post; ?>
 <div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>
 
-	<table class="cb-calendar">
+	<table class="cb2-calendar">
 		<thead>
 			<tr>
 				<?php
@@ -28,7 +26,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<?php the_inner_loop($post, 'list'); ?>
+			<?php CB2::the_inner_loop($post, 'list'); ?>
 		</tbody>
 	</table>
 </div>

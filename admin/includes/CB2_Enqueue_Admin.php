@@ -90,7 +90,7 @@ class CB2_Enqueue_Admin {
 		 *  @TODO: Temporarily a main menu item,
 		 *  possible conflict with WP_Admin_Integration?
 		 */
-		// $this->admin_view_page = add_submenu_page( CB_MENU_SLUG, __( 'Settings', CB2_TEXTDOMAIN ), __( 'Settings', CB2_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
+		// $this->admin_view_page = add_submenu_page( CB2_MENU_SLUG, __( 'Settings', CB2_TEXTDOMAIN ), __( 'Settings', CB2_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
 		$this->admin_view_page = add_menu_page( __('CommonsBooking 2 Settings', 'commons-booking'), __('Settings', 'commons-booking'), 'manage_options', 'cb_settings_page', array($this, 'display_plugin_admin_page'));
 	}
 	/**

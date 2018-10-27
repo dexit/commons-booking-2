@@ -2,7 +2,7 @@
 /**
  * API
  *
- * Reachable via mysite.de/cb-api/
+ * Reachable via mysite.de/cb2-api/
  *
  * @package   CommonsBooking2
  * @author
@@ -12,7 +12,7 @@
  */
 class CB2_API {
 
-	public $api_uri = 'cb-api';
+	public $api_uri = 'cb2-api';
 	public $query_args = array();
 
 	/**
@@ -66,16 +66,16 @@ public function process_endpoint( $request ) {
 
 }
 /**
- * Get timeframes via CB_Timeframes
+ * Get timeframes via CB2_Timeframes
  *
  * @since 2.0.0
  *
- * @uses CB_Timeframes
+ * @uses CB2_Timeframes
  */
 public function get_timeframes() {
 
-	$timeframes_object = new CB_Timeframes();
-	$timeframes_object->set_context( 'api' ); // see: CB_Object:550 -- i would still need to update the query function to your specs.
+	$timeframes_object = new CB2_Timeframes();
+	$timeframes_object->set_context( 'api' ); // see: CB2_Object:550 -- i would still need to update the query function to your specs.
 
 	$timeframes = $timeframes_object->get( $this->query_args );
 	return $timeframes;

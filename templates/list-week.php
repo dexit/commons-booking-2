@@ -7,5 +7,5 @@
     }
   ?>
 
-  <?php the_inner_loop(); ?>
+  <?php CB2::the_inner_loop(); ?>
 </tr>

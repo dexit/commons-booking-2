@@ -33,7 +33,7 @@ define( 'CB2_PLUGIN_ABSOLUTE',  __FILE__  );
 define( 'CB2_PLUGIN_URI',  plugin_dir_url( __FILE__ ) );
 
 
-/* DB Tables @TODO – move to CB_Database.php ? */
+/* DB Tables @TODO – move to CB2_Database.php ? */
 define( 'CB2_AVAILABILITY_OPTIONS_TABLE', 'cb2_availability_options' );
 /* Load framework */
 require_once(CB2_PLUGIN_ROOT . 'framework/CB2_framework.php');

@@ -1,6 +1,6 @@
 <?php
 /**
- * CB_Extras Admin
+ * CB2_Extras Admin
  *
  *  This class contains all the snippet or extras that improve the experience on the backend
  *
@@ -12,7 +12,7 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-class CB_Extras_Admin {
+class CB2_Extras_Admin {
 	/**
 	 * Initialize the snippet
 	 */
@@ -25,7 +25,7 @@ class CB_Extras_Admin {
 
 		$this->check_wp_environment(); // check plugin environment and notify the user if things are not properly defined.
 
-		$cron = new CB_Cron();
+		$cron = new CB2_Cron();
 
 		$args = array(
 			'recurrence' => 'hourly',
@@ -77,11 +77,11 @@ class CB_Extras_Admin {
 	 */
 	public function show_build_info($admin_bar){
 			$admin_bar->add_menu( array(
-				'id'    => 'cb-build',
-				'title' => 'CB' . CB2_VERSION . '-' . CB_DEV_BUILD,
+				'id'    => 'cb2-build',
+				'title' => 'CB' . CB2_VERSION . '-' . CB2_DEV_BUILD,
 				'href'  => '#',
 				'meta'  => array(
-					'title' => CB_DEV_BUILD,
+					'title' => CB2_DEV_BUILD,
 				),
 			));
 		}
@@ -198,7 +198,7 @@ class CB_Extras_Admin {
 		/**
 	 * Send a Push notification on the users browser using the Web Push plugin for WordPress
 	 *
-	 * CB_Extras->web_push_notification( 'Title', 'Content', 'http://domain.tld');
+	 * CB2_Extras->web_push_notification( 'Title', 'Content', 'http://domain.tld');
 	 *
 	 * @param string $title   Title.
 	 * @param string $content Content.
@@ -220,6 +220,6 @@ class CB_Extras_Admin {
 		return true;
 	}
 	}
-$cb_extras_admin = new CB_Extras_Admin();
+$cb_extras_admin = new CB2_Extras_Admin();
 $cb_extras_admin->initialize();
 do_action( 'commons_booking_cb_extras_admin_instance', $cb_extras_admin );
