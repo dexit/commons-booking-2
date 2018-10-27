@@ -4,35 +4,35 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
   protected static function database_table_schema_root(
 		String $table_name, String $primary_id_column,
-		Array $extra_columns = array(),
-		Array $constraints   = array(),
-		Array $triggers      = array()
+		Array $extra_columns      = array(),
+		Array $extra_foreign_keys = array(),
+		Array $triggers           = array()
 	) {
 		$base_columns = array(
-			// TYPE, (SIZE), UNSIGNED, NOT NULL, AUTO_INCREMENT, DEFAULT, COMMENT
-			$primary_id_column      => array( BIGINT, (20), UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
-			'period_group_id'       => array( INT,    (11), UNSIGNED, NOT_NULL ),
-			'period_status_type_id' => array( INT,    (11), UNSIGNED, NOT_NULL ),
-			'enabled'               => array( BIT,    (1),  NULL,     NOT_NULL, NULL, 1 ),
+			// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+			$primary_id_column      => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+			'period_group_id'       => array( CB2_INT,    (11), CB2_UNSIGNED, CB2_NOT_NULL ),
+			'period_status_type_id' => array( CB2_INT,    (11), CB2_UNSIGNED, CB2_NOT_NULL ),
+			'enabled'               => array( CB2_BIT,    (1),  NULL,         CB2_NOT_NULL, NULL, 1 ),
 		);
 		$columns = array_merge( $base_columns, $extra_columns );
 
-		$base_constraints = array(
+		$base_foreign_keys = array(
 			'period_group_id'       => array( 'cb2_period_groups',       'period_group_id' ),
 			'period_status_type_id' => array( 'cb2_period_status_types', 'period_status_type_id' ),
 		);
-		$constraints = array_merge( $base_constraints, $constraints );
+		$foreign_keys = array_merge( $base_foreign_keys, $extra_foreign_keys );
 
 		$primary_key = array_keys( $extra_columns );
-		$primary_key = array_merge( $primary_key, array_keys( $base_constraints ) );
+		$primary_key = array_merge( $primary_key, array_keys( $base_foreign_keys ) );
 
 		return array(
-			'name'        => $table_name,
-			'columns'     => $columns,
-			'primary key' => $primary_key,
-			'unique keys' => array( $primary_id_column ),
-			'foreign key constraints' => $constraints,
-			'triggers'    => $triggers,
+			'name'         => $table_name,
+			'columns'      => $columns,
+			'primary key'  => $primary_key,
+			'unique keys'  => array( $primary_id_column ),
+			'foreign keys' => $foreign_keys,
+			'triggers'     => $triggers,
 		);
   }
 
@@ -377,6 +377,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
   public static $database_table = 'cb2_global_period_groups';
   static $static_post_type      = 'periodent-global';
+  static $Class_PeriodItem      = 'CB2_PeriodItem_Global';
 	static function metaboxes() {
 		return parent::metaboxes();
 	}
@@ -385,7 +386,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 
   static function database_table_schema( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$static_post_type;
+		$post_type            = self::$Class_PeriodItem::$static_post_type;
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return CB2_PeriodEntity::database_table_schema_root(
@@ -455,6 +456,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
   public static $database_table = 'cb2_location_period_groups';
   static $static_post_type      = 'periodent-location';
+  static $Class_PeriodItem      = 'CB2_PeriodItem_Location';
 	static function metaboxes() {
 		$metaboxes = parent::metaboxes();
 		array_unshift( $metaboxes, CB2_Location::selector_metabox() );
@@ -466,14 +468,14 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 
   static function database_table_schema( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$static_post_type;
+		$post_type            = self::$Class_PeriodItem::$static_post_type;
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return CB2_PeriodEntity::database_table_schema_root(
 			$database_table_name,
 			$id_field,
 			array(
-				'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+				'location_ID' => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL ),
 			),
 			array(
 				'location_ID' => array( 'posts', 'ID' ),
@@ -546,7 +548,9 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
   public static $database_table = 'cb2_timeframe_period_groups';
   static $static_post_type      = 'periodent-timeframe';
-	static function metaboxes() {
+  static $Class_PeriodItem      = 'CB2_PeriodItem_Timeframe';
+
+  static function metaboxes() {
 		$metaboxes = parent::metaboxes();
 		array_unshift( $metaboxes, CB2_Item::selector_metabox() );
 		array_unshift( $metaboxes, CB2_Location::selector_metabox() );
@@ -557,15 +561,15 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
   static function database_table_schema( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$static_post_type;
+		$post_type            = self::$Class_PeriodItem::$static_post_type;
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return CB2_PeriodEntity::database_table_schema_root(
 			$database_table_name,
 			$id_field,
 			array(
-				'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
-				'item_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+				'location_ID' => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'item_ID'     => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL ),
 			),
 			array(
 				'location_ID' => array( 'posts', 'ID' ),
@@ -645,7 +649,9 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
   public static $database_table = 'cb2_timeframe_user_period_groups';
   static $static_post_type      = 'periodent-user';
-	static function metaboxes() {
+  static $Class_PeriodItem      = 'CB2_PeriodItem_Timeframe_User';
+
+  static function metaboxes() {
 		$metaboxes = parent::metaboxes();
 		array_unshift( $metaboxes, CB2_User::selector_metabox() );
 		array_unshift( $metaboxes, CB2_Item::selector_metabox() );
@@ -657,16 +663,16 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
   static function database_table_schema( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$static_post_type;
+		$post_type            = self::$Class_PeriodItem::$static_post_type;
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return CB2_PeriodEntity::database_table_schema_root(
 			$database_table_name,
 			$id_field,
 			array(
-				'location_ID' => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
-				'item_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
-				'user_ID'     => array( BIGINT, (20), UNSIGNED, NOT_NULL ),
+				'location_ID' => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'item_ID'     => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'user_ID'     => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL ),
 			),
 			array(
 				'location_ID' => array( 'posts', 'ID' ),

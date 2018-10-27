@@ -50,10 +50,10 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
-				// TYPE, (SIZE), UNSIGNED, NOT NULL, AUTO_INCREMENT, DEFAULT, COMMENT
-				$id_field     => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
-				'name'        => array( VARCHAR, (1024), NULL,     NOT_NULL, FALSE, 'period group' ),
-				'description' => array( VARCHAR, (2048), NULL,     NULL,     FALSE, NULL ),
+				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+				$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+				'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL, FALSE, 'period group' ),
+				'description' => array( CB2_VARCHAR, (2048), NULL,     NULL,     FALSE, NULL ),
 			),
 			'primary key' => array( $id_field ),
 			'many to many' => array(

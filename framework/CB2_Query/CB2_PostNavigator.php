@@ -8,10 +8,10 @@ abstract class CB2_PostNavigator {
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
-				'post_type_id'  => array( INT,     (11), UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
-				'post_type'     => array( VARCHAR, (20), NULL,     NOT_NULL ),
-				'ID_base'       => array( BIGINT,  (20), UNSIGNED, NOT_NULL ),
-				'ID_multiplier' => array( BIGINT,  (20), UNSIGNED, NOT_NULL, NULL, '1' ),
+				'post_type_id'  => array( CB2_INT,     (11), CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+				'post_type'     => array( CB2_VARCHAR, (20), NULL,     CB2_NOT_NULL ),
+				'ID_base'       => array( CB2_BIGINT,  (20), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'ID_multiplier' => array( CB2_BIGINT,  (20), CB2_UNSIGNED, CB2_NOT_NULL, NULL, '1' ),
 			),
 			'primary key' => array( 'post_type_id' ),
 			'unique keys' => array(

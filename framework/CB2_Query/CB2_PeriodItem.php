@@ -621,14 +621,14 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
 		return array(
 			'name'    => self::$database_options_table,
 			'columns' => array(
-				'option_id'    => array( INT,      (20),  UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
-				'timeframe_id' => array( BIGINT,   (20),  UNSIGNED, NOT_NULL ),
-				'option_name'  => array( VARCHAR,  (191), NULL,     NULL, NULL, NULL ),
-				'option_value' => array( LONGTEXT, NULL,  NULL,     NOT_NULL ),
+				'option_id'    => array( CB2_INT,      (20),  CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+				'timeframe_id' => array( CB2_BIGINT,   (20),  CB2_UNSIGNED, CB2_NOT_NULL ),
+				'option_name'  => array( CB2_VARCHAR,  (191), NULL,     NULL, NULL, NULL ),
+				'option_value' => array( CB2_LONGTEXT, NULL,  NULL,     CB2_NOT_NULL ),
 			),
-			'primary key' => array( 'option_id' ),
-			'keys'        => array( 'timeframe_id' ),
-			'constraints' => array(
+			'primary key'  => array( 'option_id' ),
+			'keys'         => array( 'timeframe_id' ),
+			'foreign keys' => array(
 				array( 'timeframe_id', 'cb2_timeframe_period_groups', 'timeframe_period_group_id' ),
 			),
 		);

@@ -323,11 +323,10 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 							$cb2_post = CB2_Query::ensure_correct_class( $post );
 							if ( empty( $meta_value ) ) $meta_value = NULL;
 							$data = array( $meta_key => $meta_value );
-
 							if ( method_exists( $cb2_post, 'sanitize_data_for_table' ) )
 								$data = $cb2_post->sanitize_data_for_table( $data, $formats );
-							else
-								$data = CB2_Database::sanitize_data_for_table( $class_database_table, $data, $formats, TRUE );
+
+							$data = CB2_Database::sanitize_data_for_table( $Class, $data, $formats, TRUE );
 
 							if ( CB2_DEBUG_SAVE ) {
 								if ( ! is_string( $meta_value ) && ! is_numeric( $meta_value ) )

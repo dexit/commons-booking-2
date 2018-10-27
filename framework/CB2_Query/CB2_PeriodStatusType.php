@@ -47,14 +47,14 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
-				// TYPE, (SIZE), UNSIGNED, NOT NULL, AUTO_INCREMENT, DEFAULT, COMMENT
-				$id_field     => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
-				'name'        => array( VARCHAR, (1024), NULL,     NOT_NULL ),
-				'description' => array( VARCHAR, (1024), NULL,     NULL,     NULL, NULL ),
-				'flags'       => array( BIT,     (32),   NULL,     NOT_NULL, NULL, 0 ),
-				'colour'      => array( VARCHAR, (256),  NULL,     NULL,     NULL, NULL ),
-				'opacity'     => array( TINYINT, (1),    NULL,     NOT_NULL, NULL, 100 ),
-				'priority'    => array( INT,     (11),   NULL,     NOT_NULL, NULL, 1 ),
+				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+				$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+				'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL ),
+				'description' => array( CB2_VARCHAR, (1024), NULL,     NULL,     NULL, NULL ),
+				'flags'       => array( CB2_BIT,     (32),   NULL,     CB2_NOT_NULL, NULL, 0 ),
+				'colour'      => array( CB2_VARCHAR, (256),  NULL,     NULL,     NULL, NULL ),
+				'opacity'     => array( CB2_TINYINT, (1),    NULL,     CB2_NOT_NULL, NULL, 100 ),
+				'priority'    => array( CB2_INT,     (11),   NULL,     CB2_NOT_NULL, NULL, 1 ),
 			),
 			'primary key' => array( $id_field ),
 			'triggers'    => array(

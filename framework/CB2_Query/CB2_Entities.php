@@ -461,9 +461,8 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 		$controller_action = 'book';
 		$display_strategy  = 'CB2_SingleItemAvailability';
 
-		// TODO: Needs to be configurable
-		// package a form plugin with CB2, e.g. ContactForm 7
 		// TODO: WP_Query of the shortcode needs to be configurable
+		// package a form plugin with CB2, e.g. ContactForm 7
 		// e.g. default period to show
 		// package Query Wrangler with CB2
 		// POC already done

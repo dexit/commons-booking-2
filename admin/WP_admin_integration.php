@@ -114,6 +114,12 @@ function cb2_admin_pages() {
 			'first'         => TRUE,
 			'advanced'      => TRUE,
 		),
+		'cb2-reflection' => array(
+			'page_title'    => 'Reflection',
+			'function'      => 'cb2_reflection',
+			'first'         => TRUE,
+			'advanced'      => TRUE,
+		),
 		'cb2-periods' => array(
 			'page_title'    => 'Periods',
 			'wp_query_args' => 'post_type=period',
@@ -409,7 +415,7 @@ function cb2_options_page() {
 		} else {
 		  print( "<li class='$class'>$indent$menu_title $count_bubble" );
 		}
-		if ( $details['description'] ) print( "<p class='cb2-description'>$details[description]</p>" );
+		if ( isset( $details['description'] ) ) print( "<p class='cb2-description'>$details[description]</p>" );
 		print( "</li>" );
 	}
 	print( '</ul>' );
@@ -451,6 +457,28 @@ function cb2_admin_page() {
 
 function cb2_calendar() {
 	require_once( 'calendar.php' );
+}
+
+function cb2_reflection() {
+	print( '<h1>Reflection</h1>' );
+
+	print( '<ul>' );
+	print( '<li><a href="?page=cb2-reflection&section=install_SQL">dump install SQL</a></li>' );
+	print( '<li><a href="?page=cb2-reflection&section=install_array">dump install array</a></li>' );
+	print( '</ul>' );
+
+	if ( $_GET['section'] ) {
+		switch ( $_GET['section'] ) {
+			case 'install_SQL':
+				print( '<pre>' );
+				print( htmlentities( CB2_Database::install_SQL() ) );
+				print( '</pre>' );
+				break;
+			case 'install_array':
+				krumo( CB2_Database::install_array() );
+				break;
+		}
+	}
 }
 
 function cb2_settings_list_page() {

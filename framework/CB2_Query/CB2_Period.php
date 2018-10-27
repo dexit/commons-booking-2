@@ -44,17 +44,17 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return array(
 			'name'    => self::$database_table,
 			'columns' => array(
-				// TYPE, (SIZE), UNSIGNED, NOT NULL, AUTO_INCREMENT, DEFAULT, COMMENT
-				$id_field     => array( INT,     (11),   UNSIGNED, NOT_NULL, AUTO_INCREMENT ),
-				'name'        => array( VARCHAR, (1024), NULL,     NOT_NULL, FALSE, 'period' ),
-				'description' => array( VARCHAR, (2048), NULL,     NULL,     FALSE, NULL ),
-				'datetime_part_period_start' => array( DATETIME, NULL, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
-				'datetime_part_period_end'   => array( DATETIME, NULL, NULL, NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
-				'recurrence_type'      => array( CHAR,     (1),  NULL,     NULL,     FALSE, NULL, 'recurrence_type:\nNULL - no recurrence\nD - daily recurrence (start and end time parts used only)\nW - weekly recurrence (day-of-week and start and end time parts used only)\nM - monthly recurrence (day-of-month and start and end time parts used only)\nY - yearly recurrence (full absolute start and end time parts used)' ),
-				'recurrence_frequency' => array( INT,      (11), UNSIGNED, NOT_NULL, FALSE, 1, 'e.g. Every 2 weeks' ),
-				'datetime_from'        => array( DATETIME, NULL, NULL,     NOT_NULL, FALSE, CURRENT_TIMESTAMP, 'Absolute date: when the period should start appearing in the calendar' ),
-				'datetime_to'          => array( DATETIME, NULL, NULL,     NULL,     FALSE, NULL, 'Absolute date: when the period should stop appearing in the calendar' ),
-				'recurrence_sequence'  => array( BIT,      (32), NULL,     NOT_NULL, FALSE, 0 ),
+				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+				$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+				'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL, FALSE, 'period' ),
+				'description' => array( CB2_VARCHAR, (2048), NULL,     NULL,     FALSE, NULL ),
+				'datetime_part_period_start' => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
+				'datetime_part_period_end'   => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
+				'recurrence_type'      => array( CB2_CHAR,     (1),  NULL,     NULL,     FALSE, NULL, 'recurrence_type:\nNULL - no recurrence\nD - daily recurrence (start and end time parts used only)\nW - weekly recurrence (day-of-week and start and end time parts used only)\nM - monthly recurrence (day-of-month and start and end time parts used only)\nY - yearly recurrence (full absolute start and end time parts used)' ),
+				'recurrence_frequency' => array( CB2_INT,      (11), CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1, 'e.g. Every 2 weeks' ),
+				'datetime_from'        => array( CB2_DATETIME, NULL, NULL,     CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Absolute date: when the period should start appearing in the calendar' ),
+				'datetime_to'          => array( CB2_DATETIME, NULL, NULL,     NULL,     FALSE, NULL, 'Absolute date: when the period should stop appearing in the calendar' ),
+				'recurrence_sequence'  => array( CB2_BIT,      (32), NULL,     CB2_NOT_NULL, FALSE, 0 ),
 			),
 			'primary key' => array( $id_field ),
 			'triggers'    => array(
