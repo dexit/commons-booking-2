@@ -2,7 +2,13 @@
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB2_User extends CB2_PostNavigator implements JsonSerializable {
+class CB2_WordPress_Entity extends CB2_PostNavigator {
+}
+
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+class CB2_User extends CB2_WordPress_Entity implements JsonSerializable {
   public static $all    = array();
   public static $schema = 'with-perioditems'; //this-only, with-perioditems
   public static $posts_table    = FALSE;
@@ -104,7 +110,7 @@ class CB2_User extends CB2_PostNavigator implements JsonSerializable {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB2_Post extends CB2_PostNavigator implements JsonSerializable {
+class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   public static $all = array();
   public static $PUBLISH        = 'publish';
   public static $AUTODRAFT      = 'auto-draft';

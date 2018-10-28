@@ -431,28 +431,6 @@ function cb2_admin_page() {
 	print( '<li>error_reporting: ' . error_reporting() . '</li>' );
 	print( '</ul>' );
 
-	// --------------------------- reset data form
-	print( '<hr/>' );
-	print( '<h2>data</h2>');
-	$and_posts = isset( $_POST['and_posts'] ); // Checkbox
-	if ( isset( $_POST['reset_data'] ) ) {
-		$password  = $_POST['reset_data'];
-		if ( CB2_Forms::reset_data( $password, $and_posts ) ) {
-			print( '<div>Data reset successful' . ( $and_posts ? ', with posts and postmeta': '' ) . '</div>' );
-		}
-	}
-	$and_posts_checked = ( $and_posts ? 'checked="1"' : '' );
-	$disabled          = ( isset( $_POST['reset_data'] ) ? 'disabled="1"' : '' );
-	print( "<form action='?page=cb2-admin' method='POST'>
-			<input type='hidden' name='reset_data' value='fryace4'/>
-			<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>And all CB2 wp_post data</label>
-			<input $disabled class='cb2-submit cb2-dangerous' type='submit' value='Clear All Data'/>
-		</form>" );
-
-	// --------------------------- Model
-	print( '<hr/>' );
-	print( '<h2>model</h2>');
-	print( '<img src="' . plugins_url( CB2_TEXTDOMAIN . '/admin/assets/model.png' ) . '"/>' );
 }
 
 function cb2_calendar() {
@@ -460,24 +438,85 @@ function cb2_calendar() {
 }
 
 function cb2_reflection() {
+	global $wpdb;
+
 	print( '<h1>Reflection</h1>' );
+	$and_posts         = isset( $_GET['and_posts'] ); // Checkbox
+	$and_posts_checked = ( $and_posts ? 'checked="1"' : '' );
+	$disabled          = ( isset( $_GET['reset_data'] ) ? 'disabled="1"' : '' );
+	print( '<div class="cb2-actions">' );
+	print( '<a href="?page=cb2-reflection">show install schema</a>' );
+	print( ' | <a href="?page=cb2-reflection&section=install_SQL">dump install SQL</a>' );
+	if ( WP_DEBUG ) print( ' | <form><div>
+			<input type="hidden" name="page" value="cb2-reflection"/>
+			<input type="hidden" name="section" value="reinstall">
+			<input class="cb2-submit cb2-dangerous" type="submit" value="re-install"/>
+			<input name="password" placeholder="password (fryace4)" value="">
+		</div></form>' );
+	if ( WP_DEBUG ) print( " | <form><div>
+			<input type='hidden' name='page' value='cb2-reflection'/>
+			<input type='hidden' name='section' value='reset_data'/>
+			<input type='hidden' name='password' value='fryace4'/>
+			<input $disabled class='cb2-submit cb2-dangerous' type='submit' value='clear all data'/>
+			<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>And all CB2 wp_post data</label>
+		</div></form>" );
+	print( '</div>' );
 
-	print( '<ul>' );
-	print( '<li><a href="?page=cb2-reflection&section=install_SQL">dump install SQL</a></li>' );
-	print( '<li><a href="?page=cb2-reflection&section=install_array">dump install array</a></li>' );
-	print( '</ul>' );
-
-	if ( $_GET['section'] ) {
+	if ( isset( $_GET['section'] ) ) {
 		switch ( $_GET['section'] ) {
+			case 'reset_data':
+				if ( CB2_Forms::reset_data( $_GET['password'], $and_posts ) ) {
+					print( '<div>Data reset successful' . ( $and_posts ? ', with posts and postmeta': '' ) . '</div>' );
+				}
+				break;
+			case 'reinstall':
+				if ( $_GET['password'] == 'fryace4' ) {
+					$sql = CB2_Database::install_SQL();
+					$wpdb->query( $sql );
+					print( 'Finished.' );
+				} else throw new Exception( 'Invlaid password' );
+				break;
 			case 'install_SQL':
 				print( '<pre>' );
 				print( htmlentities( CB2_Database::install_SQL() ) );
 				print( '</pre>' );
 				break;
-			case 'install_array':
-				krumo( CB2_Database::install_array() );
-				break;
 		}
+	} else {
+		$install_array = CB2_Database::install_array();
+
+		foreach ( $install_array['tables'] as $Class => $definition ) {
+			$post_type = ( property_exists( $Class, 'static_post_type' ) ? $Class::$static_post_type : '' );
+
+			print( "<h2>$Class (<i class='cb2-database-prefix'>$wpdb->prefix</i>$definition[name])</h2>" );
+			if ( $post_type ) print( "<div>post_type: <b>$post_type</b></div>" );
+
+			if ( isset( $install_array['views'][$Class] ) ) {
+				print( "views: <ul class='cb2-database-views'>" );
+				foreach ( $install_array['views'][$Class] as $name => $body ) {
+					print( "<li>$name</li>" );
+				}
+				print( "</ul>" );
+			}
+
+			print( "<table class='cb2-database-table'><thead>" );
+			print( "<th>name</th><th>type</th><th>size</th><th>unsigned</th><th>not null</th><th>auto increment</th><th>default</th><th>comment</th>" );
+			print( "</thead><tbody>" );
+			foreach ( $definition['columns'] as $name => $definition ) {
+				print( "<tr>" );
+				print( "<td>$name</td>" );
+				foreach ( $definition as $value ) {
+					print( "<td>$value</td>" );
+				}
+				print( "</tr>" );
+			}
+			print( "</tbody></table>" );
+		}
+
+		// --------------------------- Model
+		print( '<hr/>' );
+		print( '<h2>model</h2>');
+		print( '<img src="' . plugins_url( CB2_TEXTDOMAIN . '/admin/assets/model.png' ) . '"/>' );
 	}
 }
 
