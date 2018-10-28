@@ -451,7 +451,7 @@ function cb2_reflection() {
 			<input type="hidden" name="page" value="cb2-reflection"/>
 			<input type="hidden" name="section" value="reinstall">
 			<input class="cb2-submit cb2-dangerous" type="submit" value="re-install"/>
-			<input name="password" placeholder="password" value="">
+			<input name="password" placeholder="password (fryace4)" value="">
 		</div></form>' );
 	if ( WP_DEBUG ) print( " | <form><div>
 			<input type='hidden' name='page' value='cb2-reflection'/>
