@@ -50,6 +50,33 @@ h3 a {
 	font-size:12px;
 	font-weight:normal;
 }
+.cb2-actions form,
+.cb2-actions form > div {
+	display:inline;
+}
+.cb2-database-table {
+	border-collapse:collapse;
+	background-color:#fff;
+	border:1px solid #d7d7d7;
+}
+.cb2-database-views li,
+.cb2-database-views {
+	display:inline;
+	margin-right:5px;
+	font-weight:bold;
+}
+.cb2-database-table th {
+	border:1px solid #d7d7d7;
+	padding: 4px 4px;
+}
+.cb2-database-table td {
+	border:1px solid #d7d7d7;
+	padding: 0px 4px;
+}
+.cb2-database-prefix {
+	font-weight:normal;
+	color:#555;
+}
 body .cmb2-id-recurrence-sequence li {
 	text-align:center;
 	border:1px solid #c7c7c7;

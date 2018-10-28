@@ -32,12 +32,12 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 	 */
 	private $wp_query;
 
-	function __construct( DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = NULL, Array $args = NULL ) {
+	function __construct( DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = NULL, Array $query = NULL ) {
 		// Defaults
 		if ( is_null( $startdate ) ) $startdate   = ( isset( $_GET['startdate'] ) ? new DateTime( $_GET['startdate'] ) : new DateTime() );
 		if ( is_null( $enddate ) )   $enddate     = ( isset( $_GET['enddate'] )   ? new DateTime( $_GET['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
 		if ( is_null( $view_mode ) ) $view_mode   = ( isset( $_GET['view_mode'] ) ? $_GET['view_mode'] : CB2_Week::$static_post_type );
-		if ( is_null( $args ) )      $args        = array();
+		if ( is_null( $query ) )      $query        = array();
 
 		// Properties
 		$this->startdate = $startdate;
@@ -45,22 +45,23 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		$this->view_mode = $view_mode;
 
 		// Construct args
-		if ( ! isset( $args['post_status'] ) )    $args['post_status'] = CB2_Post::$PUBLISH;
-		if ( ! isset( $args['post_type'] ) )      $args['post_type']   = CB2_PeriodItem::$all_post_types;
-		if ( ! isset( $args['posts_per_page'] ) ) $args['posts_per_page'] = -1;
-		if ( ! isset( $args['order'] ) )          $args['order'] = 'ASC'; // defaults to post_date
-		if ( ! isset( $args['date_query'] ) )     $args['date_query'] = array();
-		if ( ! isset( $args['date_query']['after'] ) )  $args['date_query']['after']  = $this->startdate->format( CB2_Query::$datetime_format );
-		if ( ! isset( $args['date_query']['before'] ) ) $args['date_query']['before'] = $this->enddate->format( CB2_Query::$datetime_format );
+		if ( ! isset( $query['post_status'] ) )    $query['post_status'] = CB2_Post::$PUBLISH;
+		if ( ! isset( $query['post_type'] ) )      $query['post_type']   = CB2_PeriodItem::$all_post_types;
+		if ( ! isset( $query['posts_per_page'] ) ) $query['posts_per_page'] = -1;
+		if ( ! isset( $query['order'] ) )          $query['order'] = 'ASC'; // defaults to post_date
+		if ( ! isset( $query['date_query'] ) )     $query['date_query'] = array();
+		if ( ! isset( $query['date_query']['after'] ) )  $query['date_query']['after']  = $this->startdate->format( CB2_Query::$datetime_format );
+		if ( ! isset( $query['date_query']['before'] ) ) $query['date_query']['before'] = $this->enddate->format( CB2_Query::$datetime_format );
 		// This sets which CB2_(ObjectType) is the resultant primary posts array
 		// e.g. CB2_Weeks generated from the CB2_PeriodItem records
-		if ( ! isset( $args['date_query']['compare'] ) ) $args['date_query']['compare'] = $this->view_mode;
+		if ( ! isset( $query['date_query']['compare'] ) ) $query['date_query']['compare'] = $this->view_mode;
 
-		$this->logs = array();
-		$this->args = $args;
-		$this->query();
+		// Retrieve all the posts immediately (like WP_Query)
+		$this->logs  = array();
+		$this->query = $query;
+		$this->query( $this->query );
 
-		// Expost the private WP_Query in WP_DEBUG mode
+		// Expose the private WP_Query in WP_DEBUG mode
 		if ( WP_DEBUG ) $this->debug_wp_query = $this->wp_query;
 	}
 
@@ -69,8 +70,10 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 	}
 
 	// -------------------------------------------- query functions
-	function query() {
-		$this->wp_query = new WP_Query( $this->args );
+	function query( Array $query = NULL ) {
+		if ( is_null( $query ) ) $query = $this->query;
+
+		$this->wp_query = new WP_Query( $query );
 		$this->wp_query->display_strategy = $this;
 		$this->query   = $this->wp_query->query;
 		$this->request = $this->wp_query->request;
@@ -126,7 +129,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 	}
 
 	// -------------------------------------------- period analysis functions
-	function overlap_perioditems( $perioditem1 ) {
+	function overlap_perioditems( CB2_PeriodItem $perioditem1 ) {
 		$overlap_perioditems = array();
 		foreach ( $this->wp_query->posts as $perioditem2 ) {
 			if ( $this->overlaps( $perioditem1, $perioditem2 ) )
@@ -135,7 +138,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		return $overlap_perioditems;
 	}
 
-	function overlaps_time( $perioditem1, $perioditem2 ) {
+	function overlaps_time( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
 		return ( $perioditem1->datetime_period_item_start >= $perioditem2->datetime_period_item_start
 			    && $perioditem1->datetime_period_item_start <= $perioditem2->datetime_period_item_end )
 			||   ( $perioditem1->datetime_period_item_end   >= $perioditem2->datetime_period_item_start
@@ -146,28 +149,28 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		return is_null( $object1 ) || is_null( $object2 ) || $object1 == $object2;
   }
 
-  function overlaps_perioditem_object( $perioditem1, $perioditem2, $property_name ) {
+  function overlaps_perioditem_object( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2, String $property_name ) {
 		$object1 = ( property_exists( $perioditem1, $property_name ) ? $perioditem1->$property_name : NULL );
 		$object2 = ( property_exists( $perioditem2, $property_name ) ? $perioditem2->$property_name : NULL );
 		return $this->overlaps_object( $object1, $object2 );
   }
 
-  function overlaps_locaton( $perioditem1, $perioditem2 ) {
+  function overlaps_locaton( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
 		return $this->overlaps_perioditem_object( $perioditem1, $perioditem2, 'location' );
   }
 
-  function overlaps_item( $perioditem1, $perioditem2 ) {
+  function overlaps_item( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
 		return $this->overlaps_perioditem_object( $perioditem1, $perioditem2, 'item' );
   }
 
-  function overlaps( $perioditem1, $perioditem2 ) {
+  function overlaps( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
 		return $perioditem1 != $perioditem2
 			&&   $this->overlaps_time(    $perioditem1, $perioditem2 )
 			&&   $this->overlaps_locaton( $perioditem1, $perioditem2 )
 			&&   $this->overlaps_item(    $perioditem1, $perioditem2 );
   }
 
-  function process_perioditem( $perioditem, $overlap_perioditems ) {
+  function process_perioditem( CB2_PeriodItem $perioditem, Array $overlap_perioditems ) {
 		if ( ! property_exists( $perioditem, '_cb2_processed' ) || ! $perioditem->_cb2_processed ) {
 			$perioditem->priority_original   = $perioditem->period_entity->period_status_type->priority;
 			$perioditem->overlap_perioditems = $overlap_perioditems;
@@ -178,14 +181,14 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		return $perioditem;
   }
 
-  function markup( &$perioditem ) {
+  function markup( CB2_PeriodItem &$perioditem ) {
   }
 
-  function set_processed( &$perioditem ) {
+  function set_processed( CB2_PeriodItem &$perioditem ) {
 		$perioditem->_cb2_processed = TRUE;
   }
 
-  function dynamic_priority( $perioditem, $overlap_perioditems ) {
+  function dynamic_priority( CB2_PeriodItem $perioditem, Array $overlap_perioditems ) {
 		// Dictate the new display order
 		// only relevant for partial overlap
 		// for example a morning slot overlapping a full-day open period
@@ -193,7 +196,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
   }
 
   // ---------------------------------------------------- Filter methods
-  protected function filter_can( $perioditems, $Class, $period_status_type_flags ) {
+  protected function filter_can( Array $perioditems, Int $period_status_type_flags, String $Class = NULL ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
 			if ( ! $Class || is_a( $perioditem, $Class ) ) {
@@ -204,7 +207,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		return $perioditems_filtered;
   }
 
-  protected function filter_cannot( $perioditems, $Class, $period_status_type_flags ) {
+  protected function filter_cannot( Array $perioditems, Int $period_status_type_flags, String $Class = NULL ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
 			if ( ! $Class || is_a( $perioditem, $Class ) ) {
@@ -215,7 +218,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		return $perioditems_filtered;
   }
 
-  protected function filter_entity( $perioditems, $entity_type, $entity ) {
+  protected function filter_entity( Array $perioditems, String $entity_type, CB2_WordPress_Entity $entity ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
 			if ( property_exists( $perioditem->period_entity, $entity_type )
@@ -227,7 +230,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		return $perioditems_filtered;
   }
 
-  protected function filter_higher_priority( $perioditems, $priority ) {
+  protected function filter_higher_priority( Array $perioditems, Int $priority ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
 			if ( $perioditem->period_entity->period_status_type->priority >= $priority ) {
@@ -237,7 +240,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		return $perioditems_filtered;
   }
 
-  protected function intersect( $perioditem, $perioditems ) {
+  protected function intersect( CB2_PeriodItem $perioditem, Array $perioditems ) {
 		if ( count( $perioditems ) ) {
 			// TODO: period intersect()
 			// this functionality can wait for partial overlap requirement
@@ -248,7 +251,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		return $perioditem;
   }
 
-  protected function exclude( $perioditem, $perioditems ) {
+  protected function exclude( CB2_PeriodItem $perioditem, Array $perioditems ) {
 		if ( count( $perioditems ) ) {
 			// Assume that these completely cover the target for now
 			$perioditem = NULL;
@@ -265,7 +268,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 class CB2_Everything extends CB2_PeriodInteractionStrategy {
-	function __construct( $post ) {
+	function __construct( CB2_Post $post ) {
 		parent::__construct();
 	}
 }
@@ -275,25 +278,25 @@ class CB2_Everything extends CB2_PeriodInteractionStrategy {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 class CB2_SingleItemAvailability extends CB2_PeriodInteractionStrategy {
-	function __construct( CB2_Item $item = NULL, DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = 'week', Array $args = array() ) {
+	function __construct( CB2_Item $item = NULL, DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = 'week', Array $query = array() ) {
 		global $post;
 		$this->item = ( $item ? $item : $post );
 
-		if ( ! isset( $args['meta_query'] ) ) $args['meta_query'] = array();
-		if ( ! isset( $args['meta_query']['item_ID_clause'] ) ) $args['meta_query']['item_ID_clause'] = array(
+		if ( ! isset( $query['meta_query'] ) ) $query['meta_query'] = array();
+		if ( ! isset( $query['meta_query']['item_ID_clause'] ) ) $query['meta_query']['item_ID_clause'] = array(
 			'key'     => 'item_ID',
 			'value'   => array( $this->item->ID, 0 ),
 			'compare' => 'IN',
 		);
 
-		parent::__construct( $startdate, $enddate, $view_mode, $args );
+		parent::__construct( $startdate, $enddate, $view_mode, $query );
 	}
 
-	function factory_from_wp_query( $wp_query ) {
+	function factory_from_wp_query( WP_Query $wp_query ) {
 		// TODO: factory_from_wp_query
 	}
 
-	function markup( &$perioditem ) {
+	function markup( CB2_PeriodItem &$perioditem ) {
 		$period_status_type = $perioditem->period_entity->period_status_type;
 
 		// Prevent any none-availability perioditems being selected
@@ -304,7 +307,7 @@ class CB2_SingleItemAvailability extends CB2_PeriodInteractionStrategy {
 		}
 	}
 
-	function dynamic_priority( $perioditem, $overlaps ) {
+	function dynamic_priority( CB2_PeriodItem $perioditem, Array $overlaps ) {
 		/* Show a single items availability
 		* requiring its location to have an associated collect / return period
 		* e.g. open
@@ -342,7 +345,7 @@ class CB2_SingleItemAvailability extends CB2_PeriodInteractionStrategy {
 				throw new Exception( 'CB2_SingleItemAvailability: CB2_PeriodItem_Timeframe for different item' );
 
 			// Require THE location pickup / return period
-			$location_cans  = $this->filter_can( $overlaps, 'CB2_PeriodItem_Location', CB2_ANY_ACTION );
+			$location_cans  = $this->filter_can( $overlaps, CB2_ANY_ACTION, 'CB2_PeriodItem_Location' );
 			$location_cans  = $this->filter_entity( $location_cans, 'location', $location );
 			$perioditem     = $this->intersect( $perioditem, $location_cans );
 			if ( is_null( $perioditem ) ) {
@@ -350,7 +353,7 @@ class CB2_SingleItemAvailability extends CB2_PeriodInteractionStrategy {
 				$this->log( 'No location actions available' );
 			} else {
 				// Avoid Blocking period-items
-				$all_cannots    = $this->filter_cannot( $overlaps, CB2_ANY_CLASS, CB2_ANY_ACTION );
+				$all_cannots    = $this->filter_cannot( $overlaps, CB2_ANY_ACTION );
 				$all_cannots    = $this->filter_higher_priority( $all_cannots, $priority ); // >=
 				$perioditem     = $this->exclude( $perioditem, $all_cannots );
 				if ( is_null( $perioditem ) ) {
@@ -368,7 +371,7 @@ class CB2_SingleItemAvailability extends CB2_PeriodInteractionStrategy {
 			// note that we are allowing the possibility here
 			// of this single item being concurrently available in 2 separate locations
 			// at the same time
-			$availabilities = $this->filter_can( $overlaps, 'CB2_PeriodItem_Timeframe', CB2_ANY_ACTION );
+			$availabilities = $this->filter_can( $overlaps, CB2_ANY_ACTION, 'CB2_PeriodItem_Timeframe' );
 			$availabilities = $this->filter_entity( $availabilities, 'item',     $this->item );
 			$availabilities = $this->filter_entity( $availabilities, 'location', $location );
 			if ( ! count( $availabilities ) ) {
