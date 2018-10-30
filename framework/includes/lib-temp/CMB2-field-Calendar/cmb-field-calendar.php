@@ -124,17 +124,20 @@ class CMB2_Field_Calendar {
         // TODO: the wp_cb2_view_sequence_date is limited to 1000 days at the moment
         // can we auto-extend this where necessary?
 				print( "
-				<form method='POST'><div class='cb2-calendar'>
+				<div class='cb2-javascript-form cb2-calendar'>
 					<div class='entry-header'>
-						<div class='cb2-todo alignright actions bulkactions'>
-							<label for='bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label>
-							<select name='bulk-action' id='bulk-action-selector-top'>
-								<option value='-1'>Bulk Actions</option>
-									<option value='block' class='hide-if-no-js'>Block</option>
-									<option value='unblock'>UnBlock</option>
-									<option value='sequence'>Set Sequence</option>
-								</select>
-								<input type='submit' id='doaction' class='button action' value='Apply'>
+						<div class='hide-if-no-js alignright actions bulkactions'>
+							<label for='cb2-calendar-bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label>
+							<!-- no @name on these form elements because it is a *nested* form
+								it is submitted only with JavaScript
+								@js-name => @name during submission
+							-->
+							<select class='hide-if-no-js' id='cb2-calendar-bulk-action-selector-top' js-name='do_action'>
+								<option value=''>Bulk Actions</option>
+								<option value='CB2_PeriodEntity::block'>Block</option>
+								<option value='CB2_PeriodEntity::unblock'>UnBlock</option>
+							</select>
+							<input type='button' class='hide-if-no-js button action' value='Apply'>
 						</div>
 
 						<div class='cb2-view-selector'>View:
@@ -162,7 +165,7 @@ class CMB2_Field_Calendar {
 							| <a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
 						</div>
 					</div>
-				</div></form>" );
+				</div>" );
 
         $field_type_object->_desc( true, true );
     }

@@ -185,11 +185,13 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		unset( $actions['view'] );
 	}
 
-	static function do_action_attach( $period_ID, $period_group_IDs ) {
+	static function do_action_attach( $args ) {
 		// Link the Period to the PeriodGroup
 		global $wpdb;
 
 		// Convert inputs
+		$period_ID        = $args['period_ID'];
+		$period_group_IDs = $args['period_group_IDs'];
 		$period_group_IDs = explode( ',', $period_group_IDs );
 		$period_group_ids = array();
 		foreach ( $period_group_IDs as $period_group_ID ) {
@@ -215,11 +217,13 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		}
 	}
 
-	static function do_action_detach( $period_ID, $period_group_IDs ) {
+	static function do_action_detach( $args ) {
 		// Link the Period to the PeriodGroup
 		global $wpdb;
 
 		// Convert inputs
+		$period_ID        = $args['period_ID'];
+		$period_group_IDs = $args['period_group_IDs'];
 		$period_group_IDs = explode( ',', $period_group_IDs );
 		$period_group_ids = array();
 		foreach ( $period_group_IDs as $period_group_ID ) {

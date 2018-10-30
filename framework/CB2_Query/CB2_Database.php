@@ -32,19 +32,17 @@ class CB2_Database {
 
   public static function install_array() {
 		global $wpdb;
-		$install_array_tables = array();
-		$install_array_views  = array();
+		$install_array = array();
 
 		foreach ( get_declared_classes() as $Class ) { // PHP 4
 			if ( CB2_Query::has_own_method( $Class, 'database_table_schema' ) )
-				$install_array_tables[ $Class ] = $Class::database_table_schema( $wpdb->prefix );
+				$install_array[ $Class ][ 'table' ] = $Class::database_table_schema( $wpdb->prefix );
 			if ( CB2_Query::has_own_method( $Class, 'database_views' ) )
-				$install_array_views[ $Class ] = $Class::database_views( $wpdb->prefix );
+				$install_array[ $Class ][ 'views' ] = $Class::database_views( $wpdb->prefix );
+			if ( CB2_Query::has_own_method( $Class, 'database_data' ) )
+				$install_array[ $Class ][ 'data' ]  = $Class::database_data( $wpdb->prefix );
 		}
-		return array(
-			'tables' => $install_array_tables,
-			'views'  => $install_array_views,
-		);
+		return $install_array;
   }
 
   public static function install_SQL() {
@@ -562,11 +560,13 @@ class CB2_Database {
   static function posts_table( $Class ) {
 		$posts_table = FALSE;
 
-		if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
-			$post_type_stub = CB2_Query::substring_before( $Class::$static_post_type );
-			$posts_table    = "cb2_view_{$post_type_stub}_posts";
-			if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
-				$posts_table = $Class::$posts_table;
+		if ( property_exists( $Class, 'static_post_type' ) ) {
+			if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
+				$post_type_stub = CB2_Query::substring_before( $Class::$static_post_type );
+				$posts_table    = "cb2_view_{$post_type_stub}_posts";
+				if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
+					$posts_table = $Class::$posts_table;
+			}
 		}
 		return $posts_table;
 	}
@@ -574,15 +574,17 @@ class CB2_Database {
   static function postmeta_table( $Class, &$meta_type = NULL, &$meta_table_stub = NULL ) {
 		$postmeta_table = FALSE;
 
-		if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
-			if ( property_exists( $Class, 'static_post_type' ) ) {
-				$meta_type       = CB2_Query::substring_before( $Class::$static_post_type );
-				$meta_table_stub = "{$meta_type}meta";
+		if ( property_exists( $Class, 'static_post_type' ) ) {
+			if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
+				if ( property_exists( $Class, 'static_post_type' ) ) {
+					$meta_type       = CB2_Query::substring_before( $Class::$static_post_type );
+					$meta_table_stub = "{$meta_type}meta";
 
-				if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) ) {
-					$postmeta_table  = $Class::$postmeta_table;
-				} else {
-					$postmeta_table  = "cb2_view_{$meta_table_stub}";
+					if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) ) {
+						$postmeta_table  = $Class::$postmeta_table;
+					} else {
+						$postmeta_table  = "cb2_view_{$meta_table_stub}";
+					}
 				}
 			}
 		}

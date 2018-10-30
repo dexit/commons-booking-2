@@ -2,6 +2,8 @@
 require_once( 'CB2_Period.php' );
 
 abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializable {
+	public  static $database_table = 'cb2_perioditem_settings';
+	public  static $description = 'CB2_PeriodItem uses <b>triggers</b> to update the primary postmeta table for performance.';
   public  static $all              = array();
   public  static $static_post_type = 'perioditem';
   public  static $postmeta_table   = FALSE;
@@ -23,6 +25,24 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
   private $priority_overlap_periods     = array();
   private $top_priority_overlap_period  = NULL;
 
+	static function database_table_name() { return self::$database_table; }
+
+  static function database_table_schema( $prefix ) {
+		return array(
+			'name'    => self::$database_table,
+			'columns' => array(
+				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+				'period_id'        => array( INT, (11), UNSIGNED, NOT_NULL ),
+				'recurrence_index' => array( INT, (11), UNSIGNED, NOT_NULL ),
+				'blocked'          => array( BIT, (1),  NULL,     NOT_NULL, NULL, 0 ),
+			),
+			'primary key' => array( 'period_id', 'recurrence_index' ),
+			'foreign keys' => array(
+				'period_id' => array( 'cb2_periods', 'period_id'),
+			),
+		);
+  }
+
   static function database_views() {
 		return array(
 			'cb2_view_sequence_num'        => "select 0 AS `num` union all select 1 AS `1` union all select 2 AS `2` union all select 3 AS `3` union all select 4 AS `4` union all select 5 AS `5` union all select 6 AS `6` union all select 7 AS `7` union all select 8 AS `8` union all select 9 AS `9`",
@@ -40,7 +60,8 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
     $period,
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end
+    $datetime_period_item_end,
+    $blocked
   ) {
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
@@ -90,13 +111,54 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		if ( $this->ID ) unset( self::$all[$this->ID] );
   }
 
+  function is_blocked() {
+		return $this->blocked;
+  }
+
+  function block() {
+		global $wpdb;
+		$rows_affected = $wpdb->update(
+			"{$wpdb->prefix}cb2_perioditem_settings",
+			array(
+				'blocked' => 1,
+			),
+			array(
+				'period_id'        => $this->period->id(),
+				'recurrence_index' => $this->recurrence_index,
+			)
+		);
+		if ( ! $rows_affected ) $wpdb->insert(
+			"{$wpdb->prefix}cb2_perioditem_settings",
+			array(
+				'period_id'        => $this->period->id(),
+				'recurrence_index' => $this->recurrence_index,
+				'blocked'          => 1,
+			)
+		);
+  }
+
+  function unblock() {
+		global $wpdb;
+		// Manual invocation of UPDATE because of BIT field
+		$wpdb->query( $wpdb->prepare(
+			"UPDATE {$wpdb->prefix}cb2_perioditem_settings
+				SET blocked = b'0'
+				WHERE period_id = %d and recurrence_index = %d",
+			array(
+				$this->period->id(),
+				$this->recurrence_index,
+			)
+		) );
+  }
+
   static function factory_subclass(
 		$ID,
 		$period_entity, // CB2_PeriodEntity
     $period,        // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end
+    $datetime_period_item_end,
+    $blocked
   ) {
 		// provides appropriate sub-class based on final object parameters
 		$object = NULL;
@@ -106,7 +168,8 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
-				$datetime_period_item_end
+				$datetime_period_item_end,
+				$blocked
 			);
 		else if ( $item )     $object = CB2_PeriodItem_Timeframe::factory(
 				$ID,
@@ -114,7 +177,8 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
-				$datetime_period_item_end
+				$datetime_period_item_end,
+				$blocked
 			);
 		else if ( $location ) $object = CB2_PeriodItem_Location::factory(
 				$ID,
@@ -122,7 +186,8 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
-				$datetime_period_item_end
+				$datetime_period_item_end,
+				$blocked
 			);
 		else                  $object = CB2_PeriodItem_Global::factory(
 				$ID,
@@ -130,7 +195,8 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 				$period,
 				$recurrence_index,
 				$datetime_period_item_start,
-				$datetime_period_item_end
+				$datetime_period_item_end,
+				$blocked
 			);
 
 		return $object;
@@ -206,6 +272,7 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
     if ( $this->period_entity ) $classes .= $this->period_entity->period_status_type->classes();
     $classes .= ' cb2-period-group-type-' . $this->post_type();
     $classes .= ( $this->top_priority_overlap_period ? ' cb2-perioditem-has-overlap' : ' cb2-perioditem-no-overlap' );
+    if ( $this->blocked ) $classes .= ' cb2-blocked';
     return $classes;
   }
 
@@ -380,7 +447,8 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end
+		$datetime_period_item_end,
+    $blocked
   ) {
 		$this->post_type = self::$static_post_type;
 
@@ -390,7 +458,8 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
-			$datetime_period_item_end
+			$datetime_period_item_end,
+			$blocked
     );
   }
 
@@ -401,7 +470,8 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
 			NULL, // period
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
-			$properties['datetime_period_item_end']
+			$properties['datetime_period_item_end'],
+			$properties['blocked']
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -415,7 +485,8 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
     $period,     // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end
+    $datetime_period_item_end,
+    $blocked
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( $ID && isset( self::$all[$ID] ) ) {
@@ -459,7 +530,8 @@ class CB2_PeriodItem_Global extends CB2_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end
+		$datetime_period_item_end,
+    $blocked
   ) {
     parent::__construct(
 			$ID,
@@ -467,7 +539,8 @@ class CB2_PeriodItem_Global extends CB2_PeriodItem {
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
-			$datetime_period_item_end
+			$datetime_period_item_end,
+			$blocked
     );
   }
 
@@ -478,7 +551,8 @@ class CB2_PeriodItem_Global extends CB2_PeriodItem {
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
-			$properties['datetime_period_item_end']
+			$properties['datetime_period_item_end'],
+			$properties['blocked']
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -492,7 +566,8 @@ class CB2_PeriodItem_Global extends CB2_PeriodItem {
     $period,     // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end
+    $datetime_period_item_end,
+    $blocked
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( $ID && isset( self::$all[$ID] ) ) {
@@ -531,7 +606,8 @@ class CB2_PeriodItem_Location extends CB2_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end
+		$datetime_period_item_end,
+    $blocked
 	) {
     parent::__construct(
 			$ID,
@@ -539,7 +615,8 @@ class CB2_PeriodItem_Location extends CB2_PeriodItem {
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
-			$datetime_period_item_end
+			$datetime_period_item_end,
+			$blocked
     );
     $this->period_entity->location->add_perioditem( $this );
     array_push( $this->posts, $this->period_entity->location );
@@ -552,7 +629,8 @@ class CB2_PeriodItem_Location extends CB2_PeriodItem {
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
-			$properties['datetime_period_item_end']
+			$properties['datetime_period_item_end'],
+			$properties['blocked']
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -566,7 +644,8 @@ class CB2_PeriodItem_Location extends CB2_PeriodItem {
     $period,     // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end
+    $datetime_period_item_end,
+    $blocked
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( $ID && isset( self::$all[$ID] ) ) {
@@ -644,7 +723,8 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end
+		$datetime_period_item_end,
+    $blocked
   ) {
     parent::__construct(
 			$ID,
@@ -652,7 +732,8 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
-			$datetime_period_item_end
+			$datetime_period_item_end,
+			$blocked
     );
     array_push( $this->posts, $this->period_entity->location );
     array_push( $this->posts, $this->period_entity->item );
@@ -666,7 +747,8 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
-			$properties['datetime_period_item_end']
+			$properties['datetime_period_item_end'],
+			$properties['blocked']
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -680,7 +762,8 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
     $period,        // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end
+    $datetime_period_item_end,
+    $blocked
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( $ID && isset( self::$all[$ID] ) ) {
@@ -758,7 +841,8 @@ class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
     $period,
 		$recurrence_index,
 		$datetime_period_item_start,
-		$datetime_period_item_end
+		$datetime_period_item_end,
+    $blocked
   ) {
     parent::__construct(
 			$ID,
@@ -766,7 +850,8 @@ class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
 			$period,
 			$recurrence_index,
 			$datetime_period_item_start,
-			$datetime_period_item_end
+			$datetime_period_item_end,
+			$blocked
 		);
     array_push( $this->posts, $this->period_entity->location );
     array_push( $this->posts, $this->period_entity->item );
@@ -781,7 +866,8 @@ class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
-			$properties['datetime_period_item_end']
+			$properties['datetime_period_item_end'],
+			$properties['blocked']
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -795,7 +881,8 @@ class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
     $period,        // CB2_Period
     $recurrence_index,
     $datetime_period_item_start,
-    $datetime_period_item_end
+    $datetime_period_item_end,
+    $blocked
   ) {
     // Design Patterns: Factory Singleton with Multiton
 		if ( $ID && isset( self::$all[$ID] ) ) {

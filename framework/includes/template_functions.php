@@ -36,6 +36,10 @@ class CB2 {
 		return $html;
 	}
 
+	public static function the_post_type() {
+		echo get_post_type();
+	}
+
 	public static function the_calendar_footer( $query = NULL, $classes = '', $type = 'td', $before = '<tfoot><tr>', $after = '</tr></tfoot>' ) {
 		echo self::get_the_calendar_footer( $query, $classes, $type, $before, $after );
 	}
@@ -80,6 +84,15 @@ class CB2 {
 	public static function get_the_period_status_type_name() {
 		global $post;
 		return ( is_object( $post ) && method_exists( $post, 'period_status_type_name' ) ? $post->period_status_type_name() : '' );
+	}
+
+	public static function the_blocked() {
+		echo ( self::is_blocked() ? __('BLOCKED') : '' );
+	}
+
+	public static function is_blocked() {
+		global $post;
+		return ( is_object( $post ) && method_exists( $post, 'is_blocked' ) && $post->is_blocked() );
 	}
 
 	public static function the_summary() {

@@ -1,6 +1,42 @@
 (function($) {
   'use strict';
   $(document).ready(function(){
+		$('.cb2-javascript-form input[type=button]').click(function(){
+			var sExisting;
+			var sRedirect = document.location;
+			var sQuery    = unescape(document.location.search.replace(/^\?/, ''));
+			var aQuery    = sQuery.split('&');
+			var jForm     = $(this).closest('.cb2-javascript-form');
+			var jInputs   = jForm.find(":input");
+
+			jInputs.each(function(){
+				// Attribute switching so that the form inputs can exist inside the outer form
+				var sJSName =  $(this).attr('js-name');
+				if (sJSName)   $(this).attr('name', sJSName);
+				else sJSName = $(this).attr('name');
+
+				// Remove existing parameters
+				// so that double submits do not aggregate
+				if (sJSName) {
+					sJSName = sJSName.replace(/\[\d+\]/, '[]');
+					var i = aQuery.length;
+					while (i > 0) {
+						i--;
+						sExisting = aQuery[i].replace(/=.*/, '').replace(/\[[0-9]+\]/, '[]');
+						if (sExisting == sJSName)
+							aQuery.splice(i, 1);
+					}
+				}
+			});
+
+			sQuery  = aQuery.join('&');
+			sQuery += '&';
+			sQuery += jInputs.serialize()
+			sQuery += '&redirect=' + escape(sRedirect);
+
+			document.location = document.location.pathname + '?' + sQuery;
+		});
+
 		$('.cb2-template-available').click(function(e){
 			var checkbox      = $(this).children('.cb2-perioditem-selector');
 			var cssClass      = $(this).attr('class').trim();
