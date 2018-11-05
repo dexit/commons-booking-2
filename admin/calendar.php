@@ -59,8 +59,8 @@ $args = array(
 	'order'          => 'ASC',          // defaults to post_date
 	'show_overridden_periods' => 'yes', // TODO: doesnt work yet: use the query string
 	'date_query'     => array(
-		'after'   => $startdate_string,   // TODO: Needs to compare enddate > after
-		'before'  => $enddate_string,     // TODO: Needs to compare startdate < before
+		'after'   => $startdate_string,
+		'before'  => $enddate_string,
 		'compare' => $schema_type,
 	),
 	'meta_query' => $meta_query,        // Location, Item, User
@@ -84,10 +84,11 @@ $period_status_type_options_html = count_options( CB2_Forms::period_status_type_
 $period_entity_options_html      = count_options( CB2_Forms::period_entity_options() );
 
 print( "<h1>Calendar <a class='cb2-WP_DEBUG $class_WP_DEBUG' href='admin.php?page=cb2-calendar&amp;extended=1'>" . basename( __FILE__ ) . ": extended debug form</a></h1>" );
+
 print( <<<HTML
 	<form>
 		<input name='page' type='hidden' value='cb2-calendar'/>
-		<input type='text' name='startdate' value='$startdate_string'/> =&gt;
+		<input type='text' name='startdate' value='$startdate_string'/> to
 		<input type='text' name='enddate' value='$enddate_string'/>
 		Location:<select name="location_ID">$location_options</select>
 		Item:<select name="item_ID">$item_options</select>
@@ -111,6 +112,9 @@ print( <<<HTML
 	</form>
 HTML
 );
+
+if ( new DateTime( $startdate_string ) > new DateTime( $enddate_string ) ) // PHP 5.2.2
+	print( '<div class="cb2-warning cb2-notice">start date is more than end date</div>' );
 
 // --------------------------------------- Debug
 if ( WP_DEBUG ) {

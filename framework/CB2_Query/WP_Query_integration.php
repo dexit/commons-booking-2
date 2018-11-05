@@ -54,7 +54,7 @@ add_filter( 'query_vars',       'cb2_query_vars' );
 // TODO: make a static plugin setting
 // TODO: analyse potential conflicts with other installed post_id fake plugins
 //   based on this plugin
-//add_filter( 'query',             'cb2_wpdb_query_select' );
+// add_filter( 'query',             'cb2_wpdb_query_select' );
 add_filter( 'get_post_metadata', 'cb2_get_post_metadata', 10, 4 );
 
 // --------------------------------------------- Adding / Updating posts
@@ -105,6 +105,11 @@ add_filter( 'loop_start',       'cb2_loop_start' );
 add_action( 'init', 'cb2_init_register_post_types' );
 add_action( 'wp_enqueue_scripts',    'cb2_wp_enqueue_scripts' );
 add_action( 'admin_enqueue_scripts', 'cb2_admin_enqueue_scripts' );
+
+function cb2_wpdb_query_select( $sql ) {
+	print( "<div>$sql</div>" );
+	return $sql;
+}
 
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------

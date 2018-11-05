@@ -323,6 +323,32 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->period_status_type = $period_status_type;
   }
 
+  static function do_action_generic( $args ) {
+		// TODO: do_action_block()
+		$do_action_2 = $args['do_action'];   // <Class>::<action>
+		$perioditems = $args['perioditems']; // <post_type>::<ID>
+
+		$details     = explode( '::', $do_action_2 );
+		$Class       = $details[0];
+		$do_action   = $details[1];
+
+		foreach ( $perioditems as $perioditem ) {
+			$details    = explode( '::', $perioditem );
+			$post_type  = $details[0];
+			$ID         = $details[1];
+			$perioditem = CB2_Query::get_post_with_type( $post_type, $ID );
+			$perioditem->$do_action();
+		}
+  }
+
+  static function do_action_block( $args ) {
+		return self::do_action_generic( $args );
+  }
+
+  static function do_action_unblock( $args ) {
+		return self::do_action_generic( $args );
+  }
+
   function add_actions( &$actions, $post ) {
 		if ( isset( $actions['inline hide-if-no-js'] ) )
 			$actions['inline hide-if-no-js'] = str_replace( ' class="', ' class="cb2-todo ', $actions['inline hide-if-no-js'] );

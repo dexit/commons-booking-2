@@ -181,6 +181,7 @@ class CB2_Query {
 			}
 			foreach ( $get as $name => $value ) {
 				if ( ! isset( $existing_query_string[ $name ] ) ) {
+					if ( is_array( $value ) ) $value = implode( ',', $value );
 					$path .= ( strchr( $path, '?' ) ? '&' : '?' );
 					$path .= urlencode( $name ) . '=' . urlencode( $value );
 				}

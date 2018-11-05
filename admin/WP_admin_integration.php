@@ -362,19 +362,22 @@ function cb2_admin_init_menus() {
 add_action( 'admin_menu', 'cb2_admin_init_menus' );
 
 function cb2_admin_init_do_action() {
-	if ( isset( $_GET['do_action'] ) ) {
-		$do_action = explode( '::', $_GET['do_action'] );
+	$_INPUT = array_merge( $_GET, $_POST );
+	if ( isset( $_INPUT['do_action'] ) ) {
+		$do_action = explode( '::', $_INPUT['do_action'] );
 		if ( count( $do_action ) == 2 ) {
 			// SECURITY: limit which methods can be run
 			$Class  = $do_action[0];
 			$method = 'do_action_' . $do_action[1];
 			if ( method_exists( $Class, $method ) ) {
-				$args = $_GET;
+				$args = $_INPUT;
 				array_shift( $args ); // Remove the page
-				call_user_func_array( array( $Class, $method ), $args );
+				$Class::$method( $args );
 			}
 		}
 	}
+	if ( isset( $_INPUT['redirect'] ) )
+		wp_redirect( $_INPUT['redirect'] );
 }
 add_action( 'admin_init', 'cb2_admin_init_do_action' );
 
@@ -474,7 +477,7 @@ function cb2_reflection() {
 					$sql = CB2_Database::install_SQL();
 					$wpdb->query( $sql );
 					print( 'Finished.' );
-				} else throw new Exception( 'Invlaid password' );
+				} else throw new Exception( 'Invalid password' );
 				break;
 			case 'install_SQL':
 				print( '<pre>' );
@@ -485,32 +488,68 @@ function cb2_reflection() {
 	} else {
 		$install_array = CB2_Database::install_array();
 
-		foreach ( $install_array['tables'] as $Class => $definition ) {
-			$post_type = ( property_exists( $Class, 'static_post_type' ) ? $Class::$static_post_type : '' );
+		foreach ( $install_array as $Class => $object_types ) {
+			$post_type        = ( property_exists( $Class, 'static_post_type' ) ? $Class::$static_post_type : '' );
+			$table_definition = ( isset( $object_types['table'] ) ? $object_types['table'] : NULL );
+			$views            = ( isset( $object_types['views'] ) ? $object_types['views'] : NULL );
+			$table_name       = ( $table_definition ? $table_definition['name'] : NULL );
 
-			print( "<h2>$Class (<i class='cb2-database-prefix'>$wpdb->prefix</i>$definition[name])</h2>" );
+			$table_string = ( $table_name ? "<i class='cb2-database-prefix'>$wpdb->prefix</i>$table_name" : 'no table' );
+			print( "<h2>$Class ($table_string)</h2>" );
+			if ( $table_name ) {
+				if ( WP_DEBUG ) {
+					static $exsiting_tables = NULL;
+					if ( is_null( $exsiting_tables ) ) $exsiting_tables = $wpdb->get_col( 'SHOW TABLES;' );
+					if ( ! in_array( "$wpdb->prefix$table_name", $exsiting_tables ) )
+						print( "<div class='cb2-warning'>[$wpdb->prefix$table_name] not found in the database</div>" );
+				}
+			}
+			if ( property_exists( $Class, 'description' ) ) print( "<div class='cb2-description'>{$Class::$description}</div>" );
 			if ( $post_type ) print( "<div>post_type: <b>$post_type</b></div>" );
+			if ( isset( $object_types['data'] ) ) print( "<div>has <b>" . count( $object_types['data'] ) . "</b> initial data rows</div>" );
 
-			if ( isset( $install_array['views'][$Class] ) ) {
+			if ( ! CB2_Database::database_table( $Class ) ) print( '<div>the Class claims no primary database table</div>' );
+			if ( $post_type && ! CB2_Database::posts_table( $Class ) )    print( '<div>the Class claims no posts table</div>' );
+			if ( $post_type && ! CB2_Database::postmeta_table( $Class ) ) print( '<div>the Class claims no postmeta table</div>' );
+
+			if ( count( $views ) ) {
 				print( "views: <ul class='cb2-database-views'>" );
-				foreach ( $install_array['views'][$Class] as $name => $body ) {
-					print( "<li>$name</li>" );
+				$first = '';
+				foreach ( $views as $name => $body ) {
+					print( "<li>$first$name</li>" );
+					$first = ', ';
 				}
 				print( "</ul>" );
 			}
 
-			print( "<table class='cb2-database-table'><thead>" );
-			print( "<th>name</th><th>type</th><th>size</th><th>unsigned</th><th>not null</th><th>auto increment</th><th>default</th><th>comment</th>" );
-			print( "</thead><tbody>" );
-			foreach ( $definition['columns'] as $name => $definition ) {
-				print( "<tr>" );
-				print( "<td>$name</td>" );
-				foreach ( $definition as $value ) {
-					print( "<td>$value</td>" );
+			if ( $table_definition ) {
+				print( "<table class='cb2-database-table'><thead>" );
+				print( "<th>name</th><th>type</th><th>size</th><th>unsigned</th><th>not null</th><th>auto increment</th><th>default</th><th>comment</th>" );
+				print( "</thead><tbody>" );
+				foreach ( $table_definition['columns'] as $name => $column_definition ) {
+					print( "<tr>" );
+					print( "<td>$name</td>" );
+					foreach ( $column_definition as $value ) {
+						print( "<td>$value</td>" );
+					}
+					print( "</tr>" );
 				}
-				print( "</tr>" );
+				print( "</tbody></table>" );
+
+				if ( isset( $table_definition['triggers'] ) ) {
+					foreach ( $table_definition['triggers'] as $trigger_type => $triggers ) {
+						$trigger_count = count( $triggers );
+						print( "<div><b>$table_name</b> has <b>$trigger_count</b> <b>$trigger_type</b> triggers</div>" );
+					}
+				}
+
+				if ( isset( $table_definition['many to many'] ) ) {
+					foreach ( $table_definition['many to many'] as $m2mname => $m2m_defintion ) {
+						$foreign_table = $m2m_defintion[1];
+						print( "<div>$table_name also has a many-to-many realtionship with <b>$foreign_table</b> called <b>$m2mname</b></div>" );
+					}
+				}
 			}
-			print( "</tbody></table>" );
 		}
 
 		// --------------------------- Model
