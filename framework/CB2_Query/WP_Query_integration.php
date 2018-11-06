@@ -126,7 +126,9 @@ function cb2_init_do_action() {
 	if ( isset( $_INPUT['do_action'] ) ) {
 		$do_action = explode( '::', $_INPUT['do_action'] );
 		if ( count( $do_action ) == 2 ) {
-			// SECURITY: limit which methods can be run
+			// TODO: SECURITY: permissions on which methods can be run
+			// for example: we do not want people blocking opening hours from the front end
+			// without authentication
 			$Class  = $do_action[0];
 			$action = $do_action[1];
 			$method = "do_action_$action";
