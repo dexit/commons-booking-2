@@ -61,6 +61,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 				'BEFORE INSERT' => array( $trigger_check_recurrence_type ),
 				'BEFORE UPDATE' => array( $trigger_check_recurrence_type ),
 				'AFTER UPDATE'  => array( "
+					# Deleting from wp_postmeta without meta_id
 					$safe_updates_off
 
 					# ----------------------------- perioditem(s)
@@ -570,7 +571,19 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $classes;
   }
 
-  function post_post_update() {
+	protected function reference_count( $not_from = NULL ) {
+		global $wpdb;
+		$reference_count = (int) $wpdb->get_var(
+			$sql = $wpdb->prepare( "SELECT count(*)
+				from {$wpdb->prefix}cb2_period_group_period
+				where period_id = %d",
+				$this->id()
+			)
+		);
+		return $reference_count;
+	}
+
+	function post_post_update() {
 		global $wpdb;
 
 		if ( CB2_DEBUG_SAVE ) {

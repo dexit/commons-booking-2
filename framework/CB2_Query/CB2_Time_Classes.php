@@ -263,8 +263,6 @@ class CB2_Day extends CB2_TimePostNavigator {
     return $object;
   }
 
-
-
   function add_actions( &$actions, $post ) {
 		$actions[ 'view-periods' ] = '<a href="#">View Periods</a>';
 	}

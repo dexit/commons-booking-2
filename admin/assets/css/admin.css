@@ -36,7 +36,6 @@
 .admin_page_cb2-post-new .misc-pub-visibility,
 .admin_page_cb2-post-new #minor-publishing-actions,
 
-ul.subsubsub,
 #posts-filter .search-box,
 .cmb-type-multicheck-inline > .cmb-td > p,
 .cmb-type-multicheck > .cmb-td > p { /* Select all */
@@ -49,6 +48,10 @@ h2 a,
 h3 a {
 	font-size:12px;
 	font-weight:normal;
+}
+body a.thickbox {
+	color:inherit;
+	text-decoration:none;
 }
 .cb2-actions form,
 .cb2-actions form > div {
@@ -390,6 +393,11 @@ body input.cb2-tick-only:not([checked]):after {
 	color:#111;
 	font-weight:bold;
 	text-decoration:underline;
+}
+.cb2-calendar .type-day > .thickbox {
+	display:block;
+	width:100%;
+	height:100%;
 }
 .cb2-calendar .type-day.cb2-current > .entry-header > .entry-title:after {
 	content: ' ';

@@ -288,6 +288,34 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     return $indicators;
   }
 
+	protected function reference_count( $not_from = NULL ) {
+		global $wpdb;
+		return (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT count(*)
+				from {$wpdb->prefix}cb2_view_period_entities
+				where period_status_type_id = %d",
+				$this->id()
+			)
+		);
+	}
+
+	function pre_post_delete( $from_periodentity = NULL, $direct = TRUE ) {
+		global $wpdb;
+
+		// Do NOT delete ever
+		// if it is an indirect request
+		if ( $direct ) {
+			if ( $this->system )
+				throw new Exception( 'Cannot delete system CB2_PeriodStatusType' );
+
+			// Will throw if there are outstanding references
+			$this->reference_count( $direct );
+		}
+
+		// Continue with sub-object deletion (there are none)
+		return $direct;
+	}
+
   function jsonSerialize() {
     return array_merge( (array) $this, array(
       'styles'     => $this->styles(),
@@ -325,6 +353,14 @@ class CB2_SystemPeriodStatusType extends CB2_PeriodStatusType {
 		if ( $this->id() != $this::$id )
 			throw new Exception( 'CB2_SystemPeriodStatusType id is incorrect' );
 		$this->system = TRUE;
+	}
+
+	function can_delete() {
+		return FALSE;
+	}
+
+	function can_trash() {
+		return FALSE;
 	}
 }
 

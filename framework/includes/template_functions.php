@@ -7,6 +7,7 @@ class CB2 {
 	public static function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
 		global $post;
 		$html = '';
+		$outer_post = $post;
 
 		if ( $context == 'single' )
 			throw new Exception( 'the_inner_loop() should never be called with context [single]' );
@@ -32,8 +33,27 @@ class CB2 {
 		} else {
 			throw new Exception( 'the_inner_loop() only available for CB2_PostNavigator or WP_Query' );
 		}
+		$post = $outer_post;
 
 		return $html;
+	}
+
+	public static function the_context_menu( $context = NULL ) {
+		global $post;
+
+		$actions = self::get_the_class_actions()
+			. self::get_the_calendar_actions()
+			. self::get_the_query_actions();
+		if ( $actions ) {
+			$ID = $post->ID;
+
+			$actions_popup = "?inlineId=cb2-contextmenu_$ID&amp;title=context+menu&amp;width=300&amp;height=100&amp;#TB_inline";
+			print( "<a class='thickbox cb2-contextmenu-link' name='context menu' href='$actions_popup'></a>" );
+
+			print( "<div id='cb2-contextmenu_$ID' class='cb2-contextmenu' style='display:none;'><ul>" );
+			print( $actions );
+			print( '</ul></div>' );
+		}
 	}
 
 	public static function the_post_type() {
@@ -212,6 +232,39 @@ class CB2 {
 				echo '</span>', $after;
 			}
 		}
+	}
+
+	public static function the_class_actions() {
+		echo self::get_the_class_actions();
+	}
+
+	public static function the_calendar_actions() {
+		echo self::get_the_calendar_actions();
+	}
+
+	public static function the_query_actions() {
+		echo self::get_the_query_actions();
+	}
+
+	public static function get_the_class_actions() {
+		global $post;
+		return ( is_object( $post ) && method_exists( $post, 'get_the_class_actions' ) ? $post->get_the_class_actions() : '' );
+	}
+
+	public static function get_the_calendar_actions() {
+		global $post;
+		return ( is_object( $post ) && method_exists( $post, 'get_the_calendar_actions' )  ? $post->get_the_calendar_actions() : '' );
+	}
+
+	public static function get_the_query_actions() {
+		global $wp_query;
+		$html = '';
+		if ( is_object( $wp_query ) && property_exists( $wp_query, 'query_actions' ) ) {
+			foreach ( $wp_query->query_actions as $name => $link ) {
+				$html .= "<li class='cb2-action-$name'>$link</li>";
+			}
+		}
+		return $html;
 	}
 
 	public static function the_debug( $before = '', $afer = '' ) {

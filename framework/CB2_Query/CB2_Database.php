@@ -342,6 +342,10 @@ class CB2_Database {
   }
 
   // ------------------------------------------------------- Reflection
+  static function has_column( $Class, $column_name ) {
+		return isset( self::columns( $Class )[$column_name] );
+  }
+
 	static function columns( $Class ) {
 		global $wpdb;
 

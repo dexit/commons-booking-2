@@ -70,7 +70,15 @@ abstract class CB2_PostNavigator {
 		return $this->ID == $post_navigator->ID;
   }
 
-  function remove_post( $post_remove ) {
+	function can_trash() {
+		return TRUE;
+	}
+
+	function can_delete() {
+		return FALSE;
+	}
+
+	function remove_post( $post_remove ) {
 		$new_posts = array();
 		foreach ( $this->posts as $post ) {
 			$is_remove_post = ( $post instanceof CB2_PostNavigator && $post->is( $post_remove ) );
@@ -525,34 +533,8 @@ abstract class CB2_PostNavigator {
 		return '';
 	}
 
-	function process_form( $action, $values, $user = NULL ) {
-		$html ='';
-		$handler_function = "process_form_{$action}";
-		if ( method_exists( $this, $handler_function ) ) {
-			// $_POST has happened for this item
-			$html = $this->$handler_function( $action, $values, $user );
-		} else if ( WP_DEBUG ) throw new Exception( "handler [$handler_function] not found" );
-		return $html;
-	}
-
 	function get_the_content() {
-		static $form_content = NULL; // Ensure this happens only once
 		$content = '';
-
-		if ( is_null( $form_content ) ) {
-			if ( $this->is_controller() ) {
-				$action   = ( isset( $_POST['action'] ) ? $_POST['action'] : NULL );
-				$user     = CB2_User::factory_current();
-				$values   = array();
-				foreach ( $_POST as $name => $value ) {
-					$interpret_func = 'post_' . preg_replace( '/[^a-zA-Z0-9_]/', '_', $name ). '_interpret';
-					$values[$name]  = ( method_exists( $this, $interpret_func ) ? $this->$interpret_func( $value ) : $value );
-				}
-				$form_content = $this->process_form( $action, $values, $user );
-			}
-		}
-		$content .= $form_content;
-
 		if ( property_exists( $this, 'post_content' ) ) $content .= $this->post_content;
 		$content .= $this->get_the_after_content();
 		return $content;
@@ -562,21 +544,29 @@ abstract class CB2_PostNavigator {
 		return '';
   }
 
-  // ------------------------------------------------- Saving
-  function is_controller() {
-		$is_controller = FALSE;
-		if ( ! property_exists( $this, '_was_controller' ) ) {
-			if ( isset( $_POST['controller'] ) && isset( $_POST['ID'] ) ) {
-				$controller    = $_POST['controller'];
-				$_POST_ID      = $_POST['ID'];
-				$Class         = get_class( $this );
-				$is_controller = ( $controller == $Class && $_POST_ID == $this->ID );
-				$this->_was_controller = TRUE;
-			}
-		}
-		return $is_controller;
-  }
+	// --------------------------------------- input interpretation
+	// Used by do_action_*()
+	static function post_perioditem_user_IDs_interpret( $perioditem_user_IDs ) {
+		return self::get_posts_with_type( $perioditem_user_IDs, 'perioditem-user' );
+	}
 
+	static function post_perioditem_globals_interpret( $perioditem_timeframe_IDs ) {
+		return self::get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-global' );
+	}
+
+	static function post_perioditem_locations_interpret( $perioditem_timeframe_IDs ) {
+		return self::get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-location' );
+	}
+
+	static function post_perioditem_timeframes_interpret( $perioditem_timeframe_IDs ) {
+		return self::get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-timeframe' );
+	}
+
+	static function post_perioditem_timeframe_users_interpret( $perioditem_timeframe_IDs ) {
+		return self::get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-user' );
+	}
+
+	// ---------------------------------------------- Fake post helpers
 	static function get_post_type_setup() {
 		global $wpdb;
 		static $post_types = NULL;
@@ -608,15 +598,7 @@ abstract class CB2_PostNavigator {
 		return $id;
 	}
 
-	function post_perioditem_user_IDs_interpret( $perioditem_user_IDs ) {
-		return $this->get_posts_with_type( $perioditem_user_IDs, 'perioditem-user' );
-	}
-
-	function post_perioditem_timeframe_IDs_interpret( $perioditem_timeframe_IDs ) {
-		return $this->get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-timeframe' );
-	}
-
-	function get_posts_with_type( $post_IDs, $post_type ) {
+	static function get_posts_with_type( $post_IDs, $post_type ) {
 		$objects = array();
 		foreach ( $post_IDs as $post_ID ) {
 			$object = CB2_Query::get_post_with_type( $post_type, $post_ID );

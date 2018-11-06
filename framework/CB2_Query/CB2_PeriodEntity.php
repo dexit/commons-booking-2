@@ -43,16 +43,14 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
 		return "
 					# Create all metadata
-					if new.enabled then
-						insert into $postmeta( meta_id, post_id, meta_key, meta_value )
-							select meta_id, post_id, meta_key, meta_value
-								from $period_item_meta
-								where post_id in(
-									select ID from $period_item_posts
-												where timeframe_id = new.$id_field
-												and post_type = '$post_type'
-									);
-					end if;";
+					insert into $postmeta( meta_id, post_id, meta_key, meta_value )
+						select meta_id, post_id, meta_key, meta_value
+							from $period_item_meta
+							where post_id in(
+								select ID from $period_item_posts
+											where timeframe_id = new.$id_field
+											and post_type = '$post_type'
+								);";
   }
 
   static function database_delete_all_metadata( $prefix, $id_field, $post_type ) {
@@ -62,14 +60,12 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
 		return "
 					# Remove all existing metadata
-					if old.enabled then
-						delete from $postmeta
-							where post_id in(
-								select ID from $period_item_posts
-										where timeframe_id = old.$id_field
-										and post_type = '$post_type'
-								);
-					end if;";
+					delete from $postmeta
+						where post_id in(
+							select ID from $period_item_posts
+									where timeframe_id = old.$id_field
+									and post_type = '$post_type'
+							);";
 	}
 
   static function database_table_triggers( $prefix, $id_field, $post_type ) {
@@ -81,10 +77,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return array(
 			'AFTER INSERT' => array( "
 				# ----------------------------- perioditem(s)
-				# Deleting from postmeta without meta_id
-				$safe_updates_off
-				$create_metadata
-				$safe_updates_restore",
+				$create_metadata",
 			),
 			'AFTER UPDATE' => array( "
 				# ----------------------------- perioditem(s)
@@ -96,16 +89,18 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			),
 			'BEFORE DELETE' => array( "
 				# ----------------------------- perioditem(s)
+				# Deleting from postmeta without meta_id
+				$safe_updates_off
 				$delete_metadata
-				"
+				$safe_updates_restore"
 			),
 		);
   }
 
   static function database_views() {
 		return array(
-			'cb2_view_period_entities'   => "select `ip`.`global_period_group_id` AS `timeframe_id`,`pg`.`name` AS `name`,`pg`.`name` AS `title`,NULL AS `location_ID`,NULL AS `item_ID`,NULL AS `user_ID`,'global' AS `period_group_type`,1 AS `period_group_priority`,`ip`.`period_group_id` AS `period_group_id`,`ip`.`period_status_type_id` AS `period_status_type_id`,`ip`.`enabled` AS `enabled` from (`wp_cb2_global_period_groups` `ip` join `wp_cb2_period_groups` `pg` on((`ip`.`period_group_id` = `pg`.`period_group_id`))) union all select `ip`.`location_period_group_id` AS `timeframe_ID`,`pg`.`name` AS `name`,concat(`pg`.`name`,convert(if(length(`pg`.`name`),' - ','') using utf8mb4),`loc`.`post_title`) AS `title`,`ip`.`location_ID` AS `location_ID`,NULL AS `item_ID`,NULL AS `user_ID`,'location' AS `period_group_type`,2 AS `period_group_priority`,`ip`.`period_group_id` AS `period_group_id`,`ip`.`period_status_type_id` AS `period_status_type_id`,`ip`.`enabled` AS `enabled` from ((`wp_cb2_location_period_groups` `ip` join `wp_cb2_period_groups` `pg` on((`ip`.`period_group_id` = `pg`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) union all select `ip`.`timeframe_period_group_id` AS `timeframe_ID`,`pg`.`name` AS `name`,concat(`pg`.`name`,convert(if(length(`pg`.`name`),' - ','') using utf8mb4),`loc`.`post_title`,' - ',`itm`.`post_title`) AS `title`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,NULL AS `user_ID`,'timeframe' AS `period_group_type`,3 AS `period_group_priority`,`ip`.`period_group_id` AS `period_group_id`,`ip`.`period_status_type_id` AS `period_status_type_id`,`ip`.`enabled` AS `enabled` from (((`wp_cb2_timeframe_period_groups` `ip` join `wp_cb2_period_groups` `pg` on((`ip`.`period_group_id` = `pg`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) union all select `ip`.`timeframe_user_period_group_id` AS `timeframe_ID`,`pg`.`name` AS `name`,concat(`pg`.`name`,convert(if(length(`pg`.`name`),' - ','') using utf8mb4),`loc`.`post_title`,' - ',`itm`.`post_title`,' - ',`usr`.`user_login`) AS `title`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,`ip`.`user_ID` AS `user_ID`,'user' AS `period_group_type`,4 AS `period_group_priority`,`ip`.`period_group_id` AS `period_group_id`,`ip`.`period_status_type_id` AS `period_status_type_id`,`ip`.`enabled` AS `enabled` from ((((`wp_cb2_timeframe_user_period_groups` `ip` join `wp_cb2_period_groups` `pg` on((`ip`.`period_group_id` = `pg`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) join `wp_users` `usr` on((`ip`.`user_ID` = `usr`.`ID`)))",
-			'cb2_view_periodent_posts'   => "select ((`p`.`timeframe_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,'' AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`timeframe_id` + `pt_e`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,concat('periodent-',convert(`p`.`period_group_type` using utf8mb4)) AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`timeframe_id` AS `timeframe_id`,ifnull(`p`.`location_ID`,0) AS `location_ID`,ifnull(`p`.`item_ID`,0) AS `item_ID`,ifnull(`p`.`user_ID`,0) AS `user_ID`,`p`.`title` AS `title`,(`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `period_group_ID`,(`p`.`period_status_type_id` + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`p`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,(select group_concat((`wp_cb2_period_group_period`.`period_id` + `pt2`.`ID_base`) separator ',') from (`wp_cb2_period_group_period` join `wp_cb2_post_types` `pt2` on((`pt2`.`post_type` = 'period'))) where (`wp_cb2_period_group_period`.`period_group_id` = `p`.`period_group_id`) group by `wp_cb2_period_group_period`.`period_group_id`) AS `period_IDs`,cast(`p`.`enabled` as unsigned) AS `enabled`,((`p_first`.`period_id` * `pt_p_first`.`ID_multiplier`) + `pt_p_first`.`ID_base`) AS `period_ID`,`p_first`.`datetime_part_period_start` AS `datetime_part_period_start`,`p_first`.`datetime_part_period_end` AS `datetime_part_period_end`,`p_first`.`recurrence_type` AS `recurrence_type`,`p_first`.`recurrence_frequency` AS `recurrence_frequency`,`p_first`.`datetime_from` AS `datetime_from`,`p_first`.`datetime_to` AS `datetime_to`,`p_first`.`recurrence_sequence` AS `recurrence_sequence` from ((((((`wp_cb2_view_period_entities` `p` join `wp_cb2_period_status_types` `pst` on((`p`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `wp_cb2_post_types` `pt_e` on((`pt_e`.`post_type` = concat('periodent-',convert(`p`.`period_group_type` using utf8mb4))))) join `wp_cb2_post_types` `pt_pg` on((`pt_pg`.`post_type_id` = 2))) join `wp_cb2_post_types` `pt_pst` on((`pt_pst`.`post_type_id` = 8))) join `wp_cb2_post_types` `pt_p_first` on((`pt_p_first`.`post_type_id` = 1))) join `wp_cb2_periods` `p_first` on((`p_first`.`period_id` = (select `ps2`.`period_id` from `wp_cb2_period_group_period` `ps2` where (`ps2`.`period_group_id` = `p`.`period_group_id`) order by `ps2`.`period_id` limit 1))))",
+			'cb2_view_period_entities'   => "select `ip`.`global_period_group_id` AS `timeframe_id`,`pg`.`name` AS `name`,`pg`.`name` AS `title`,NULL AS `location_ID`,NULL AS `item_ID`,NULL AS `user_ID`,'global' AS `period_group_type`,1 AS `period_group_priority`,`ip`.`period_group_id` AS `period_group_id`,`ip`.`period_status_type_id` AS `period_status_type_id`,`ip`.`enabled` AS `enabled` from (`wp_cb2_global_period_groups` `ip` join `wp_cb2_period_groups` `pg` on((`ip`.`period_group_id` = `pg`.`period_group_id`))) union all select `ip`.`location_period_group_id` AS `timeframe_ID`,`pg`.`name` AS `name`,concat(`pg`.`name`,if(length(`pg`.`name`),' - ',''),`loc`.`post_title`) AS `title`,`ip`.`location_ID` AS `location_ID`,NULL AS `item_ID`,NULL AS `user_ID`,'location' AS `period_group_type`,2 AS `period_group_priority`,`ip`.`period_group_id` AS `period_group_id`,`ip`.`period_status_type_id` AS `period_status_type_id`,`ip`.`enabled` AS `enabled` from ((`wp_cb2_location_period_groups` `ip` join `wp_cb2_period_groups` `pg` on((`ip`.`period_group_id` = `pg`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) union all select `ip`.`timeframe_period_group_id` AS `timeframe_ID`,`pg`.`name` AS `name`,concat(`pg`.`name`,if(length(`pg`.`name`),' - ',''),`loc`.`post_title`,' - ',`itm`.`post_title`) AS `title`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,NULL AS `user_ID`,'timeframe' AS `period_group_type`,3 AS `period_group_priority`,`ip`.`period_group_id` AS `period_group_id`,`ip`.`period_status_type_id` AS `period_status_type_id`,`ip`.`enabled` AS `enabled` from (((`wp_cb2_timeframe_period_groups` `ip` join `wp_cb2_period_groups` `pg` on((`ip`.`period_group_id` = `pg`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) union all select `ip`.`timeframe_user_period_group_id` AS `timeframe_ID`,`pg`.`name` AS `name`,concat(`pg`.`name`,if(length(`pg`.`name`),' - ',''),`loc`.`post_title`,' - ',`itm`.`post_title`,' - ',`usr`.`user_login`) AS `title`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,`ip`.`user_ID` AS `user_ID`,'user' AS `period_group_type`,4 AS `period_group_priority`,`ip`.`period_group_id` AS `period_group_id`,`ip`.`period_status_type_id` AS `period_status_type_id`,`ip`.`enabled` AS `enabled` from ((((`wp_cb2_timeframe_user_period_groups` `ip` join `wp_cb2_period_groups` `pg` on((`ip`.`period_group_id` = `pg`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) join `wp_users` `usr` on((`ip`.`user_ID` = `usr`.`ID`)))",
+			'cb2_view_periodent_posts'   => "select ((`p`.`timeframe_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,'' AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,if(`p`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`timeframe_id` + `pt_e`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,concat('periodent-',`p`.`period_group_type`) AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`timeframe_id` AS `timeframe_id`,ifnull(`p`.`location_ID`,0) AS `location_ID`,ifnull(`p`.`item_ID`,0) AS `item_ID`,ifnull(`p`.`user_ID`,0) AS `user_ID`,`p`.`title` AS `title`,(`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `period_group_ID`,(`p`.`period_status_type_id` + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`p`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,(select group_concat((`wp_cb2_period_group_period`.`period_id` + `pt2`.`ID_base`) separator ',') from (`wp_cb2_period_group_period` join `wp_cb2_post_types` `pt2` on((`pt2`.`post_type` = 'period'))) where (`wp_cb2_period_group_period`.`period_group_id` = `p`.`period_group_id`) group by `wp_cb2_period_group_period`.`period_group_id`) AS `period_IDs`,cast(`p`.`enabled` as unsigned) AS `enabled`,((`p_first`.`period_id` * `pt_p_first`.`ID_multiplier`) + `pt_p_first`.`ID_base`) AS `period_ID`,`p_first`.`datetime_part_period_start` AS `datetime_part_period_start`,`p_first`.`datetime_part_period_end` AS `datetime_part_period_end`,`p_first`.`recurrence_type` AS `recurrence_type`,`p_first`.`recurrence_frequency` AS `recurrence_frequency`,`p_first`.`datetime_from` AS `datetime_from`,`p_first`.`datetime_to` AS `datetime_to`,`p_first`.`recurrence_sequence` AS `recurrence_sequence` from ((((((`wp_cb2_view_period_entities` `p` join `wp_cb2_period_status_types` `pst` on((`p`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `wp_cb2_post_types` `pt_e` on((`pt_e`.`post_type` = concat('periodent-',`p`.`period_group_type`)))) join `wp_cb2_post_types` `pt_pg` on((`pt_pg`.`post_type_id` = 2))) join `wp_cb2_post_types` `pt_pst` on((`pt_pst`.`post_type_id` = 8))) join `wp_cb2_post_types` `pt_p_first` on((`pt_p_first`.`post_type_id` = 1))) join `wp_cb2_periods` `p_first` on((`p_first`.`period_id` = (select `ps2`.`period_id` from `wp_cb2_period_group_period` `ps2` where (`ps2`.`period_group_id` = `p`.`period_group_id`) order by `ps2`.`period_id` limit 1))))",
 			'cb2_view_periodentmeta'     => "select (((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'period_IDs' AS `meta_key`,`po`.`period_IDs` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 1) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'period_group_ID' AS `meta_key`,`po`.`period_group_ID` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 2) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'period_status_type_ID' AS `meta_key`,`po`.`period_status_type_ID` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 3) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'location_ID' AS `meta_key`,`po`.`location_ID` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 4) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'item_ID' AS `meta_key`,`po`.`item_ID` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 5) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'user_ID' AS `meta_key`,`po`.`user_ID` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 6) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'enabled' AS `meta_key`,`po`.`enabled` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 7) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'period_status_type_name' AS `meta_key`,`po`.`period_status_type_name` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 8) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'datetime_part_period_start' AS `meta_key`,`po`.`datetime_part_period_start` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 9) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'datetime_part_period_end' AS `meta_key`,`po`.`datetime_part_period_end` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 10) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'recurrence_type' AS `meta_key`,`po`.`recurrence_type` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 11) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'recurrence_frequency' AS `meta_key`,`po`.`recurrence_frequency` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 12) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'datetime_from' AS `meta_key`,`po`.`datetime_from` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 13) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'datetime_to' AS `meta_key`,`po`.`datetime_to` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 14) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'recurrence_sequence' AS `meta_key`,cast(`po`.`recurrence_sequence` as unsigned) AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 15) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'period_ID' AS `meta_key`,`po`.`period_ID` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 16) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'period_status_type_id' AS `meta_key`,`po`.`period_status_type_native_id` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`))) union all select ((((`po`.`timeframe_id` * `pt`.`ID_multiplier`) * 20) + `pt`.`ID_base`) + 17) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodent_id`,'title' AS `meta_key`,`po`.`title` AS `meta_value` from (`wp_cb2_view_periodent_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `po`.`post_type`)))",
 			'cb2_view_timeframe_options' => "select distinct `c2to`.`timeframe_id` AS `timeframe_id`,(select `wp_cb2_timeframe_options`.`option_value` from `wp_cb2_timeframe_options` where ((`wp_cb2_timeframe_options`.`timeframe_id` = `c2to`.`timeframe_id`) and (`wp_cb2_timeframe_options`.`option_name` = 'max-slots')) order by `wp_cb2_timeframe_options`.`option_id` desc limit 1) AS `max-slots`,(select `wp_cb2_timeframe_options`.`option_value` from `wp_cb2_timeframe_options` where ((`wp_cb2_timeframe_options`.`timeframe_id` = `c2to`.`timeframe_id`) and (`wp_cb2_timeframe_options`.`option_name` = 'closed-days-booking')) order by `wp_cb2_timeframe_options`.`option_id` desc limit 1) AS `closed-days-booking`,(select `wp_cb2_timeframe_options`.`option_value` from `wp_cb2_timeframe_options` where ((`wp_cb2_timeframe_options`.`timeframe_id` = `c2to`.`timeframe_id`) and (`wp_cb2_timeframe_options`.`option_name` = 'consequtive-slots')) order by `wp_cb2_timeframe_options`.`option_id` desc limit 1) AS `consequtive-slots`,(select `wp_cb2_timeframe_options`.`option_value` from `wp_cb2_timeframe_options` where ((`wp_cb2_timeframe_options`.`timeframe_id` = `c2to`.`timeframe_id`) and (`wp_cb2_timeframe_options`.`option_name` = 'use-codes')) order by `wp_cb2_timeframe_options`.`option_id` desc limit 1) AS `use-codes`,(select `wp_cb2_timeframe_options`.`option_value` from `wp_cb2_timeframe_options` where ((`wp_cb2_timeframe_options`.`timeframe_id` = `c2to`.`timeframe_id`) and (`wp_cb2_timeframe_options`.`option_name` = 'limit')) order by `wp_cb2_timeframe_options`.`option_id` desc limit 1) AS `limit`,(select `wp_cb2_timeframe_options`.`option_value` from `wp_cb2_timeframe_options` where ((`wp_cb2_timeframe_options`.`timeframe_id` = `c2to`.`timeframe_id`) and (`wp_cb2_timeframe_options`.`option_name` = 'holiday_provider')) order by `wp_cb2_timeframe_options`.`option_id` desc limit 1) AS `holiday-provider` from `wp_cb2_timeframe_options` `c2to`",
 		);
@@ -174,7 +169,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			$properties['ID'],
 			$properties['post_title'],
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
+			$properties['enabled']
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -226,6 +222,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			$name,
 			$period_group,
 			new $new_period_status_type_Class(),
+			TRUE,
 
 			( $location ? $location : $period_entity->location ),
 			( $item     ? $item     : $period_entity->item ),
@@ -240,6 +237,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
     $name,
 		$period_group,       // Can be NULL, indicating <create new>
 		$period_status_type,
+		$enabled,
 
 		//here to prevent static inheritance warning
 		$location = NULL,
@@ -262,6 +260,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$name,
 		$period_group,       // CB2_PeriodGroup
 		$period_status_type, // CB2_PeriodStatusType
+		$enabled,
 
     $location = NULL,   // CB2_Location
     $item     = NULL,   // CB2_Item
@@ -274,6 +273,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				$name,
 				$period_group,
 				$period_status_type,
+				$enabled,
 				$location,
 				$item,
 				$user
@@ -283,6 +283,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				$name,
 				$period_group,
 				$period_status_type,
+				$enabled,
 				$location,
 				$item,
 				$user
@@ -292,6 +293,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				$name,
 				$period_group,
 				$period_status_type,
+				$enabled,
 				$location,
 				$item,
 				$user
@@ -301,6 +303,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				$name,
 				$period_group,
 				$period_status_type,
+				$enabled,
 				$location,
 				$item,
 				$user
@@ -313,7 +316,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$ID,
     $name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
-    $period_status_type         // CB2_PeriodStatusType
+    $period_status_type,        // CB2_PeriodStatusType
+    $enabled
   ) {
 		parent::__construct();
 
@@ -321,24 +325,27 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
     $this->name               = $name;
 		$this->period_group       = $period_group;
 		$this->period_status_type = $period_status_type;
+		$this->enabled            = $enabled;
   }
 
   static function do_action_generic( $args ) {
 		// TODO: do_action_block()
-		$do_action_2 = $args['do_action'];   // <Class>::<action>
-		$perioditems = $args['perioditems']; // <post_type>::<ID>
-
+		$do_action_2 = $args['do_action'];                // <Class>::<action>
 		$details     = explode( '::', $do_action_2 );
-		$Class       = $details[0];
 		$do_action   = $details[1];
 
-		foreach ( $perioditems as $perioditem ) {
-			$details    = explode( '::', $perioditem );
-			$post_type  = $details[0];
-			$ID         = $details[1];
-			$perioditem = CB2_Query::get_post_with_type( $post_type, $ID );
+		// Compile all the object arrays sent through
+		$perioditems = array();
+		foreach ( $args as $name => $perioditem_array )
+			if ( substr( $name, 0, 11 ) == 'perioditem-'
+				&& is_array( $perioditem_array )
+				&& count( $perioditem_array )
+				&& $perioditem_array[0] instanceof CB2_PeriodItem
+			)
+				$perioditems = array_merge( $perioditems, $perioditem_array );
+
+		foreach ( $perioditems as $perioditem )
 			$perioditem->$do_action();
-		}
   }
 
   static function do_action_block( $args ) {
@@ -431,7 +438,8 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 			$properties['ID'],
 			$properties['post_title'],
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
+			$properties['enabled']
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -444,6 +452,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
     $name,
 		$period_group,
 		$period_status_type,
+		$enabled,
 
 		//here to prevent static inheritance warning
 		$location = NULL,
@@ -465,13 +474,15 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 		$ID,
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
-    $period_status_type         // CB2_PeriodStatusType
+    $period_status_type,        // CB2_PeriodStatusType
+    $enabled
   ) {
 		parent::__construct(
 			$ID,
 			$name,
 			$period_group,
-			$period_status_type
+			$period_status_type,
+			$enabled
     );
   }
 }
@@ -518,6 +529,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 			$properties['post_title'],
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
+			$properties['enabled'],
 
 			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container )
 		);
@@ -532,6 +544,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 		$name,
 		$period_group,
 		$period_status_type,
+		$enabled,
 		$location = NULL,
 		$item     = NULL,
 		$user     = NULL
@@ -552,6 +565,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
     $period_status_type,        // CB2_PeriodStatusType
+		$enabled,
 
     $location                   // CB2_Location
   ) {
@@ -559,7 +573,8 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 			$ID,
 			$name,
 			$period_group,
-			$period_status_type
+			$period_status_type,
+			$enabled
     );
 
 		$this->location = $location;
@@ -613,6 +628,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 			$properties['post_title'],
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
+			$properties['enabled'],
 
 			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container )
@@ -628,6 +644,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 		$name,
 		$period_group,
 		$period_status_type,
+		$enabled,
 		$location = NULL,
 		$item     = NULL,
 		$user     = NULL
@@ -648,6 +665,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
     $period_status_type,        // CB2_PeriodStatusType
+    $enabled,
 
     $location,                  // CB2_Location
     $item                       // CB2_Item
@@ -657,6 +675,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 			$name,
 			$period_group,
 			$period_status_type,
+			$enabled,
 			$location,
 			$item
     );
@@ -723,6 +742,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 			$properties['post_title'],
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
+			$properties['enabled'],
 
 			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container ),
@@ -739,6 +759,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 		$name,
 		$period_group,
 		$period_status_type,
+		$enabled,
 
 		$location = NULL,
 		$item     = NULL,
@@ -779,6 +800,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
     $period_status_type,        // CB2_PeriodStatusType
+    $enabled,
 
     $location,                  // CB2_Location
     $item,                      // CB2_Item
@@ -789,6 +811,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 			$name,
 			$period_group,
 			$period_status_type,
+			$enabled,
 			$location,
 			$item,
 			$user
@@ -804,7 +827,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
   function add_actions( &$actions, $post ) {
 		parent::add_actions( $actions, $post );
-		$actions['contact'] = "<a class='cb2-todo' href='#'>" . __( 'Contact User' ) . '</a>';
+		// TODO: $actions['contact'] = "<a class='cb2-todo' href='#'>" . __( 'Contact User' ) . '</a>';
 	}
 
 	function summary_actions() {

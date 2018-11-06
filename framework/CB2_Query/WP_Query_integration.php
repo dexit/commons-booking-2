@@ -89,7 +89,9 @@ add_action( 'add_post_meta',        'cb2_add_post_meta',           10, 3 );
 add_action( 'update_post_meta',     'cb2_update_post_meta',        10, 4 );
 
 // --------------------------------------------- Deleting posts
-add_action( 'trashed_post',         'cb2_delete_post' );
+add_filter( 'pre_trash_post',       'cb2_pre_trash_post',   10, 2 );
+add_filter( 'pre_untrash_post',     'cb2_pre_untrash_post', 10, 2 );
+add_filter( 'pre_delete_post',      'cb2_pre_delete_post',  10, 3 );
 
 // --------------------------------------------- WP_Query Database redirect to views for custom posts
 // $wpdb->posts => wp_cb2_view_posts
@@ -114,7 +116,120 @@ function cb2_wpdb_query_select( $sql ) {
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
-// Update/Delete integration
+function cb2_init_do_action() {
+	// Used by front and backend for
+	//   bookings
+	//   block / unblock
+	// etc.
+	$_INPUT         = array_merge( $_GET, $_POST );
+	$action_post_ID = NULL;
+	if ( isset( $_INPUT['do_action'] ) ) {
+		$do_action = explode( '::', $_INPUT['do_action'] );
+		if ( count( $do_action ) == 2 ) {
+			// SECURITY: limit which methods can be run
+			$Class  = $do_action[0];
+			$action = $do_action[1];
+			$method = "do_action_$action";
+			$args   = $_INPUT;
+			array_shift( $args ); // Remove the page
+			foreach ( $args as $name => $value ) {
+				$interpret_func = 'post_' . preg_replace( '/[^a-zA-Z0-9_]/', '_', $name ) . '_interpret';
+				$args[$name]    = ( method_exists( CB2_PostNavigator, $interpret_func ) ? CB2_PostNavigator::$interpret_func( $value ) : $value );
+			}
+
+			if ( isset( $_INPUT['do_action_post_ID'] ) ) {
+				// ------------------------------------------ method handler
+				$post_type   = $Class::$static_post_type;
+				$post_ID     = (int) $_INPUT['do_action_post_ID'];
+				$action_post = CB2_Query::get_post_with_type( $post_type, $post_ID );
+				if ( $action_post )  {
+					if ( method_exists( $action_post, $method ) ) {
+						if ( WP_DEBUG ) {
+							print( "<div class='cb2-WP_DEBUG'>Member $Class->do_action_[$action]($post_ID)</div>" );
+							krumo( $args );
+						}
+						$action_post->$method( $args );
+					} else throw new Exception( "$method does not exist on $Class" );
+				} else throw new Exception( "Cannot find $Class($post_ID)" );
+			} else {
+				// ------------------------------------------ Static handler
+				if ( method_exists( $Class, $method ) ) {
+					if ( WP_DEBUG ) {
+						print( "<div class='cb2-WP_DEBUG'>Static $Class::do_action_[$action]()</div>" );
+						krumo( $args );
+					}
+					$Class::$method( $args );
+				} else throw new Exception( "Static $method does not exist on $Class" );
+			}
+		} else throw new Exception( "Invalid do_action request. Format is <Class>::<method stub after do_action_>" );
+	}
+
+	if ( isset( $_INPUT['redirect'] ) )
+		wp_redirect( $_INPUT['redirect'] );
+
+	return TRUE;
+}
+add_action( 'init', 'cb2_init_do_action' );
+
+
+// ------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------
+// Trash/Delete integration
+function cb2_pre_untrash_post( $untrash, $post ) {
+	// $untrash is null on input
+	$post_type = $post->post_type;
+	if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+		$cb2_post = CB2_Query::ensure_correct_class( $post );
+		if ( method_exists( $cb2_post, 'untrash' ) ) {
+			if ( ! $cb2_post->untrash() )
+				throw new Exception( "Failed to untrash $Class" );
+			$untrash = $post; // Halt normal trash process
+		} // else allow null $untrash to continue with normal trash process
+	}
+
+	// Returing null will cause the normal trash process to continue
+	// $untrash is null on input
+	return $untrash;
+}
+
+function cb2_pre_trash_post( $trash, $post ) {
+	// $trash is null on input
+	$post_type = $post->post_type;
+	if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+		$cb2_post = CB2_Query::ensure_correct_class( $post );
+		if ( method_exists( $cb2_post, 'trash' ) ) {
+			if ( ! $cb2_post->trash() )
+				throw new Exception( "Failed to trash $Class" );
+			$trash = $post; // Halt normal trash process
+		} // else allow null $trash to continue with normal trash process
+	}
+
+	// Returing null will cause the normal trash process to continue
+	// $trash is null on input
+	return $trash;
+}
+
+function cb2_pre_delete_post( $delete, $post, $force_delete ) {
+	// $delete is null on input
+	$post_type = $post->post_type;
+	if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+		$cb2_post = CB2_Query::ensure_correct_class( $post );
+		if ( method_exists( $cb2_post, 'delete' ) ) {
+			$cb2_post->delete();
+			$delete = $post;
+		} // else allow null $delete to continue with normal deletion
+	}
+
+	// Returing null will cause the normal delete process to continue
+	// $delete is null on input
+	return $delete;
+}
+
+// ------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------
+// Update integration
 function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 	global $auto_draft_publish_transition;
 
@@ -194,7 +309,8 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// not an auto-draft request anymore so all its meta-data is saved and ready
 				// probably created by the Add New post process
 				// because we have not hooked in to the wp_insert_post(auto-draft) process
-				if ( CB2_DEBUG_SAVE ) print( "<h2>cb2_save_post_move_to_native( $class_database_table/$post_type )</h2>" );
+				if ( CB2_DEBUG_SAVE )
+					print( "<h2>cb2_save_post_move_to_native( $class_database_table/$post_type )</h2>" );
 
 				// ----------------------------------------------------- Include meta-data
 				// Move all extra metadata in to $properties for later actions to use
@@ -203,7 +319,8 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// currently we do not store any arrays:
 				//   ID lists are stored as comma delimited for example
 				//   bit arrays are handled as unsigned
-				if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>include wp_post meta-data</div>" );
+				if ( CB2_DEBUG_SAVE )
+					print( "<div class='cb2-WP_DEBUG-small'>include wp_post meta-data</div>" );
 				CB2_Query::get_metadata_assign( $post );
 				$properties = (array) $post;
 

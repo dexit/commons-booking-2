@@ -7,5 +7,7 @@
 			<?php CB2::the_inner_loop( NULL, 'list', 'available' ); ?>
 		</tbody></table>
 	</div><!-- .entry-content -->
+
+	<?php CB2::the_context_menu(); ?>
 </td>
 

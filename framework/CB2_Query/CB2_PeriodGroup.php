@@ -329,6 +329,44 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		return '';
   }
 
+	protected function reference_count( $not_from = NULL ) {
+		global $wpdb;
+		return (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT count(*)
+				from {$wpdb->prefix}cb2_view_period_entities
+				where period_group_id = %d",
+				$this->id()
+			)
+		);
+	}
+
+	function pre_post_delete( $from_periodentity = NULL, $direct = TRUE ) {
+		// $from_periodentity has already been deleted in the Database
+		global $wpdb;
+
+		$reference_count      = $this->reference_count( $direct );
+		$continue_with_delete = ! $reference_count;
+
+		if ( $continue_with_delete ) {
+			// We intend to delete it
+			// clear all references to sub-objects first
+			$rows_affected = $wpdb->delete(
+				"{$wpdb->prefix}cb2_period_group_period",
+				array( 'period_group_id' => $this->id() )
+			);
+			if ( CB2_DEBUG_SAVE ) {
+				$Class = get_class( $this );
+				$ID    = $this->ID;
+				print( "<div class='cb2-WP_DEBUG-small'>" );
+				print( "$Class::pre_post_delete($ID)d [$rows_affected] many-to-many period rows" );
+				print( "</div>" );
+			}
+		}
+
+		// Continue CB2_PeriodGroup::delete_row() and traverse sub-objects (CB2_Periods)?
+		return $continue_with_delete;
+	}
+
   function post_post_update() {
 		global $wpdb;
 
