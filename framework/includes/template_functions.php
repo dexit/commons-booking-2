@@ -78,7 +78,7 @@ class CB2 {
 					}
 					$action = "<a href='$action[base]?$setup_args_string'>$action[link_text]</a>";
 				}
-				print( $action );
+				print( "<li>$action</li>" );
 			}
 			print( '</ul></div>' );
 		}

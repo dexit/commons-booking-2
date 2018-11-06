@@ -160,7 +160,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 					'datetime_part_period_start' => '%date->date%',
 					'datetime_part_period_end'   => '%date->date%',
 				),
-				'set-times' => '<input/>',
+				'set-times' => '<form><div>Example form:<input/></div></form>',
 			),
 		);
 		if ( $post ) $options[ 'query' ] = array(
