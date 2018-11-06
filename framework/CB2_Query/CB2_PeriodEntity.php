@@ -328,7 +328,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->enabled            = $enabled;
   }
 
-  static function do_action_generic( $args ) {
+  static function do_action_generic( CB2_User $user, $args ) {
 		// TODO: do_action_block()
 		$do_action_2 = $args['do_action'];                // <Class>::<action>
 		$details     = explode( '::', $do_action_2 );
@@ -348,12 +348,12 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			$perioditem->$do_action();
   }
 
-  static function do_action_block( $args ) {
-		return self::do_action_generic( $args );
+  static function do_action_block( CB2_User $user, $args ) {
+		return self::do_action_generic( $user, $args );
   }
 
-  static function do_action_unblock( $args ) {
-		return self::do_action_generic( $args );
+  static function do_action_unblock( CB2_User $user, $args ) {
+		return self::do_action_generic( $user, $args );
   }
 
   function add_actions( &$actions, $post ) {

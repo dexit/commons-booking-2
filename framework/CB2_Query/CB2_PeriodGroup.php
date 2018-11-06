@@ -185,7 +185,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		unset( $actions['view'] );
 	}
 
-	static function do_action_attach( $args ) {
+	static function do_action_attach( CB2_User $user, $args ) {
 		// Link the Period to the PeriodGroup
 		global $wpdb;
 
@@ -217,7 +217,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		}
 	}
 
-	static function do_action_detach( $args ) {
+	static function do_action_detach( CB2_User $user, $args ) {
 		// Link the Period to the PeriodGroup
 		global $wpdb;
 

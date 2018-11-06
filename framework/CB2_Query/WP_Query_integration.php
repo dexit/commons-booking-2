@@ -126,14 +126,16 @@ function cb2_init_do_action() {
 	if ( isset( $_INPUT['do_action'] ) ) {
 		$do_action = explode( '::', $_INPUT['do_action'] );
 		if ( count( $do_action ) == 2 ) {
-			// TODO: SECURITY: permissions on which methods can be run
-			// for example: we do not want people blocking opening hours from the front end
-			// without authentication
 			$Class  = $do_action[0];
 			$action = $do_action[1];
 			$method = "do_action_$action";
 			$args   = $_INPUT;
 			array_shift( $args ); // Remove the page
+
+			$user = CB2_User::factory_current();
+			if ( ! $user )
+				throw new Exception( "user required during [$action]" );
+
 			foreach ( $args as $name => $value ) {
 				$interpret_func = 'post_' . preg_replace( '/[^a-zA-Z0-9_]/', '_', $name ) . '_interpret';
 				$args[$name]    = ( method_exists( CB2_PostNavigator, $interpret_func ) ? CB2_PostNavigator::$interpret_func( $value ) : $value );
@@ -150,7 +152,7 @@ function cb2_init_do_action() {
 							print( "<div class='cb2-WP_DEBUG'>Member $Class->do_action_[$action]($post_ID)</div>" );
 							krumo( $args );
 						}
-						$action_post->$method( $args );
+						$action_post->$method( $user, $args );
 					} else throw new Exception( "$method does not exist on $Class" );
 				} else throw new Exception( "Cannot find $Class($post_ID)" );
 			} else {
@@ -160,7 +162,7 @@ function cb2_init_do_action() {
 						print( "<div class='cb2-WP_DEBUG'>Static $Class::do_action_[$action]()</div>" );
 						krumo( $args );
 					}
-					$Class::$method( $args );
+					$Class::$method( $user, $args );
 				} else throw new Exception( "Static $method does not exist on $Class" );
 			}
 		} else throw new Exception( "Invalid do_action request. Format is <Class>::<method stub after do_action_>" );

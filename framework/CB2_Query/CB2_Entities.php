@@ -482,15 +482,12 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 		";
 	}
 
-  function do_action_book( Array $values ) {
+  function do_action_book( CB2_User $user, Array $values ) {
 		// The booking times are based on the perioditems selected
 		if ( ! isset( $values['perioditem-timeframes'] ) ) {
 			krumo( $values );
 			throw new Exception( "perioditem-timeframes required during [$action]" );
 		}
-		$user = CB2_User::factory_current();
-		if ( ! $user )
-			throw new Exception( "user required during [$action]" );
 
 		// Book these availabilities
 		// TODO: should these be combined?
