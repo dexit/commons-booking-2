@@ -37,7 +37,7 @@
 			document.location = document.location.pathname + '?' + sQuery;
 		});
 
-		$('.cb2-template-available').click(function(e){
+		$('.cb2-template-available > .cb2-details').click(function(e){
 			var checkbox      = $(this).children('.cb2-perioditem-selector');
 			var cssClass      = $(this).attr('class').trim();
 			var target        = $(e.target);
@@ -55,6 +55,12 @@
 				if (!clicked_input) checkbox.attr('checked', '1');
 				$(this).attr( 'class', cssClass + ' cb2-booked' );
 			}
+
+			// Prevent any container clicks from bubbling
+			e.stopPropagation();
+
+			// Prevent any default container <a> working
+			if (!clicked_input) e.preventDefault();
 		});
 
 		$('.cb2-calendar-krumo-show').click(function(){

@@ -288,6 +288,10 @@ class CB2_SingleItemAvailability extends CB2_PeriodInteractionStrategy {
 			'value'   => array( $this->item->ID, 0 ),
 			'compare' => 'IN',
 		);
+		if ( ! isset( $query['meta_query']['blocked_clause'] ) ) $query['meta_query']['blocked_clause'] = array(
+			'key'     => 'blocked',
+			'value'   => '0',
+		);
 
 		parent::__construct( $startdate, $enddate, $view_mode, $query );
 	}

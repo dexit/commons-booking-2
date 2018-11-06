@@ -61,6 +61,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 				'BEFORE INSERT' => array( $trigger_check_recurrence_type ),
 				'BEFORE UPDATE' => array( $trigger_check_recurrence_type ),
 				'AFTER UPDATE'  => array( "
+					# Deleting from wp_postmeta without meta_id
 					$safe_updates_off
 
 					# ----------------------------- perioditem(s)
@@ -130,14 +131,14 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'id' => 'datetime_part_period_start',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB2_Database::$database_date_format,
-						'default' => $now->format( $morning_format ),
+						'default' => ( isset( $_GET['datetime_part_period_start'] ) ? $_GET['datetime_part_period_start'] : $now->format( $morning_format ) ),
 					),
 					array(
 						'name' => __( 'End', 'commons-booking-2' ),
 						'id' => 'datetime_part_period_end',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB2_Database::$database_date_format,
-						'default' => $now->format( $evening_format ),
+						'default' => ( isset( $_GET['datetime_part_period_end'] ) ? $_GET['datetime_part_period_end'] : $now->format( $evening_format ) ),
 					),
 				),
 			),
@@ -222,13 +223,14 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'id' => 'datetime_from',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB2_Database::$database_date_format,
-						'default' => $now->format( $morning_format ),
+						'default' => ( isset( $_GET['datetime_from'] ) ? $_GET['datetime_from'] : $now->format( $morning_format ) ),
 					),
 					array(
 						'name' => __( 'Recurrence To Date (optional)', 'commons-booking-2' ),
 						'id' => 'datetime_to',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB2_Database::$database_date_format,
+						'default' => ( isset( $_GET['datetime_to'] ) ? $_GET['datetime_to'] : NULL ),
 					),
 				),
 			),
@@ -570,7 +572,19 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $classes;
   }
 
-  function post_post_update() {
+	protected function reference_count( $not_from = NULL ) {
+		global $wpdb;
+		$reference_count = (int) $wpdb->get_var(
+			$sql = $wpdb->prepare( "SELECT count(*)
+				from {$wpdb->prefix}cb2_period_group_period
+				where period_id = %d",
+				$this->id()
+			)
+		);
+		return $reference_count;
+	}
+
+	function post_post_update() {
 		global $wpdb;
 
 		if ( CB2_DEBUG_SAVE ) {

@@ -60,7 +60,7 @@ function cb2_admin_pages() {
 			'menu_title'    => 'Holidays',
 			'wp_query_args' => 'post_type=periodent-global&period_status_type_ID=100000006&post_title=Holidays',
 			'description'   => 'Edit the global holidays, and holidays for specific locations.',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups where period_status_type_id = " . CB2_PeriodStatusType_Holiday::$id,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Holiday::$id,
 		),
 		'cb2-items'         => array(
 			'page_title' => 'Items',
@@ -72,7 +72,7 @@ function cb2_admin_pages() {
 			'page_title' => 'Repairs %(for)% %location_ID% %item_ID%',
 			'menu_title' => 'Repairs',
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000005',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups where period_status_type_id = " . CB2_PeriodStatusType_Repair::$id,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Repair::$id,
 			'count_class'   => 'warning',
 		),
 		'cb2-locations'     => array(
@@ -85,14 +85,14 @@ function cb2_admin_pages() {
 			'page_title' => 'Opening Hours %(for)% %location_ID%',
 			'menu_title' => 'Opening Hours',
 			'wp_query_args' => 'post_type=periodent-location&recurrence_type=D&recurrence_type_show=no&period_status_type_ID=100000004&post_title=Opening Hours %(for)% %location_ID%',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where period_status_type_id = " . CB2_PeriodStatusType_Open::$id,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Open::$id,
 		),
 		'cb2-timeframes'    => array(
 			'indent'      => 1,
 			'page_title' => 'Item availibility %(for)% %location_ID%',
 			'menu_title' => 'Item Availibility',
 			'wp_query_args' => 'post_type=periodent-timeframe&period_status_type_ID=100000001',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where period_status_type_id = " . CB2_PeriodStatusType_Available::$id,
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Available::$id,
 		),
 		'cb2-bookings'    => array(
 			'indent'      => 1,
@@ -226,15 +226,31 @@ function cb2_post_row_actions( $actions, $post ) {
 	$post_type  = $post->post_type;
 	$post_title = htmlspecialchars( $post->post_title );
 	if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+		CB2_Query::get_metadata_assign( $post );
+		$cb2_post = CB2_Query::ensure_correct_class( $post );
+
 		// Move all edit actions to our custom screens
 		if ( isset( $actions['edit'] ) )
-			$actions['edit'] = "<a href='admin.php?page=cb2-post-edit&post=$post->ID&post_type=$post->post_type&action=edit' aria-label='Edit &#8220;$post_title&#8221;'>Edit</a>";
+			$actions['edit'] = "<a href='admin.php?page=cb2-post-edit&post=$cb2_post->ID&post_type=$cb2_post->post_type&action=edit' aria-label='Edit &#8220;$post_title&#8221;'>Edit</a>";
 
-		CB2_Query::get_metadata_assign( $post );
-		$post = CB2_Query::ensure_correct_class( $post );
-		if ( $post instanceof CB2_PostNavigator && method_exists( $post, 'add_actions' ) ) {
+		// Remove QuickEdit quick-edit
+		if ( isset( $actions['inline hide-if-no-js'] ) ) unset( $actions['inline hide-if-no-js'] );
+
+		if ( ! $cb2_post->can_trash() ) {
+			// Change Trash to delete if no enabled field
+			unset( $actions['trash'] );
+			if ( $cb2_post->can_delete() ) {
+				$delete_text       = __( 'Delete Permanently' );
+				$page              = $_GET['page'];
+				$do_action         = "$Class::delete";
+				$delete_link       = "admin.php?page=$page&post=$cb2_post->ID&action=delete";
+				$actions['delete'] = "<a class='cb2-todo' style='color:red;' href='$delete_link'>$delete_text</a>";
+			}
+		}
+
+		if ( $cb2_post instanceof CB2_PostNavigator && method_exists( $cb2_post, 'add_actions' ) ) {
 			$add_actions = ( isset( $_GET['add_actions'] ) ? explode( ',', $_GET['add_actions'] ) : array() );
-			$post->add_actions( $actions, $post, $add_actions );
+			$cb2_post->add_actions( $actions, $cb2_post, $add_actions );
 		}
 
 		if ( basename( $_SERVER['PHP_SELF'] ) == 'admin.php' && isset( $_GET[ 'page' ] ) ) {
@@ -245,7 +261,7 @@ function cb2_post_row_actions( $actions, $post ) {
 				if ( $action_string ) {
 					$new_actions = explode( ',', $action_string );
 					foreach ( $new_actions as $new_action ) {
-						foreach ( $post as $name => $value ) {
+						foreach ( $cb2_post as $name => $value ) {
 							if ( strstr( $new_action, "%$name%" ) !== FALSE )
 								$new_action = str_replace( "%$name%", $value, $new_action );
 						}
@@ -259,6 +275,30 @@ function cb2_post_row_actions( $actions, $post ) {
 	return $actions;
 }
 add_filter( 'post_row_actions', 'cb2_post_row_actions', 10, 2 );
+
+function cb2_admin_views( $views ) {
+	$page       = $_GET['page'];
+	$all_text   = __( 'All' );
+	$trash_text = __( 'Trash' );
+	$views = array(
+		'all'   => "<a href='admin.php?page=$page&post_status=publish'>$all_text</span></a>",
+		'trash' => "<a href='admin.php?page=$page&post_status=trash'>$trash_text</span></a>",
+	);
+	return $views;
+}
+
+function cb2_admin_views_remove( $views) {
+	return array();
+}
+add_filter( 'views_periodent-global',    'cb2_admin_views' );
+add_filter( 'views_periodent-location',  'cb2_admin_views' );
+add_filter( 'views_periodent-timeframe', 'cb2_admin_views' );
+add_filter( 'views_periodent-user',      'cb2_admin_views' );
+
+add_filter( 'views_period',              'cb2_admin_views_remove' );
+add_filter( 'views_periodgroup',         'cb2_admin_views_remove' );
+add_filter( 'views_periodstatustype',    'cb2_admin_views_remove' );
+
 
 function cb2_notification_bubble_in_admin_menu() {
   global $menu, $submenu;
@@ -361,26 +401,6 @@ function cb2_admin_init_menus() {
 }
 add_action( 'admin_menu', 'cb2_admin_init_menus' );
 
-function cb2_admin_init_do_action() {
-	$_INPUT = array_merge( $_GET, $_POST );
-	if ( isset( $_INPUT['do_action'] ) ) {
-		$do_action = explode( '::', $_INPUT['do_action'] );
-		if ( count( $do_action ) == 2 ) {
-			// SECURITY: limit which methods can be run
-			$Class  = $do_action[0];
-			$method = 'do_action_' . $do_action[1];
-			if ( method_exists( $Class, $method ) ) {
-				$args = $_INPUT;
-				array_shift( $args ); // Remove the page
-				$Class::$method( $args );
-			}
-		}
-	}
-	if ( isset( $_INPUT['redirect'] ) )
-		wp_redirect( $_INPUT['redirect'] );
-}
-add_action( 'admin_init', 'cb2_admin_init_do_action' );
-
 // ---------------------------------------------------------- Pages
 function cb2_options_page() {
 	// main CB2 options page
@@ -450,17 +470,22 @@ function cb2_reflection() {
 	print( '<div class="cb2-actions">' );
 	print( '<a href="?page=cb2-reflection">show install schema</a>' );
 	print( ' | <a href="?page=cb2-reflection&section=install_SQL">dump install SQL</a>' );
-	if ( WP_DEBUG ) print( ' | <form><div>
-			<input type="hidden" name="page" value="cb2-reflection"/>
-			<input type="hidden" name="section" value="reinstall">
-			<input class="cb2-submit cb2-dangerous" type="submit" value="re-install"/>
-			<input name="password" placeholder="password (fryace4)" value="">
-		</div></form>' );
+	$processing = 'var self = this;
+		setTimeout(function(){
+			self.setAttribute("value", "Processing...");
+			self.setAttribute("disabled", "1");
+		}, 0);';
+	if ( WP_DEBUG ) print( " | <form><div class='cb2-todo'>
+			<input type='hidden' name='page' value='cb2-reflection'/>
+			<input type='hidden' name='section' value='reinstall'>
+			<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='re-install'/>
+			<input name='password' placeholder='password (fryace4)' value=''>
+		</div></form>" );
 	if ( WP_DEBUG ) print( " | <form><div>
 			<input type='hidden' name='page' value='cb2-reflection'/>
 			<input type='hidden' name='section' value='reset_data'/>
 			<input type='hidden' name='password' value='fryace4'/>
-			<input $disabled class='cb2-submit cb2-dangerous' type='submit' value='clear all data'/>
+			<input onclick='$processing' $disabled class='cb2-submit cb2-dangerous' type='submit' value='clear all data'/>
 			<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>And all CB2 wp_post data</label>
 		</div></form>" );
 	print( '</div>' );
@@ -475,8 +500,16 @@ function cb2_reflection() {
 			case 'reinstall':
 				if ( $_GET['password'] == 'fryace4' ) {
 					$sql = CB2_Database::install_SQL();
-					$wpdb->query( $sql );
-					print( 'Finished.' );
+					$con = mysqli_connect( DB_HOST, DB_USER, DB_PASSWORD );
+					if ( mysqli_connect_errno() )
+						print( "Failed to connect to MySQL: " . mysqli_connect_error() );
+					else {
+						if ( mysqli_multi_query( $con, $sql ) )
+							print( 'Finished.' );
+						else
+							print( 'Failed.' );
+					}
+					mysqli_close( $con );
 				} else throw new Exception( 'Invalid password' );
 				break;
 			case 'install_SQL':
@@ -488,6 +521,24 @@ function cb2_reflection() {
 	} else {
 		$install_array = CB2_Database::install_array();
 
+		if ( WP_DEBUG ) {
+			$exsiting_tables   = $exsiting_tables = $wpdb->get_col( 'SHOW TABLES;' );
+			$exsiting_views    = $wpdb->get_results( 'select table_name, view_definition from INFORMATION_SCHEMA.views', OBJECT_K );
+			$triggers_results  = $wpdb->get_results( 'select trigger_name, action_statement from INFORMATION_SCHEMA.triggers', OBJECT_K );
+			$existing_triggers = array();
+			foreach ( $triggers_results as $name => $definition ) {
+				$action_statement = str_replace( '`commonsbooking_2`.',   '',  $definition->action_statement );
+				$action_statement = preg_replace( '/^BEGIN\\n|\\nEND$/', '',  $action_statement );
+				$action_statement = trim( preg_replace( '/\\s+/', ' ', $action_statement ) );
+				array_push( $existing_triggers, $action_statement );
+			}
+			foreach ( $exsiting_views as $name => &$definition ) {
+				$definition->view_definition = str_replace( '`commonsbooking_2`.', '', $definition->view_definition );
+				$definition->view_definition = str_replace( 'convert(',            '', $definition->view_definition );
+				$definition->view_definition = str_replace( ' using utf8mb4)',     '', $definition->view_definition );
+			}
+		}
+
 		foreach ( $install_array as $Class => $object_types ) {
 			$post_type        = ( property_exists( $Class, 'static_post_type' ) ? $Class::$static_post_type : '' );
 			$table_definition = ( isset( $object_types['table'] ) ? $object_types['table'] : NULL );
@@ -498,12 +549,12 @@ function cb2_reflection() {
 			print( "<h2>$Class ($table_string)</h2>" );
 			if ( $table_name ) {
 				if ( WP_DEBUG ) {
-					static $exsiting_tables = NULL;
-					if ( is_null( $exsiting_tables ) ) $exsiting_tables = $wpdb->get_col( 'SHOW TABLES;' );
 					if ( ! in_array( "$wpdb->prefix$table_name", $exsiting_tables ) )
 						print( "<div class='cb2-warning'>[$wpdb->prefix$table_name] not found in the database</div>" );
 				}
 			}
+
+			// ----------------------------------------------- Infrastructure
 			if ( property_exists( $Class, 'description' ) ) print( "<div class='cb2-description'>{$Class::$description}</div>" );
 			if ( $post_type ) print( "<div>post_type: <b>$post_type</b></div>" );
 			if ( isset( $object_types['data'] ) ) print( "<div>has <b>" . count( $object_types['data'] ) . "</b> initial data rows</div>" );
@@ -512,23 +563,44 @@ function cb2_reflection() {
 			if ( $post_type && ! CB2_Database::posts_table( $Class ) )    print( '<div>the Class claims no posts table</div>' );
 			if ( $post_type && ! CB2_Database::postmeta_table( $Class ) ) print( '<div>the Class claims no postmeta table</div>' );
 
+			// ----------------------------------------------- VIEWS
 			if ( count( $views ) ) {
 				print( "views: <ul class='cb2-database-views'>" );
 				$first = '';
 				foreach ( $views as $name => $body ) {
-					print( "<li>$first$name</li>" );
+					print( "<li>$first$name" );
+					if ( WP_DEBUG ) {
+						$full_name = "$wpdb->prefix$name";
+						if ( ! isset( $exsiting_views[$full_name] ) )
+							print( " <span class='cb2-warning'>does not exist</span>" );
+						else if ( $exsiting_views[$full_name]->view_definition != $body ) {
+							krumo($exsiting_views[$full_name]->view_definition, $body);
+							print( " <span class='cb2-warning'>has different body</span>" );
+						}
+					}
+					print( '</li>' );
 					$first = ', ';
 				}
 				print( "</ul>" );
 			}
 
+			// ----------------------------------------------- TABLE
 			if ( $table_definition ) {
 				print( "<table class='cb2-database-table'><thead>" );
 				print( "<th>name</th><th>type</th><th>size</th><th>unsigned</th><th>not null</th><th>auto increment</th><th>default</th><th>comment</th>" );
 				print( "</thead><tbody>" );
+				if ( WP_DEBUG ) {
+					$existing_columns = $wpdb->get_results( "DESC {$wpdb->prefix}$table_name;", OBJECT_K );
+					if ( count( $existing_columns ) > count( $table_definition['columns'] ) )
+						print( "<div class='cb2-warning'>$table_name has new columns</div>");
+				}
+
 				foreach ( $table_definition['columns'] as $name => $column_definition ) {
 					print( "<tr>" );
-					print( "<td>$name</td>" );
+					print( "<td>$name" );
+					if ( WP_DEBUG && ! isset( $existing_columns[$name] ) )
+						print( " <span class='cb2-warning'>not found</span>" );
+					print( "</td>" );
 					foreach ( $column_definition as $value ) {
 						print( "<td>$value</td>" );
 					}
@@ -536,13 +608,23 @@ function cb2_reflection() {
 				}
 				print( "</tbody></table>" );
 
+				// ----------------------------------------------- TRIGGERS
 				if ( isset( $table_definition['triggers'] ) ) {
 					foreach ( $table_definition['triggers'] as $trigger_type => $triggers ) {
-						$trigger_count = count( $triggers );
-						print( "<div><b>$table_name</b> has <b>$trigger_count</b> <b>$trigger_type</b> triggers</div>" );
+						foreach ( $triggers as $trigger_body ) {
+							print( "<div><b>$table_name</b> $trigger_type</div>" );
+							if ( WP_DEBUG ) {
+								$trigger_body = trim( preg_replace( '/\\s+/', ' ', $trigger_body ) );
+								if ( ! in_array( $trigger_body, $existing_triggers ) ) {
+									krumo($trigger_body, $existing_triggers);
+									print( "&nbsp;<span class='cb2-warning'>trigger different, or does not exist</span>" );
+								}
+							}
+						}
 					}
 				}
 
+				// ----------------------------------------------- M2M
 				if ( isset( $table_definition['many to many'] ) ) {
 					foreach ( $table_definition['many to many'] as $m2mname => $m2m_defintion ) {
 						$foreign_table = $m2m_defintion[1];
@@ -554,7 +636,7 @@ function cb2_reflection() {
 
 		// --------------------------- Model
 		print( '<hr/>' );
-		print( '<h2>model</h2>');
+		print( '<h2>model (Always slightly out-of-date)</h2>');
 		print( '<img src="' . plugins_url( CB2_TEXTDOMAIN . '/admin/assets/model.png' ) . '"/>' );
 	}
 }
@@ -628,6 +710,7 @@ function cb2_settings_list_page() {
 			$typenow = $post_type;
 
 			// This is a COPY of the normal wp-admin file
+
 			$screen = WP_Screen::get( $typenow );
 			set_current_screen( $screen );
 			require_once( dirname( __FILE__ ) . '/wp-admin/edit.php' );
@@ -685,6 +768,7 @@ function cb2_settings_post_new() {
 		print( '<div class="cb2-WP_DEBUG-small">auto_draft_publish_transition ' . ( $auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
 
 	// This is a COPY of the normal wp-admin file
+
 	$screen = WP_Screen::get( $typenow );
 	set_current_screen( $screen );
 	require_once( dirname( __FILE__ ) . '/wp-admin/post-new.php' );
@@ -746,6 +830,7 @@ function cb2_settings_post_edit() {
 	// This is a COPY of the normal wp-admin file will:
 	//   $post_id = edit_post() from the $_POST
 	// creating meta_data as well
+
 	$screen = WP_Screen::get( $typenow );
 	set_current_screen( $screen );
 	require_once( dirname( __FILE__ ) . '/wp-admin/post.php' );

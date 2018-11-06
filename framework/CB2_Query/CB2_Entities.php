@@ -91,6 +91,10 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable {
     return $object;
   }
 
+  function can( $capability ) {
+		return user_can( $this->ID, $capability );
+  }
+
   function add_perioditem( &$perioditem ) {
     array_push( $this->perioditems, $perioditem );
   }
@@ -460,11 +464,11 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 
 	function get_the_after_content() {
 		// Booking form
-		$ID         = $this->ID;
-		$controller = get_class( $this );
-		$action     = '';
-		$submit     = __( 'book the' ) . " $this->post_title";
-		$controller_action = 'book';
+		$Class       = get_class( $this );
+		$ID          = $this->ID;
+		$form_action = '';
+		$do_action   = 'book';
+		$submit      = __( 'book the' ) . " $this->post_title";
 		$display_strategy  = 'CB2_SingleItemAvailability';
 
 		// TODO: WP_Query of the shortcode needs to be configurable
@@ -472,10 +476,9 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 		// e.g. default period to show
 		// package Query Wrangler with CB2
 		// POC already done
-		return "<form action='$action' method='POST'><div>
+		return "<form action='$form_action' method='POST'><div>
 				<input type='hidden' name='ID' value='$ID' />
-				<input type='hidden' name='controller' value='$controller' />
-				<input type='hidden' name='action' value='$controller_action' />
+				<input type='hidden' name='do_action' value='$Class::$do_action' />
 				<input type='submit' name='submit' value='$submit' />
 				[cb2_calendar view_mode=Week display-strategy=$display_strategy]
 				<input type='submit' name='submit' value='$submit' />
@@ -483,16 +486,16 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 		";
 	}
 
-  function process_form_book( $action, Array $values, CB2_User $user ) {
+  function do_action_book( CB2_User $user, Array $values ) {
 		// The booking times are based on the perioditems selected
-		if ( ! isset( $values['perioditem_timeframe_IDs'] ) )
-			throw new Exception( "perioditem_timeframe_IDs required during [$action]" );
-		if ( ! $user )
-			throw new Exception( "user required during [$action]" );
+		if ( ! isset( $values['perioditem-timeframes'] ) ) {
+			krumo( $values );
+			throw new Exception( "perioditem-timeframes required during [$action]" );
+		}
 
 		// Book these availabilities
 		// TODO: should these be combined?
-		$booked_perioditems = $values['perioditem_timeframe_IDs'];
+		$booked_perioditems = $values['perioditem-timeframes'];
 		$name               = 'booking'; // Default
 		$copy_period_group  = TRUE;      // Default
 		$count              = count( $booked_perioditems );

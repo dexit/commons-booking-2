@@ -43,8 +43,9 @@ class CMB2_Field_Calendar {
         $object_type,
         CMB2_Types $field_type_object
     ) {
-				global $post;
+				global $post, $wp_query;
 
+        $outer_wp_query = $wp_query;
         $this->enqueue_scripts();
 
         if ( version_compare( CMB2_VERSION, '2.2.2', '>=' ) ) {
@@ -81,19 +82,21 @@ class CMB2_Field_Calendar {
         $query_args    = array_merge( $default_query, $query_options );
 
         // Request period items
-        $query = new WP_Query( $query_args );
+        $wp_query = new WP_Query( $query_args );
+        // Context Menu Actions
+				$wp_query->actions = ( isset( $options[ 'actions' ] ) ? $options[ 'actions' ] : array() );
 
         // Debug
         if ( WP_DEBUG ) {
 					$post_types = array();
-					$post_count = count( $query->posts );
-					foreach ( $query->posts as $post )
+					$post_count = count( $wp_query->posts );
+					foreach ( $wp_query->posts as $post )
 						$post_types[$post->post_type] = $post->post_type;
 					print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;font-size:10px;background-color:#fff;margin:1em 0em;'>" );
 					print( "<b>$post_count</b> posts returned" );
 					print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
 					print( ' <a class="cb2-calendar-krumo-show">more...</a><div class="cb2-calendar-krumo" style="display:none;">' );
-					krumo( $query );
+					krumo( $wp_query );
 					print( '</div></div>' );
 				}
 
@@ -151,11 +154,11 @@ class CMB2_Field_Calendar {
 					<div class='cb2-calendar'>
 						<div class='entry-content clear'>
 							<table class='cb2-subposts'>" );
-				CB2::the_calendar_header( $query );
+				CB2::the_calendar_header( $wp_query );
 				print( '<tbody>' );
-				CB2::the_inner_loop( $query, $context, $template );
+				CB2::the_inner_loop( $wp_query, $context, $template );
 				print( '</tbody>' );
-				CB2::the_calendar_footer( $query );
+				CB2::the_calendar_footer( $wp_query );
 				print( "</table>
 						</div>
 					</div>
@@ -167,6 +170,7 @@ class CMB2_Field_Calendar {
 					</div>
 				</div>" );
 
+        $wp_query = $outer_wp_query;
         $field_type_object->_desc( true, true );
     }
 

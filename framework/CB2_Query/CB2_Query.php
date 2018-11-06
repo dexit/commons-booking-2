@@ -274,8 +274,11 @@ class CB2_Query {
 				$metadata = get_metadata( $meta_type, $ID );
 				foreach ( $metadata as $meta_key => &$meta_value_array ) {
 					$is_system_metadata = ( substr( $meta_key, 0, 1 ) == '_' );
-					if ( ! $is_system_metadata )
-						$post->$meta_key = CB2_Query::to_object( $meta_key, $meta_value_array[0] );
+					if ( ! $is_system_metadata ) {
+						$meta_value      = CB2_Query::to_object( $meta_key, $meta_value_array[0] );
+						$post->$meta_key = $meta_value;
+						//if ( ! is_object( $meta_value ) ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key = $meta_value $meta_value_array[0]</div>" );
+					}
 				}
 				// Register that all metadata is present
 				$post->{GET_METADATA_ASSIGN} = TRUE;
@@ -390,7 +393,13 @@ class CB2_Query {
 	}
 
 	static function ensure_boolean( $name, $object ) {
-		return (bool) $object;
+		$boolean = FALSE;
+		if      ( is_null( $object ) )    $boolean = FALSE;
+		else if ( is_object( $object ) && method_exists( $object, '__Boolean' ) ) $boolean = $object->__Boolean();
+		else if ( is_string( $object ) )  $boolean = ( $object && $object != '0' && strtolower( $object ) != 'false' && strtolower( $object ) != 'no' );
+		else if ( is_numeric( $object ) ) $boolean = (int) $object != 0;
+		else                              $boolean = (bool) $object;
+		return $boolean;
 	}
 
 	static function ensure_ints( $name, $object, $allow_create_new = FALSE ) {
