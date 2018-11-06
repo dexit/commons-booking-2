@@ -680,7 +680,7 @@ function cb2_settings_post_new() {
 	//   get_default_post_to_edit( $post_type, CREATE_IN_DB );
 	// and this will need to write to wp_posts
 	// an auto-draft
-	$auto_draft_publish_transition = FALSE;
+	$auto_draft_publish_transition = TRUE;
 	if ( CB2_DEBUG_SAVE )
 		print( '<div class="cb2-WP_DEBUG-small">auto_draft_publish_transition ' . ( $auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
 
