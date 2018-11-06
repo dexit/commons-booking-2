@@ -91,6 +91,10 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable {
     return $object;
   }
 
+  function can( $capability ) {
+		return user_can( $this->ID, $capability );
+  }
+
   function add_perioditem( &$perioditem ) {
     array_push( $this->perioditems, $perioditem );
   }

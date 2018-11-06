@@ -370,6 +370,8 @@ class CB2_SystemPeriodStatusType extends CB2_PeriodStatusType {
 // --------------------------------------------------------------------
 class CB2_PeriodStatusType_Available extends CB2_SystemPeriodStatusType {
 	static $id = 1;
+	static function bigID() {return CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );}
+
 	public function __construct(...$args) {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
@@ -382,6 +384,8 @@ class CB2_PeriodStatusType_Available extends CB2_SystemPeriodStatusType {
 
 class CB2_PeriodStatusType_Booked    extends CB2_SystemPeriodStatusType {
 	static $id = 2;
+	static function bigID() {return CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );}
+
 	public function __construct(...$args) {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
@@ -394,6 +398,8 @@ class CB2_PeriodStatusType_Booked    extends CB2_SystemPeriodStatusType {
 
 class CB2_PeriodStatusType_Closed    extends CB2_SystemPeriodStatusType {
 	static $id = 3;
+	static function bigID() {return CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );}
+
 	public function __construct(...$args) {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
@@ -406,6 +412,8 @@ class CB2_PeriodStatusType_Closed    extends CB2_SystemPeriodStatusType {
 
 class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 	static $id = 4;
+	static function bigID() {return CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );}
+
 	public function __construct(...$args) {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
@@ -418,6 +426,8 @@ class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 
 class CB2_PeriodStatusType_Repair    extends CB2_SystemPeriodStatusType {
 	static $id = 5;
+	static function bigID() {return CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );}
+
 	public function __construct(...$args) {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
@@ -430,6 +440,8 @@ class CB2_PeriodStatusType_Repair    extends CB2_SystemPeriodStatusType {
 
 class CB2_PeriodStatusType_Holiday   extends CB2_SystemPeriodStatusType {
 	static $id = 6;
+	static function bigID() {return CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );}
+
 	public function __construct(...$args) {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments

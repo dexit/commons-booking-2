@@ -83,6 +83,8 @@ class CMB2_Field_Calendar {
 
         // Request period items
         $wp_query = new WP_Query( $query_args );
+        // Context Menu Actions
+				$wp_query->actions = ( isset( $options[ 'actions' ] ) ? $options[ 'actions' ] : array() );
 
         // Debug
         if ( WP_DEBUG ) {

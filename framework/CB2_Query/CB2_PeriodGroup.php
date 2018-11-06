@@ -189,6 +189,9 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		// Link the Period to the PeriodGroup
 		global $wpdb;
 
+		if ( ! $user->can( 'edit_posts' ) )
+			throw new Exception( "User does not have sufficient permissions to attach" );
+
 		// Convert inputs
 		$period_ID        = $args['period_ID'];
 		$period_group_IDs = $args['period_group_IDs'];
@@ -220,6 +223,9 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 	static function do_action_detach( CB2_User $user, $args ) {
 		// Link the Period to the PeriodGroup
 		global $wpdb;
+
+		if ( ! $user->can( 'edit_posts' ) )
+			throw new Exception( "User does not have sufficient permissions to detach" );
 
 		// Convert inputs
 		$period_ID        = $args['period_ID'];

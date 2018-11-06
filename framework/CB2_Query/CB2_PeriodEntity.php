@@ -150,7 +150,19 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 	static function metabox_calendar_options_cb( $field ) {
 		global $post;
 
-		$options = array( 'template' => 'available' );
+		$options = array(
+			'template' => 'available',
+			'actions' => array(
+				'make-available' => array(
+					'link_text' => __( 'Make Available' ),
+					'post_type' => CB2_PeriodEntity_Timeframe::$static_post_type,
+					'period_status_type_ID'      => CB2_PeriodStatusType_Available::bigID(),
+					'datetime_part_period_start' => '%date->date%',
+					'datetime_part_period_end'   => '%date->date%',
+				),
+				'set-times' => '<input/>',
+			),
+		);
 		if ( $post ) $options[ 'query' ] = array(
 			'meta_query' => array(
 				'period_entity_ID_clause' => array(
@@ -333,6 +345,9 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$do_action_2 = $args['do_action'];                // <Class>::<action>
 		$details     = explode( '::', $do_action_2 );
 		$do_action   = $details[1];
+
+		if ( ! $user->can( 'edit_posts' ) )
+			throw new Exception( "User does not have sufficient permissions to $do_action" );
 
 		// Compile all the object arrays sent through
 		$perioditems = array();
