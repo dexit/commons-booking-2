@@ -192,6 +192,22 @@ class CB2_Database {
 			}
 		}
 
+		if ( CB2_DEBUG_PROCEDURE ) {
+			$debug_table = "{$wpdb->prefix}cb2_debug";
+			$sql .= "# database procedure debugging cb2_debug:\n";
+			$sql .= "DROP TABLE IF EXISTS `$debug_table`;\n";
+			$sql .= "CREATE TABLE `$debug_table` (\n";
+			$sql .= "`event`     varchar(1024)  NOT NULL,\n";
+			$sql .= "`part`      varchar(1024)  DEFAULT NULL,\n";
+			$sql .= "`timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n";
+			$sql .= "`rows_affected` int(11)    DEFAULT NULL,\n";
+			$sql .= "`duration`  int(11)        DEFAULT NULL,\n";
+			$sql .= "`ID`        bigint(21)     DEFAULT NULL,\n";
+			$sql .= "`post_type` varchar(20)    DEFAULT NULL,\n";
+			$sql .= "`notes`     varchar(1024)  DEFAULT NULL\n";
+			$sql .= ");\n";
+		}
+
 		$sql .= "\n";
 		return $sql;
 	}
@@ -202,19 +218,21 @@ class CB2_Database {
 
 		$table_name = $Class::database_table_name();
 		$definition = $Class::database_table_schema( $wpdb->prefix );
+		$full_table = "$wpdb->prefix$table_name";
 		$sql = "# Constraints for $table_name\n";
 
 		if ( $definition['many to many'] ) {
 			foreach ( $definition['many to many'] as $m2m_table => $details ) {
-				$column_name   = $details[0];
-				$column        = $definition['columns'][$column_name];
-				$target_table  = "$wpdb->prefix$details[1]";
-				$target_column = $details[2];
+				$full_m2m_table = "$wpdb->prefix$m2m_table";
+				$column_name    = $details[0];
+				$column         = $definition['columns'][$column_name];
+				$target_table   = "$wpdb->prefix$details[1]";
+				$target_column  = $details[2];
 
-				$fk_name_base = "fk_$wpdb->prefix{$m2m_table}";
-				$sql .= "ALTER TABLE `$wpdb->prefix$m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column_name`) REFERENCES `$wpdb->prefix$table_name` (`$column_name`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
+				$fk_name_base = "fk_$full_m2m_table";
+				$sql .= "ALTER TABLE `$full_m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column_name`) REFERENCES `$full_table` (`$column_name`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
 				$i++;
-				$sql .= "ALTER TABLE `$wpdb->prefix$m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$target_column`) REFERENCES `$target_table` (`$target_column`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
+				$sql .= "ALTER TABLE `$full_m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$target_column`) REFERENCES `$target_table` (`$target_column`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
 				$i++;
 
 				// many-to-many can have triggers also
@@ -222,10 +240,15 @@ class CB2_Database {
 					$sql .= "DELIMITER ;;\n";
 					foreach ( $details['triggers'] as $type => $triggers ) {
 						foreach ( $triggers as $body ) {
-							if ( FALSE ) $body .= "\n					insert into {$prefix}cb2_debug( `event`, rows_affected ) values( @@TRIGGER_NAME@@, ROW_COUNT() );\n";
-							$body = str_replace( "@@TRIGGER_NAME@@", "'tr_$i'", $body );
+							if ( CB2_DEBUG_PROCEDURE ) {
+								$body  = "					declare start_time datetime;\n					set start_time = now();\n" . $body;
+								$body .= "\n					insert into {$wpdb->prefix}cb2_debug( `event`, part, rows_affected, duration )
+									values( @@TRIGGER_NAME@@, @@TRIGGER_TYPE@@, ROW_COUNT(), TIMESTAMPDIFF(SECOND, start_time, now()) );\n";
+							}
+							$body = str_replace( "@@TRIGGER_NAME@@", "'$m2m_table.tr_$i'", $body );
+							$body = str_replace( "@@TRIGGER_TYPE@@", "'$type'", $body );
 
-							$sql .= "CREATE TRIGGER `tr_$i` $type ON `$wpdb->prefix$m2m_table` FOR EACH ROW\n";
+							$sql .= "CREATE TRIGGER `tr_$i` $type ON `$full_m2m_table` FOR EACH ROW\n";
 							$sql .= "BEGIN\n$body\nEND;;\n";
 							$i++;
 						}
@@ -239,7 +262,7 @@ class CB2_Database {
 			foreach ( $definition['foreign keys'] as $column => $constraint ) {
 				$foreign_table  = "$wpdb->prefix$constraint[0]";
 				$foreign_column = $constraint[1];
-				$sql .= "ALTER TABLE `$wpdb->prefix$table_name` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column`) REFERENCES `$foreign_table` (`$foreign_column`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
+				$sql .= "ALTER TABLE `$full_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column`) REFERENCES `$foreign_table` (`$foreign_column`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
 				$i++;
 			}
 		}
@@ -248,10 +271,15 @@ class CB2_Database {
 			$sql .= "DELIMITER ;;\n";
 			foreach ( $definition['triggers'] as $type => $triggers ) {
 				foreach ( $triggers as $body ) {
-					if ( FALSE ) $body .= "\n					insert into {$prefix}cb2_debug( `event`, rows_affected ) values( @@TRIGGER_NAME@@, ROW_COUNT() );\n";
-					$body = str_replace( "@@TRIGGER_NAME@@", "'tr_$i'", $body );
+					if ( CB2_DEBUG_PROCEDURE ) {
+						$body  = "					declare start_time datetime;\n					set start_time = now();\n" . $body;
+						$body .= "\n					insert into {$wpdb->prefix}cb2_debug( `event`, part, rows_affected, duration )
+							values( @@TRIGGER_NAME@@, @@TRIGGER_TYPE@@, ROW_COUNT(), TIMESTAMPDIFF(SECOND, start_time, now()) );\n";
+					}
+					$body = str_replace( "@@TRIGGER_NAME@@", "'$table_name.tr_$i'", $body );
+					$body = str_replace( "@@TRIGGER_TYPE@@", "'$type'", $body );
 
-					$sql .= "CREATE TRIGGER `tr_$i` $type ON `$wpdb->prefix$table_name` FOR EACH ROW\n";
+					$sql .= "CREATE TRIGGER `tr_$i` $type ON `$full_table` FOR EACH ROW\n";
 					$sql .= "BEGIN\n$body\nEND;;\n";
 					$i++;
 				}
@@ -266,9 +294,10 @@ class CB2_Database {
 		global $wpdb;
 
 		$sql = "# Views for $Class\n";
-		foreach ( $Class::database_views() as $name => $view ) {
+		foreach ( $Class::database_views() as $name => $body ) {
+			$body = str_replace( "@@VIEW_NAME@@", "'$name'", $body );
 			$sql .= "DROP VIEW IF EXISTS `$wpdb->prefix$name`;\n";
-			$sql .= "CREATE VIEW `$wpdb->prefix$name` AS\n  $view;\n";
+			$sql .= "CREATE VIEW `$wpdb->prefix$name` AS\n  $body;\n";
 		}
 		$sql .= "\n";
 

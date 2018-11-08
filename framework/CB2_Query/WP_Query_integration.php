@@ -83,8 +83,6 @@ add_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 
 // instead, they hook in to the save_post and write the meta-data manually
 // so there will be no meta-data available at pre_post_update stage
 // they also DO NOT use AJAX writing of values to meta-data
-add_filter( 'add_post_metadata',    'cb2_add_post_metadata',       10, 5 );
-add_filter( 'update_post_metadata', 'cb2_update_post_metadata',    10, 5 );
 add_action( 'add_post_meta',        'cb2_add_post_meta',           10, 3 );
 add_action( 'update_post_meta',     'cb2_update_post_meta',        10, 4 );
 
@@ -138,7 +136,7 @@ function cb2_init_do_action() {
 
 			foreach ( $args as $name => $value ) {
 				$interpret_func = 'post_' . preg_replace( '/[^a-zA-Z0-9_]/', '_', $name ) . '_interpret';
-				$args[$name]    = ( method_exists( CB2_PostNavigator, $interpret_func ) ? CB2_PostNavigator::$interpret_func( $value ) : $value );
+				$args[$name]    = ( method_exists( 'CB2_PostNavigator', $interpret_func ) ? CB2_PostNavigator::$interpret_func( $value ) : $value );
 			}
 
 			if ( isset( $_INPUT['do_action_post_ID'] ) ) {
@@ -278,6 +276,11 @@ function cb2_save_post_debug( $post_id, $post, $update ) {
 	if ( CB2_DEBUG_SAVE ) {
 		if ( ! $done ) {
 			print( '<h1>CB2_DEBUG_SAVE is on in CB2_Query.php</h1>' );
+			if ( isset( $_GET['XDEBUG_PROFILE'] ) ) {
+				$xdebug_profiler_output = xdebug_get_profiler_filename();
+				print( "<div class='cb2-WP_DEBUG'>XDEBUG_PROFILE=1 dump will appear in <b><a target='_blank' href='file://$xdebug_profiler_output'>$xdebug_profiler_output</a></b></div>" );
+			}
+
 			print( '<p>Debug info will be shown and redirect will be suppressed, but printed at the bottom</p>' );
 			print( '<div class="cb2-WP_DEBUG-small">auto_draft_publish_transition ' . ( $auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
 			krumo( $_POST, $post );
@@ -400,22 +403,10 @@ function cb2_get_post_metadata( $type, $post_id, $meta_key, $single ) {
 function cb2_add_post_meta( $ID, $meta_key, $meta_value ) {
 	// We are never adding a record in this scenario
 	// Because our data is not normalised
-	return cb2_update_post_metadata( NULL, $ID, $meta_key, $meta_value );
+	return cb2_update_post_meta( NULL, $ID, $meta_key, $meta_value );
 }
 
 function cb2_update_post_meta( $meta_id, $ID, $meta_key, $meta_value ) {
-	// We are never adding a record in this scenario
-	// Because our data is not normalised
-	return cb2_update_post_metadata( NULL, $ID, $meta_key, $meta_value );
-}
-
-function cb2_add_post_metadata( $allowing, $ID, $meta_key, $meta_value, $unique ) {
-	// We are never adding a record in this scenario
-	// Because our data is not normalised
-	return cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value );
-}
-
-function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev_value = NULL ) {
 	// Calls cb2_get_post_metadata() first to check for existence
 	// Only calls here if it does not already exist
 	// These also happen in a loop during the post saving procedure:
@@ -457,7 +448,7 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 							if ( CB2_DEBUG_SAVE ) {
 								if ( ! is_string( $meta_value ) && ! is_numeric( $meta_value ) )
 									krumo( $meta_value, $data );
-								print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>cb2_update_post_metadata($Class/$post_type): [$meta_key] =&gt; [$meta_value]</div>" );
+								print( "<div class='cb2-debug cb2-high-debug' style='font-weight:bold;color:#600;'>cb2_update_post_meta($Class/$post_type): [$meta_key] =&gt; [$meta_value]</div>" );
 								// if ( $meta_key == 'recurrence_sequence' ) exit();
 							}
 
@@ -467,7 +458,7 @@ function cb2_update_post_metadata( $allowing, $ID, $meta_key, $meta_value, $prev
 							// TODO: This is executing the triggers for every meta-data update
 							// in case of a post save this will fire many times
 							if ( count( $data ) ) {
-								$id      = $cb2_post->id( 'update_post_metadata' );
+								$id      = $cb2_post->id( 'update_post_meta' );
 								$where   = array( $id_field => $id );
 								$query = $wpdb->update(
 									"$wpdb->prefix$class_database_table",

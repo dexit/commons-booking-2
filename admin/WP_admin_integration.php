@@ -29,20 +29,17 @@ add_filter( 'cmb2_group_wrap_attributes', 'cb2_cmb2_group_wrap_attributes', 10, 
 
 function cb2_wp_redirect( $location, $status ) {
 	if ( CB2_DEBUG_SAVE ) {
-		print( "wp_redirect( <a href='$location'>$location</a>, <b>$status</b> )" );
-		print( '<hr/><h2>CB2_DEBUG_SAVE</h2>' );
+		print( '<hr/><h2>CB2_DEBUG_SAVE wp_redirect() caught</h2>' );
 		krumo( $_POST );
-		xdebug_print_function_stack();
-		exit();
-	}
-	if ( WP_DEBUG ) {
+		print( "<b>wp_redirect</b>( <a href='$location'>$location</a>, <b>$status</b> )" );
+		$location = FALSE; // Prevent actual redirect
+	} else if ( WP_DEBUG ) {
 		// We will have had debug information already
 		// and a header after output error
 		// so we need to JS redirect instead
 		$esc_location = str_replace( "'", "\\\'", $location );
 		print( "Using JavaScript redirect because WP_DEBUG has already output debug info..." );
 		print( "<script>document.location='$esc_location';</script>" );
-		exit();
 	}
 	return $location;
 }
@@ -68,9 +65,10 @@ function cb2_admin_pages() {
 			'count'         => "select count(*) from {$wpdb->prefix}posts where post_type='item' and post_status='publish'",
 		),
 		'cb2-repairs'       => array(
-			'indent'      => 1,
-			'page_title' => 'Repairs %(for)% %location_ID% %item_ID%',
-			'menu_title' => 'Repairs',
+			'indent'        => 1,
+			'menu_visible'  => FALSE,
+			'page_title'    => 'Repairs %(for)% %location_ID% %item_ID%',
+			'menu_title'    => 'Repairs',
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000005',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Repair::$id,
 			'count_class'   => 'warning',
@@ -81,23 +79,26 @@ function cb2_admin_pages() {
 			'count'          => "select count(*) from {$wpdb->prefix}posts where post_type='location' and post_status='publish'",
 		),
 		'cb2-opening-hours' => array(
-			'indent'      => 1,
-			'page_title' => 'Opening Hours %(for)% %location_ID%',
-			'menu_title' => 'Opening Hours',
+			'indent'        => 1,
+			'menu_visible'  => FALSE,
+			'page_title'    => 'Opening Hours %(for)% %location_ID%',
+			'menu_title'    => 'Opening Hours',
 			'wp_query_args' => 'post_type=periodent-location&recurrence_type=D&recurrence_type_show=no&period_status_type_ID=100000004&post_title=Opening Hours %(for)% %location_ID%',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Open::$id,
 		),
 		'cb2-timeframes'    => array(
-			'indent'      => 1,
-			'page_title' => 'Item availibility %(for)% %location_ID%',
-			'menu_title' => 'Item Availibility',
+			'indent'        => 1,
+			'menu_visible'  => FALSE,
+			'page_title'    => 'Item availibility %(for)% %location_ID%',
+			'menu_title'    => 'Item Availibility',
 			'wp_query_args' => 'post_type=periodent-timeframe&period_status_type_ID=100000001',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Available::$id,
 		),
 		'cb2-bookings'    => array(
-			'indent'      => 1,
-			'page_title' => 'Bookings %(for)% %location_ID%',
-			'menu_title' => 'Bookings',
+			'indent'        => 1,
+			'menu_visible'  => FALSE,
+			'page_title'    => 'Bookings %(for)% %location_ID%',
+			'menu_title'    => 'Bookings',
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=100000002',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_view_future_bookings",
 			'count_class'   => 'ok',
@@ -135,21 +136,21 @@ function cb2_admin_pages() {
 		),
 		'cb2-period-locations' => array(
 			'indent'        => 1,
-			'page_title' => 'Locations',
+			'page_title'    => 'Locations',
 			'wp_query_args' => 'post_type=periodent-location',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups",
 			'advanced'      => TRUE,
 		),
 		'cb2-period-timeframes' => array(
 			'indent'        => 1,
-			'page_title' => 'Timeframes',
+			'page_title'    => 'Timeframes',
 			'wp_query_args' => 'post_type=periodent-timeframe',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups",
 			'advanced'      => TRUE,
 		),
 		'cb2-period-users' => array(
 			'indent'        => 1,
-			'page_title' => 'Users',
+			'page_title'    => 'Users',
 			'wp_query_args' => 'post_type=periodent-user',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups",
 			'advanced'      => TRUE,
@@ -500,7 +501,7 @@ function cb2_reflection() {
 			case 'reinstall':
 				if ( $_GET['password'] == 'fryace4' ) {
 					$sql = CB2_Database::install_SQL();
-					$con = mysqli_connect( DB_HOST, DB_USER, DB_PASSWORD );
+					$con = mysqli_connect( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME );
 					if ( mysqli_connect_errno() )
 						print( "Failed to connect to MySQL: " . mysqli_connect_error() );
 					else {
@@ -521,24 +522,40 @@ function cb2_reflection() {
 	} else {
 		$install_array = CB2_Database::install_array();
 
-		if ( WP_DEBUG ) {
-			$exsiting_tables   = $exsiting_tables = $wpdb->get_col( 'SHOW TABLES;' );
-			$exsiting_views    = $wpdb->get_results( 'select table_name, view_definition from INFORMATION_SCHEMA.views', OBJECT_K );
-			$triggers_results  = $wpdb->get_results( 'select trigger_name, action_statement from INFORMATION_SCHEMA.triggers', OBJECT_K );
-			$existing_triggers = array();
-			foreach ( $triggers_results as $name => $definition ) {
-				$action_statement = str_replace( '`commonsbooking_2`.',   '',  $definition->action_statement );
-				$action_statement = preg_replace( '/^BEGIN\\n|\\nEND$/', '',  $action_statement );
-				$action_statement = trim( preg_replace( '/\\s+/', ' ', $action_statement ) );
-				array_push( $existing_triggers, $action_statement );
-			}
-			foreach ( $exsiting_views as $name => &$definition ) {
-				$definition->view_definition = str_replace( '`commonsbooking_2`.', '', $definition->view_definition );
-				$definition->view_definition = str_replace( 'convert(',            '', $definition->view_definition );
-				$definition->view_definition = str_replace( ' using utf8mb4)',     '', $definition->view_definition );
-			}
+		// ---------------------------------------------------- Database reflection
+		$exsiting_tables   = $exsiting_tables = $wpdb->get_col( 'SHOW TABLES;' );
+		$exsiting_views    = $wpdb->get_results( 'select table_name, view_definition from INFORMATION_SCHEMA.views', OBJECT_K );
+		$triggers_results  = $wpdb->get_results( 'select trigger_name, action_statement from INFORMATION_SCHEMA.triggers', OBJECT_K );
+		$existing_triggers = array();
+		$variable_database_name = '/`commons[-_]?booking[0-9a-z_-]+`\\./i';
+		$debug_line             = '/\\s+insert into [a-z_]*cb2_debug[^;]+;|\\s+declare start_time[^;]+;|\\s+set start_time[^;]+;/i';
+		// The compilation procedure adds things in to the definitions
+		// that we do not specifiy, like collation
+		foreach ( $triggers_results as $name => $definition ) {
+			$action_statement = preg_replace( $variable_database_name, '',  $definition->action_statement );
+			$action_statement = preg_replace( '/^BEGIN\\n|\\nEND$/',   '',  $action_statement );
+			$action_statement = preg_replace( $debug_line,             '',  $action_statement );
+			$action_statement = trim( preg_replace( '/\\s+/', ' ', $action_statement ) );
+			array_push( $existing_triggers, $action_statement );
+		}
+		foreach ( $exsiting_views as $name => &$definition ) {
+			$definition->view_definition = preg_replace( $variable_database_name, '', $definition->view_definition );
+			$definition->view_definition = str_replace(  'convert(',              '', $definition->view_definition );
+			$definition->view_definition = str_replace(  ' using utf8mb4)',       '', $definition->view_definition );
 		}
 
+		// ---------------------------------------------------- WordPress
+		print( "<h2>WordPress ({$wpdb->prefix}postmeta)</h2>" );
+		$row_count = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}postmeta" );
+		$class = ( $row_count >= 1000 ? 'cb2-warning' : '' );
+		print( "<div class='$class'>row count: $row_count</div>" );
+
+		print( "<h2>WordPress ({$wpdb->prefix}posts)</h2>" );
+		$row_count = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}posts" );
+		$class = ( $row_count >= 1000 ? 'cb2-warning' : '' );
+		print( "<div class='$class'>row count: $row_count</div>" );
+
+		// ---------------------------------------------------- CB2
 		foreach ( $install_array as $Class => $object_types ) {
 			$post_type        = ( property_exists( $Class, 'static_post_type' ) ? $Class::$static_post_type : '' );
 			$table_definition = ( isset( $object_types['table'] ) ? $object_types['table'] : NULL );
@@ -548,10 +565,11 @@ function cb2_reflection() {
 			$table_string = ( $table_name ? "<i class='cb2-database-prefix'>$wpdb->prefix</i>$table_name" : 'no table' );
 			print( "<h2>$Class ($table_string)</h2>" );
 			if ( $table_name ) {
-				if ( WP_DEBUG ) {
-					if ( ! in_array( "$wpdb->prefix$table_name", $exsiting_tables ) )
-						print( "<div class='cb2-warning'>[$wpdb->prefix$table_name] not found in the database</div>" );
-				}
+				$row_count = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}$table_name" );
+				$class = ( $row_count >= 1000 ? 'cb2-warning' : '' );
+				print( "<div class='$class'>row count: $row_count</div>" );
+				if ( ! in_array( "$wpdb->prefix$table_name", $exsiting_tables ) )
+					print( "<div class='cb2-warning'>[$wpdb->prefix$table_name] not found in the database</div>" );
 			}
 
 			// ----------------------------------------------- Infrastructure
@@ -565,23 +583,25 @@ function cb2_reflection() {
 
 			// ----------------------------------------------- VIEWS
 			if ( count( $views ) ) {
-				print( "views: <ul class='cb2-database-views'>" );
+				print( "<div>views: <ul class='cb2-database-views'>" );
 				$first = '';
 				foreach ( $views as $name => $body ) {
 					print( "<li>$first$name" );
-					if ( WP_DEBUG ) {
-						$full_name = "$wpdb->prefix$name";
-						if ( ! isset( $exsiting_views[$full_name] ) )
-							print( " <span class='cb2-warning'>does not exist</span>" );
-						else if ( $exsiting_views[$full_name]->view_definition != $body ) {
-							krumo($exsiting_views[$full_name]->view_definition, $body);
-							print( " <span class='cb2-warning'>has different body</span>" );
-						}
+					$full_name = "$wpdb->prefix$name";
+					if ( ! isset( $exsiting_views[$full_name] ) )
+						print( " <span class='cb2-warning'>does not exist</span>" );
+					else if ( $exsiting_views[$full_name]->view_definition != $body ) {
+						krumo($exsiting_views[$full_name]->view_definition, $body);
+						print( " <span class='cb2-warning'>has different body</span>" );
+					} else {
+						$row_count = $wpdb->get_var( "SELECT count(*) from $full_name" );
+						$class     = ( $row_count >= 1000 ? 'cb2-warning' : '' );
+						print( "&nbsp;<span class='$class'>($row_count)</span>" );
 					}
 					print( '</li>' );
 					$first = ', ';
 				}
-				print( "</ul>" );
+				print( "</ul></div>" );
 			}
 
 			// ----------------------------------------------- TABLE
@@ -589,16 +609,14 @@ function cb2_reflection() {
 				print( "<table class='cb2-database-table'><thead>" );
 				print( "<th>name</th><th>type</th><th>size</th><th>unsigned</th><th>not null</th><th>auto increment</th><th>default</th><th>comment</th>" );
 				print( "</thead><tbody>" );
-				if ( WP_DEBUG ) {
-					$existing_columns = $wpdb->get_results( "DESC {$wpdb->prefix}$table_name;", OBJECT_K );
-					if ( count( $existing_columns ) > count( $table_definition['columns'] ) )
-						print( "<div class='cb2-warning'>$table_name has new columns</div>");
-				}
+				$existing_columns = $wpdb->get_results( "DESC {$wpdb->prefix}$table_name;", OBJECT_K );
+				if ( count( $existing_columns ) > count( $table_definition['columns'] ) )
+					print( "<div class='cb2-warning'>$table_name has new columns</div>");
 
 				foreach ( $table_definition['columns'] as $name => $column_definition ) {
 					print( "<tr>" );
 					print( "<td>$name" );
-					if ( WP_DEBUG && ! isset( $existing_columns[$name] ) )
+					if ( ! isset( $existing_columns[$name] ) )
 						print( " <span class='cb2-warning'>not found</span>" );
 					print( "</td>" );
 					foreach ( $column_definition as $value ) {
@@ -612,13 +630,11 @@ function cb2_reflection() {
 				if ( isset( $table_definition['triggers'] ) ) {
 					foreach ( $table_definition['triggers'] as $trigger_type => $triggers ) {
 						foreach ( $triggers as $trigger_body ) {
-							print( "<div><b>$table_name</b> $trigger_type</div>" );
-							if ( WP_DEBUG ) {
-								$trigger_body = trim( preg_replace( '/\\s+/', ' ', $trigger_body ) );
-								if ( ! in_array( $trigger_body, $existing_triggers ) ) {
-									krumo($trigger_body, $existing_triggers);
-									print( "&nbsp;<span class='cb2-warning'>trigger different, or does not exist</span>" );
-								}
+							print( "<div><b>$trigger_type</b> trigger</div>" );
+							$trigger_body = trim( preg_replace( '/\\s+/', ' ', $trigger_body ) );
+							if ( ! in_array( $trigger_body, $existing_triggers ) ) {
+								krumo($trigger_body, $existing_triggers);
+								print( "&nbsp;<span class='cb2-warning'>trigger different, or does not exist</span>" );
 							}
 						}
 					}
@@ -764,8 +780,11 @@ function cb2_settings_post_new() {
 	// and this will need to write to wp_posts
 	// an auto-draft
 	$auto_draft_publish_transition = FALSE;
-	if ( CB2_DEBUG_SAVE )
+	if ( CB2_DEBUG_SAVE ) {
+		$post_submit_custom    .= '&XDEBUG_PROFILE=1';
+		print( "<div class='cb2-WP_DEBUG'>XDEBUG_PROFILE=1</div>" );
 		print( '<div class="cb2-WP_DEBUG-small">auto_draft_publish_transition ' . ( $auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
+	}
 
 	// This is a COPY of the normal wp-admin file
 
