@@ -13,7 +13,7 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && TRUE );
+define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
 define( 'CB2_DEBUG_PROCEDURE', WP_DEBUG && TRUE );
 
 // Native post create process
