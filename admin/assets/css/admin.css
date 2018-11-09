@@ -465,8 +465,6 @@ body input.cb2-tick-only:not([checked]):after {
 	font-size:11px;
 }
 .cb2-submit {
-	height:40px;
-	font-weight:bold;
 }
 .cb2-calendar h2 {
 	font-size: 16px;

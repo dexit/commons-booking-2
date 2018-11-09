@@ -108,6 +108,7 @@ class CB2_Forms {
 
     if ( WP_DEBUG && $pass == 'fryace4' ) {
 			// Native leaves
+			if ( CB2_DEBUG_PROCEDURE ) self::truncate_table( 'cb2_debug', 'ID' );
 			self::truncate_table( 'cb2_perioditem_settings', 'period_id' );
 			self::truncate_table( 'cb2_timeframe_options', 'option_id' );
 			self::truncate_table( 'cb2_global_period_groups', 'period_group_id' );

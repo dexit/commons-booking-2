@@ -96,9 +96,9 @@ static function database_table_triggers( $prefix ) {
 			'name'    => self::$database_table,
 			'columns' => array(
 				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
-				'period_id'        => array( INT, (11), UNSIGNED, NOT_NULL ),
-				'recurrence_index' => array( INT, (11), UNSIGNED, NOT_NULL ),
-				'blocked'          => array( BIT, (1),  NULL,     NOT_NULL, NULL, 0 ),
+				'period_id'        => array( CB2_INT, (11), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'recurrence_index' => array( CB2_INT, (11), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'blocked'          => array( CB2_BIT, (1),  NULL,         CB2_NOT_NULL, NULL, 0 ),
 			),
 			'primary key'  => array( 'period_id', 'recurrence_index' ),
 			'triggers'     => self::database_table_triggers( $prefix ),
