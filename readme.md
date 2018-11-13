@@ -2,7 +2,7 @@
 
 CB2 is a complete rewrite of [Commons Booking](https://github.com/wielebenwir/commons-booking).  It is currently under heavy development.
 
-Main reasons for a new code base were:
+CB2 will:
 
 * Provide a much more flexible booking system, that can adapt to  diverse scenarios.
 * Create a Database structure that allows for multiple bookings per day (though the booking functionality will *not* be implemented in CB2.0, possible for a future version).
@@ -11,6 +11,8 @@ Main reasons for a new code base were:
 
 For design docs, db structure etc, please see the [WIKI](https://github.com/wielebenwir/commons-booking-2/wiki).
 For current progress, see the [project](https://github.com/wielebenwir/commons-booking-2/projects/1)
+
+**[Subscribe to the CommonsBooking Newsletter](https://www.wielebenwir.de/kontakt/newsletter)** (bilingual german/english) to recieve news about the development. 
 
 ## The way forward (for current Commons Booking users)
 
