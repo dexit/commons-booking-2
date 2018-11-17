@@ -18,13 +18,8 @@ require_once('includes/lib/cmb2/init.php');
 require_once('includes/lib/cmb2-grid/Cmb2GridPluginLoad.php');
 require_once('includes/lib/cmb2-tabs/cmb2-tabs.php');
 require_once('includes/lib/cmb2-field-icon/cmb2-field-icon.php');
-/**
- * @TODO move libs
- * Libs temporarily in /lib-temp because
- * not availabe via composer atm
- */
-require_once('includes/lib-temp/CMB2-field-Calendar/cmb-field-calendar.php');
-require_once('includes/lib-temp/CMB2-field-Paragraph/cmb-field-paragraph.php');
+require_once('includes/lib/cmb2-field-calendar/cmb2-field-calendar.php');
+require_once('includes/lib/cmb2-field-paragraph/cmb2-field-paragraph.php');
 require_once(CB2_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php'); /* TODO */
 
 
