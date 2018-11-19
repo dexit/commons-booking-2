@@ -19,7 +19,7 @@
 	},
 	"repositories": [
 		{
-			"url": "git@github.com:nathanielks\/wordpress-admin-notice.git",
+			"url": "https:\/\/github.com\/nathanielks\/wordpress-admin-notice.git",
 			"type": "git"
 		},
 		{
@@ -40,15 +40,15 @@
 		},
 		{
 			"type": "git",
-			"url": "git@github.com:flegfleg\/cmb2-field-icon"
+			"url": "https:\/\/github.com\/flegfleg\/cmb2-field-icon"
 		},
 		{
 			"type": "git",
-			"url": "git@github.com:flegfleg\/cmb2-field-paragraph"
+			"url": "https:\/\/github.com\/flegfleg\/cmb2-field-paragraph"
 		},
 		{
 			"type": "git",
-			"url": "git@github.com:flegfleg\/cmb2-field-calendar"
+			"url": "https:\/\/github.com\/flegfleg\/cmb2-field-calendar"
 		}
 	],
 	"config": {
