@@ -96,7 +96,7 @@ class CMB2_Field_Calendar {
 					print( "<b>$post_count</b> posts returned" );
 					print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
 					print( ' <a class="cb2-calendar-krumo-show">more...</a><div class="cb2-calendar-krumo" style="display:none;">' );
-					krumo( $wp_query );
+					// krumo( $wp_query );
 					print( '</div></div>' );
 				}
 
@@ -124,8 +124,6 @@ class CMB2_Field_Calendar {
         $viewless_url = preg_replace( '/&view=[^&]*/', '', $url );
 
         // Render
-        // TODO: the wp_cb2_view_sequence_date is limited to 1000 days at the moment
-        // can we auto-extend this where necessary?
 				print( "
 				<div class='cb2-javascript-form cb2-calendar'>
 					<div class='entry-header'>

@@ -37,7 +37,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		if ( is_null( $startdate ) ) $startdate   = ( isset( $_GET['startdate'] ) ? new DateTime( $_GET['startdate'] ) : new DateTime() );
 		if ( is_null( $enddate ) )   $enddate     = ( isset( $_GET['enddate'] )   ? new DateTime( $_GET['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
 		if ( is_null( $view_mode ) ) $view_mode   = ( isset( $_GET['view_mode'] ) ? $_GET['view_mode'] : CB2_Week::$static_post_type );
-		if ( is_null( $query ) )      $query        = array();
+		if ( is_null( $query ) )     $query       = array();
 
 		// Properties
 		$this->startdate = $startdate;
@@ -216,9 +216,11 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
   protected function filter_can( Array $perioditems, Int $period_status_type_flags, String $Class = NULL ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
-			if ( ! $Class || is_a( $perioditem, $Class ) ) {
-				if ( $perioditem->period_entity->period_status_type->flags & $period_status_type_flags )
-					array_push( $perioditems_filtered, $perioditem );
+			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
+				if ( ! $Class || is_a( $perioditem, $Class ) ) {
+					if ( $perioditem->period_entity->period_status_type->flags & $period_status_type_flags )
+						array_push( $perioditems_filtered, $perioditem );
+				}
 			}
 		}
 		return $perioditems_filtered;
@@ -227,9 +229,11 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
   protected function filter_cannot( Array $perioditems, Int $period_status_type_flags, String $Class = NULL ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
-			if ( ! $Class || is_a( $perioditem, $Class ) ) {
-				if ( ! $perioditem->period_entity->period_status_type->flags & $period_status_type_flags )
-					array_push( $perioditems_filtered, $perioditem );
+			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
+				if ( ! $Class || is_a( $perioditem, $Class ) ) {
+					if ( ! $perioditem->period_entity->period_status_type->flags & $period_status_type_flags )
+						array_push( $perioditems_filtered, $perioditem );
+				}
 			}
 		}
 		return $perioditems_filtered;
@@ -239,10 +243,12 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 		$perioditems_filtered      = array();
 		$any_period_with_this_type = is_null( $entity );
 		foreach ( $perioditems as $perioditem ) {
-			if ( property_exists( $perioditem->period_entity, $entity_type )
-				&& ( $any_period_with_this_type || $perioditem->period_entity->$entity_type->is( $entity ) )
-			) {
-				array_push( $perioditems_filtered, $perioditem );
+			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
+				if ( property_exists( $perioditem->period_entity, $entity_type )
+					&& ( $any_period_with_this_type || $perioditem->period_entity->$entity_type->is( $entity ) )
+				) {
+					array_push( $perioditems_filtered, $perioditem );
+				}
 			}
 		}
 		return $perioditems_filtered;
@@ -251,8 +257,10 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
   protected function filter_higher_priority( Array $perioditems, Int $priority ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
-			if ( $perioditem->period_entity->period_status_type->priority >= $priority ) {
-				array_push( $perioditems_filtered, $perioditem );
+			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
+				if ( $perioditem->period_entity->period_status_type->priority >= $priority ) {
+					array_push( $perioditems_filtered, $perioditem );
+				}
 			}
 		}
 		return $perioditems_filtered;

@@ -1,5 +1,5 @@
 <?php if ( CB2::is_top_priority() ) { ?>
-	<div id="post-<?php the_ID(); ?>" <?php post_class( 'cb2-template-available' ); ?>>
+	<div id="post-<?php the_ID(); ?>" <?php CB2::post_class( 'cb2-template-available' ); ?>>
 		<div class="cb2-details">
 			<?php if ( CB2::can_select() ) { ?>
 				<input class="cb2-perioditem-selector" type="checkbox" id="perioditem-<?php the_ID(); ?>" name="<?php CB2::the_post_type(); ?>s[]" value="<?php the_ID(); ?>"/><span class="cb2-time-period"><?php CB2::the_time_period(); ?></span>

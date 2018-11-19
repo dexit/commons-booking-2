@@ -8,6 +8,14 @@ class CB2_TimePostNavigator extends CB2_PostNavigator implements JsonSerializabl
   public static $database_table = FALSE;
 	public $first = FALSE;
 
+	static function max_days() {
+		global $wpdb;
+		static $max_days = NULL;
+		if ( is_null( $max_days ) )
+			$max_days = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}cb2_view_sequence_date" );
+		return $max_days;
+	}
+
   function classes() {
     $classes = '';
     if ( $this->is_current ) $classes .= ' cb2-current';
@@ -263,7 +271,7 @@ class CB2_Day extends CB2_TimePostNavigator {
     return $object;
   }
 
-  function add_actions( &$actions, $post ) {
+  function row_actions( &$actions, $post ) {
 		$actions[ 'view-periods' ] = '<a href="#">View Periods</a>';
 	}
 

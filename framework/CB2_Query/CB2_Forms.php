@@ -93,7 +93,7 @@ class CB2_Forms {
 		return $wpdb->query( "DELETE from $wpdb->prefix$table_name WHERE $id_field >= 0" );
   }
 
-  static function reset_data( $pass, $and_posts = FALSE ) {
+  static function reset_data( $pass, $and_posts = FALSE, $testdata = FALSE ) {
 		global $wpdb;
     $cleared = FALSE;
     $post_types_array = array(
@@ -108,7 +108,6 @@ class CB2_Forms {
 
     if ( WP_DEBUG && $pass == 'fryace4' ) {
 			// Native leaves
-			if ( CB2_DEBUG_PROCEDURE ) self::truncate_table( 'cb2_debug', 'ID' );
 			self::truncate_table( 'cb2_perioditem_settings', 'period_id' );
 			self::truncate_table( 'cb2_timeframe_options', 'option_id' );
 			self::truncate_table( 'cb2_global_period_groups', 'period_group_id' );
@@ -127,6 +126,18 @@ class CB2_Forms {
 				// Clear up manual DRI
 				$wpdb->query( "delete from {$wpdb->prefix}postmeta where NOT exists(select * from wp_posts where ID = post_id)" );
 			}
+
+			if ( $testdata ) {
+				self::truncate_table( 'posts', 'ID' );
+				self::truncate_table( 'postmeta', 'post_id' );
+				// Items
+				$wpdb->query( "insert into wp_posts values( '1', '1', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', 'Cargo Bike Blue', '', 'publish', 'closed', 'closed', '', 'cargo-bike-blue', '', '', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', '0', 'http://commonsbooking.ddns.net/?post_type=item&#038;p=1', '0', 'item', '', '0');" );
+				$wpdb->query( "insert into wp_posts values( '2', '1', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', 'Cargo Bike Red',  '', 'publish', 'closed', 'closed', '', 'cargo-bike-red',  '', '', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', '0', 'http://commonsbooking.ddns.net/?post_type=item&#038;p=2', '0', 'item', '', '0');" );
+				// Locations
+				$wpdb->query( "insert into wp_posts values( '3', '1', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', 'Budapest fairest', '', 'publish', 'closed', 'closed', '', 'budapest-fairest', '', '', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', '0', 'http://commonsbooking.ddns.net/?post_type=item&#038;p=3', '0', 'location', '', '0');" );
+				$wpdb->query( "insert into wp_posts values( '4', '1', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', 'Berlin biscuits',  '', 'publish', 'closed', 'closed', '', 'berlin-biscuits',  '', '', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', '0', 'http://commonsbooking.ddns.net/?post_type=item&#038;p=4', '0', 'location', '', '0');" );
+			}
+
 			$cleared = TRUE;
     }
 

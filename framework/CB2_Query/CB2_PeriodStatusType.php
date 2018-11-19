@@ -10,7 +10,6 @@ define( 'CB2_ANY_ACTION', CB2_COLLECT | CB2_USE | CB2_RETURN );
 class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements JsonSerializable {
   public  static $database_table = 'cb2_period_status_types';
   public  static $all = array();
-  public  static $standard_fields = array( 'name' );
   static  $static_post_type = 'periodstatustype';
   public  static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-settings',
@@ -27,7 +26,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 					'name'    => __( 'PeriodStatusType', 'commons-booking-2' ),
 					'id'      => 'period_status_type_ID',
 					'type'    => 'radio',
-					'default' => ( isset( $_GET['period_status_type_ID'] ) ? $_GET['period_status_type_ID'] : NULL ),
+					'default' => CB2_PostNavigator::ID_from_GET_post_type( CB2_PeriodStatusType::$static_post_type, 'period_status_type' ),
 					'options' => CB2_Forms::period_status_type_options(),
 				),
 				array(
@@ -41,22 +40,26 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 
   static function database_table_name() { return self::$database_table; }
 
-  static function database_table_schema( $prefix ) {
+  static function database_table_schemas( $prefix ) {
 		$id_field = CB2_Database::id_field( __class__ );
 
-		return array(
+		return array( array(
 			'name'    => self::$database_table,
 			'columns' => array(
 				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
 				$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
 				'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL ),
-				'description' => array( CB2_VARCHAR, (1024), NULL,     NULL,     NULL, NULL ),
-				'flags'       => array( CB2_BIT,     (32),   NULL,     CB2_NOT_NULL, NULL, 0 ),
-				'colour'      => array( CB2_VARCHAR, (256),  NULL,     NULL,     NULL, NULL ),
-				'opacity'     => array( CB2_TINYINT, (1),    NULL,     CB2_NOT_NULL, NULL, 100 ),
-				'priority'    => array( CB2_INT,     (11),   NULL,     CB2_NOT_NULL, NULL, 1 ),
+				'description' => array( CB2_VARCHAR, (1024), NULL,     NULL,         NULL, NULL ),
+				'flags'       => array( CB2_BIT,     (32),   NULL,     CB2_NOT_NULL, NULL,  0 ),
+				'colour'      => array( CB2_VARCHAR, (256),  NULL,     NULL,         NULL, NULL ),
+				'opacity'     => array( CB2_TINYINT, (1),    NULL,     CB2_NOT_NULL, NULL,  100 ),
+				'priority'    => array( CB2_INT,     (11),   NULL,     CB2_NOT_NULL, NULL,  1 ),
+				'author_ID'   => array( CB2_BIGINT,  (20),   CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1 ),
 			),
 			'primary key' => array( $id_field ),
+			'foreign keys' => array(
+				'author_ID' => array( 'users', 'ID' ),
+			),
 			'triggers'    => array(
 				'BEFORE UPDATE' => array( "
 					if old.$id_field <= 6 then
@@ -74,21 +77,21 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 					end if;"
 				),
 			),
-		);
+		) );
 	}
 
 	static function database_data() {
 		return array(
-			array( '1', 'available', '', '7', '#', '100', '2' ),
-			array( '2', 'booked', NULL, '0', '#dd3333', '50', '6' ),
-			array( '3', 'closed', 'rrr', '2', '#f7f7f7', '50', '3' ),
-			array( '4', 'open', '', '7', '#456', '100', '1' ),
-			array( '5', 'repair', NULL, '0', '#999', '100', '4' ),
-			array( '6', 'holiday', ' ', '2', '#a7a7a7', '100', '5' ),
+			array( '1', 'available', '', '7', '#', '100', '2', '1' ),
+			array( '2', 'booked', NULL, '0', '#dd3333', '50', '6', '1' ),
+			array( '3', 'closed', 'rrr', '2', '#f7f7f7', '50', '3', '1' ),
+			array( '4', 'open', '', '7', '#456', '100', '1', '1' ),
+			array( '5', 'repair', NULL, '0', '#999', '100', '4', '1' ),
+			array( '6', 'holiday', ' ', '2', '#a7a7a7', '100', '5', '1' ),
 		);
 	}
 
-  static function database_views() {
+  static function database_views( $prefix ) {
 		return array(
 			'cb2_view_periodstatustype_posts' => "select (`p`.`period_status_type_id` + `pt`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'description' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,`p`.`name` AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,'periodstatustype' AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_status_type_id` AS `period_status_type_id`,`p`.`name` AS `name`,`p`.`description` AS `description`,`p`.`flags` AS `flags`,`p`.`colour` AS `colour`,`p`.`opacity` AS `opacity`,`p`.`priority` AS `priority`,(`p`.`period_status_type_id` <= 6) AS `system` from (`wp_cb2_period_status_types` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = 'periodstatustype')))",
 			'cb2_view_periodstatustypemeta'   => "select ((`pst`.`period_status_type_id` * 10) + `pt`.`ID_base`) AS `meta_id`,`pst`.`ID` AS `post_id`,`pst`.`ID` AS `periodstatustype_id`,'flags' AS `meta_key`,cast(`pst`.`flags` as unsigned) AS `meta_value` from (`wp_cb2_view_periodstatustype_posts` `pst` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `pst`.`post_type`))) union all select (((`pst`.`period_status_type_id` * 10) + `pt`.`ID_base`) + 1) AS `meta_id`,`pst`.`ID` AS `post_id`,`pst`.`ID` AS `periodstatustype_id`,'colour' AS `meta_key`,`pst`.`colour` AS `meta_value` from (`wp_cb2_view_periodstatustype_posts` `pst` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `pst`.`post_type`))) union all select (((`pst`.`period_status_type_id` * 10) + `pt`.`ID_base`) + 2) AS `meta_id`,`pst`.`ID` AS `post_id`,`pst`.`ID` AS `periodstatustype_id`,'opacity' AS `meta_key`,`pst`.`opacity` AS `meta_value` from (`wp_cb2_view_periodstatustype_posts` `pst` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `pst`.`post_type`))) union all select (((`pst`.`period_status_type_id` * 10) + `pt`.`ID_base`) + 3) AS `meta_id`,`pst`.`ID` AS `post_id`,`pst`.`ID` AS `periodstatustype_id`,'priority' AS `meta_key`,`pst`.`priority` AS `meta_value` from (`wp_cb2_view_periodstatustype_posts` `pst` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `pst`.`post_type`)))",
@@ -233,7 +236,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     return $styles;
   }
 
-  function add_actions( &$actions, $post ) {
+  function row_actions( &$actions, $post ) {
 		if ( property_exists( $post, 'system' ) && $post->system ) {
 			array_unshift( $actions, '<b style="color:#000;">System Status Type</b>' );
 			unset( $actions['trash'] );

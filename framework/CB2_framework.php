@@ -55,6 +55,6 @@ require_once('includes/CB2_Codes.php');
  * Includes - Functions
  */
 require_once('includes/get_template_part.php');
-require_once('includes/template_functions.php');
+require_once('includes/CB2_template_functions.php');
 require_once('includes/helper_functions.php');
 

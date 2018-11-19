@@ -14,10 +14,13 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 	}
 }
 define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
-define( 'CB2_DEBUG_PROCEDURE', WP_DEBUG && TRUE );
 
-// Native post create process
-define( 'CB2_CREATE_NEW', -1 );
+// Native posts
+define( 'CB2_ID_SHARING',    TRUE );
+define( 'CB2_ID_BASE',       0 );
+define( 'CB2_MAX_CB2_POSTS', 10000 );
+
+define( 'CB2_CREATE_NEW',    -1 );
 define( 'CB2_UPDATE', TRUE );
 define( 'GET_METADATA_ASSIGN', '_get_metadata_assign' );
 define( 'CB2_ALLOW_CREATE_NEW', TRUE ); // Allows CB2_CREATE_NEW to be passed as a numeric ID
@@ -78,16 +81,20 @@ class CB2_Query {
 			throw new Exception( "[$Class] get_post_with_type() using wp_posts table" );
 		}
 
-		// WP_Post::get_instance() will check the cache
-		// TODO: Can we intelligently wp_cache_delete() instead?
-		wp_cache_delete( $post_id, 'posts' );
-
 		// TODO: get_post() will populate ALL fields from the post table: take advantage of this
 		$post = get_post( $post_id, $output, $filter );
+		if ( $post->post_type != $post_type ) {
+			// WP_Post::get_instance() will check the cache
+			// In some modes, post IDs can conflict
+			// the DB is redirected now, so try again
+			wp_cache_delete( $post_id, 'posts' );
+			$post = get_post( $post_id, $output, $filter );
+			if ( $post->post_type != $post_type )
+				throw new Exception( "[$Class/$post_id] fetched a [$post->post_type] post_type from [$posts_table], not a [$post_type]" );
+		}
+
 		if ( is_null( $post ) )
 			throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
-		if ( $post->post_type != $post_type )
-			throw new Exception( "[$Class/$post_id] fetched a [$post->post_type] post_type from [$posts_table], not a [$post_type]" );
 
 		// Reset and Annotate
 		// This will make a get_metadata_assign() call
@@ -106,7 +113,8 @@ class CB2_Query {
 	}
 
 	static function ensure_correct_classes( &$posts, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE ) {
-		// TODO: Several embedded queries: move static <Time class>::$all arrays on to the $instance_container
+		// TODO: Several embedded WP_Querys would cause a build up of static $all:
+		//   move static <Time class>::$all arrays on to the $instance_container (not used yet)
 		// static CB2_User::$all are ok, but CB2_Time varies according to the query
 		// only a problem when using compare => view_mode
 		// Currently, if several DIFFERENT time queries happen in the page load
@@ -124,8 +132,6 @@ class CB2_Query {
 
 	static function ensure_correct_class( &$post, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE, $post_classes = NULL ) {
     // factory()s will also create the extra CB2_Time_Classes based OO data structures
-		// TODO: The WP_Post may have all its metadata loaded already
-		// as the wordpress system adds all fields to the WP_Post dynamically
     global $auto_draft_publish_transition;
 
 		if ( ! $post )
@@ -192,49 +198,84 @@ class CB2_Query {
 		return $path;
 	}
 
-	static function redirect_wpdb_for_post_type( $post_type, $meta_redirect = TRUE ) {
+	static function wpdb_postmeta_is_redirected() {
 		global $wpdb;
+		return ( strstr( $wpdb->postmeta, 'cb2_view_' ) !== FALSE );
+	}
+
+	static function wpdb_posts_is_redirected() {
+		global $wpdb;
+		return ( strstr( $wpdb->posts, 'cb2_view_' ) !== FALSE );
+	}
+
+	static function redirect_wpdb_for_post_type( $post_type, $meta_redirect = TRUE, &$meta_type = NULL ) {
+		global $wpdb, $auto_draft_publish_transition;
 		$redirected = FALSE;
+		$meta_type  = 'post';
 
-		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
-			// TODO: Reset the posts to the normal table necessary?
-			// maybe it will interfere with other plugins?
-			$wpdb->posts    = "{$wpdb->prefix}posts";
-
-			if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
-				// perioditem-global => perioditem
-				$post_type_stub = CB2_Query::substring_before( $post_type );
-				if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
-					$post_type_stub = $Class::$posts_table;
-				// cb2_view_periodoccurence_posts
-				$posts_table    = "{$wpdb->prefix}cb2_view_{$post_type_stub}_posts";
-				$wpdb->posts    = $posts_table;
-				$redirected     = TRUE;
-				//if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] =&gt; [$posts_table]</span>" );
-			}
-
-			if ( $meta_redirect ) {
-				if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
+		// If $auto_draft_publish_transition is happening
+		// Then the primary $wpdb->postmeta table will be set to wp_postmeta
+		// This happens when the post is still in the normal WP tables
+		// not been moved yet to the native structures and views
+		if ( ! $auto_draft_publish_transition ) {
+			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+				if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
 					// perioditem-global => perioditem
 					$post_type_stub = CB2_Query::substring_before( $post_type );
-					if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) )
-						$post_type_stub = $Class::$postmeta_table;
-					// cb2_view_periodoccurencemeta
-					$postmeta_table = "{$wpdb->prefix}cb2_view_{$post_type_stub}meta";
-					$wpdb->postmeta = $postmeta_table;
-					if ( WP_DEBUG && FALSE )
-						print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] =&gt; [$postmeta_table]</span>" );
+					if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
+						$post_type_stub = $Class::$posts_table;
+					// cb2_view_periodoccurence_posts
+					$posts_table          = "{$wpdb->prefix}cb2_view_{$post_type_stub}_posts";
+					if ( property_exists( $wpdb, 'old_wpdb_posts' ) ) array_push( $wpdb->old_wpdb_posts, $wpdb->posts );
+					else $wpdb->old_wpdb_posts = array( $wpdb->posts );
+					$wpdb->posts          = $posts_table;
+					$redirected           = TRUE;
+					if ( WP_DEBUG && FALSE ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] =&gt; [$posts_table]</span>" );
 				}
-			} else if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] no meta redirect</span>" );
+
+				if ( $meta_redirect ) {
+					if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
+						// perioditem-global => perioditem
+						$meta_type = CB2_Query::substring_before( $post_type );
+						if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) )
+							$meta_type = $Class::$postmeta_table;
+						// cb2_view_periodoccurencemeta
+						$postmeta_table        = "{$wpdb->prefix}cb2_view_{$meta_type}meta";
+						$post_type_meta        = "{$meta_type}meta";
+						$wpdb->$post_type_meta = $postmeta_table;
+						// Note that requests using a redirected postmeta
+						// cannot be cached by the WP_Query system
+						// the meta-type will be post and thus conflict
+						// and, in fact, we have turned auto-caching off
+						// However, we need the redirect for the primary query meta-query JOINS
+						if ( property_exists( $wpdb, 'old_wpdb_postmeta' ) ) array_push( $wpdb->old_wpdb_postmeta, $wpdb->postmeta );
+						else $wpdb->old_wpdb_postmeta = array( $wpdb->postmeta );
+						$wpdb->postmeta          = $postmeta_table;
+						if ( WP_DEBUG && FALSE ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] =&gt; [$postmeta_table]</span>" );
+					}
+				} else if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] no meta redirect</span>" );
+			}
 		}
 
 		return $redirected;
 	}
 
+	static function unredirect_wpdb() {
+		global $wpdb;
+
+		if ( property_exists( $wpdb, 'old_wpdb_posts' ) && count( $wpdb->old_wpdb_posts ) )    {
+			$wpdb->posts = array_shift( $wpdb->old_wpdb_posts );
+		} else $wpdb->posts = "{$wpdb->prefix}posts";
+
+		if ( property_exists( $wpdb, 'old_wpdb_postmeta' ) && count( $wpdb->old_wpdb_postmeta )  )    {
+			$wpdb->postmeta = array_shift( $wpdb->old_wpdb_postmeta );
+		} else $wpdb->postmeta = "{$wpdb->prefix}postmeta";
+	}
+
 	static function get_metadata_assign( &$post ) {
 		// Switch base tables to our views
 		// Load all associated metadata and assign to the post object
-		global $auto_draft_publish_transition, $wpdb;
+		global $wpdb;
 
 		if ( ! is_object( $post ) )
 			throw new Exception( 'get_metadata_assign() post object required' );
@@ -243,61 +284,44 @@ class CB2_Query {
 		if ( ! property_exists( $post, 'post_type' ) || ! $post->post_type )
 			throw new Exception( 'get_metadata_assign: $post->post_type required' );
 
-		// WordPress standard settings for the wp_postmeta
-		// $wpdb->postmeta = wp_postmeta
-		$meta_type       = 'post';
-		$meta_table_stub = "{$meta_type}meta";
-		$postmeta_table  = $meta_table_stub;
+		$ID              = $post->ID;
+		$post_type       = $post->post_type;
 
-		$ID        = $post->ID;
-		$post_type = $post->post_type;
+		if ( ! property_exists( $post, GET_METADATA_ASSIGN ) || ! $post->{GET_METADATA_ASSIGN} ) {
+			// get_metadata( $meta_type, ... )
+			//   meta.php has _get_meta_table( $meta_type );
+			//   $table_name = $meta_type . 'meta';
+			//   $meta_type  = post_type stub, e.g. perioditem
+			// get_metadata() will use standard WP caches
+			self::redirect_wpdb_for_post_type( $post_type, TRUE, $meta_type );
+			$metadata = get_metadata( $meta_type, $ID ); // e.g. perioditem, 40004004
+			self::unredirect_wpdb();
 
-		if ( ! property_exists( $post, 'GET_METADATA_ASSIGN' ) || ! $post->{GET_METADATA_ASSIGN} ) {
-			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
-				// If $auto_draft_publish_transition is happening
-				// Then the primary $wpdb->postmeta table will be set to wp_postmeta
-				// This happens when the post is still in the normal WP tables
-				// not been moved yet to the native structures and views
-				if ( ! $auto_draft_publish_transition ) {
-					// postmeta_table() will return FALSE
-					// if the Class does not have its own postmeta
-					if ( $has_postmeta_table = CB2_Database::postmeta_table( $Class, $meta_type, $meta_table_stub ) )
-						$postmeta_table = $has_postmeta_table;
-				}
-				$wpdb->$meta_table_stub = "$wpdb->prefix$postmeta_table";
-				if ( WP_DEBUG && FALSE )
-					print( "<div class='cb2-WP_DEBUG-small'>using to \$wpdb->$meta_table_stub = {$wpdb->$meta_table_stub} for [$post_type/$meta_type/$auto_draft_publish_transition]</div>" );
+			// Convert to objects
+			foreach ( $metadata as $meta_key => &$meta_value_array ) {
+				$meta_value      = CB2_Query::to_object( $meta_key, $meta_value_array[0] );
+				$post->$meta_key = $meta_value;
+				//if ( ! is_object( $meta_value ) ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key = $meta_value $meta_value_array[0]</div>" );
+			}
 
-				// get_metadata( $meta_type, ... )
-				//   meta.php has _get_meta_table( $meta_type );
-				//   $table_name = $meta_type . 'meta';
-				// And remove pseudo meta like _edit_lock
-				$metadata = get_metadata( $meta_type, $ID );
-				foreach ( $metadata as $meta_key => &$meta_value_array ) {
+			// Register that all metadata is present
+			$post->{GET_METADATA_ASSIGN} = TRUE;
+
+			if ( WP_DEBUG ) {
+				// Check that some meta data is returned
+				$has_metadata = FALSE;
+				foreach ( $metadata as $meta_key => $meta_value_array ) {
 					$is_system_metadata = ( substr( $meta_key, 0, 1 ) == '_' );
-					if ( ! $is_system_metadata ) {
-						$meta_value      = CB2_Query::to_object( $meta_key, $meta_value_array[0] );
-						$post->$meta_key = $meta_value;
-						//if ( ! is_object( $meta_value ) ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key = $meta_value $meta_value_array[0]</div>" );
-					}
+					if ( ! $is_system_metadata ) $has_metadata = TRUE;
 				}
-				// Register that all metadata is present
-				$post->{GET_METADATA_ASSIGN} = TRUE;
+				if ( ! $has_metadata && $meta_type != 'post' ) {
+					krumo( $wpdb );
+					throw new Exception( "[$post_type/$meta_type] [$ID] returned no metadata" );
+				}
 
-				if ( WP_DEBUG ) {
-					// Check that some meta data is returned
-					foreach ( $metadata as $meta_key => $meta_value_array ) {
-						$is_system_metadata = ( substr( $meta_key, 0, 1 ) == '_' );
-						if ( $is_system_metadata ) unset( $metadata[$meta_key] );
-					}
-					if ( ! count( $metadata ) && $meta_type != 'post' ) {
-						krumo( $wpdb );
-						throw new Exception( "[$post_type/$meta_type/$postmeta_table] [$ID/$auto_draft_publish_transition] returned no metadata" );
-					}
-					if ( CB2_DEBUG_SAVE && FALSE )
-						krumo( $ID, $post_type, $post->post_status, $meta_type, $postmeta_table, $metadata );
-				}
-			} else throw new Exception( "Cannot get_metadata_assign() to [$post_type] not governed by CB2" );
+				if ( CB2_DEBUG_SAVE && FALSE )
+					krumo( $ID, $post_type, $post->post_status, $meta_type, $metadata );
+			}
 		}
 
 		//return $post; // Passed by reference, so no need to check result
@@ -554,5 +578,111 @@ class CB2_Query {
 
 	static function array_has_associative( $array ) {
 		return array_keys($arr) !== range(0, count($arr) - 1);
+	}
+
+	static function debug_print_backtrace( $message = NULL ) {
+		// This function is here because QueryMonitor traps all PHP errors
+		// and prevents a decent Stack Trace in xdebug
+		static $css_bubble   = "font-size:10px; display:inline-block; margin:1px 0 0 2px; padding:0 5px; min-width:7px; height:17px; border-radius:11px; color:#444; font-size:9px; line-height:17px; text-align:center; box-shadow:0px 0px 1px #aaa;background-color:#fff;";
+		static $css_debug    = "margin:1px 3px 0 2px; padding: 2px 5px; min-width: 7px; border-radius: 11px; background-color: #500; color: #fff; font-size: 9px; text-align: center;";
+		static $css_function = "overflow:scroll;max-height:200px;color:#010;font-size:10px;margin:0px 0px 20px 30px;padding-left:10px;border-left:14px solid #d7d7d7;border-bottom:4px solid #d7d7d7;";
+		static $css_button   = 'line-height:12px;height:12px;width:12px;padding:0px;margin:0px;';
+		static $expand       = 'var tr = this.parentNode.parentNode.nextSibling;var hidden = tr.getAttribute("style") == "display:none;";tr.setAttribute("style", ( hidden ? "" : "display:none;" ));tr.firstChild.firstChild.scrollTop = 200000;this.innerText = ( hidden ? "-" : "+" );';
+		static $backlines    = 100;
+		static $frontlines   = 5;
+		$trace               = array_reverse( debug_backtrace() );
+		$i                   = 0;
+		$document_root       = $_SERVER['DOCUMENT_ROOT'];
+		$document_root_len   = strlen( $document_root ) + 1;
+
+		if ( WP_DEBUG ) {
+			if ( $message ) print( "<div><span style='$css_debug'>WP_DEBUG:</span> <b>$message</b></div>" );
+
+			print( '<table>' );
+			//array_pop( $trace ); // debug_print_backtrace() call
+			foreach ( $trace as $line ) {
+				$function_name  = $line['function'];
+				$class          = ( isset( $line['class'] )  ? $line['class']  : NULL );
+				$object         = ( isset( $line['object'] ) ? $line['object'] : NULL );
+				$type           = ( isset( $line['type'] )   ? $line['type']   : '->' );
+				$absolute_path  = $line['file'];
+				$lineno         = $line['line'];
+				$file_contents  = file_get_contents( $absolute_path );
+				$file_lines     = explode( "\n", $file_contents );
+				$function_lines = array_splice( $file_lines,
+														( $lineno > $backlines ? $lineno - $backlines : 0 ),
+														( $lineno > $backlines ? $backlines : $lineno ) + $frontlines
+													);
+				$relative_path  = substr( $absolute_path, $document_root_len );
+				$dir            = dirname( $relative_path );
+				$file           = basename( $relative_path );
+				$link           = "file://$line[file]";
+
+				if ( strlen( $dir ) > 30 ) $dir = '...' . substr( $dir, strlen( $dir ) - 30 );
+				$function_name_full = ( $class ? "$class$type$function_name" : $function_name );
+
+				print( "<tr><td style='$css_bubble'>#$i</td>" );
+				print( "<td style='white-space:nowrap;'>$dir/</td>" );
+				print( "<td style='white-space:nowrap;'><b><a target='_blank' href='$link'>$file</a></b>:$lineno</td>" );
+				print( "<td><button style='$css_button' onclick='$expand'>+</button></td>" );
+				print( "<td><b>$function_name_full</b>( " );
+				$first_arg = TRUE;
+
+				foreach ( $line['args'] as $arg ) {
+					if ( is_null( $arg ) )     $argstring = ( 'NULL' );
+					else if ( is_array( $arg ) )  {
+						if ( count( $arg ) > 5 ) $argstring = ( 'Array(' . count( $arg ) . ')' );
+						else {
+							$argstring = ( '[' );
+							$first_subarg = TRUE;
+							foreach ( $arg as $subarg ) {
+								if ( ! $first_subarg ) $argstring .= ( ', ' );
+								if      ( is_null( $arg ) )      $argstring .= ( 'NULL' );
+								else if ( is_array( $subarg ) )  $argstring .= ( 'Array(' . count( $subarg ) . ')' );
+								else if ( is_object( $subarg ) ) $argstring .= ( get_class( $subarg) . ( property_exists( $subarg, 'ID' ) ? "($subarg->ID)" : '' ) );
+								else if ( is_string( $subarg ) && empty( $subarg ) ) $argstring .= ( "''" );
+								else if ( is_string( $subarg ) ) $argstring .= ( str_replace( $document_root, '', $subarg ) );
+								else if ( is_bool( $subarg ) )   $argstring .= ( $subarg ? 'TRUE' : 'FALSE' );
+								else $argstring .= ( $subarg );
+								$first_subarg = FALSE;
+							}
+							$argstring .= ( ']' );
+						}
+					}
+					else if ( is_object( $arg ) ) $argstring = ( get_class( $arg) . ( property_exists( $arg, 'ID' ) ? "($arg->ID)" : '' ) );
+					else if ( is_string( $arg ) && empty( $arg ) ) $argstring = ( "''" );
+					else if ( is_string( $arg ) ) $argstring = ( str_replace( $document_root, '', $arg ) );
+					else if ( is_bool( $arg ) )   $argstring = ( $arg ? 'TRUE' : 'FALSE' );
+					else $argstring = ( $arg );
+
+					$argstring = htmlspecialchars( $argstring );
+					if ( strlen( $argstring ) > 30 ) $argstring = substr( $argstring, 0, 20 ) . '...';
+					if ( ! $first_arg ) print( ', ' );
+					print( $argstring );
+					$first_arg = FALSE;
+				}
+
+				print( ' )</td><td>' );
+				print( '</td></tr>');
+				print( "<tr style='display:none;'><td colspan='100'><ul style='$css_function'>" );
+				foreach ( $function_lines as $function_line ) {
+					$function_line = htmlspecialchars( $function_line );
+					$function_line = preg_replace( '/function\\s+([^(]+)/', '<b>function $1</b>', $function_line );
+					$function_line = str_replace(  ' ', str_repeat( '&nbsp;', 2 ), $function_line );
+					$function_line = preg_replace( '/\\t/', str_repeat( '&nbsp;', 8 ), $function_line );
+					$function_line = str_replace(  "$function_name(", "<b style='color:blue;'>$function_name</b>(", $function_line);
+					if ( $class ) $function_line = str_replace(  "$class(", "<b style='color:blue;'>$class</b>(", $function_line);
+					print( "<li style='margin:0px;line-height:14px;'>$function_line</li>" );
+				}
+				print( "</ul>" );
+				if ( $object ) {
+					//var_dump( $object );
+				}
+				print( "</td></tr>" );
+				$i++;
+			}
+			print( '</table>' );
+			exit();
+		}
 	}
 }

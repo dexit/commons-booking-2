@@ -2,24 +2,18 @@
 require_once( 'CB2_Period.php' );
 
 abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializable {
-	public  static $database_table = 'cb2_perioditem_settings';
-	public  static $description = 'CB2_PeriodItem uses <b>triggers</b> to update the primary postmeta table for performance.';
+	public  static $database_table   = 'cb2_perioditem_settings';
+	public  static $description      = 'CB2_PeriodItem uses <b>triggers</b> to update the primary postmeta table for performance.';
   public  static $all              = array();
-  public  static $static_post_type = 'perioditem';
-  public  static $postmeta_table   = FALSE;
-  public  static $standard_fields  = array(
-		'time_start',
-		'name',
-		'period->period_status_type->name',
-		'recurrence_index',
-		'period->priority'
-	);
+  // public  static $postmeta_table   = FALSE;
+
 	public static $all_post_types = array(
-		'perioditem-automatic', // post_status = auto-draft
 		'perioditem-global',
 		'perioditem-location',
 		'perioditem-timeframe',
 		'perioditem-user',
+
+		'perioditem-automatic', // post_status = auto-draft (last because fake)
 	);
   private static $null_recurrence_index = 0;
   private $priority_overlap_periods     = array();
@@ -27,95 +21,47 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 
 	static function database_table_name() { return self::$database_table; }
 
-  static function database_create_all_metadata( $prefix, $stage = 'new' ) {
-		$period_item_posts    = "{$prefix}cb2_view_perioditem_posts";
-		$period_item_meta     = "{$prefix}cb2_view_perioditemmeta";
-		$postmeta             = "{$prefix}postmeta";
+  static function database_table_schemas( $prefix ) {
+		$period_cache_table   = "{$prefix}cb2_cache_perioditems";
+		$refresh_cache        = "delete from $period_cache_table; insert into $period_cache_table(period_id, recurrence_index, datetime_period_item_start, datetime_period_item_end, blocked) select * from {$prefix}cb2_view_perioditems;";
 
-		return "
-					# Create all metadata
-					insert into $postmeta( meta_id, post_id, meta_key, meta_value )
-						select meta_id, post_id, meta_key, meta_value
-							from $period_item_meta
-							where post_id in(
-								select ID from $period_item_posts
-											where period_native_id = $stage.period_id
-								);";
-  }
-
-  static function database_delete_all_metadata( $prefix, $stage = 'old' ) {
-		$period_item_posts    = "{$prefix}cb2_view_perioditem_posts";
-		$period_item_meta     = "{$prefix}cb2_view_perioditemmeta";
-		$postmeta             = "{$prefix}postmeta";
-
-		return "
-					# Remove all existing metadata
-					delete from $postmeta
-						where post_id in(
-							select ID from $period_item_posts
-									where period_native_id = $stage.period_id
-							);";
-	}
-
-static function database_table_triggers( $prefix ) {
-		$delete_old_metadata  = self::database_delete_all_metadata( $prefix, 'old' );
-		$delete_new_metadata  = self::database_delete_all_metadata( $prefix, 'new' );
-		$create_new_metadata  = self::database_create_all_metadata( $prefix, 'new' );
-		$safe_updates_off = CB2_Database::$safe_updates_off;
-		$safe_updates_restore = CB2_Database::$safe_updates_restore;
-
-		return array(
-			'AFTER INSERT' => array( "
-				# ----------------------------- perioditem(s)
-				# Deleting from postmeta without meta_id
-				$safe_updates_off
-				$delete_new_metadata
-				$create_new_metadata
-				$safe_updates_restore",
-			),
-			'AFTER UPDATE' => array( "
-				# ----------------------------- perioditem(s)
-				# Deleting from postmeta without meta_id
-				$safe_updates_off
-				$delete_new_metadata
-				$create_new_metadata
-				$safe_updates_restore"
-			),
-			'BEFORE DELETE' => array( "
-				# ----------------------------- perioditem(s)
-				# Deleting from postmeta without meta_id
-				$safe_updates_off
-				$delete_old_metadata
-				$safe_updates_restore"
-			),
-		);
-  }
-
-  static function database_table_schema( $prefix ) {
-		return array(
+		return array( array(
 			'name'    => self::$database_table,
 			'columns' => array(
 				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
-				'period_id'        => array( CB2_INT, (11), CB2_UNSIGNED, CB2_NOT_NULL ),
-				'recurrence_index' => array( CB2_INT, (11), CB2_UNSIGNED, CB2_NOT_NULL ),
-				'blocked'          => array( CB2_BIT, (1),  NULL,         CB2_NOT_NULL, NULL, 0 ),
+				'period_id'        => array( CB2_INT,    (11), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'recurrence_index' => array( CB2_INT,    (11), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'blocked'          => array( CB2_BIT,    (1),  NULL,         CB2_NOT_NULL, NULL,  0 ),
+				'author_ID'        => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1 ),
 			),
 			'primary key'  => array( 'period_id', 'recurrence_index' ),
-			'triggers'     => self::database_table_triggers( $prefix ),
 			'foreign keys' => array(
 				'period_id' => array( 'cb2_periods', 'period_id'),
+				'author_ID' => array( 'users',    'ID' ),
 			),
-		);
+			'triggers'     => array(
+				'AFTER UPDATE'  => array( $refresh_cache ),
+				'AFTER DELETE'  => array( $refresh_cache ),
+				'AFTER INSERT'  => array( $refresh_cache ),
+			),
+		) );
   }
 
-  static function database_views() {
+  static function database_views( $prefix ) {
+		// cb2_view_sequence_date is designed to return 4000 rows
+		// which is equivalent to 10 years on daily repeat
+		// Some lines are concatenated only to reduce line length for my kate editor :)
+		$period_cache_table   = "{$prefix}cb2_cache_perioditems";
+
 		return array(
 			'cb2_view_sequence_num'        => "select 0 AS `num` union all select 1 AS `1` union all select 2 AS `2` union all select 3 AS `3` union all select 4 AS `4` union all select 5 AS `5` union all select 6 AS `6` union all select 7 AS `7` union all select 8 AS `8` union all select 9 AS `9`",
-			'cb2_view_sequence_date'       => "select ((`t3`.`num` * 100) + ((`t2`.`num` * 10) + `t1`.`num`)) AS `num` from ((`wp_cb2_view_sequence_num` `t1` join `wp_cb2_view_sequence_num` `t2`) join `wp_cb2_view_sequence_num` `t3`)",
+			'cb2_view_sequence_date'       => "select ((`t4`.`num` * 1000) + ((`t3`.`num` * 100) + ((`t2`.`num` * 10) + `t1`.`num`))) AS `num` from (((`wp_cb2_view_sequence_num` `t1` join `wp_cb2_view_sequence_num` `t2`) join `wp_cb2_view_sequence_num` `t3`) join `wp_cb2_view_sequence_num` `t4`) where (`t4`.`num` <= 3)",
 			'cb2_view_perioditems'         => "select `pr`.`period_id` AS `period_id`,0 AS `recurrence_index`,`pr`.`datetime_part_period_start` AS `datetime_period_item_start`,`pr`.`datetime_part_period_end` AS `datetime_period_item_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from (`wp_cb2_periods` `pr` left join `wp_cb2_perioditem_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = 0)))) where (isnull(`pr`.`recurrence_type`) and (`pr`.`datetime_from` <= `pr`.`datetime_part_period_start`) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= `pr`.`datetime_part_period_end`))) union all select `pr`.`period_id` AS `period_id`,`sq`.`num` AS `recurrence_index`,(`pr`.`datetime_part_period_start` + interval `sq`.`num` year) AS `datetime_period_item_start`,(`pr`.`datetime_part_period_end` + interval `sq`.`num` year) AS `datetime_period_item_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from ((`wp_cb2_view_sequence_date` `sq` join `wp_cb2_periods` `pr`) left join `wp_cb2_perioditem_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = `sq`.`num`)))) where ((`pr`.`recurrence_type` = 'Y') and ((year(`pr`.`datetime_part_period_end`) + `sq`.`num`) < 9999) and (`pr`.`datetime_from` <= (`pr`.`datetime_part_period_start` + interval `sq`.`num` year)) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= (`pr`.`datetime_part_period_end` + interval `sq`.`num` year)))) union all select `pr`.`period_id` AS `period_id`,`sq`.`num` AS `recurrence_index`,(`pr`.`datetime_part_period_start` + interval `sq`.`num` month) AS `datetime_period_item_start`,(`pr`.`datetime_part_period_end` + interval `sq`.`num` month) AS `datetime_period_item_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from ((`wp_cb2_view_sequence_date` `sq` join `wp_cb2_periods` `pr`) left join `wp_cb2_perioditem_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = `sq`.`num`)))) where ((`pr`.`recurrence_type` = 'M') and ((year(`pr`.`datetime_part_period_end`) + (`sq`.`num` / 12)) < 9999) and ((`pr`.`recurrence_sequence` = 0) or (`pr`.`recurrence_sequence` & (pow(2,month((`pr`.`datetime_part_period_start` + interval `sq`.`num` month))) - 1))) and (`pr`.`datetime_from` <= (`pr`.`datetime_part_period_start` + interval `sq`.`num` month)) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= (`pr`.`datetime_part_period_end` + interval `sq`.`num` month)))) union all select `pr`.`period_id` AS `period_id`,`sq`.`num` AS `recurrence_index`,(`pr`.`datetime_part_period_start` + interval `sq`.`num` week) AS `datetime_period_item_start`,(`pr`.`datetime_part_period_end` + interval `sq`.`num` week) AS `datetime_period_item_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from ((`wp_cb2_view_sequence_date` `sq` join `wp_cb2_periods` `pr`) left join `wp_cb2_perioditem_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = `sq`.`num`)))) where ((`pr`.`recurrence_type` = 'W') and ((year(`pr`.`datetime_part_period_end`) + (`sq`.`num` / 52)) < 9999) and (`pr`.`datetime_from` <= (`pr`.`datetime_part_period_start` + interval `sq`.`num` week)) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= (`pr`.`datetime_part_period_end` + interval `sq`.`num` week)))) union all select `pr`.`period_id` AS `period_id`,`sq`.`num` AS `recurrence_index`,(`pr`.`datetime_part_period_start` + interval `sq`.`num` day) AS `datetime_period_item_start`,(`pr`.`datetime_part_period_end` + interval `sq`.`num` day) AS `datetime_period_item_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from ((`wp_cb2_view_sequence_date` `sq` join `wp_cb2_periods` `pr`) left join `wp_cb2_perioditem_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = `sq`.`num`)))) where ((`pr`.`recurrence_type` = 'D') and ((year(`pr`.`datetime_part_period_end`) + (`sq`.`num` / 356)) < 9999) and ((`pr`.`recurrence_sequence` = 0) or (`pr`.`recurrence_sequence` & pow(2,(dayofweek((`pr`.`datetime_part_period_start` + interval `sq`.`num` day)) - 1)))) and (`pr`.`datetime_from` <= (`pr`.`datetime_part_period_start` + interval `sq`.`num` day)) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= (`pr`.`datetime_part_period_end` + interval `sq`.`num` day))))",
-			'cb2_view_perioditem_entities' => "select `ip`.`global_period_group_id` AS `timeframe_id`,concat(`pst`.`name`) AS `title`,NULL AS `location_ID`,NULL AS `item_ID`,NULL AS `user_ID`,'global' AS `period_group_type`,1 AS `period_group_priority`,`pgp`.`period_group_id` AS `period_group_id`,`p`.`period_id` AS `period_id`,`pst`.`period_status_type_id` AS `period_status_type_id`,`po`.`recurrence_index` AS `recurrence_index`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,`po`.`blocked` AS `blocked`,`ip`.`enabled` AS `enabled` from ((((`wp_cb2_view_perioditems` `po` join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `wp_cb2_global_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `wp_cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) union all select `ip`.`location_period_group_id` AS `timeframe_ID`,concat(`loc`.`post_title`,' - ',`pst`.`name`) AS `title`,`ip`.`location_ID` AS `location_ID`,NULL AS `item_ID`,NULL AS `user_ID`,'location' AS `period_group_type`,2 AS `period_group_priority`,`pgp`.`period_group_id` AS `period_group_id`,`p`.`period_id` AS `period_id`,`pst`.`period_status_type_id` AS `period_status_type_id`,`po`.`recurrence_index` AS `recurrence_index`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,`po`.`blocked` AS `blocked`,`ip`.`enabled` AS `enabled` from (((((`wp_cb2_view_perioditems` `po` join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `wp_cb2_location_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) union all select `ip`.`timeframe_period_group_id` AS `timeframe_ID`,concat(`loc`.`post_title`,' - ',`itm`.`post_title`,' - ',`pst`.`name`) AS `title`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,NULL AS `user_ID`,'timeframe' AS `period_group_type`,3 AS `period_group_priority`,`pgp`.`period_group_id` AS `period_group_id`,`p`.`period_id` AS `period_id`,`pst`.`period_status_type_id` AS `period_status_type_id`,`po`.`recurrence_index` AS `recurrence_index`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,`po`.`blocked` AS `blocked`,`ip`.`enabled` AS `enabled` from ((((((`wp_cb2_view_perioditems` `po` join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `wp_cb2_timeframe_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) join `wp_cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) union all select `ip`.`timeframe_user_period_group_id` AS `timeframe_ID`,concat(`loc`.`post_title`,' - ',`itm`.`post_title`,' - ',`usr`.`user_login`,' - ',`pst`.`name`) AS `title`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,`ip`.`user_ID` AS `user_ID`,'user' AS `period_group_type`,4 AS `period_group_priority`,`pgp`.`period_group_id` AS `period_group_id`,`p`.`period_id` AS `period_id`,`pst`.`period_status_type_id` AS `period_status_type_id`,`po`.`recurrence_index` AS `recurrence_index`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,`po`.`blocked` AS `blocked`,`ip`.`enabled` AS `enabled` from (((((((`wp_cb2_view_perioditems` `po` join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `wp_cb2_timeframe_user_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) join `wp_users` `usr` on((`ip`.`user_ID` = `usr`.`ID`))) join `wp_cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`)))",
-			'cb2_view_perioditem_posts'    => "select (((`po`.`timeframe_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_item_start` AS `post_date`,`po`.`datetime_period_item_start` AS `post_date_gmt`,'' AS `post_content`,`po`.`title` AS `post_title`,'' AS `post_excerpt`,if(`po`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(((`po`.`timeframe_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_item_end` AS `post_modified`,`po`.`datetime_period_item_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,concat('perioditem-',`po`.`period_group_type`) AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,((`po`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,`po`.`period_group_type` AS `period_group_type`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,`po`.`timeframe_id` AS `timeframe_id`,((`po`.`timeframe_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,ifnull(`po`.`location_ID`,0) AS `location_ID`,ifnull(`po`.`item_ID`,0) AS `item_ID`,ifnull(`po`.`user_ID`,0) AS `user_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`po`.`enabled` as unsigned) AS `enabled` from (((((((`wp_cb2_view_perioditem_entities` `po` join `wp_cb2_period_status_types` `pst` on((`pst`.`period_status_type_id` = `po`.`period_status_type_id`))) join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_post_types` `pt_pi`) join `wp_cb2_post_types` `pt_p`) join `wp_cb2_post_types` `pt_pg`) join `wp_cb2_post_types` `pt_e`) join `wp_cb2_post_types` `pt_pst`) where ((concat('perioditem-',`po`.`period_group_type`) = `pt_pi`.`post_type`) and (1 = `pt_p`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (concat('periodent-',`po`.`period_group_type`) = `pt_e`.`post_type`) and (8 = `pt_pst`.`post_type_id`))",
-			'cb2_view_perioditemmeta'      => "select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 1) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'location_ID' AS `meta_key`,`cal`.`location_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 2) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'item_ID' AS `meta_key`,`cal`.`item_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 3) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'user_ID' AS `meta_key`,`cal`.`user_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 4) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_group_ID' AS `meta_key`,`cal`.`period_group_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 5) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_ID' AS `meta_key`,`cal`.`period_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 6) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_status_type_ID' AS `meta_key`,`cal`.`period_status_type_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 7) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'recurrence_index' AS `meta_key`,`cal`.`recurrence_index` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 8) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_group_type' AS `meta_key`,`cal`.`period_group_type` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 9) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_status_type_name' AS `meta_key`,`cal`.`period_status_type_name` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 10) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_entity_ID' AS `meta_key`,`cal`.`period_entity_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 11) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'blocked' AS `meta_key`,`cal`.`blocked` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 12) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'enabled' AS `meta_key`,`cal`.`enabled` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`))))",
+			'cb2_view_perioditem_posts'    => "select (((`ip`.`global_period_group_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_item_start` AS `post_date`,`po`.`datetime_period_item_start` AS `post_date_gmt`,'' AS `post_content`,`pst`.`name` AS `post_title`,'' AS `post_excerpt`,if(`ip`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(((`ip`.`global_period_group_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_item_end` AS `post_modified`,`po`.`datetime_period_item_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pi`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`ip`.`global_period_group_id` AS `timeframe_id`,`pt_e`.`post_type_id` AS `post_type_id`,'global' AS `period_group_type`,((`pgp`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,((`ip`.`global_period_group_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,0 AS `location_ID`,0 AS `item_ID`,0 AS `user_ID`,`pst`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`ip`.`enabled` as unsigned) AS `enabled` from (((((((((`$period_cache_table` `po` join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `wp_cb2_global_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `wp_cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `wp_cb2_post_types` `pt_pi`) join `wp_cb2_post_types` `pt_p`) join `wp_cb2_post_types` `pt_pg`) join `wp_cb2_post_types` `pt_e`) join `wp_cb2_post_types` `pt_pst`) where ((4 = `pt_pi`.`post_type_id`) and (1 = `pt_p`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (12 = `pt_e`.`post_type_id`) and (8 = `pt_pst`.`post_type_id`)) union all select (((`ip`.`location_period_group_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_item_start` AS `post_date`,`po`.`datetime_period_item_start` AS `post_date_gmt`,'' AS `post_content`,concat(`loc`.`post_title`,' - ',`pst`.`name`) AS `post_title`,'' AS `post_excerpt`,if(`ip`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(((`ip`.`location_period_group_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_item_end` AS `post_modified`,`po`.`datetime_period_item_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pi`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`ip`.`location_period_group_id` AS `timeframe_id`,`pt_e`.`post_type_id` AS `post_type_id`,'location' AS `period_group_type`,((`pgp`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,((`ip`.`location_period_group_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,`ip`.`location_ID` AS "
+																			. "`location_ID`,0 AS `item_ID`,0 AS `user_ID`,`pst`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`ip`.`enabled` as unsigned) AS `enabled` from ((((((((((`$period_cache_table` `po` join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `wp_cb2_location_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `wp_cb2_post_types` `pt_pi`) join `wp_cb2_post_types` `pt_p`) join `wp_cb2_post_types` `pt_pg`) join `wp_cb2_post_types` `pt_e`) join `wp_cb2_post_types` `pt_pst`) where ((5 = `pt_pi`.`post_type_id`) and (1 = `pt_p`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (13 = `pt_e`.`post_type_id`) and (8 = `pt_pst`.`post_type_id`)) union all select (((`ip`.`timeframe_period_group_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_item_start` AS `post_date`,`po`.`datetime_period_item_start` AS `post_date_gmt`,'' AS `post_content`,concat(`loc`.`post_title`,' - ',`itm`.`post_title`,' - ',`pst`.`name`) AS `post_title`,'' AS `post_excerpt`,if(`ip`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(((`ip`.`timeframe_period_group_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_item_end` AS `post_modified`,`po`.`datetime_period_item_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pi`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`ip`.`timeframe_period_group_id` AS `timeframe_id`,`pt_e`.`post_type_id` AS `post_type_id`,'timeframe' AS `period_group_type`,((`pgp`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,((`ip`.`timeframe_period_group_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,0 AS `user_ID`,`pst`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`ip`.`enabled` as unsigned) AS `enabled` from (((((((((((`$period_cache_table` `po` join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `wp_cb2_timeframe_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) join `wp_cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `wp_cb2_post_types` `pt_pi`) join `wp_cb2_post_types` `pt_p`) join `wp_cb2_post_types` `pt_pg`) join `wp_cb2_post_types` `pt_e`) join `wp_cb2_post_types` `pt_pst`) where ((6 = `pt_pi`.`post_type_id`) and (1 = `pt_p`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (14 = `pt_e`.`post_type_id`) and (8 = `pt_pst`.`post_type_id`)) union all select (((`ip`.`timeframe_user_period_group_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_item_start` "
+																			. "AS `post_date`,`po`.`datetime_period_item_start` AS `post_date_gmt`,'' AS `post_content`,concat(`loc`.`post_title`,' - ',`itm`.`post_title`,' - ',`usr`.`user_login`,' - ',`pst`.`name`) AS `post_title`,'' AS `post_excerpt`,if(`ip`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(((`ip`.`timeframe_user_period_group_id` * `pt_pi`.`ID_multiplier`) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_item_end` AS `post_modified`,`po`.`datetime_period_item_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pi`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`ip`.`timeframe_user_period_group_id` AS `timeframe_id`,`pt_e`.`post_type_id` AS `post_type_id`,'user' AS `period_group_type`,((`pgp`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,((`ip`.`timeframe_user_period_group_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,`ip`.`user_ID` AS `user_ID`,`pst`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_item_start` AS `datetime_period_item_start`,`po`.`datetime_period_item_end` AS `datetime_period_item_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`ip`.`enabled` as unsigned) AS `enabled` from ((((((((((((`$period_cache_table` `po` join `wp_cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `wp_cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `wp_cb2_timeframe_user_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `wp_posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `wp_posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) join `wp_users` `usr` on((`ip`.`user_ID` = `usr`.`ID`))) join `wp_cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `wp_cb2_post_types` `pt_pi`) join `wp_cb2_post_types` `pt_p`) join `wp_cb2_post_types` `pt_pg`) join `wp_cb2_post_types` `pt_e`) join `wp_cb2_post_types` `pt_pst`) where ((7 = `pt_pi`.`post_type_id`) and (1 = `pt_p`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (15 = `pt_e`.`post_type_id`) and (8 = `pt_pst`.`post_type_id`))",
+			'cb2_view_perioditemmeta'      => "select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 1) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'location_ID' AS `meta_key`,`cal`.`location_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 2) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'item_ID' AS `meta_key`,`cal`.`item_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 3) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'user_ID' AS `meta_key`,`cal`.`user_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 4) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_group_ID' AS `meta_key`,`cal`.`period_group_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 5) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_ID' AS `meta_key`,`cal`.`period_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 6) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_status_type_ID' AS `meta_key`,`cal`.`period_status_type_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 7) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'recurrence_index' AS `meta_key`,`cal`.`recurrence_index` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 8) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_group_type' AS `meta_key`,`cal`.`period_group_type` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 9) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_status_type_name' AS "
+																			. "`meta_key`,`cal`.`period_status_type_name` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 10) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'period_entity_ID' AS `meta_key`,`cal`.`period_entity_ID` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 11) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'blocked' AS `meta_key`,`cal`.`blocked` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`)))) union all select `cal`.`timeframe_id` AS `timeframe_id`,`cal`.`recurrence_index` AS `recurrence_index`,(((((`cal`.`timeframe_id` * `pt`.`ID_multiplier`) + `cal`.`recurrence_index`) * 20) + `pt`.`ID_base`) + 12) AS `meta_id`,`cal`.`ID` AS `post_id`,`cal`.`ID` AS `perioditem_id`,'enabled' AS `meta_key`,`cal`.`enabled` AS `meta_value` from (`wp_cb2_view_perioditem_posts` `cal` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = concat('perioditem-',`cal`.`period_group_type`))))",
 		);
 	}
 
@@ -316,7 +262,7 @@ static function database_table_triggers( $prefix ) {
   }
 
   function seconds_in_day( $datetime ) {
-    // TODO: better / faster way of doing this?
+    // TODO: better / faster way of doing seconds_in_day()?
     $time_string = $datetime->format( 'H:i' );
     $time_object = new DateTime( "1970-01-01 $time_string" );
     return (int) $time_object->format('U');
@@ -367,7 +313,7 @@ static function database_table_triggers( $prefix ) {
     return $styles;
   }
 
-  function add_actions( &$actions, $post ) {
+  function row_actions( &$actions, $post ) {
 		$period_ID = $this->period->ID;
 		$actions[ 'edit-definition' ] = "<a href='admin.php?page=cb2-post-edit&post=$period_ID&post_type=period&action=edit'>Edit definition</a>";
 		$actions[ 'trash occurence' ] = '<a href="#" class="submitdelete">Trash Occurence</a>';
@@ -415,7 +361,6 @@ static function database_table_triggers( $prefix ) {
 	}
 
 	function get_the_time_period( $format = 'H:i' ) {
-		// TODO: all the_*() need to be namespaced. In CB2_Query? or CB2_TemplateFunctions::*()
 		$time_period = $this->datetime_period_item_start->format( $format ) . ' - ' . $this->datetime_period_item_end->format( $format );
 		if ( $this->period->fullday ) $time_period = 'all day';
 		return $time_period;
@@ -465,38 +410,46 @@ static function database_table_triggers( $prefix ) {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
+	// Completely PHP layer generated posts
+	// no postmeta or stuff in the DB
+	// A fake perioditem WP_Post for each day
+	// simply to make rendering the full calendar easier
 	static public $static_post_type = 'perioditem-automatic';
   static $database_table = FALSE;
+  static $postmeta_table = FALSE;
+  static private $fake_ID = 300000000;
 
   function post_type() {return self::$static_post_type;}
 
-  static private $fake_ID = 300000000;
   static function post_from_date( $date ) {
-		$startdate = ( clone $date )->setTime( 0, 0 );
-		$enddate   = ( clone $startdate )->setTime( 23, 59 );
+		$startdate  = ( clone $date )->setTime( 0, 0 );
+		$enddate    = ( clone $startdate )->setTime( 23, 59 );
+		$post_title = $startdate->format( CB2_Query::$datetime_format );
+		$post_name  = $startdate->format( 'Y-m-d' );
 
 		return new WP_Post( (object) array(
-			'ID' => self::$fake_ID++,
+			'ID' => self::$fake_ID++,         // Complete fake ID
+			GET_METADATA_ASSIGN => TRUE,      // Prevent meta-data analysis ($postmeta_table = FALSE does this also)
+			'post_status'    => 'auto-draft', // auto-draft to allow WP_Query selection
+			'post_type'      => self::$static_post_type, // Does not exist in database
 			'post_author'    => 1,
 			'post_date'      => $startdate->format( CB2_Query::$datetime_format ),
 			'post_date_gmt'  => $startdate->format( CB2_Query::$datetime_format ),
 			'post_content'   => '',
-			'post_title'     => 'automatic',
+			'post_title'     => $post_title,
 			'post_excerpt'   => '',
-			'post_status'    => 'auto-draft',
 			'comment_status' => 'closed',
 			'ping_status'    => 'closed',
 			'post_password'  => '',
-			'post_name'      => 'automatic',
-			'to_ping' => '',
-			'pinged'  => '',
+			'post_name'      => $post_name,
+			'to_ping'        => '',
+			'pinged'         => '',
 			'post_modified'     => $enddate->format( CB2_Query::$datetime_format ),
 			'post_modified_gmt' => $enddate->format( CB2_Query::$datetime_format ),
 			'post_content_filtered' => '',
 			'post_parent' => NULL,
 			'guid'        => '',
 			'menu_order'  => 0,
-			'post_type'   => self::$static_post_type,
 			'post_mime_type'    => '',
 			'comment_count'     => 0,
 			'filter'            => 'raw',
@@ -507,12 +460,13 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
 			'timeframe_id'      => 0,
 			'period_entity_ID'  => 0,
 			'location_ID' => 0,
-			'item_ID' => 0,
-			'user_ID' => 0,
+			'item_ID'     => 0,
+			'user_ID'     => 0,
 			'period_status_type_ID' => 0,
 			'period_status_type_name' => '',
 			'datetime_period_item_start' => $startdate->format( CB2_Query::$datetime_format ),
 			'datetime_period_item_end'   => $enddate->format( CB2_Query::$datetime_format ),
+			'blocked' => FALSE,
 		) );
 	}
 
@@ -771,21 +725,23 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
 
   static function database_table_name() { return self::$database_options_table; }
 
-  static function database_table_schema( $prefix ) {
-		return array(
+  static function database_table_schemas( $prefix ) {
+		return array( array(
 			'name'    => self::$database_options_table,
 			'columns' => array(
 				'option_id'    => array( CB2_INT,      (20),  CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
 				'timeframe_id' => array( CB2_BIGINT,   (20),  CB2_UNSIGNED, CB2_NOT_NULL ),
 				'option_name'  => array( CB2_VARCHAR,  (191), NULL,     NULL, NULL, NULL ),
 				'option_value' => array( CB2_LONGTEXT, NULL,  NULL,     CB2_NOT_NULL ),
+				'author_ID'    => array( CB2_BIGINT,   (20),  CB2_UNSIGNED,     CB2_NOT_NULL, FALSE, 1 ),
 			),
 			'primary key'  => array( 'option_id' ),
 			'keys'         => array( 'timeframe_id' ),
 			'foreign keys' => array(
 				'timeframe_id' => array( 'cb2_timeframe_period_groups', 'timeframe_period_group_id' ),
+				'author_ID'    => array( 'users', 'ID' ),
 			),
-		);
+		) );
 	}
 
 	static public $static_post_type = 'perioditem-timeframe';
@@ -875,7 +831,7 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
   }
 
   function update_option( $option, $new_value, $autoload = TRUE ) {
-		// TODO: complete update_option()
+		// TODO: complete update_option() cb2_timeframe_options
 		throw new Exception( 'NOT_COMPLETE' );
     $update = CB2_Database_UpdateInsert::factory( self::$database_options_table );
     $update->add_field(     'option_name',  $option );

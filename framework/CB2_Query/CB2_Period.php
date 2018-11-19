@@ -16,17 +16,20 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 
   static function database_table_name() { return self::$database_table; }
 
-  static function database_table_schema( $prefix ) {
+  static function database_table_schemas( $prefix ) {
 		// TODO: PHP object property type assignment could work from this knowledge also
 		// however, pseudo fields like period_IDs that represent DRI
 		// with array(ints) would need guidance also
 		$period_item_posts    = "{$prefix}cb2_view_perioditem_posts";
 		$period_item_meta     = "{$prefix}cb2_view_perioditemmeta";
 		$period_group_period  = "{$prefix}cb2_period_group_period";
+		$period_cache_table   = "{$prefix}cb2_cache_perioditems";
 		$postmeta             = "{$prefix}postmeta";
 		$id_field             = CB2_Database::id_field( __class__ );
 		$safe_updates_off     = CB2_Database::$safe_updates_off;
 		$safe_updates_restore = CB2_Database::$safe_updates_restore;
+
+		$refresh_cache = "delete from $period_cache_table; insert into $period_cache_table(period_id, recurrence_index, datetime_period_item_start, datetime_period_item_end, blocked) select * from {$prefix}cb2_view_perioditems;";
 
 		$trigger_check_recurrence_type = "
 					if new.recurrence_type not in('Y', 'M', 'W', 'D') then
@@ -42,65 +45,54 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 					end if;";
 
 		return array(
-			'name'    => self::$database_table,
-			'columns' => array(
-				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
-				$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
-				'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL, FALSE, 'period' ),
-				'description' => array( CB2_VARCHAR, (2048), NULL,     NULL,     FALSE, NULL ),
-				'datetime_part_period_start' => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
-				'datetime_part_period_end'   => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
-				'recurrence_type'      => array( CB2_CHAR,     (1),  NULL,     NULL,     FALSE, NULL, 'recurrence_type:\nNULL - no recurrence\nD - daily recurrence (start and end time parts used only)\nW - weekly recurrence (day-of-week and start and end time parts used only)\nM - monthly recurrence (day-of-month and start and end time parts used only)\nY - yearly recurrence (full absolute start and end time parts used)' ),
-				'recurrence_frequency' => array( CB2_INT,      (11), CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1, 'e.g. Every 2 weeks' ),
-				'datetime_from'        => array( CB2_DATETIME, NULL, NULL,     CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Absolute date: when the period should start appearing in the calendar' ),
-				'datetime_to'          => array( CB2_DATETIME, NULL, NULL,     NULL,     FALSE, NULL, 'Absolute date: when the period should stop appearing in the calendar' ),
-				'recurrence_sequence'  => array( CB2_BIT,      (32), NULL,     CB2_NOT_NULL, FALSE, 0 ),
-			),
-			'primary key' => array( $id_field ),
-			'triggers'    => array(
-				'BEFORE INSERT' => array( $trigger_check_recurrence_type ),
-				'BEFORE UPDATE' => array( $trigger_check_recurrence_type ),
-				'AFTER UPDATE'  => array( "
-					# Deleting from wp_postmeta without meta_id
-					$safe_updates_off
-
-					# ----------------------------- perioditem(s)
-					if exists(select * from $period_group_period where $id_field = old.$id_field) then
-						# Remove all existing metadata
-						delete from $postmeta
-							where post_id in(
-								select ID from $period_item_posts
-									where $id_field = old.$id_field
-								);
-					end if;
-
-					if exists(select * from $period_group_period where $id_field = new.$id_field) then
-						# ReCreate all metadata
-						insert into $postmeta( meta_id, post_id, meta_key, meta_value )
-							select meta_id, post_id, meta_key, meta_value
-								from $period_item_meta
-								where post_id in(
-									select ID from $period_item_posts
-										where $id_field = new.$id_field
-								);
-					end if;
-
-					$safe_updates_restore",
+			array(
+				'name'    => self::$database_table,
+				'columns' => array(
+					// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+					$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+					'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL, FALSE, 'period' ),
+					'description' => array( CB2_VARCHAR, (2048), NULL,     NULL,     FALSE, NULL ),
+					'datetime_part_period_start' => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
+					'datetime_part_period_end'   => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Only part of this datetime may be used, depending on the recurrence_type' ),
+					'recurrence_type'      => array( CB2_CHAR,     (1),  NULL,     NULL,     FALSE, NULL, 'recurrence_type:\nNULL - no recurrence\nD - daily recurrence (start and end time parts used only)\nW - weekly recurrence (day-of-week and start and end time parts used only)\nM - monthly recurrence (day-of-month and start and end time parts used only)\nY - yearly recurrence (full absolute start and end time parts used)' ),
+					'recurrence_frequency' => array( CB2_INT,      (11), CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1, 'e.g. Every 2 weeks' ),
+					'datetime_from'        => array( CB2_DATETIME, NULL, NULL,     CB2_NOT_NULL, FALSE, CB2_CURRENT_TIMESTAMP, 'Absolute date: when the period should start appearing in the calendar' ),
+					'datetime_to'          => array( CB2_DATETIME, NULL, NULL,     NULL,     FALSE, NULL, 'Absolute date: when the period should stop appearing in the calendar' ),
+					'recurrence_sequence'  => array( CB2_BIT,      (32), NULL,     CB2_NOT_NULL, FALSE, 0 ),
+					'author_ID'            => array( CB2_BIGINT,   (20), CB2_UNSIGNED,     CB2_NOT_NULL, FALSE, 1 ),
 				),
-				'BEFORE DELETE'  => array( "
-					# ----------------------------- perioditem(s)
-					# Remove all existing metadata
-					delete from $postmeta
-						where post_id in(
-							select ID from $period_item_posts
-								where $id_field = old.$id_field
-							);"
+				'primary key'  => array( $id_field ),
+				'foreign keys' => array(
+					'author_ID' => array( 'users', 'ID' ),
+				),
+				'triggers'     => array(
+					'BEFORE INSERT' => array( $trigger_check_recurrence_type ),
+					'BEFORE UPDATE' => array( $trigger_check_recurrence_type ),
+					'AFTER UPDATE'  => array( $refresh_cache ),
+					'AFTER DELETE'  => array( $refresh_cache ),
+					'AFTER INSERT'  => array( $refresh_cache ),
+				),
+			),
+
+			array(
+				'name'    => 'cb2_cache_perioditems',
+				'columns' => array(
+					'period_id'        => array( CB2_INT,     (11), CB2_UNSIGNED, CB2_NOT_NULL, ),
+					'recurrence_index' => array( CB2_INT,     (11), CB2_UNSIGNED, CB2_NOT_NULL, ),
+					'datetime_period_item_start' => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, ),
+					'datetime_period_item_end'   => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, ),
+					'blocked'          => array( CB2_TINYINT, (1),  CB2_UNSIGNED, CB2_NOT_NULL, ),
+				),
+				'primary key' => array( 'period_id', 'recurrence_index', ),
+				'keys'        => array(
+					'datetime_period_item_start',
+					'datetime_period_item_end',
 				),
 			),
 		);
   }
 
-  static function database_views() {
+  static function database_views( $prefix ) {
 		return array(
 			'cb2_view_period_posts' => "select (`p`.`period_id` + `pt_p`.`ID_base`) AS `ID`,1 AS `post_author`,`p`.`datetime_from` AS `post_date`,`p`.`datetime_from` AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`period_id` + `pt_p`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`p`.`datetime_to` AS `post_modified`,`p`.`datetime_to` AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,'period' AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_id` AS `period_id`,`p`.`datetime_part_period_start` AS `datetime_part_period_start`,`p`.`datetime_part_period_end` AS `datetime_part_period_end`,`p`.`datetime_from` AS `datetime_from`,`p`.`datetime_to` AS `datetime_to`,`p`.`recurrence_type` AS `recurrence_type`,`p`.`recurrence_sequence` AS `recurrence_sequence`,`p`.`recurrence_frequency` AS `recurrence_frequency`,(select group_concat((`pgp`.`period_group_id` + `pt`.`ID_base`) separator ',') from (`wp_cb2_period_group_period` `pgp` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup'))) where (`pgp`.`period_id` = `p`.`period_id`)) AS `period_group_IDs` from ((`wp_cb2_periods` `p` join `wp_cb2_post_types` `pt_p` on((`pt_p`.`post_type` = 'period'))) join `wp_cb2_post_types` `pt_pst` on((`pt_pst`.`post_type` = 'periodstatustype')))",
 			'cb2_view_periodmeta'   => "select ((`p`.`period_id` * 10) + `pt`.`ID_base`) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'period_id' AS `meta_key`,`p`.`period_id` AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 1) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_part_period_start' AS `meta_key`,`p`.`datetime_part_period_start` AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 2) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_part_period_end' AS `meta_key`,`p`.`datetime_part_period_end` AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 3) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_from' AS `meta_key`,`p`.`datetime_from` AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 4) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_to' AS `meta_key`,`p`.`datetime_to` AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 5) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_type' AS `meta_key`,`p`.`recurrence_type` AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 6) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_frequency' AS `meta_key`,`p`.`recurrence_frequency` AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 7) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_sequence' AS `meta_key`,cast(`p`.`recurrence_sequence` as unsigned) AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 8) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'period_group_IDs' AS `meta_key`,`p`.`period_group_IDs` AS `meta_value` from (`wp_cb2_view_period_posts` `p` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`)))",
@@ -391,7 +383,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 					&& $this->datetime_part_period_end->format(   'H:i:s' ) == '23:59:59'
 				 );
 
-		// TODO: make configurable
+		// TODO: make fullworkday times configurable
 		$this->fullworkday = ( $this->datetime_part_period_start && $this->datetime_part_period_end )
 			&& ( 	 $this->datetime_part_period_start->format( 'H:i:s' ) == '00:09:00'
 					&& $this->datetime_part_period_end->format(   'H:i:s' ) == '18:00:00'
@@ -495,11 +487,11 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $summary;
 	}
 
-  function add_actions( &$actions, $post, $add_actions = array() ) {
+  function row_actions( &$actions, $post, $row_actions = array() ) {
 		if ( $this->used() ) unset( $actions['trash'] );
 		unset( $actions['view'] );
 
-		if ( in_array( 'attach', $add_actions ) ) {
+		if ( in_array( 'attach', $row_actions ) ) {
 			$period_group_IDs  = $_GET['period_group_IDs'];
 			$attach_text       = __( 'Attach' );
 			$cancel_text       = __( 'Cancel Attach' );

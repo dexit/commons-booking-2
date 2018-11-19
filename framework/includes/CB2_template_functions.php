@@ -10,14 +10,16 @@ class CB2 {
 		$outer_post = $post;
 
 		if ( $context == 'single' )
-			throw new Exception( 'the_inner_loop() should never be called with context [single]' );
+			throw new Exception( "the_inner_loop() should never be called with context [$context]" );
 
 		if ( ! $post_navigator ) $post_navigator = $post;
 		if ( $post_navigator instanceof CB2_PostNavigator || $post_navigator instanceof WP_Query ) {
 			if ( $post_navigator->have_posts() ) {
 				while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 					$html .= $before;
+					CB2_Query::redirect_wpdb_for_post_type( $post->post_type() );
 					$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', array(), TRUE );
+					CB2_Query::unredirect_wpdb();
 					$html .= $after;
 				endwhile;
 				// NOTE: We have manually set the global $wp_query->post
@@ -305,32 +307,70 @@ class CB2 {
 		}
 	}
 
-	public static function post_class( $classes, $class, $ID ) {
-		$post_type = NULL;
-		foreach ( $classes as $class ) {
-			if ( substr( $class, 0, 5 ) == 'type-' ) {
-				$post_type = substr( $class, 5 );
-				break;
+	public static function post_class( $class = NULL, $post_id = null ) {
+		// Copied from post-template.php
+		// Separates classes with a single space, collates classes for post DIV
+		echo 'class="' . join( ' ', self::get_post_class( $class, $post_id ) ) . '"';
+	}
+
+	public static function get_post_class( $class = '', $post_id = null ) {
+		// Replaces the normal get_post_class()
+		// normal get_post_class() will get wrong data and not be cached
+		// because it requests meta-data with 'post' meta-type
+		// which will cache with the wrong cache key
+		// thus causing new SQL query every request
+		// Some Copied and edited from post-template.php
+		global $post;
+
+		if ( ! is_null( $post_id ) )
+			throw new Exception( 'Explicit post_id not supported in CB2::post_class()' );
+
+		// Copied from post-template.php
+		$classes = array();
+
+		if ( $class ) {
+			if ( ! is_array( $class ) ) {
+				$class = preg_split( '#\s+#', $class );
+			}
+			$classes = array_map( 'esc_attr', $class );
+		} else {
+			// Ensure that we always coerce class to being an array.
+			$class = array();
+		}
+
+		if ( ! $post )
+			return $classes;
+
+		// New: Object based classes
+		if ( is_object( $post ) && method_exists( $post, 'classes' ) ) {
+			if ( $post_classes = $post->classes() ) {
+				$classes = array_merge( $classes, preg_split( '#\s+#', $post_classes ) );
 			}
 		}
 
-		if ( $post_type ) {
-			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
-				if ( property_exists( $Class, 'all' ) ) {
-					$lookup = $Class::$all;
-					if ( isset( $lookup[$ID] ) ) {
-						if ( $object = $lookup[$ID] ) {
-							// Add the objects classes()
-							if ( $object_classes = $object->classes() ) {
-								array_push( $classes, $object_classes );
-							}
-						} else throw new Exception( "Object [$ID] NULL in general $Class::\$all(" . count( $lookup ) . ") lookup" );
-					} //else throw new Exception( "Object [$ID] not found in general $Class::\$all(" . count( $lookup ) . ") lookup" );
-				} else throw new Exception( "$Class::\$all lookup property required" );
-			}
-		}
+		$classes[] = 'post-' . $post->ID;
+		if ( ! is_admin() )
+			$classes[] = $post->post_type;
+		$classes[] = 'type-' . $post->post_type;
+		$classes[] = 'status-' . $post->post_status;
 
-		return $classes;
+		// Removed: Post Format
+		// Removed: Post requires password.
+		// Removed: Post thumbnails.
+		// Removed: sticky for Sticky Posts
+		// hentry for hAtom compliance
+		$classes[] = 'hentry';
+		// Removed: All public taxonomies
+
+		$classes = array_map( 'esc_attr', $classes );
+
+		// Filters the list of CSS classes for the current post.
+		// Prevent the WP_DEBUG check
+		remove_filter( 'post_class', 'cb2_post_class_check', 10, 3 );
+		$classes = apply_filters( 'post_class', $classes, $class, $post->ID );
+		add_filter( 'post_class', 'cb2_post_class_check', 10, 3 );
+
+		return array_unique( $classes );
 	}
 
 	public static function is_list( $post = '' ) {
@@ -365,5 +405,4 @@ class CB2 {
 }
 
 // TODO: move functions to CB2_Templates utilities files
-add_filter( 'post_class',  array( 'CB2', 'post_class'  ), 10, 3 ); /* @TODO: retire, filter is in public/cb.php */
 add_filter( 'the_content', array( 'CB2', 'the_content' ), 1 );

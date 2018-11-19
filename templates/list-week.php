@@ -1,4 +1,4 @@
-<tr id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+<tr id="post-<?php the_ID(); ?>" <?php CB2::post_class(); ?>>
 	<?php
 		// Empty day cells before the startdate in the week starts
 		global $post;

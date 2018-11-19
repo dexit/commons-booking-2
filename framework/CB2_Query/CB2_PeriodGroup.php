@@ -39,7 +39,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 
   static function database_table_name() { return self::$database_table; }
 
-  static function database_table_schema( $prefix ) {
+  static function database_table_schemas( $prefix ) {
  		$safe_updates_off     = CB2_Database::$safe_updates_off;
 		$safe_updates_restore = CB2_Database::$safe_updates_restore;
 		$period_item_posts    = "{$prefix}cb2_view_perioditem_posts";
@@ -47,84 +47,28 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		$postmeta             = "{$prefix}postmeta";
 		$id_field             = CB2_Database::id_field( __class__ );
 
-		return array(
+		return array( array(
 			'name'    => self::$database_table,
 			'columns' => array(
 				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
 				$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
 				'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL, FALSE, 'period group' ),
 				'description' => array( CB2_VARCHAR, (2048), NULL,     NULL,     FALSE, NULL ),
+				'author_ID'   => array( CB2_BIGINT,  (20),   CB2_UNSIGNED,     CB2_NOT_NULL, FALSE, 1 ),
 			),
 			'primary key' => array( $id_field ),
+			'foreign keys' => array(
+				'author_ID' => array( 'users', 'ID' ),
+			),
 			'many to many' => array(
 				'cb2_period_group_period' => array(
 					$id_field, 'cb2_periods', 'period_id',
-					'triggers' => array(
-						'AFTER INSERT' => array( "
-							$safe_updates_off
-
-							# ----------------------------- perioditem(s)
-							if exists(select * from {$prefix}cb2_global_period_groups where $id_field = new.$id_field)
-								or exists(select * from {$prefix}cb2_location_period_groups where $id_field = new.$id_field)
-								or exists(select * from {$prefix}cb2_timeframe_period_groups where $id_field = new.$id_field)
-								or exists(select * from {$prefix}cb2_timeframe_user_period_groups where $id_field = new.$id_field)
-							then
-								# ReCreate all metadata
-								insert into $postmeta( meta_id, post_id, meta_key, meta_value )
-									select meta_id, post_id, meta_key, meta_value
-										from $period_item_meta
-										where post_id in(
-											select ID from $period_item_posts
-												where period_id = new.period_id
-												and $id_field = new.$id_field
-										);
-							end if;
-
-							$safe_updates_restore",
-						),
-						'AFTER UPDATE' => array( "
-							$safe_updates_off
-
-							# ----------------------------- perioditem(s)
-							# Remove all existing metadata
-							if exists(select * from {$prefix}cb2_global_period_groups where $id_field = old.$id_field)
-								or exists(select * from {$prefix}cb2_location_period_groups where $id_field = old.$id_field)
-								or exists(select * from {$prefix}cb2_timeframe_period_groups where $id_field = old.$id_field)
-								or exists(select * from {$prefix}cb2_timeframe_user_period_groups where $id_field = old.$id_field)
-							then
-								delete from $postmeta
-									where post_id in(
-										select ID from $period_item_posts
-											where period_id = old.period_id
-											and $id_field = old.$id_field
-										);
-							end if;
-
-							# ReCreate all metadata
-							if exists(select * from {$prefix}cb2_global_period_groups where $id_field = new.$id_field)
-								or exists(select * from {$prefix}cb2_location_period_groups where $id_field = new.$id_field)
-								or exists(select * from {$prefix}cb2_timeframe_period_groups where $id_field = new.$id_field)
-								or exists(select * from {$prefix}cb2_timeframe_user_period_groups where $id_field = new.$id_field)
-							then
-								insert into $postmeta( meta_id, post_id, meta_key, meta_value )
-									select meta_id, post_id, meta_key, meta_value
-										from $period_item_meta
-										where post_id in(
-											select ID from $period_item_posts
-												where $id_field = new.$id_field
-												and period_id = new.period_id
-											);
-							end if;
-
-							$safe_updates_restore",
-						),
-					),
 				),
 			),
-		);
+		) );
 	}
 
-  static function database_views() {
+  static function database_views( $prefix ) {
 		return array(
 			'cb2_view_periodgroup_posts' => "select (`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,'periodgroup' AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_group_id` AS `period_group_id`,(select group_concat((`wp_cb2_period_group_period`.`period_id` + `pt2`.`ID_base`) separator ',') from (`wp_cb2_period_group_period` join `wp_cb2_post_types` `pt2` on((`pt2`.`post_type` = 'period'))) where (`wp_cb2_period_group_period`.`period_group_id` = `p`.`period_group_id`) group by `wp_cb2_period_group_period`.`period_group_id`) AS `period_IDs` from (`wp_cb2_period_groups` `p` join `wp_cb2_post_types` `pt_pg` on((`pt_pg`.`post_type` = 'periodgroup')))",
 			'cb2_view_periodgroupmeta'   => "select ((`po`.`period_group_id` * 10) + `pt`.`ID_base`) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodgroup_id`,'period_IDs' AS `meta_key`,`po`.`period_IDs` AS `meta_value` from (`wp_cb2_view_periodgroup_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup'))) union all select (((`po`.`period_group_id` * 10) + `pt`.`ID_base`) + 1) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodgroup_id`,'period_group_id' AS `meta_key`,`po`.`period_group_id` AS `meta_value` from (`wp_cb2_view_periodgroup_posts` `po` join `wp_cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup')))",
@@ -181,7 +125,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		array_push( $this->periods, $period );
   }
 
-  function add_actions( &$actions, $post ) {
+  function row_actions( &$actions, $post ) {
 		unset( $actions['view'] );
 	}
 
@@ -263,7 +207,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 				$page         = 'cb2-post-new';
 				$post_type    = 'period';
 				$add_link     = "admin.php?page=$page&period_group_IDs=$this->ID&post_type=$post_type";
-				$attach_link  = "admin.php?page=cb2-periods&period_group_IDs=$this->ID&add_actions=attach";
+				$attach_link  = "admin.php?page=cb2-periods&period_group_IDs=$this->ID&row_actions=attach";
 				print( "<a href='$add_link'>$add_new_text</a>" );
 				print( " | <a href='$attach_link'>$attach_text</a>" );
 				break;

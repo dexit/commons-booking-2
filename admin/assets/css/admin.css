@@ -301,7 +301,8 @@ body input.cb2-tick-only:not([checked]):after {
 .cb2-calendar {
 	width:100%;
 }
-.cb2-calendar .cb2-blocked {
+.cb2-calendar .cb2-blocked,
+.cb2-calendar .cb2-blocked a {
 	color:red;
 	opacity:0.7;
 }

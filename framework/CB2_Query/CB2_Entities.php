@@ -327,8 +327,10 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Item Availability' ) . '</div>' );
 				}
 				print( "<div class='cb2-column-actions'>" );
-				$add_link = "admin.php?page=cb2-post-new&location_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
-				print( " <a href='$add_link'>add new item availability</a>" );
+				$post_title   = __( 'Availability at' ) . " $this->post_title";
+				$add_new_text = __( 'add new item availability' );
+				$add_link     = "admin.php?page=cb2-post-new&location_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
+				print( " <a href='$add_link'>$add_new_text</a>" );
 				print( '</div>' );
 				break;
 
@@ -358,10 +360,15 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );
 				}
 				print( "<div class='cb2-column-actions'>" );
-				$add_link  = "admin.php?page=cb2-post-new&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
-				print( " <a href='$add_link'>add new booking</a>" );
-				$view_link = "admin.php?page=cb2-calendar&location_ID=$this->ID&period_status_type_ID=100000002";
-				print( " | <a href='$view_link'>view in calendar</a>" );
+				$page       = 'cb2-post-new';
+				$add_new_text = __( 'add new booking' );
+				$post_title = __( 'Booking at' ) . " $this->post_title";
+				$add_link   = "admin.php?page=$page&location_ID=$this->ID&post_type=periodent-user&period_status_type_id=2&post_title=$post_title";
+				print( " <a href='$add_link'>$add_new_text</a>" );
+				$page       = 'cb2-calendar';
+				$view_text  = __( 'view in calendar' );
+				$view_link  = "admin.php?page=$page&location_ID=$this->ID&period_status_type_id=2";
+				print( " | <a href='$view_link'>$view_text</a>" );
 				print( '</div>' );
 				break;
 		}
@@ -381,7 +388,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
     ));
   }
 
-	function add_actions( &$actions, $post ) {
+	function row_actions( &$actions, $post ) {
 		$wp_query = new WP_Query( array(
 			'post_type'   => 'periodent-location',
 			'meta_query'  => array(
@@ -397,10 +404,14 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 			),
 		) );
 		$period_count = $wp_query->post_count;
-
-		$action  = "<span style='white-space:nowrap;'><a href='admin.php?page=cb2-opening-hours&location_ID=$this->ID'>Opening Hours";
-		if ( $period_count ) $action .= " <span class='cb2-usage-count-ok' title='Number of registered opening periods'>$period_count</span> ";
-		else $action .= " <span class='cb2-usage-count-warning' title='Number of registered opening periods'>$period_count</span> ";
+		$count_ok           = 'warning';
+		if ( $period_count ) $count_ok = 'ok';
+		$page               = 'cb2-opening-hours';
+		$help_text          = __( 'Number of registered opening periods' );
+		$opening_hours_text = __( 'Opening Hours' );
+		$action  = "<span style='white-space:nowrap;'>";
+		$action .= "<a href='admin.php?page=$page&location_ID=$this->ID'>$opening_hours_text";
+		$action .= " <span class='cb2-usage-count-$count_ok' title='$help_text'>$period_count</span> ";
 		$action .= '</a></span>';
 
 		$actions[ 'manage_opening_hours' ] = $action;
@@ -469,6 +480,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 		$form_action = '';
 		$do_action   = 'book';
 		$submit      = __( 'book the' ) . " $this->post_title";
+		$name        = __( 'Booking of' ) . " $this->post_title";
 		$display_strategy  = 'CB2_SingleItemAvailability';
 
 		// TODO: WP_Query of the shortcode needs to be configurable
@@ -477,8 +489,9 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 		// package Query Wrangler with CB2
 		// POC already done
 		return "<form action='$form_action' method='POST'><div>
-				<input type='hidden' name='ID' value='$ID' />
+				<input type='hidden' name='name' value='$name' />
 				<input type='hidden' name='do_action' value='$Class::$do_action' />
+				<input type='hidden' name='do_action_post_ID' value='$ID' />
 				<input type='submit' name='submit' value='$submit' />
 				[cb2_calendar view_mode=Week display-strategy=$display_strategy]
 				<input type='submit' name='submit' value='$submit' />
@@ -494,19 +507,25 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 		}
 
 		// Book these availabilities
-		// TODO: should these be combined?
-		$booked_perioditems = $values['perioditem-timeframes'];
-		$name               = 'booking'; // Default
-		$copy_period_group  = TRUE;      // Default
-		$count              = count( $booked_perioditems );
-		foreach ( $booked_perioditems as $booked_perioditem ) {
+		// TODO: should these bookings be combined? (settings)
+		$available_perioditems = $values['perioditem-timeframes'];
+		$name                  = __( 'Booking' );
+		$copy_period_group     = TRUE;      // Default
+		$count                 = count( $available_perioditems );
+
+		if ( isset( $values['name'] ) )
+			 $name = str_replace( __( 'available' ), __( 'booking' ), $values['name'] );
+
+		foreach ( $available_perioditems as $available_perioditem ) {
 			$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
-				$booked_perioditem,
+				$available_perioditem,
 				$user,
 				$name,
 				$copy_period_group
 			);
-			$periodentity_booking->save(); // Create objects only
+			// Create objects only (e.g. period_status_type will not be updated),
+			// and fire wordpress post events
+			$periodentity_booking->save();
 		}
 
 		return "<div>processed ($count) perioditem availabile in to bookings</div>";
@@ -550,8 +569,11 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Item Availability' ) . '</div>' );
 				}
 				print( "<div class='cb2-column-actions'>" );
-				$add_link = "admin.php?page=cb2-post-new&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_ID=100000001";
-				print( "<a href='$add_link'>add new item availability</a>" );
+				$page         = 'cb2-post-new';
+				$add_new_text = ( 'add new item availability' );
+				$post_title   = __( 'Availability of' ) . " $this->post_title";
+				$add_link     = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
+				print( "<a href='$add_link'>$add_new_text</a>" );
 				print( '</div>' );
 				break;
 
@@ -581,10 +603,15 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );
 				}
 				print( "<div class='cb2-column-actions'>" );
-				$add_link  = "admin.php?page=cb2-post-new&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=100000002";
-				print( " <a href='$add_link'>add new booking</a>" );
-				$view_link = "admin.php?page=cb2-calendar&item_ID=$this->ID&period_status_type_ID=100000002";
-				print( " | <a href='$view_link'>view in calendar</a>" );
+				$page       = 'cb2-post-new';
+				$post_title = __( 'Booking of' ) . " $this->post_title";
+				$add_new_booking_text = __( 'add new booking' );
+				$add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_id=2&post_title=$post_title";
+				print( " <a href='$add_link'>$add_new_booking_text</a>" );
+				$page       = 'cb2-calendar';
+				$view_booking_text = __( 'view in calendar' );
+				$view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_id=2";
+				print( " | <a href='$view_link'>$view_booking_text</a>" );
 				print( '</div>' );
 				break;
 		}
@@ -597,7 +624,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 		) ) . '</div>' );
 	}
 
-	function add_actions( &$actions, $post ) {
+	function row_actions( &$actions, $post ) {
 		$wp_query = new WP_Query( array(
 			'post_type'   => 'periodent-user',
 			'meta_query'  => array(

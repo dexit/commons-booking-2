@@ -1,11 +1,12 @@
 <?php
 abstract class CB2_PostNavigator {
   public static $database_table = 'cb2_post_types';
+  public static $description    = 'CB2_MAX_DAYS is set to 10000 which is 10 years.';
 
   static function database_table_name() { return self::$database_table; }
 
-  static function database_table_schema( $prefix ) {
-		return array(
+  static function database_table_schemas( $prefix ) {
+		$schema = array(
 			'name'    => self::$database_table,
 			'columns' => array(
 				'post_type_id'  => array( CB2_INT,     (11), CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
@@ -17,25 +18,76 @@ abstract class CB2_PostNavigator {
 			'unique keys' => array(
 				'post_type',
 				'post_type_id',
-				'ID_base'
+				// 'ID_base' // Added optionally below
 			),
 		);
+		if ( ! CB2_ID_SHARING )
+			array_push( $schema['unique keys'], 'ID_base' );
+
+		return array( $schema );
 	}
 
 	static function database_data() {
+		global $wpdb;
+
+		// WordPress WP_Query requests IDs first with:
+		//   SELECT SQL_CALC_FOUND_ROWS wp_posts.ID FROM wp_cb2_view_period_posts ...
+		// and then, if it cannot find the full post details in the cache
+		// it requests each post separately with the basic query:
+		//   SELECT * FROM wp_cb2_view_period_posts WHERE ID = 3 LIMIT 1
+		// without post_type
+		// We wp_cache_flush() before each WP_Query select
+		//
+		// Thus, when several post_types share the same view like:
+		//   periodent-* => wp_cb2_view_periodent_posts
+		// they must have distinct IDs
+		//
+		// CB2_ID_BASE:
+		// Setting CB2_ID_BASE = 0 is good for testing clashes with WP posts
+		//
+		// CB2_MAX_CB2_POSTS:
+		// More CB2 posts than this will overlap with the next quota of post_type
+		// this needs to be high because perioditem-* also has a $CB2_MAX_DAYS
+		//
+		// $CB2_MAX_DAYS:
+		// This is the maximum number of recurrences
+		// For example: 10000 would mean 10000 repeating entries for a given period definition
+		// in the case of daily repetition, this would indicate 10 x 365 = ~10 years maximum
+		// the view wp_cb2_view_sequence_date limits this maximum also
+		//
+		// PHP_INT_MAX (integer)
+		// The largest integer supported in this build of PHP.
+		// Usually int(2,147,483,647) in 32 bit systems
+		// and int(9223372036854775807) in 64 bit systems. Available since PHP 5.0.5'
+		$CB2_MAX_DAYS     = CB2_TimePostNavigator::max_days();
+		$perioditem_quota = CB2_MAX_CB2_POSTS * $CB2_MAX_DAYS;
+		if ( 4 * $perioditem_quota + CB2_ID_BASE > PHP_INT_MAX )
+			throw new Exception( 'Fake CB2 post IDs are above PHP_INT_MAX [' . PHP_INT_MAX . ']' );
+
 		return array(
-			array( '1', 'period', '200000000', '1' ),
-			array( '2', 'periodgroup', '800000000', '1' ),
-			array( '3', 'perioditem-automatic', '300000000', '10000' ),
-			array( '4', 'perioditem-global', '400000000', '10000' ),
-			array( '5', 'perioditem-location', '500000000', '10000' ),
-			array( '6', 'perioditem-timeframe', '600000000', '10000' ),
-			array( '7', 'perioditem-user', '700000000', '10000' ),
-			array( '8', 'periodstatustype', '100000000', '1' ),
-			array( '12', 'periodent-global', '900000000', '1' ),
-			array( '13', 'periodent-location', '1000000000', '1' ),
-			array( '14', 'periodent-timeframe', '1100000000', '1' ),
-			array( '15', 'periodent-user', '1200000000', '1' ),
+			// Separate views
+			// these post_types cannot be requested mixed together in 1 WP_Query
+			// redirect to 1 view is possible only
+			array( '1',  'period',               0, '1' ),
+			array( '2',  'periodgroup',          0, '1' ),
+			array( '8',  'periodstatustype',     0, '1' ),
+
+			// 1 Shared view
+			// several of these post_types may be requested at the SAME TIME
+			// thus requireing one view for all types
+			// recurrence causes many perioditems
+			array( '4',  'perioditem-global',    0 * $perioditem_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+			array( '5',  'perioditem-location',  1 * $perioditem_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+			array( '6',  'perioditem-timeframe', 2 * $perioditem_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+			array( '7',  'perioditem-user',      3 * $perioditem_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+
+			// 1 Shared view
+			// several of these post_types may be requested at the SAME TIME
+			// thus requireing one view for all types
+			array( '12', 'periodent-global',     0 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, '1' ),
+			array( '13', 'periodent-location',   1 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, '1' ),
+			array( '14', 'periodent-timeframe',  2 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, '1' ),
+			array( '15', 'periodent-user',       3 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, '1' ),
 		);
 	}
 
@@ -274,7 +326,7 @@ abstract class CB2_PostNavigator {
 			$object_ids[$this->ID] = TRUE;
 
 			$debug  = $before;
-			$debug .= "<ul class='cb2-debug cb2-depth-$depth'>";
+			$debug .= "<ul class='cb2-WP_DEBUG cb2-depth-$depth'>";
 			$debug .= "<li class='cb2-classname'>$classname:</li>";
 			foreach ( $this as $name => $value ) {
 				if ( $name
@@ -364,7 +416,7 @@ abstract class CB2_PostNavigator {
   function is_single()  {return FALSE;}
   function get( $name ) {return NULL;}
 
-  function add_actions( &$actions, $post ) {}
+  function row_actions( &$actions, $post ) {}
 
   function setup_postdata( $post ) {
 		global $id, $authordata, $currentday, $currentmonth, $page, $pages, $multipage, $more, $numpages;
@@ -567,7 +619,7 @@ abstract class CB2_PostNavigator {
 	}
 
 	// ---------------------------------------------- Fake post helpers
-	static function get_post_type_setup() {
+	private static function get_post_type_setup() {
 		global $wpdb;
 		static $post_types = NULL;
 
@@ -593,7 +645,7 @@ abstract class CB2_PostNavigator {
 			$details = $post_types[$post_type];
 			if ( $details->ID_base > $ID ) throw new Exception( "Negative id from ID [$ID/$post_type] with [$details->ID_base/$details->ID_multiplier]" );
 			$id      = ( $ID - $details->ID_base ) / $details->ID_multiplier;
-		}
+		} else throw new Exception( "Post type [$post_type] not managed" );
 
 		return $id;
 	}
@@ -607,6 +659,16 @@ abstract class CB2_PostNavigator {
 		return $objects;
 	}
 
+	static function ID_from_GET_post_type( $post_type, $stub = NULL ) {
+		$default_ID = NULL;
+		if ( is_null( $stub ) ) $stub = str_replace( '-', '_', $post_type );
+		if ( isset( $_GET["{$stub}_ID"] ) )
+			$default_ID = $_GET["{$stub}_ID"];
+		else if ( isset( $_GET["{$stub}_id"] ) )
+			$default_ID = CB2_PostNavigator::ID_from_id_post_type( $_GET["{$stub}_id"], $post_type );
+		return $default_ID;
+	}
+
 	static function ID_from_id_post_type( $id, $post_type ) {
 		// NULL return indicates that this post_type is not governed by CB2
 		$ID         = NULL;
@@ -617,7 +679,7 @@ abstract class CB2_PostNavigator {
 
 		if ( isset( $post_types[$post_type] ) ) {
 			$details = $post_types[$post_type];
-			if ( $id >= $details->ID_base ) throw new Exception( "[$post_type/$id] is already more than its ID_base [$details->ID_base]" );
+			if ( $details->ID_base && $id >= $details->ID_base ) throw new Exception( "[$post_type/$id] is already more than its ID_base [$details->ID_base]" );
 			$ID      = $id * $details->ID_multiplier + $details->ID_base;
 		}
 

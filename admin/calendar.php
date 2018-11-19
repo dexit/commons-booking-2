@@ -65,6 +65,8 @@ $args = array(
 	),
 	'meta_query' => $meta_query,        // Location, Item, User
 );
+// Here we should instantiate with stated CB2_PeriodInteractionStrategy
+// same as WP_Query
 $query = new WP_Query( $args );
 
 // --------------------------------------- Filter selection Form
@@ -83,16 +85,20 @@ $show_overridden_periods_checked = ( $show_overridden_periods ? 'checked="1"' : 
 $period_status_type_options_html = count_options( CB2_Forms::period_status_type_options() );
 $period_entity_options_html      = count_options( CB2_Forms::period_entity_options() );
 
-print( "<h1>Calendar <a class='cb2-WP_DEBUG $class_WP_DEBUG' href='admin.php?page=cb2-calendar&amp;extended=1'>" . basename( __FILE__ ) . ": extended debug form</a></h1>" );
+$calendar_text = __( 'Calendar' );
+print( "<h1>$calendar_text <a class='cb2-WP_DEBUG $class_WP_DEBUG' href='admin.php?page=cb2-calendar&amp;extended=1'>" . basename( __FILE__ ) . ": extended debug form</a></h1>" );
 
+$location_text = __( 'Location' );
+$item_text     = __( 'Item' );
+$user_text     = __( 'User' );
 print( <<<HTML
 	<form>
 		<input name='page' type='hidden' value='cb2-calendar'/>
 		<input type='text' name='startdate' value='$startdate_string'/> to
 		<input type='text' name='enddate' value='$enddate_string'/>
-		Location:<select name="location_ID">$location_options</select>
-		Item:<select name="item_ID">$item_options</select>
-		User:<select name="user_ID">$user_options</select>
+		$location_text:<select name="location_ID">$location_options</select>
+		$item_text:<select name="item_ID">$item_options</select>
+		$user_text:<select name="user_ID">$user_options</select>
 		<div style='display:$extended_class'>
 			<input type="hidden" name="extended$extended_class" value="1"/>
 			Period Status:
@@ -132,7 +138,8 @@ if ( WP_DEBUG ) {
 		print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
 			<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
 			<div style='margin-left:5px;color:#448;'>$query->request</div></div>" );
-		krumo( $query );
+		print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
+		// krumo( $query );
 		print( "</div></div>" );
 	} else print( "<div>No posts returned!</div>" );
 }
