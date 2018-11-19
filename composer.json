@@ -7,13 +7,15 @@
 		"composer\/installers": "1.x",
 		"mnsami\/composer-custom-directory-installer": "1.1.*",
 		"azuyalabs\/yasumi": "~1.8.0",
-		"flegfleg\/CMB2-field-Icon": "master",
+		"flegfleg\/cmb2-field-icon": "master",
+		"flegfleg\/cmb2-field-paragraph": "master",
+		"flegfleg\/cmb2-field-calendar": "master",
 		"opencage\/geocode": "~2.0",
 		"webdevstudios\/cmb2": "~2.3",
 		"origgami\/cmb2-grid": "dev-master",
 		"nathanielks\/wp-admin-notice": "dev-master",
 		"rubengc\/cmb2-tabs": "~1.0.0",
-		"drmonty/leaflet": "dev-master"
+		"drmonty\/leaflet": "dev-master"
 	},
 	"repositories": [
 		{
@@ -38,7 +40,15 @@
 		},
 		{
 			"type": "git",
-			"url": "https:\/\/github.com\/flegfleg\/CMB2-field-Icon"
+			"url": "git@github.com:flegfleg\/cmb2-field-icon"
+		},
+		{
+			"type": "git",
+			"url": "git@github.com:flegfleg\/cmb2-field-paragraph"
+		},
+		{
+			"type": "git",
+			"url": "git@github.com:flegfleg\/cmb2-field-calendar"
 		}
 	],
 	"config": {
@@ -65,6 +75,8 @@
 				"origgami\/cmb2-grid",
 				"rubengc\/cmb2-tabs",
 				"flegfleg\/cmb2-field-icon",
+				"flegfleg\/cmb2-field-paragraph",
+				"flegfleg\/cmb2-field-calendar",
 				"drmonty/leaflet"
 			],
 			".\/admin\/includes\/lib\/{$name}": [
