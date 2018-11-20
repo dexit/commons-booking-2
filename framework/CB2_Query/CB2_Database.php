@@ -57,8 +57,7 @@ class CB2_Database {
 		return $install_array;
   }
 
-  public static function get_install_SQL() {
-		global $wpdb;
+  public static function get_install_SQL_header() {
 
 		$date = (new DateTime())->format( 'c' );
 		$host = $_SERVER['HTTP_HOST'];
@@ -75,37 +74,80 @@ class CB2_Database {
 		$sql .= "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n";
 		$sql .= "\n\n";
 
-		// Tables
-		$sql .= "# ------------------------------ TABLES\n";
-		foreach ( get_declared_classes() as $Class ) { // PHP 4
-			if ( CB2_Query::has_own_method( $Class, 'database_table_schemas' ) )
-				$sql .= self::database_table_schema_SQL( $Class );
-		}
-		$sql .= "\n\n";
+		return $sql;
 
-		// Data
-		$sql .= "# ------------------------------ DATA\n";
-		foreach ( get_declared_classes() as $Class ) { // PHP 4
-			if ( CB2_Query::has_own_method( $Class, 'database_data' ) )
-				$sql .= self::database_data_SQL( $Class );
-		}
-		$sql .= "\n\n";
+	}
 
-		// Constraints
-		$sql .= "# ------------------------------ CONSTRAINTS\n";
-		foreach ( get_declared_classes() as $Class ) { // PHP 4
-			if ( CB2_Query::has_own_method( $Class, 'database_table_schemas' ) )
-				$sql .= self::database_table_constraints_SQL( $Class );
+	public static function get_install_SQL_tables() {
+
+				$sql = "";
+				// Tables
+        $sql .= "# ------------------------------ TABLES\n";
+
+        foreach (get_declared_classes() as $Class) { // PHP 4
+            if (CB2_Query::has_own_method($Class, 'database_table_schemas')) {
+                $sql .= self::database_table_schema_SQL($Class);
+            }
+        }
+        $sql .= "\n\n";
+
+        return $sql;
 		}
-		$sql .= "\n\n";
+
+		public static function get_install_SQL_data() {
+
+			  $sql = "";
+
+				// Data
+        $sql .= "# ------------------------------ DATA\n";
+
+        foreach (get_declared_classes() as $Class) { // PHP 4
+            if (CB2_Query::has_own_method($Class, 'database_data')) {
+                $sql .= self::database_data_SQL($Class);
+            }
+        }
+        $sql .= "\n\n";
+
+        return $sql;
+		}
+
+	public static function get_install_SQL_constraints() {
+
+			$sql = "";
+
+			// Constraints
+        $sql .= "# ------------------------------ CONSTRAINTS\n";
+
+			foreach (get_declared_classes() as $Class) { // PHP 4
+					if (CB2_Query::has_own_method($Class, 'database_table_schemas')) {
+							$sql .= self::database_table_constraints_SQL($Class);
+					}
+			}
+			$sql .= "\n\n";
+
+			return $sql;
+		}
+
+	public static function get_install_SQL_views() {
+
+		$sql = "";
 
 		// Views
-		$sql .= "# ------------------------------ VIEWS\n";
+    $sql .= "# ------------------------------ VIEWS\n";
+
 		foreach ( get_declared_classes() as $Class ) { // PHP 4
 			if ( CB2_Query::has_own_method( $Class, 'database_views' ) )
 				$sql .= self::database_views_SQL( $Class );
 		}
 		$sql .= "\n\n";
+
+		return $sql;
+
+	}
+
+	public static function get_install_SQL_footer() {
+
+		$sql = "";
 
 		$sql .= "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n";
 		$sql .= "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n";
@@ -118,18 +160,45 @@ class CB2_Database {
 		return $sql;
 	}
 
+	public static function get_install_SQL_array () {
+
+		$sql_array = array (
+			'tables' => self::get_install_SQL_tables(),
+			'data' => self::get_install_SQL_data(),
+			'constraints' => self::get_install_SQL_constraints(),
+			'views' => self::get_install_SQL_views()
+		);
+
+		return $sql_array;
+
+	}
+
 	public static function install_SQL() {
 
-		$sql = self::get_install_SQL();
+		global $wpdb;
+
+		$message = '';
+
+		$sql_array = self::get_install_SQL_array();
+		$sql_header = self::get_install_SQL_header();
+		$sql_footer = self::get_install_SQL_footer();
+
 		$con = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+
 		if (mysqli_connect_errno()) {
 				return ("Failed to connect to MySQL: " . mysqli_connect_error());
 		} else {
-				if (mysqli_multi_query($con, $sql)) {
-						return('Finished.');
-				} else {
-						return ('Failed.');
-				}
+			foreach ( $sql_array as $section => $sql_content ) {
+				$sql =  $sql_header . $sql_content . $sql_footer;
+					if (mysqli_multi_query($con, $sql )) {
+						$message .=  sprintf( '<h3 style="color: green">%s OK </h3>', $section );
+					} else {
+						$message .=  sprintf( '
+						<h3 style="color: red"> %s FAILED </h3>
+						<textarea style= "width:500px; height: 200px">%s</textarea>', $section, $sql );
+					}
+			}
+			return $message;
 		}
 		mysqli_close($con);
 

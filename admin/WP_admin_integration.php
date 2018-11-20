@@ -366,7 +366,8 @@ function cb2_admin_init_menus() {
 	global $wpdb;
 
 	$capability_default   = 'manage_options';
-	$bookings_count       = $wpdb->get_var( "select count(*) from {$wpdb->prefix}cb2_view_future_bookings" );
+	// $bookings_count       = $wpdb->get_var("select count(*) from {$wpdb->prefix}cb2_view_future_bookings");
+	$bookings_count       = 0; /* disabled because it threw error: cb2_view_future_bookings does not exist */
 	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
 	add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_options_page', 'dashicons-video-alt' );
 
