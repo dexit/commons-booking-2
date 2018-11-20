@@ -39,10 +39,17 @@ define( 'CB2_AVAILABILITY_OPTIONS_TABLE', 'cb2_availability_options' );
 
 /* Load framework */
 require_once(CB2_PLUGIN_ROOT . 'framework/CB2_framework.php');
-/* Load admin messages - enqued here to enable messages on activate */
-require_once(CB2_PLUGIN_ROOT . 'admin/includes/lib/wp-admin-notice/WP_Admin_notice.php');
+
 /* Load public */
 require_once(CB2_PLUGIN_ROOT . 'public/CB2_Public.php');
+
+/* Plugin de/activation */
+require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_ActDeact.php');
+register_activation_hook(CB2_PLUGIN_ROOT . '/commons-booking.php', array( 'CB2_ActDeact', 'activate' ));
+register_deactivation_hook(CB2_PLUGIN_ROOT . '/commons-booking.php', array( 'CB2_ActDeact', 'deactivate' ));
+
+
+
 /* Load admin */
 require_once(CB2_PLUGIN_ROOT . 'admin/WP_admin_integration.php');
 

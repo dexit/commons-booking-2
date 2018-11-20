@@ -31,8 +31,7 @@ class CB2_Public {
 	public static function initialize() {
 
 		require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_Shortcodes.php');
-		require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_Enqueue.php');require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_ActDeact.php');
-
+		require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_Enqueue.php');
 
 		// require_once( CB2_PLUGIN_ROOT . 'public/widgets/sample.php' );
 		}
