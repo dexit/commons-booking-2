@@ -29,12 +29,16 @@ class CB2_Admin {
 		if ( !apply_filters( 'cb2_admin_initialize', true ) ) {
 			return;
 		}
+		/*
+		* Enqueue
+		*/
 
 		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Enqueue_Admin.php' );
-		// /*
-		// * All the extras functions
-		// */
-		// require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Extras_Admin.php' );
+
+		/*
+		* Extra functions
+		*/
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Extras_Admin.php' );
 
 		/* @TODO: add all filters & functions from WP_Admin_Integration */
 

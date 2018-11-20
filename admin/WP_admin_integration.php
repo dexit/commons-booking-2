@@ -475,7 +475,7 @@ function cb2_reflection() {
 	$disabled          = ( isset( $_GET['reset_data'] ) ? 'disabled="1"' : '' );
 	print( '<div class="cb2-actions">' );
 	print( '<a href="?page=cb2-reflection">show install schema</a>' );
-	print( ' | <a href="?page=cb2-reflection&section=install_SQL">dump install SQL</a>' );
+	print( ' | <a href="?page=cb2-reflection&section=get_install_SQL">dump install SQL</a>' );
 	$processing = 'var self = this;
 		setTimeout(function(){
 			self.setAttribute("value", "Processing...");
@@ -506,7 +506,7 @@ function cb2_reflection() {
 				break;
 			case 'reinstall':
 				if ( $_GET['password'] == 'fryace4' ) {
-					$sql = CB2_Database::install_SQL();
+					$sql = CB2_Database::get_install_SQL();
 					$con = mysqli_connect( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME );
 					if ( mysqli_connect_errno() )
 						print( "Failed to connect to MySQL: " . mysqli_connect_error() );
@@ -519,9 +519,9 @@ function cb2_reflection() {
 					mysqli_close( $con );
 				} else throw new Exception( 'Invalid password' );
 				break;
-			case 'install_SQL':
+			case 'get_install_SQL':
 				print( '<pre>' );
-				print( htmlentities( CB2_Database::install_SQL() ) );
+				print( htmlentities( CB2_Database::get_install_SQL() ) );
 				print( '</pre>' );
 				break;
 		}

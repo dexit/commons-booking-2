@@ -57,7 +57,7 @@ class CB2_Database {
 		return $install_array;
   }
 
-  public static function install_SQL() {
+  public static function get_install_SQL() {
 		global $wpdb;
 
 		$date = (new DateTime())->format( 'c' );
@@ -117,7 +117,26 @@ class CB2_Database {
 		$sql .= "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n";
 
 		return $sql;
-  }
+	}
+
+	public static function install_SQL() {
+
+		$sql = self::get_install_SQL();
+		$con = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+		if (mysqli_connect_errno()) {
+				return ("Failed to connect to MySQL: " . mysqli_connect_error());
+		} else {
+				if (mysqli_multi_query($con, $sql)) {
+						return('Finished.');
+				} else {
+						return ('Failed.');
+				}
+		}
+		mysqli_close($con);
+
+	}
+
+
 
   private static function database_table_schema_SQL( $Class ) {
 		global $wpdb;

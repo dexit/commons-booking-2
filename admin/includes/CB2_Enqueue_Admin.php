@@ -134,4 +134,4 @@ function cmb2_sanitize_checkbox( $override_value, $value ) {
 }
 $cb_enqueue_admin = new CB2_Enqueue_Admin();
 $cb_enqueue_admin->initialize();
-do_action( 'commons_booking_cb_enqueue_admin_instance', $cb_enqueue_admin );
+do_action( 'cb2_enqueue_admin_instance', $cb_enqueue_admin );

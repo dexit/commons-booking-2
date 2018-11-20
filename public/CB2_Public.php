@@ -31,8 +31,8 @@ class CB2_Public {
 	public static function initialize() {
 
 		require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_Shortcodes.php');
+		require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_Enqueue.php');require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_ActDeact.php');
 
-		require_once( CB2_PLUGIN_ROOT . 'public/includes/CB2_Enqueue.php' );
 
 		// require_once( CB2_PLUGIN_ROOT . 'public/widgets/sample.php' );
 		}
@@ -67,4 +67,4 @@ class CB2_Public {
  *   problems when the plugin use API of other plugins, remove
  *   if you don' want this
  */
-add_action( 'plugins_loaded', array( 'CB2_Public', 'get_instance' ), 9999 );
+add_action( 'plugins_loaded', array( 'CB2_Public', 'get_instance' ), 9999);

@@ -94,6 +94,6 @@ class CB2_Enqueue {
 	}
 
 }
-$cb_enqueue = new CB2_Enqueue();
-$cb_enqueue->initialize();
-do_action( 'commons_booking_cb_enqueue_instance', $cb_enqueue );
+$cb2_enqueue = new CB2_Enqueue();
+$cb2_enqueue->initialize();
+do_action( 'cb2_enqueue_instance', $cb2_enqueue );
