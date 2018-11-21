@@ -113,7 +113,7 @@ class CB2 {
 
 		switch ( $schema_type ) {
 			case CB2_Week::$static_post_type:
-				// TODO: wordpress WeekStartsOn
+				// TODO: use wordpress WeekStartsOn
 				$html .= ( $before );
 				foreach ( CB2_Query::$days as $dayname ) {
 					$html .= ( "<$type>$dayname</$type>" );
@@ -249,7 +249,8 @@ class CB2 {
 		global $post;
 
 		if ( is_object( $post ) ) {
-			// TODO: allow better placement of class here
+			// TODO: remove the_fields() functionality
+			// allow better placement of class here
 			// that respects the possibility of complex tags being passed in
 			$before_open = ( substr( $before, -1 ) == '>' ? substr( $before, 0, -1 ) : $before );
 			foreach ( $field_names as $field_name ) {
@@ -404,5 +405,5 @@ class CB2 {
 	}
 }
 
-// TODO: move functions to CB2_Templates utilities files
+// TODO: move the_content() filter to CB2_Templates utilities files
 add_filter( 'the_content', array( 'CB2', 'the_content' ), 1 );

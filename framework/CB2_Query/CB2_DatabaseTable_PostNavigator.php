@@ -54,7 +54,6 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 
 	function delete( $from = NULL, $depth = 0 ) {
 		// Trash dependent leaf objects before trashing this
-		// TODO: this delete() should be in a transaction
 		$Class                = get_class( $this );
 		$class_database_table = CB2_Database::database_table( $Class );
 		$direct               = ( $depth == 0 );
@@ -246,7 +245,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			if ( CB2_DEBUG_SAVE )
 				print( "<div class='cb2-WP_DEBUG-small'>created $Class(ID $ID)</div>" );
 		} else {
-			// TODO: data name conflicts?
+			// TODO: data name conflicts? e.g. both CB2_PeriodGroup and CB2_PeriodEntity have @name attributes
 			// e.g. PeriodEntity save() may also update the name of the fixed PeriodStatusType
 			// because fields like name are everywhere
 			// PHP object creation needs more intention annotation

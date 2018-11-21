@@ -275,7 +275,6 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
   }
 
   function seconds_in_day( $datetime ) {
-    // TODO: better / faster way of doing seconds_in_day()?
     $time_string = $datetime->format( 'H:i' );
     $time_object = new DateTime( "1970-01-01 $time_string" );
     return (int) $time_object->format('U');

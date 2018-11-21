@@ -33,7 +33,7 @@ class CB2_Query {
   public static $javascript_date_format = 'Y-m-d H:i:s';
   public static $date_format     = 'Y-m-d';
   public static $datetime_format = 'Y-m-d H:i:s';
-  // TODO: make configurable: follow wordpress setting
+  // TODO: make configurable: follow wordpress setting for week start day
 	public static $days            = array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
 
   // -------------------------------------------------------------------- WordPress integration
@@ -531,9 +531,7 @@ class CB2_Query {
 		// convert *_ID(s) => objects using
 		//   get_or_create_new(ids)
 		//
-		// TODO: document the naming conventions of course
-		// TODO: move all this in to the CB2_DatabaseTable_PostNavigator Class
-		// to use the database schema knowledge instead :)
+		// TODO: move all this in to the CB2_DatabaseTable_PostNavigator Class to use the database schema knowledge instead :)
 		if ( ! is_null( $value ) ) {
 			if      ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
 			else if ( $name == 'date' )                      $value = self::ensure_datetime( $name, $value );

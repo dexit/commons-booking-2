@@ -683,7 +683,7 @@ function cb2_reflection() {
 
 		// --------------------------- Model
 		print( '<hr/>' );
-		print( '<h2>model (Always slightly out-of-date)</h2>');
+		print( '<h2>model</h2>');
 		print( '<img src="' . plugins_url( CB2_TEXTDOMAIN . '/admin/assets/model.png' ) . '"/>' );
 	}
 }
@@ -871,9 +871,6 @@ function cb2_settings_post_edit() {
 	$typenow   = $post_type;
 
 	// conditionally redirect the get_post() in post.php
-	// redirect the postmeta may cause the _edit_lock to fail
-	// TODO: move to get_post_type() in post.php? possibly with a conditional $redirect = TRUE parameter
-	// TODO: temporarily redirect and unredirect in post.php
 	if ( ! $auto_draft_publish_transition ) {
 		// Full normal redirected main get_post()
 		CB2_Query::redirect_wpdb_for_post_type( $post_type );
