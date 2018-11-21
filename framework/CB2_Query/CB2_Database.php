@@ -67,13 +67,16 @@ class CB2_Database {
 		$sql .= "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n";
 		$sql .= "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n";
 		$sql .= "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n";
-		$sql .= "/*!40101 SET NAMES utf8 */;\n";
 		$sql .= "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n";
 		$sql .= "/*!40103 SET TIME_ZONE='+00:00' */;\n";
 		$sql .= "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n";
 		$sql .= "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n";
 		$sql .= "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n";
 		$sql .= "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n";
+		// Let us not do this, and leave the database to decide
+		// All views and triggers should convert output to UTF8 for fields
+		// especially when UNION is involved
+		// $sql .= "/*!40101 SET NAMES utf8 */;\n";
 		$sql .= "\n\n";
 
 		// Tables
@@ -292,16 +295,11 @@ class CB2_Database {
 		// MySQL inserts CONVERT() statements for its local COLLATION
 		// this will FAIL for double embedded CONVERTs
 		// TODO: on the final system this should not be necessary
-		if ( preg_match( '/ UTF8[A-Z0-9]+/', $body ) )
-			throw new Exception( "Function body [$identifier] has collation string in it" );
+		if ( preg_match( '/ utf8[A-Z0-9]+| latin1/i', $body ) )
+			throw new Exception( "Function body [$identifier] has wrong collation string in it" );
 		// MySQL inserts fully qualified Database names
-		if ( preg_match( '/commonsbooking_2/', $body ) )
-			throw new Exception( "Function body [$identifier] has database name commonsbooking_2 string in it" );
-		if ( preg_match( '/[a-z0-9_]wp_/', $body ) )
-			throw new Exception( "Function body [$identifier] has non-prefix wp_ string in it" );
-
-		// Standard wp_ replacement
-		$body = str_replace( 'wp_', $wpdb->prefix, $body );
+		if ( preg_match( '/commonsbooking_2|wp47/', $body ) )
+			throw new Exception( "Function body [$identifier] has database name string in it" );
 
 		return $body;
 	}

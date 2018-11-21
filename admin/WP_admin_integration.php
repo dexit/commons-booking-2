@@ -100,7 +100,7 @@ function cb2_admin_pages() {
 			'page_title'    => 'Bookings %(for)% %location_ID%',
 			'menu_title'    => 'Bookings',
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_id=2',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_view_future_bookings",
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`",
 			'count_class'   => 'ok',
 		),
 		'cb2-calendar' => array(
@@ -366,7 +366,7 @@ function cb2_admin_init_menus() {
 	global $wpdb;
 
 	$capability_default   = 'manage_options';
-	$bookings_count       = $wpdb->get_var( "select count(*) from {$wpdb->prefix}cb2_view_future_bookings" );
+	$bookings_count       = $wpdb->get_var( "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`" );
 	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
 	add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_options_page', 'dashicons-video-alt' );
 
@@ -533,19 +533,22 @@ function cb2_reflection() {
 		$exsiting_views    = $wpdb->get_results( 'select table_name, view_definition from INFORMATION_SCHEMA.views', OBJECT_K );
 		$triggers_results  = $wpdb->get_results( 'select trigger_name, action_statement from INFORMATION_SCHEMA.triggers', OBJECT_K );
 		$existing_triggers = array();
-		$variable_database_name = '/`commons[-_]?booking[0-9a-z_-]+`\\./i';
+		$variable_database_name = '/`commons[-_]?booking[0-9a-z_-]+`\\.|`wp47`\\./i';
 		// The compilation procedure adds things in to the definitions
 		// that we do not specifiy, like collation
 		foreach ( $triggers_results as $name => $definition ) {
 			$action_statement = preg_replace( $variable_database_name, '',  $definition->action_statement );
 			$action_statement = preg_replace( '/^BEGIN\\n|\\nEND$/',   '',  $action_statement );
 			$action_statement = trim( preg_replace( '/\\s+/', ' ', $action_statement ) );
+			$action_statement = str_replace(  'convert(',                   '', $action_statement );
+			$action_statement = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $action_statement );
 			array_push( $existing_triggers, $action_statement );
 		}
 		foreach ( $exsiting_views as $name => &$definition ) {
 			$definition->view_definition = preg_replace( $variable_database_name, '', $definition->view_definition );
-			$definition->view_definition = str_replace(  'convert(',              '', $definition->view_definition );
-			$definition->view_definition = str_replace(  ' using utf8mb4)',       '', $definition->view_definition );
+			// We are including conversions but cannot reliably remove them
+			$definition->view_definition = str_replace(  'convert(',                   '', $definition->view_definition );
+			$definition->view_definition = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $definition->view_definition );
 		}
 
 		// ---------------------------------------------------- WordPress
@@ -631,6 +634,8 @@ function cb2_reflection() {
 								print( "<div><b>$trigger_type</b> trigger</div>" );
 								$trigger_body = CB2_Database::check_fuction_bodies( "$table_name::trigger", $trigger_body );
 								$trigger_body = trim( preg_replace( '/\\s+/', ' ', $trigger_body ) );
+								$trigger_body = str_replace(  'convert(',                   '', $trigger_body );
+								$trigger_body = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $trigger_body );
 								if ( ! in_array( $trigger_body, $existing_triggers ) ) {
 									krumo($trigger_body, $existing_triggers);
 									print( "&nbsp;<span class='cb2-warning'>trigger different, or does not exist</span>" );
@@ -655,7 +660,9 @@ function cb2_reflection() {
 					foreach ( $views as $name => $view_body ) {
 						print( "<li>$first$name" );
 						$full_name = "$wpdb->prefix$name";
-						$view_body = CB2_Database::check_fuction_bodies( "$name::trigger", $view_body );
+						$view_body = CB2_Database::check_fuction_bodies( "view::$name", $view_body );
+						$view_body = str_replace(  'convert(',                   '', $view_body );
+						$view_body = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $view_body );
 						if ( ! isset( $exsiting_views[$full_name] ) )
 							print( " <span class='cb2-warning'>does not exist</span>" );
 						else if ( $exsiting_views[$full_name]->view_definition != $view_body ) {
@@ -683,6 +690,8 @@ function cb2_reflection() {
 
 function cb2_settings_list_page() {
 	global $wpdb;
+	global $is_IE;
+
 	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 
 	if ( isset( $_GET[ 'page' ] ) ) {
@@ -762,6 +771,7 @@ function cb2_settings_list_page() {
 
 function cb2_settings_post_new() {
 	global $auto_draft_publish_transition;
+	global $is_IE;
 
 	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 	$title = 'Add New';
@@ -819,6 +829,7 @@ function cb2_settings_post_new() {
 
 function cb2_settings_post_edit() {
 	global $action, $auto_draft_publish_transition; // post.php will wp_reset_vars(action)
+	global $is_IE;
 
 	if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . __FUNCTION__ . '()</span>' ); // CB2/Annesley: debug
 	$title = 'Edit Post';

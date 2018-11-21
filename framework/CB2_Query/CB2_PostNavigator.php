@@ -210,8 +210,10 @@ abstract class CB2_PostNavigator {
 		// If $ID_property_name is plural, an array will be returned
 		$TargetClass = self::class_from_ID_property_name( $ID_property_name, $object_property_name, $plural, $Class );
 
-		if ( ! isset( $properties[ $ID_property_name ] ) )
+		if ( ! isset( $properties[ $ID_property_name ] ) ) {
+			krumo( $properties );
 			throw new Exception( "$ID_property_name required" );
+		}
 
 		$property_ID_value = $properties[ $ID_property_name ];
 

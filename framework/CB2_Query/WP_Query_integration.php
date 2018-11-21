@@ -464,7 +464,7 @@ function cb2_update_post_meta( $meta_id, $ID, $meta_key, $meta_value ) {
 				if ( CB2_DEBUG_SAVE ) {
 					$table = ( $auto_draft_publish_transition ? "<b class='cb2-warning'>{$wpdb->prefix}posts</b>" : 'native tables' );
 					if ( $first ) print( "<h2 class='cb2-WP_DEBUG'>update_meta_data($ID) => $table</h2>" );
-					print( "<b>$meta_key</b>=$meta_value, </li>" );
+					if ( is_string( $meta_value ) ) print( "<b>$meta_key</b>=$meta_value, </li>" );
 					$first = FALSE;
 				}
 				if ( ! $auto_draft_publish_transition ) {

@@ -541,6 +541,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 	function custom_columns( $column ) {
 		$wp_query_page_name = "paged-column-$column";
 		$current_page       = ( isset( $_GET[$wp_query_page_name] ) ? $_GET[$wp_query_page_name] : 1 );
+		$has_locations      = count( CB2_forms::location_options() );
 
 		switch ( $column ) {
 			case 'availability':
@@ -573,7 +574,9 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 				$add_new_text = ( 'add new item availability' );
 				$post_title   = __( 'Availability of' ) . " $this->post_title";
 				$add_link     = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
-				print( "<a href='$add_link'>$add_new_text</a>" );
+				if ( $has_locations )
+					print( "<a href='$add_link'>$add_new_text</a>" );
+				else print( '<span class="cb2-no-data-notice">' . __( 'Add a Location first' ) . '</span>' );
 				print( '</div>' );
 				break;
 
@@ -606,12 +609,14 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
 				$page       = 'cb2-post-new';
 				$post_title = __( 'Booking of' ) . " $this->post_title";
 				$add_new_booking_text = __( 'add new booking' );
-				$add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_id=2&post_title=$post_title";
-				print( " <a href='$add_link'>$add_new_booking_text</a>" );
-				$page       = 'cb2-calendar';
-				$view_booking_text = __( 'view in calendar' );
-				$view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_id=2";
-				print( " | <a href='$view_link'>$view_booking_text</a>" );
+				if ( $has_locations ) {
+					$add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_id=2&post_title=$post_title";
+					print( " <a href='$add_link'>$add_new_booking_text</a>" );
+					$page       = 'cb2-calendar';
+					$view_booking_text = __( 'view in calendar' );
+					$view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_id=2";
+					print( " | <a href='$view_link'>$view_booking_text</a>" );
+				} else print( '<span class="cb2-no-data-notice">' . __( 'Add a Location first' ) . '</span>' );
 				print( '</div>' );
 				break;
 		}
