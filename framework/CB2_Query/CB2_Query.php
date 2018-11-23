@@ -13,7 +13,7 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
+define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && TRUE );
 
 // Native posts
 define( 'CB2_ID_SHARING',    TRUE );
@@ -545,9 +545,12 @@ class CB2_Query {
 			else if ( substr( $name, -6 ) == '_index' )      $value = self::ensure_int(  $name, $value );
 			else if ( $name == 'ID' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
 			else if ( $name == 'id' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
+			else if ( in_array( $name, array(
+				'location_icon' ,
+			) ) ) $value = unserialize( $value );
 
 			if ( self::check_for_serialisation( $value ) )
-				throw new Exception( "[$value] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
+				throw new Exception( "[$name] = [$value] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
 		}
 
 		return $value;
