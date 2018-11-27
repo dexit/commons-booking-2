@@ -42,334 +42,372 @@ class CB2_Database {
 		'foreign key',
 	);
 
-  public static function install_array() {
+  public static function schema_array() {
 		global $wpdb;
-		$install_array = array();
+		$schema_array = array();
 
 		foreach ( get_declared_classes() as $Class ) { // PHP 4
 			if ( CB2_Query::has_own_method( $Class, 'database_table_schemas' ) )
-				$install_array[ $Class ][ 'table' ] = $Class::database_table_schemas( $wpdb->prefix );
+				$schema_array[ $Class ][ 'table' ] = $Class::database_table_schemas( $wpdb->prefix );
 			if ( CB2_Query::has_own_method( $Class, 'database_views' ) )
-				$install_array[ $Class ][ 'views' ] = $Class::database_views( $wpdb->prefix );
+				$schema_array[ $Class ][ 'views' ] = $Class::database_views( $wpdb->prefix );
 			if ( CB2_Query::has_own_method( $Class, 'database_data' ) )
-				$install_array[ $Class ][ 'data' ]  = $Class::database_data( $wpdb->prefix );
+				$schema_array[ $Class ][ 'data' ]  = $Class::database_data( $wpdb->prefix );
 		}
-		return $install_array;
+		return $schema_array;
   }
 
-  public static function get_install_SQL_header() {
+  public static function get_install_SQL_header( $prefix, $character_set = FALSE ) {
+		// Setting the character set
+		// would cause all string literals in the views
+		// to be in that character set
+		// If the database is in a different character set, e.g. latin1
+		// then CONCAT(field_value, "string literal") will throw a collation error
+		//
+		// We are removing foreign key checks although we do not need to
+		$date          = (new DateTime())->format( 'c' );
+		$host          = $_SERVER['HTTP_HOST'];
 
-		$date = (new DateTime())->format( 'c' );
-		$host = $_SERVER['HTTP_HOST'];
-		$sql  = "# ------------------------------ $date\n";
-		$sql .= "# host: $host\n";
-		$sql .= "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n";
-		$sql .= "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n";
-		$sql .= "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n";
-		$sql .= "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n";
-		$sql .= "/*!40103 SET TIME_ZONE='+00:00' */;\n";
-		$sql .= "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n";
-		$sql .= "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n";
-		$sql .= "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n";
-		$sql .= "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n";
-		$sql .= "\n\n";
+		$sqls = array();
+		array_push( $sqls, "# ------------------------------ $date" );
+		array_push( $sqls, "# host: $host" );
+		array_push( $sqls, "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */" );
+		array_push( $sqls, "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */" );
+		array_push( $sqls, "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */" );
+		array_push( $sqls, "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */" );
+		array_push( $sqls, "/*!40103 SET TIME_ZONE='+00:00' */" );
+		array_push( $sqls, "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */" );
+		array_push( $sqls, "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */" );
+		array_push( $sqls, "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */" );
+		array_push( $sqls, "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */" );
+		if ( $character_set ) array_push( $sqls, "/*!40101 SET NAMES $character_set */" );
 
-		return $sql;
-
-	}
-
-	public static function get_install_SQL_tables() {
-
-				$sql = "";
-				// Tables
-        $sql .= "# ------------------------------ TABLES\n";
-
-        foreach (get_declared_classes() as $Class) { // PHP 4
-            if (CB2_Query::has_own_method($Class, 'database_table_schemas')) {
-                $sql .= self::database_table_schema_SQL($Class);
-            }
-        }
-        $sql .= "\n\n";
-
-        return $sql;
-		}
-
-		public static function get_install_SQL_data() {
-
-			  $sql = "";
-
-				// Data
-        $sql .= "# ------------------------------ DATA\n";
-
-        foreach (get_declared_classes() as $Class) { // PHP 4
-            if (CB2_Query::has_own_method($Class, 'database_data')) {
-                $sql .= self::database_data_SQL($Class);
-            }
-        }
-        $sql .= "\n\n";
-
-        return $sql;
-		}
-
-	public static function get_install_SQL_constraints() {
-
-			$sql = "";
-
-			// Constraints
-        $sql .= "# ------------------------------ CONSTRAINTS\n";
-
-			foreach (get_declared_classes() as $Class) { // PHP 4
-					if (CB2_Query::has_own_method($Class, 'database_table_schemas')) {
-							$sql .= self::database_table_constraints_SQL($Class);
-					}
-			}
-			$sql .= "\n\n";
-
-			return $sql;
-		}
-
-	public static function get_install_SQL_views() {
-
-		$sql = "";
-
-		// Views
-    $sql .= "# ------------------------------ VIEWS\n";
-
-		foreach ( get_declared_classes() as $Class ) { // PHP 4
-			if ( CB2_Query::has_own_method( $Class, 'database_views' ) )
-				$sql .= self::database_views_SQL( $Class );
-		}
-		$sql .= "\n\n";
-
-		return $sql;
+		return $sqls;
 
 	}
 
-	public static function get_install_SQL_footer() {
+	public static function get_install_SQL_footer( $prefix ) {
+		$sqls = array();
 
-		$sql = "";
+		array_push( $sqls, "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */" );
+		array_push( $sqls, "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */" );
+		array_push( $sqls, "/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */" );
+		array_push( $sqls, "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */" );
+		array_push( $sqls, "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */" );
+		array_push( $sqls, "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */" );
+		array_push( $sqls, "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */" );
 
-		$sql .= "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n";
-		$sql .= "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n";
-		$sql .= "/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;\n";
-		$sql .= "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n";
-		$sql .= "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n";
-		$sql .= "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n";
-		$sql .= "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n";
-
-		return $sql;
+		return $sqls;
 	}
 
-	public static function get_install_SQL_array () {
-
-		$sql_array = array (
-			'tables' => self::get_install_SQL_tables(),
-			'data' => self::get_install_SQL_data(),
-			'constraints' => self::get_install_SQL_constraints(),
-			'views' => self::get_install_SQL_views()
-		);
-
-		return $sql_array;
-
-	}
-
-	public static function install_SQL() {
-
+	public static function install( $run = TRUE ) {
 		global $wpdb;
+		$install_SQLs  = array();
+		$schema_array = self::schema_array();
 
-		$message = '';
+		$install_SQLs = array_merge( $install_SQLs, self::get_install_SQL_header( $wpdb->prefix ) );
 
-		$sql_array = self::get_install_SQL_array();
-		$sql_header = self::get_install_SQL_header();
-		$sql_footer = self::get_install_SQL_footer();
-
-		$con = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-
-		if (mysqli_connect_errno()) {
-				return ("Failed to connect to MySQL: " . mysqli_connect_error());
-		} else {
-			foreach ( $sql_array as $section => $sql_content ) {
-				$sql =  $sql_header . $sql_content . $sql_footer;
-					if (mysqli_multi_query($con, $sql )) {
-						$message .=  sprintf( '<h3 style="color: green">%s OK </h3>', $section );
-					} else {
-						$message .=  sprintf( '
-						<h3 style="color: red"> %s FAILED </h3>
-						<textarea style= "width:500px; height: 200px">%s</textarea>', $section, $sql );
+		// ----------------------------------------------- DROPS
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['table'] ) ) {
+					foreach ( $objects['table'] as $table ) {
+							$install_SQLs = array_merge( $install_SQLs, self::database_constraint_drops_SQL( $wpdb->prefix, $table ) );
 					}
-			}
-			return $message;
+				}
 		}
-		mysqli_close($con);
 
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['table'] ) ) {
+					foreach ( $objects['table'] as $table ) {
+							$install_SQLs = array_merge( $install_SQLs, self::database_table_drops_SQL( $wpdb->prefix, $table ) );
+					}
+				}
+		}
+
+		if ( $run ) {
+			foreach ( $install_SQLs as $sql ) {
+				$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
+				$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
+				if ( ! $is_comment && ! $is_delimiter ) {
+					try {
+						$wpdb->query( $sql );
+					}
+					catch ( Exception $ex ) {
+						// Nevermind
+					}
+				}
+			}
+		}
+
+		// ----------------------------------------------- CREATES
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['table'] ) ) {
+					foreach ( $objects['table'] as $table ) {
+							$install_SQLs = array_merge( $install_SQLs, self::database_table_schema_SQL( $wpdb->prefix, $table ) );
+					}
+				}
+		}
+
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['data'] ) ) {
+					// TODO: only the primary table can be populated at the moment
+					$table_name = $Class::database_table_name();
+					$install_SQLs = array_merge( $install_SQLs, self::database_data_SQL( $wpdb->prefix, $table_name, $objects['data'] ) );
+				}
+		}
+
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['table'] ) ) {
+					foreach ( $objects['table'] as $table ) {
+							$install_SQLs = array_merge( $install_SQLs, self::database_table_constraints_SQL( $wpdb->prefix, $table ) );
+					}
+				}
+		}
+
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['views'] ) ) {
+					foreach ( $objects['views'] as $name => $body ) {
+							$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body ) );
+					}
+				}
+		}
+
+		$install_SQLs = array_merge( $install_SQLs, self::get_install_SQL_footer( $wpdb->prefix ) );
+
+		if ( $run ) {
+			foreach ( $install_SQLs as $sql ) {
+				$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
+				$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
+				if ( ! $is_comment && ! $is_delimiter ) {
+					$wpdb->query( $sql );
+				}
+			}
+		}
+
+		return $install_SQLs;
 	}
 
+	private static function database_constraint_drops_SQL( $prefix, $definition ) {
+		// DROP all the constraints, not just the registered ones
+		// because the DB might have changed
+		static $i = 1;
+		$table_name = $definition['name'];
+		$full_table = "$prefix$table_name";
+		$mysql_constraint_drop = 'DROP FOREIGN KEY';
 
+		$sqls = array();
+		if ( isset( $definition['many to many'] ) ) {
+			foreach ( $definition['many to many'] as $m2m_table => $m2m_definition ) {
+				$full_m2m_table = "$prefix$m2m_table";
+				$fk_name_base   = "fk_$full_m2m_table";
+				array_push( $sqls, "ALTER TABLE `$full_m2m_table` $mysql_constraint_drop `fk_$i`" );
+				$i++;
+				array_push( $sqls, "ALTER TABLE `$full_m2m_table` $mysql_constraint_drop `fk_$i`" );
+				$i++;
+			}
+		}
 
-  private static function database_table_schema_SQL( $Class ) {
-		global $wpdb;
+		if ( isset( $definition['foreign keys'] ) ) {
+			foreach ( $definition['foreign keys'] as $column => $constraint ) {
+				array_push( $sqls, "ALTER TABLE `$full_table` $mysql_constraint_drop `fk_$i`" );
+				$i++;
+			}
+		}
+
+		return $sqls;
+	}
+
+	private static function database_table_drops_SQL( $prefix, $definition ) {
+		$sqls = array();
+		$table_name = $definition['name'];
+		array_push( $sqls, "DROP TABLE IF EXISTS `$prefix$table_name`" );
+		return $sqls;
+	}
+
+  private static function database_table_schema_SQL( $prefix, $definition ) {
 		static $i = 1;
 
-		$sql = '';
-		$definitions = $Class::database_table_schemas( $wpdb->prefix );
-		foreach ( $definitions as $definition ) {
-			$table_name = $definition['name'];
-			$sql       .= "DROP TABLE IF EXISTS `$wpdb->prefix$table_name`;\n";
-			$sql       .= "CREATE TABLE `$wpdb->prefix$table_name` (\n";
-			foreach ( $definition['columns'] as $name => $column ) {
-				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
-				$count    = count( $column );
-				$type     = $column[0];
+		$sqls = array();
+		$table_name = $definition['name'];
+		$sql        = "CREATE TABLE `$prefix$table_name` (\n";
+		foreach ( $definition['columns'] as $name => $column ) {
+			// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+			$count    = count( $column );
+			$type     = $column[0];
 
-				// Optional
-				$size     = ( $count > 1 && $column[1] ? "($column[1])" : '' );
-				$unsigned = ( $count > 2 && $column[2] ? 'UNSIGNED' : '' );
-				$not_null = ( $count > 3 && $column[3] ? 'NOT NULL' : '' );
-				$auto     = ( $count > 4 && $column[4] ? 'AUTO_INCREMENT' : '' );
-				$default  = ( $count > 5 ? $column[5] : NULL );
-				$comment  = ( $count > 6 && $column[6] ? "COMMENT '$column[6]'" : '' );
+			// Optional
+			$size     = ( $count > 1 && $column[1] ? "($column[1])" : '' );
+			$unsigned = ( $count > 2 && $column[2] ? 'UNSIGNED' : '' );
+			$not_null = ( $count > 3 && $column[3] ? 'NOT NULL' : '' );
+			$auto     = ( $count > 4 && $column[4] ? 'AUTO_INCREMENT' : '' );
+			$default  = ( $count > 5 ? $column[5] : NULL );
+			$comment  = ( $count > 6 && $column[6] ? "COMMENT '$column[6]'" : '' );
 
-				// TODO: use the standard converter for the DEFAULT
-				if ( is_null( $default ) ) {
-					// No default
-				} else if ( $default === CB2_CURRENT_TIMESTAMP || $default === CB2_NULL ) {
-					// Stated constants
-					$default = "DEFAULT $default";
-				} else if ( $type == CB2_BIT ) {
-					$default = 'DEFAULT ' . CB2_Database::int_to_bitstring( $default );
-				} else if ( is_string( $default ) ) {
-					$default = "DEFAULT '" . str_replace( "'", "\\\'", $default ) . "'";
-				} else {
-					$default = "DEFAULT $default";
-				}
-
-				$syntax = "`$name` $type$size $unsigned $not_null $auto $default $comment";
-				$syntax = trim( preg_replace( '/ {2,}/', ' ', $syntax ) );
-				$sql   .= "  $syntax,\n";
+			// TODO: use the standard converter for the DEFAULT
+			if ( is_null( $default ) ) {
+				// No default
+			} else if ( $default === CB2_CURRENT_TIMESTAMP || $default === CB2_NULL ) {
+				// Stated constants
+				$default = "DEFAULT $default";
+			} else if ( $type == CB2_BIT ) {
+				$default = 'DEFAULT ' . CB2_Database::int_to_bitstring( $default );
+			} else if ( is_string( $default ) ) {
+				$default = "DEFAULT '" . str_replace( "'", "\\\'", $default ) . "'";
+			} else {
+				$default = "DEFAULT $default";
 			}
 
-			if ( isset( $definition['primary key'] ) ) {
-				$sql .= "  PRIMARY KEY (";
-				foreach ( $definition['primary key'] as $column ) $sql .= "`$column`,";
-				$sql = substr( $sql, 0, -1 );
-				$sql .= "),\n";
-			}
+			$syntax = "`$name` $type$size $unsigned $not_null $auto $default $comment";
+			$syntax = trim( preg_replace( '/ {2,}/', ' ', $syntax ) );
+			$sql   .= "  $syntax,\n";
+		}
 
-			if ( isset( $definition['unique keys'] ) ) {
-				foreach ( $definition['unique keys'] as $name ) {
-					$sql .= "  UNIQUE KEY `uk_$i` (`$name`),\n";
-					$i++;
-				}
-			}
+		if ( isset( $definition['primary key'] ) ) {
+			$sql .= "  PRIMARY KEY (";
+			foreach ( $definition['primary key'] as $column ) $sql .= "`$column`,";
+			$sql = substr( $sql, 0, -1 );
+			$sql .= "),\n";
+		}
 
-			if ( isset( $definition['keys'] ) ) {
-				foreach ( $definition['keys'] as $name ) {
-					$sql .= "  KEY `idx_$i` (`$name`),\n";
-					$i++;
-				}
-			}
-
-			$sql = substr( $sql, 0, -2 ); // Trailing comma
-			$sql .= "\n);\n";
-
-			if ( isset( $definition['many to many'] ) ) {
-				foreach ( $definition['many to many'] as $m2m_table => $details ) {
-					$column_name   = $details[0];
-					$column        = $definition['columns'][$column_name];
-					$target_table  = "$wpdb->prefix$details[1]";
-					$target_column = $details[2];
-
-					$count         = count( $column );
-					$type          = $column[0];
-					$size          = ( $count > 1 && $column[1] ? "($column[1])" : '' );
-					$unsigned      = ( $count > 2 && $column[2] ? 'UNSIGNED' : '' );
-
-					$sql .= "# many-to-many directive $m2m_table:\n";
-					$sql .= "DROP TABLE IF EXISTS `$wpdb->prefix$m2m_table`;\n";
-					$sql .= "CREATE TABLE `$wpdb->prefix$m2m_table` (\n";
-					$sql .= "  `$column_name`   $type$size $unsigned NOT NULL,\n";
-					$sql .= "  `$target_column` $type$size $unsigned NOT NULL,\n";
-					$sql .= "  PRIMARY KEY( `$column_name`, `$target_column` )\n";
-					$sql .= ");\n";
-				}
+		if ( isset( $definition['unique keys'] ) ) {
+			foreach ( $definition['unique keys'] as $name ) {
+				$sql .= "  UNIQUE KEY `uk_$i` (`$name`),\n";
+				$i++;
 			}
 		}
 
-		$sql .= "\n";
-		return $sql;
+		if ( isset( $definition['keys'] ) ) {
+			foreach ( $definition['keys'] as $name ) {
+				$sql .= "  KEY `idx_$i` (`$name`),\n";
+				$i++;
+			}
+		}
+
+		$sql = substr( $sql, 0, -2 ); // Trailing comma
+		$sql .= "\n)";
+		array_push( $sqls, $sql );
+
+		if ( isset( $definition['many to many'] ) ) {
+			foreach ( $definition['many to many'] as $m2m_table => $details ) {
+				$column_name   = $details[0];
+				$column        = $definition['columns'][$column_name];
+				$target_table  = "$prefix$details[1]";
+				$target_column = $details[2];
+
+				$count         = count( $column );
+				$type          = $column[0];
+				$size          = ( $count > 1 && $column[1] ? "($column[1])" : '' );
+				$unsigned      = ( $count > 2 && $column[2] ? 'UNSIGNED' : '' );
+
+				array_push( $sqls, "# many-to-many directive $m2m_table" );
+				array_push( $sqls, "DROP TABLE IF EXISTS `$prefix$m2m_table`" );
+				$sql  = "CREATE TABLE `$prefix$m2m_table` (\n";
+				$sql .= "  `$column_name`   $type$size $unsigned NOT NULL,\n";
+				$sql .= "  `$target_column` $type$size $unsigned NOT NULL,\n";
+				$sql .= "  PRIMARY KEY( `$column_name`, `$target_column` )\n";
+				$sql .= ")";
+				array_push( $sqls, $sql );
+			}
+		}
+
+		return $sqls;
 	}
 
-	private static function database_table_constraints_SQL( $Class ) {
-		global $wpdb;
+	private static function database_table_constraints_SQL( $prefix, $definition ) {
 		static $i = 1;
+		static $j = 1;
 
-		$sql         = '';
-		$definitions = $Class::database_table_schemas( $wpdb->prefix );
-		foreach ( $definitions as $definition ) {
-			$table_name = $definition['name'];
-			$full_table = "$wpdb->prefix$table_name";
-			$sql .= "# Constraints for $table_name\n";
+		$sqls = array();
+		$table_name = $definition['name'];
+		$full_table = "$prefix$table_name";
+		array_push( $sqls, "# Constraints for $table_name" );
 
-			if ( isset( $definition['many to many'] ) ) {
-				foreach ( $definition['many to many'] as $m2m_table => $m2m_definition ) {
-					$full_m2m_table = "$wpdb->prefix$m2m_table";
-					$column_name    = $m2m_definition[0];
-					$column         = $definition['columns'][$column_name];
-					$target_table   = "$wpdb->prefix$m2m_definition[1]";
-					$target_column  = $m2m_definition[2];
+		if ( isset( $definition['many to many'] ) ) {
+			foreach ( $definition['many to many'] as $m2m_table => $m2m_definition ) {
+				$full_m2m_table = "$prefix$m2m_table";
+				$column_name    = $m2m_definition[0];
+				$column         = $definition['columns'][$column_name];
+				$target_table   = "$prefix$m2m_definition[1]";
+				$target_column  = $m2m_definition[2];
 
-					$fk_name_base = "fk_$full_m2m_table";
-					$sql .= "ALTER TABLE `$full_m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column_name`) REFERENCES `$full_table` (`$column_name`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
-					$i++;
-					$sql .= "ALTER TABLE `$full_m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$target_column`) REFERENCES `$target_table` (`$target_column`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
-					$i++;
+				$fk_name_base = "fk_$full_m2m_table";
+				array_push( $sqls, "ALTER TABLE `$full_m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column_name`) REFERENCES `$full_table` (`$column_name`) ON DELETE NO ACTION ON UPDATE NO ACTION" );
+				$i++;
+				array_push( $sqls, "ALTER TABLE `$full_m2m_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$target_column`) REFERENCES `$target_table` (`$target_column`) ON DELETE NO ACTION ON UPDATE NO ACTION" );
+				$i++;
 
-					// many-to-many can have triggers also
-					if ( isset( $m2m_definition['triggers'] ) && count( $m2m_definition['triggers'] )  ) {
-						$sql .= "DELIMITER ;;\n";
-						foreach ( $m2m_definition['triggers'] as $type => $triggers ) {
-							foreach ( $triggers as $body ) {
-								$body = str_replace( "@@TRIGGER_NAME@@", "'$m2m_table.tr_$i'", $body );
-								$body = str_replace( "@@TRIGGER_TYPE@@", "'$type'", $body );
+				// many-to-many can have triggers also
+				if ( isset( $m2m_definition['triggers'] ) && count( $m2m_definition['triggers'] )  ) {
+					array_push( $sqls, "DELIMITER ;;" );
+					foreach ( $m2m_definition['triggers'] as $type => $triggers ) {
+						foreach ( $triggers as $body ) {
+							$body = str_replace( "@@TRIGGER_NAME@@", "'$m2m_table.tr_$i'", $body );
+							$body = str_replace( "@@TRIGGER_TYPE@@", "'$type'", $body );
 
-								$sql .= "CREATE TRIGGER `tr_$i` $type ON `$full_m2m_table` FOR EACH ROW\n";
-								$sql .= "BEGIN\n$body\nEND;;\n";
-								$i++;
-							}
+							array_push( $sqls, "CREATE TRIGGER `tr_$i` $type ON `$full_m2m_table` FOR EACH ROW\nBEGIN\n$body\nEND;;\n" );
+							$i++;
 						}
-						$sql .= "DELIMITER ;\n";
 					}
+					array_push( $sqls, "DELIMITER ;" );
 				}
-			}
-
-			if ( isset( $definition['foreign keys'] ) ) {
-				foreach ( $definition['foreign keys'] as $column => $constraint ) {
-					$foreign_table  = "$wpdb->prefix$constraint[0]";
-					$foreign_column = $constraint[1];
-					$sql .= "ALTER TABLE `$full_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column`) REFERENCES `$foreign_table` (`$foreign_column`) ON DELETE NO ACTION ON UPDATE NO ACTION;\n";
-					$i++;
-				}
-			}
-
-			if ( isset( $definition['triggers'] ) && count( $definition['triggers'] ) ) {
-				$sql .= "DELIMITER ;;\n";
-				foreach ( $definition['triggers'] as $type => $triggers ) {
-					foreach ( $triggers as $trigger_body ) {
-						$trigger_body = str_replace( "@@TRIGGER_NAME@@", "'$table_name.tr_$i'", $trigger_body );
-						$trigger_body = str_replace( "@@TRIGGER_TYPE@@", "'$type'", $trigger_body );
-
-						$trigger_body = self::check_fuction_bodies( "$table_name::trigger", $trigger_body );
-
-						$sql .= "CREATE TRIGGER `tr_$i` $type ON `$full_table` FOR EACH ROW\n";
-						$sql .= "BEGIN\n$trigger_body\nEND;;\n";
-						$i++;
-					}
-				}
-				$sql .= "DELIMITER ;\n";
 			}
 		}
 
-		return $sql;
+		if ( isset( $definition['foreign keys'] ) ) {
+			foreach ( $definition['foreign keys'] as $column => $constraint ) {
+				$foreign_table  = "$prefix$constraint[0]";
+				$foreign_column = $constraint[1];
+				array_push( $sqls, "ALTER TABLE `$full_table` ADD CONSTRAINT `fk_$i` FOREIGN KEY (`$column`) REFERENCES `$foreign_table` (`$foreign_column`) ON DELETE NO ACTION ON UPDATE NO ACTION" );
+				$i++;
+			}
+		}
+
+		if ( isset( $definition['triggers'] ) && count( $definition['triggers'] ) ) {
+			array_push( $sqls, "DELIMITER ;;" );
+			foreach ( $definition['triggers'] as $type => $triggers ) {
+				foreach ( $triggers as $trigger_body ) {
+					$trigger_body = str_replace( "@@TRIGGER_NAME@@", "'$table_name.tr_$j'", $trigger_body );
+					$trigger_body = str_replace( "@@TRIGGER_TYPE@@", "'$type'", $trigger_body );
+
+					$trigger_body = self::check_fuction_bodies( "$table_name::trigger", $trigger_body );
+
+					array_push( $sqls, "CREATE TRIGGER `tr_$j` $type ON `$full_table` FOR EACH ROW\nBEGIN\n$trigger_body\nEND;;" );
+					$j++;
+				}
+			}
+			array_push( $sqls, "DELIMITER ;" );
+		}
+
+		return $sqls;
+	}
+
+	private static function database_views_SQL( $prefix, $name, $body ) {
+		$sqls = array();
+		$body = str_replace( "@@VIEW_NAME@@", "'$name'", $body );
+		self::check_fuction_bodies( "view::$name", $body );
+		array_push( $sqls, "DROP VIEW IF EXISTS `$prefix$name`" );
+		array_push( $sqls, "CREATE VIEW `$prefix$name` AS\n  $body" );
+
+		return $sqls;
+	}
+
+	private static function database_data_SQL( $prefix, $name, $data ) {
+		$sqls = array();
+		array_push( $sqls, "# Data for table $name" );
+		foreach ( $data as $row ) {
+			$sql = "INSERT INTO `$prefix$name` values(";
+			foreach ( $row as $value )
+				$sql .= "'$value',";
+			$sql  = substr( $sql, 0, -1 );
+			$sql .= ")";
+			array_push( $sqls, $sql );
+		}
+
+		return $sqls;
+  }
+
+  private static function uninstall_SQL( $prefix, $table ) {
+		// TODO: uninstall_SQL()
 	}
 
 	public static function check_fuction_bodies( $identifier, $body ) {
@@ -391,48 +429,6 @@ class CB2_Database {
 		$body = str_replace( 'wp_', $wpdb->prefix, $body );
 
 		return $body;
-	}
-
-	private static function database_views_SQL( $Class ) {
-		global $wpdb;
-
-		$sql = "# Views for $Class\n";
-		foreach ( $Class::database_views( $wpdb->prefix ) as $name => $body ) {
-			$body = str_replace( "@@VIEW_NAME@@", "'$name'", $body );
-
-			self::check_fuction_bodies( "$Class::view", $body );
-
-			$sql .= "DROP VIEW IF EXISTS `$wpdb->prefix$name`;\n";
-			$sql .= "CREATE VIEW `$wpdb->prefix$name` AS\n  $body;\n";
-		}
-		$sql .= "\n";
-
-		return $sql;
-	}
-
-	private static function database_data_SQL( $Class ) {
-		global $wpdb;
-
-		$table_name = $Class::database_table_name();
-
-		$sql = "# Data for $table_name\n";
-		foreach ( $Class::database_data() as $row ) {
-			$sql .= "INSERT INTO `$wpdb->prefix$table_name` values(";
-			foreach ( $row as $value )
-				$sql .= "'$value',";
-			$sql  = substr( $sql, 0, -1 );
-			$sql .= ");\n";
-		}
-		$sql .= "\n";
-
-		return $sql;
-  }
-
-  private static function uninstall_SQL( $Class ) {
-		global $wpdb;
-		// TODO: uninstall_SQL()
-		$table_name = $Class::database_table_name();
-		return "DROP TABLE `$wpdb->prefix$table_name`;";
 	}
 
 	// -------------------------------- Conversion Utilities

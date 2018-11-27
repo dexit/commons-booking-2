@@ -577,7 +577,7 @@ class CB2_Query {
 	}
 
 	static function array_has_associative( $array ) {
-		return array_keys($arr) !== range(0, count($arr) - 1);
+		return array_keys($array) !== range(0, count($array) - 1);
 	}
 
 	static function debug_print_backtrace( $message = NULL ) {

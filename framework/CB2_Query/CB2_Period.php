@@ -329,7 +329,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			$properties['datetime_part_period_start'],
 			$properties['datetime_part_period_end'],
 			$properties['datetime_from'],
-			$properties['datetime_to'],
+			( isset( $properties['datetime_to'] ) ? $properties['datetime_to'] : NULL ),
 			$properties['recurrence_type'],
 			$properties['recurrence_frequency'],
 			$properties['recurrence_sequence'],
