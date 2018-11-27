@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   CommonsBooking2
- * @author    Florian Egermann <florian@wielebenwir.de>
+ * @author    The CommonsBooking Team <florian@wielebenwir.de>
  * @copyright 2018 wielebenwir e.V.
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
@@ -10,13 +10,13 @@
  * Plugin URI:        @TODO
  * Description:       @TODO
  * Version:           2.0.0
- * Author:            Florian Egermann
+ * Author:            The CommonsBooking Team
  * Author URI:        http://commonsbooking.wielebenwir.de
  * Text Domain:       commons-booking
  * License:           GPL 2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Domain Path:       /languages
- * commons-booking: v2.0.5
+ * commons-booking:   v2.0.5
  */
 // If this file is called directly, abort.
 if ( !defined( 'WPINC' ) ) {
@@ -24,6 +24,7 @@ if ( !defined( 'WPINC' ) ) {
 }
 
 define( 'CB2_VERSION', '2.0.0' );
+define( 'CB2_DEV_BUILD', '181120' );
 define( 'CB2_TEXTDOMAIN', 'commons-booking-2' );
 define( 'CB2_NAME', 'CommonsBooking 2' );
 define( 'CB2_MENU_SLUG', 'cb2_menu');
@@ -35,12 +36,23 @@ define( 'CB2_PLUGIN_URI',  plugin_dir_url( __FILE__ ) );
 
 /* DB Tables @TODO – move to CB2_Database.php ? */
 define( 'CB2_AVAILABILITY_OPTIONS_TABLE', 'cb2_availability_options' );
+
 /* Load framework */
 require_once(CB2_PLUGIN_ROOT . 'framework/CB2_framework.php');
+
 /* Load public */
 require_once(CB2_PLUGIN_ROOT . 'public/CB2_Public.php');
+
+/* Plugin de/activation */
+require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_ActDeact.php');
+register_activation_hook(CB2_PLUGIN_ROOT . '/commons-booking.php', array( 'CB2_ActDeact', 'activate' ));
+register_deactivation_hook(CB2_PLUGIN_ROOT . '/commons-booking.php', array( 'CB2_ActDeact', 'deactivate' ));
+
+
+
 /* Load admin */
 require_once(CB2_PLUGIN_ROOT . 'admin/WP_admin_integration.php');
+
 
 if ( is_admin() ) {
 	if (
@@ -56,9 +68,9 @@ if ( is_admin() ) {
  *
  * @return void
  */
-function cb_load_plugin_textdomain()
+function cb2_load_plugin_textdomain()
 {
 	$locale = apply_filters('plugin_locale', get_locale(), CB2_TEXTDOMAIN);
 	load_textdomain(CB2_TEXTDOMAIN, trailingslashit(WP_PLUGIN_DIR) . CB2_TEXTDOMAIN . '/languages/' . CB2_TEXTDOMAIN . '-' . $locale . '.mo');
 }
-add_action('plugins_loaded', 'cb_load_plugin_textdomain', 1);
+add_action('plugins_loaded', 'cb2_load_plugin_textdomain', 1);

@@ -17,37 +17,17 @@ class CB2_Extras_Admin {
 	 * Initialize the snippet
 	 */
 	function initialize() {
-		/*
-		 * Debug mode
-		 */
-		$debug = new WPBP_Debug( 'WPBP' );
-		$debug->log( __( 'Plugin Loaded', CB2_TEXTDOMAIN ) );
 
 		$this->check_wp_environment(); // check plugin environment and notify the user if things are not properly defined.
-
-		$cron = new CB2_Cron();
-
-		$args = array(
-			'recurrence' => 'hourly',
-			'schedule' => 'schedule',
-			'name' => 'extend_timeframes',
-			'cb' => $cron->extend_timeframes(),
-			'plugin_root_file' => 'commons-booking.php'
-		);
-
-		$cronplus = new CronPlus( $args );
-		$cronplus->schedule_event();
 
 		if ( WP_DEBUG ) { // add a build version entry in the top menu
 			add_action('admin_bar_menu', array ( $this, 'show_build_info'), 100);
 		}
 
-		$plugin = Commons_Booking::get_instance();
-		$this->cpts = $plugin->get_cpts();
 		// Activity Dashboard widget for your cpts
-		add_filter( 'dashboard_recent_posts_query_args', array( $this, 'cpt_activity_dashboard_support' ), 10, 1 );
+		// add_filter( 'dashboard_recent_posts_query_args', array( $this, 'cpt_activity_dashboard_support' ), 10, 1 );
 		// Add bubble notification for cpt pending
-		add_action( 'admin_menu', array( $this, 'pending_cpt_bubble' ), 999 );
+		// add_action( 'admin_menu', array( $this, 'pending_cpt_bubble' ), 999 );
 
 	}
 		/**
@@ -222,4 +202,4 @@ class CB2_Extras_Admin {
 	}
 $cb_extras_admin = new CB2_Extras_Admin();
 $cb_extras_admin->initialize();
-do_action( 'commons_booking_cb_extras_admin_instance', $cb_extras_admin );
+do_action( 'cb2_extras_admin_instance', $cb_extras_admin );

@@ -475,13 +475,12 @@ function cb2_reflection() {
 	$disabled          = ( isset( $_GET['reset_data'] ) ? 'disabled="1"' : '' );
 	print( '<div class="cb2-actions">' );
 	print( '<a href="?page=cb2-reflection">show install schema</a>' );
-	print( ' | <a href="?page=cb2-reflection&section=install_SQL">dump install SQL</a>' );
 	$processing = 'var self = this;
 		setTimeout(function(){
 			self.setAttribute("value", "Processing...");
 			self.setAttribute("disabled", "1");
 		}, 0);';
-	if ( WP_DEBUG ) print( " | <form><div class='cb2-todo'>
+	if ( WP_DEBUG ) print( " | <form><div>
 			<input type='hidden' name='page' value='cb2-reflection'/>
 			<input type='hidden' name='section' value='reinstall'>
 			<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='re-install'/>
@@ -506,27 +505,14 @@ function cb2_reflection() {
 				break;
 			case 'reinstall':
 				if ( $_GET['password'] == 'fryace4' ) {
-					$sql = CB2_Database::install_SQL();
-					$con = mysqli_connect( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME );
-					if ( mysqli_connect_errno() )
-						print( "Failed to connect to MySQL: " . mysqli_connect_error() );
-					else {
-						if ( mysqli_multi_query( $con, $sql ) )
-							print( 'Finished.' );
-						else
-							print( 'Failed.' );
-					}
-					mysqli_close( $con );
+					CB2_Database::uninstall();
+					CB2_Database::install();
+					print( '<div>Finished.</div>' );
 				} else throw new Exception( 'Invalid password' );
-				break;
-			case 'install_SQL':
-				print( '<pre>' );
-				print( htmlentities( CB2_Database::install_SQL() ) );
-				print( '</pre>' );
 				break;
 		}
 	} else {
-		$install_array = CB2_Database::install_array();
+		$schema_array = CB2_Database::schema_array();
 
 		// ---------------------------------------------------- Database reflection
 		$exsiting_tables   = $exsiting_tables = $wpdb->get_col( 'SHOW TABLES;' );
@@ -563,7 +549,7 @@ function cb2_reflection() {
 		print( "<div class='$class'>row count: $row_count</div>" );
 
 		// ---------------------------------------------------- CB2
-		foreach ( $install_array as $Class => $object_types ) {
+		foreach ( $schema_array as $Class => $object_types ) {
 			$post_type         = ( property_exists( $Class, 'static_post_type' ) ? $Class::$static_post_type : '' );
 			$table_definitions = ( isset( $object_types['table'] ) ? $object_types['table'] : NULL );
 			$views             = ( isset( $object_types['views'] ) ? $object_types['views'] : NULL );

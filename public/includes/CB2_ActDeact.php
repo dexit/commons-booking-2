@@ -1,6 +1,6 @@
 <?php
 /**
- * Commons_Booking
+ * Hooks for activation/deactivation, installer, upgrade.
  *
  * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
@@ -20,10 +20,11 @@ class CB2_ActDeact {
 	function __construct() {
 		// Activate plugin when new blog is added
 		add_action( 'wpmu_new_blog', array( $this, 'activate_new_site' ) );
-
-		register_activation_hook( CB2_TEXTDOMAIN . '/' . CB2_TEXTDOMAIN . '.php', array( __CLASS__, 'activate' ) );
-		register_deactivation_hook( CB2_TEXTDOMAIN . '/' . CB2_TEXTDOMAIN . '.php', array( __CLASS__, 'deactivate' ) );
+		// Display an admin message
+		add_action( 'admin_notices', array( $this, 'admin_message'));
+		// Check for updates
 		add_action( 'admin_init', array( $this, 'upgrade_procedure' ) );
+
 	}
 
 	/**
@@ -31,7 +32,7 @@ class CB2_ActDeact {
 	 *
 	 * @param integer $blog_id ID of the new blog.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -48,11 +49,12 @@ class CB2_ActDeact {
 	 *
 	 * @param boolean $network_wide True if active in a multiste, false if classic site.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
 	public static function activate( $network_wide ) {
+
 		if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 			if ( $network_wide ) {
 				// Get all blog ids
@@ -75,7 +77,7 @@ class CB2_ActDeact {
 	 *                              WPMU is disabled or plugin is
 	 *                              deactivated on an individual blog.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -97,26 +99,35 @@ class CB2_ActDeact {
 	/**
 	 * Fired for each blog when the plugin is activated.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.0
+	 * @uses	CB2_Database
 	 *
 	 * @return void
 	 */
-	private static function single_activate() {
+	public static function single_activate() {
 		// Requirements Detection System - read the doc/example in the library file
-		new Plugin_Requirements( CB2_NAME, CB2_TEXTDOMAIN, array(
-			'WP' => new WordPress_Requirement( '4.6.0' )
-				) );
+		// new Plugin_Requirements( CB_NAME, CB_TEXTDOMAIN, array(
+		// 	'WP' => new WordPress_Requirement( '4.6.0' )
+		// 		) );
 		// @TODO: Define activation functionality here
+
+		/* install db tables via CB2_DB */
+		$sql = CB2_Database::install_SQL();
+
+		// set admin message
+		set_transient('CB2_message_ActDeact', $sql, 0);
+
 		// add_role( 'advanced', __( 'Advanced' ) ); //Add a custom roles
 		self::add_capabilities();
 		self::upgrade_procedure();
 		// Clear the permalinks
 		flush_rewrite_rules();
+
 	}
 	/**
 	 * Fired for each blog when the plugin is deactivated.
 	 *
-	 * @since 2.0.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -205,6 +216,26 @@ class CB2_ActDeact {
 			}
 		}
 	}
+  /**
+  * Display admin message
+  *
+  * @return void
+  */
+	public function admin_message( ) {
+    /* Check transient, if available display notice */
+    if (get_transient('CB2_message_ActDeact')) {
+			$return = get_transient('CB2_message_ActDeact');
+        ?>
+        <div class="updated notice is-dismissible">
+            <strong>CB2 activated</strong>. Install script says: <?php echo $return; ?>
+        </div>
+        <?php
+        /* Delete transient, only display this notice once. */
+        delete_transient('CB2_message_ActDeact');
+    }
+	}
 
 }
+
+
 new CB2_ActDeact();
