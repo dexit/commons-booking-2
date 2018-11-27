@@ -100,7 +100,7 @@ function cb2_admin_pages() {
 			'page_title'    => 'Bookings %(for)% %location_ID%',
 			'menu_title'    => 'Bookings',
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_id=2',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_view_future_bookings",
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`",
 			'count_class'   => 'ok',
 		),
 		'cb2-calendar' => array(
@@ -366,8 +366,7 @@ function cb2_admin_init_menus() {
 	global $wpdb;
 
 	$capability_default   = 'manage_options';
-	// $bookings_count       = $wpdb->get_var("select count(*) from {$wpdb->prefix}cb2_view_future_bookings");
-	$bookings_count       = 0; /* disabled because it threw error: cb2_view_future_bookings does not exist */
+	$bookings_count       = $wpdb->get_var("select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`");
 	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
 	add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_options_page', 'dashicons-video-alt' );
 
@@ -506,7 +505,9 @@ function cb2_reflection() {
 				break;
 			case 'reinstall':
 				if ( $_GET['password'] == 'fryace4' ) {
+					CB2_Database::uninstall();
 					CB2_Database::install();
+					print( '<div>Finished.</div>' );
 				} else throw new Exception( 'Invalid password' );
 				break;
 		}

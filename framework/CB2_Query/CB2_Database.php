@@ -107,39 +107,6 @@ class CB2_Database {
 
 		$install_SQLs = array_merge( $install_SQLs, self::get_install_SQL_header( $wpdb->prefix ) );
 
-		// ----------------------------------------------- DROPS
-		foreach ( $schema_array as $Class => $objects ) {
-				if ( isset( $objects['table'] ) ) {
-					foreach ( $objects['table'] as $table ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_constraint_drops_SQL( $wpdb->prefix, $table ) );
-					}
-				}
-		}
-
-		foreach ( $schema_array as $Class => $objects ) {
-				if ( isset( $objects['table'] ) ) {
-					foreach ( $objects['table'] as $table ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_table_drops_SQL( $wpdb->prefix, $table ) );
-					}
-				}
-		}
-
-		if ( $run ) {
-			foreach ( $install_SQLs as $sql ) {
-				$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
-				$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
-				if ( ! $is_comment && ! $is_delimiter ) {
-					try {
-						$wpdb->query( $sql );
-					}
-					catch ( Exception $ex ) {
-						// Nevermind
-					}
-				}
-			}
-		}
-
-		// ----------------------------------------------- CREATES
 		foreach ( $schema_array as $Class => $objects ) {
 				if ( isset( $objects['table'] ) ) {
 					foreach ( $objects['table'] as $table ) {
@@ -406,8 +373,43 @@ class CB2_Database {
 		return $sqls;
   }
 
-  private static function uninstall_SQL( $prefix, $table ) {
-		// TODO: uninstall_SQL()
+  static function uninstall( $run = TRUE ) {
+		global $wpdb;
+		$install_SQLs  = array();
+		$schema_array = self::schema_array();
+
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['table'] ) ) {
+					foreach ( $objects['table'] as $table ) {
+							$install_SQLs = array_merge( $install_SQLs, self::database_constraint_drops_SQL( $wpdb->prefix, $table ) );
+					}
+				}
+		}
+
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['table'] ) ) {
+					foreach ( $objects['table'] as $table ) {
+							$install_SQLs = array_merge( $install_SQLs, self::database_table_drops_SQL( $wpdb->prefix, $table ) );
+					}
+				}
+		}
+
+		if ( $run ) {
+			foreach ( $install_SQLs as $sql ) {
+				$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
+				$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
+				if ( ! $is_comment && ! $is_delimiter ) {
+					try {
+						$wpdb->query( $sql );
+					}
+					catch ( Exception $ex ) {
+						// Nevermind
+					}
+				}
+			}
+		}
+
+		return $install_SQLs;
 	}
 
 	public static function check_fuction_bodies( $identifier, $body ) {
