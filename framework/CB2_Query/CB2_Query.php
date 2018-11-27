@@ -13,7 +13,7 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && TRUE );
+define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
 
 // Native posts
 define( 'CB2_ID_SHARING',    TRUE );
@@ -67,18 +67,23 @@ class CB2_Query {
 			throw new Exception( "[$post_type] not managed" );
 
 		// Redirect
-		$old_wpdb_posts = $wpdb->posts;
-		if ( $posts_table = CB2_Database::posts_table( $Class ) ) {
-			$wpdb->posts = "$wpdb->prefix$posts_table";
-			$redirected_post_request = TRUE;
-		} else {
+		if ( ! self::redirect_wpdb_for_post_type( $post_type ) ) {
+			// Posts was NOT redirected
+			// this could be because we are querying a normal WP post_type
+			//   location, item
+			// So we need to set the posts to its normal place
+			// TODO: multisite design and support with $wpdb->set_blog_id()
+			if ( is_multisite() )
+				throw new Exception( 'Multisite not supported. Please disable CommonsBooking plugin on Multisite installations.' );
+			// TODO: can we set posts in a more programatic way?
+			// What if other plugins are redirecting, like multisite does
 			$wpdb->posts = "{$wpdb->prefix}posts";
 		}
 		if ( CB2_DEBUG_SAVE && TRUE
 			&& ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE )
 			&& $wpdb->posts == "{$wpdb->prefix}posts"
 		) {
-			throw new Exception( "[$Class] get_post_with_type() using wp_posts table" );
+			throw new Exception( "[$Class] get_post_with_type() using [{$wpdb->posts}]" );
 		}
 
 		// TODO: get_post() will populate ALL fields from the post table: take advantage of this
@@ -97,10 +102,10 @@ class CB2_Query {
 			throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
 
 		// Reset and Annotate
-		// This will make a get_metadata_assign() call
 		$post->cb2_redirected_post_request = $redirected_post_request;
-		$wpdb->posts = $old_wpdb_posts;
-		$cb2_post    = self::ensure_correct_class( $post, $instance_container, TRUE ); // TRUE = prevent_auto_draft_publish_transition
+		self::unredirect_wpdb();
+		// This will make a get_metadata_assign() call
+		$cb2_post = self::ensure_correct_class( $post, $instance_container, TRUE ); // TRUE = prevent_auto_draft_publish_transition
 
 		return $cb2_post;
 	}

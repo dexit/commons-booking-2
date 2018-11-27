@@ -225,7 +225,7 @@ function cb2_pre_delete_post( $delete, $post, $force_delete ) {
 // ------------------------------------------------------------------------------------------
 // Update integration
 function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
-	global $auto_draft_publish_transition;
+	global $wpdb, $auto_draft_publish_transition;
 
 	$consider_empty_post = FALSE;
 	$post_id     = ( isset( $postarr['ID'] ) ? $postarr['ID'] : NULL );
@@ -248,7 +248,7 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 					// Prevent post.php wp_insert_post() from continuing
 					// with its update of wp_posts
 					if ( CB2_DEBUG_SAVE ) {
-						print( "<h1>CB2_DEBUG_SAVE:</h1><div>cb2_wp_insert_post_empty_content() preventing update to wp_posts and remaining save process</div>" );
+						print( "<h1>CB2_DEBUG_SAVE:</h1><div>cb2_wp_insert_post_empty_content() preventing update to {$wpdb->prefix}posts and remaining save process</div>" );
 						krumo($postarr);
 					}
 					$consider_empty_post = TRUE;
