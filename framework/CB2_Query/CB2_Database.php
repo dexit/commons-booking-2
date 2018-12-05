@@ -100,12 +100,42 @@ class CB2_Database {
 		return $sqls;
 	}
 
-	public static function install( $run = TRUE ) {
+	public static function get_reinstall_SQL_full( $character_set = FALSE ) {
+		// Useful for copy paste installations
+		// and for debug
 		global $wpdb;
+
+		$sqls = array();
+		$sqls = array_merge( $sqls, self::get_install_SQL_header( $wpdb->prefix, $character_set ) );
+		$sqls = array_merge( $sqls, self::get_uninstall_sqls() );
+		$sqls = array_merge( $sqls, self::get_install_sqls() );
+		$sqls = array_merge( $sqls, self::get_install_SQL_footer( $wpdb->prefix ) );
+
+		// DELIMITER ;; is rendered DELIMITER ;;;
+		// and so are the trigger END;; rendered END;;;
+		return implode( ";\n", $sqls );
+	}
+
+	public static function install() {
+		global $wpdb;
+
+		$install_SQLs = self::get_install_sqls();
+		foreach ( $install_SQLs as $sql ) {
+			// In this scenario we do not need DELIMITERs
+			// because the SQL statement is singular
+			$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
+			$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
+			if ( ! $is_comment && ! $is_delimiter ) {
+				$wpdb->query( $sql );
+			}
+		}
+	}
+
+	public static function get_install_sqls() {
+		global $wpdb;
+
 		$install_SQLs  = array();
 		$schema_array = self::schema_array();
-
-		$install_SQLs = array_merge( $install_SQLs, self::get_install_SQL_header( $wpdb->prefix ) );
 
 		foreach ( $schema_array as $Class => $objects ) {
 				if ( isset( $objects['table'] ) ) {
@@ -137,18 +167,6 @@ class CB2_Database {
 							$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body ) );
 					}
 				}
-		}
-
-		$install_SQLs = array_merge( $install_SQLs, self::get_install_SQL_footer( $wpdb->prefix ) );
-
-		if ( $run ) {
-			foreach ( $install_SQLs as $sql ) {
-				$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
-				$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
-				if ( ! $is_comment && ! $is_delimiter ) {
-					$wpdb->query( $sql );
-				}
-			}
 		}
 
 		return $install_SQLs;
@@ -373,8 +391,27 @@ class CB2_Database {
 		return $sqls;
   }
 
-  static function uninstall( $run = TRUE ) {
+  static function uninstall() {
 		global $wpdb;
+
+		$install_SQLs = self::get_uninstall_sqls();
+		foreach ( $install_SQLs as $sql ) {
+			$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
+			$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
+			if ( ! $is_comment && ! $is_delimiter ) {
+				try {
+					$wpdb->query( $sql );
+				}
+				catch ( Exception $ex ) {
+					// Nevermind
+				}
+			}
+		}
+  }
+
+  static function get_uninstall_sqls() {
+		global $wpdb;
+
 		$install_SQLs  = array();
 		$schema_array = self::schema_array();
 
@@ -392,21 +429,6 @@ class CB2_Database {
 							$install_SQLs = array_merge( $install_SQLs, self::database_table_drops_SQL( $wpdb->prefix, $table ) );
 					}
 				}
-		}
-
-		if ( $run ) {
-			foreach ( $install_SQLs as $sql ) {
-				$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
-				$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
-				if ( ! $is_comment && ! $is_delimiter ) {
-					try {
-						$wpdb->query( $sql );
-					}
-					catch ( Exception $ex ) {
-						// Nevermind
-					}
-				}
-			}
 		}
 
 		return $install_SQLs;

@@ -482,6 +482,19 @@ function cb2_reflection() {
 		}, 0);';
 	if ( WP_DEBUG ) print( " | <form><div>
 			<input type='hidden' name='page' value='cb2-reflection'/>
+			<input type='hidden' name='section' value='reinstall_sql'>
+			<input onclick='$processing' class='cb2-submit' type='submit' value='generate re-install SQL'/>
+			<select name='character_set'>
+				<option value=''>-- explicit collation --</option>
+				<option value='latin1_swedish_ci'>latin1_swedish_ci (MySQL default)</option>
+				<option value='utf8mb4_unicode_ci'>utf8mb4_unicode_ci (advised)</option>
+				<option>utf8mb4_general_ci</option>
+				<option>utf8_unicode_ci</option>
+				<option>utf8_general_ci</option>
+			</select>
+		</div></form>" );
+	if ( WP_DEBUG ) print( " | <form><div>
+			<input type='hidden' name='page' value='cb2-reflection'/>
 			<input type='hidden' name='section' value='reinstall'>
 			<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='re-install'/>
 			<input name='password' placeholder='password (fryace4)' value=''>
@@ -510,6 +523,12 @@ function cb2_reflection() {
 					print( '<div>Finished.</div>' );
 				} else throw new Exception( 'Invalid password' );
 				break;
+			case 'reinstall_sql':
+				// TODO: detect MySQL DB collation and wp-config.php collation
+				// and advise if there are issues
+				$full_sql = CB2_Database::get_reinstall_SQL_full( $_GET['character_set'] );
+				print( "<pre>$full_sql</pre>" );
+				break;
 		}
 	} else {
 		$schema_array = CB2_Database::schema_array();
@@ -536,6 +555,15 @@ function cb2_reflection() {
 			$definition->view_definition = str_replace(  'convert(',                   '', $definition->view_definition );
 			$definition->view_definition = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $definition->view_definition );
 		}
+
+		// ---------------------------------------------------- System setup
+		print( "<h2>WordPress and Database setup</h2>" );
+		$db_charset = $wpdb->get_var( "SELECT @@character_set_database" );
+		$db_collate = $wpdb->get_var( "SELECT @@collation_database;" );
+		print( '<div>WordPress wp-config.php DB_CHARSET: <b>' . ( DB_CHARSET ? DB_CHARSET : '(Blank)' ) . '</b></div>' );
+		print( '<div>WordPress wp-config.php DB_COLLATE: <b>' . ( DB_COLLATE ? DB_COLLATE : '(Blank)' ) . '</b></div>' );
+		print( '<div>Database [' . DB_NAME . "] DB_CHARSET: <b>$db_charset</b></div>" );
+		print( '<div>Database [' . DB_NAME . "] DB_COLLATE: <b>$db_collate</b></div>" );
 
 		// ---------------------------------------------------- WordPress
 		print( "<h2>WordPress ({$wpdb->prefix}postmeta)</h2>" );

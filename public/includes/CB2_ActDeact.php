@@ -111,8 +111,8 @@ class CB2_ActDeact {
 		// 		) );
 		// @TODO: Define activation functionality here
 
-		/* install db tables via CB2_DB */
-		$sql = CB2_Database::install_SQL();
+		/* install db tables via CB2_Database */
+		$sql = CB2_Database::install();
 
 		// set admin message
 		set_transient('CB2_message_ActDeact', $sql, 0);
