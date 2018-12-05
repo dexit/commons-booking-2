@@ -5,7 +5,7 @@ if ( WP_DEBUG ) include( 'krumo/class.krumo.php' );
 error_reporting( E_ALL );
 if ( ! function_exists( 'krumo' ) ) {
 	function krumo( ...$params ) {
-		if ( WP_DEBUG ) var_dump( $params );
+		if ( WP_DEBUG ) print( 'CB2_Query.php:8 (WP_DEBUG is TRUE) says install krumo for debug output here.' );
 	}
 }
 if ( ! function_exists( 'xdebug_print_function_stack' ) ) {

@@ -379,7 +379,7 @@ class CB2_PeriodStatusType_Available extends CB2_SystemPeriodStatusType {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
 			$ID   = CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );
-			$args = array( $ID );
+			$args = array( $ID, 'available' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
@@ -393,7 +393,7 @@ class CB2_PeriodStatusType_Booked    extends CB2_SystemPeriodStatusType {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
 			$ID   = CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );
-			$args = array( $ID );
+			$args = array( $ID, 'booked' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
@@ -407,7 +407,7 @@ class CB2_PeriodStatusType_Closed    extends CB2_SystemPeriodStatusType {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
 			$ID   = CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );
-			$args = array( $ID );
+			$args = array( $ID, 'closed' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
@@ -421,7 +421,7 @@ class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
 			$ID   = CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );
-			$args = array( $ID );
+			$args = array( $ID, 'open' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
@@ -435,7 +435,7 @@ class CB2_PeriodStatusType_Repair    extends CB2_SystemPeriodStatusType {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
 			$ID   = CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );
-			$args = array( $ID );
+			$args = array( $ID, 'repair' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
@@ -449,7 +449,7 @@ class CB2_PeriodStatusType_Holiday   extends CB2_SystemPeriodStatusType {
 		if ( ! count( $args ) ) {
 			// No ID sent through: created for save, without arguments
 			$ID   = CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );
-			$args = array( $ID );
+			$args = array( $ID, 'holiday' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}

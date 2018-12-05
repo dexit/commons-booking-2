@@ -281,6 +281,16 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->enabled            = $enabled;
   }
 
+  function save( $update = FALSE, $fire_wordpress_events = TRUE, $depth = 0 ) {
+		$post_type               = $this->post_type();
+		$period_status_type_name = $this->period_status_type->name;
+		$action                  = "save_post_{$post_type}_{$period_status_type_name}";
+		$ret = parent::save( $update, $fire_wordpress_events, $depth );
+		krumo( $this, $action );
+		do_action( $action, $this->ID, $this );
+		return $ret;
+  }
+
   static function do_action_generic( CB2_User $user, $args ) {
 		$do_action_2 = $args['do_action'];                // <Class>::<action>
 		$details     = explode( '::', $do_action_2 );
