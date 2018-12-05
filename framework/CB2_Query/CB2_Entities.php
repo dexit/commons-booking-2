@@ -229,28 +229,28 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		);
 	}
 
-	static function metaboxes() {
-		return array(
-			array(
-				'title'      => __( 'Icon', 'commons-booking-2' ),
-				'context'    => 'side',
-				'show_names' => FALSE,
-				'fields'     => array(
-					array(
-						'name' => __( 'Icon', 'commons-booking-2' ),
-						'id'   => 'location_icon',
-						'type' => 'icon',
-						'desc' => 'Used in Maps.',
-						'options' => array(
-							'paths' => array(
-								'http://www.flaticon.com/packs/holiday-travelling-3',
-							),
-						),
-					),
-				),
-			),
-		);
-	}
+	// static function metaboxes() {
+	// 	return array(
+	// 		array(
+	// 			'title'      => __( 'Icon', 'commons-booking-2' ),
+	// 			'context'    => 'side',
+	// 			'show_names' => FALSE,
+	// 			'fields'     => array(
+	// 				array(
+	// 					'name' => __( 'Icon', 'commons-booking-2' ),
+	// 					'id'   => 'location_icon',
+	// 					'type' => 'icon',
+	// 					'desc' => 'Used in Maps.',
+	// 					'options' => array(
+	// 						'paths' => array(
+	// 							'http://www.flaticon.com/packs/holiday-travelling-3',
+	// 						),
+	// 					),
+	// 				),
+	// 			),
+	// 		),
+	// 	);
+	// }
 
   function post_type() {return self::$static_post_type;}
 

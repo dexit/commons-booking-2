@@ -262,14 +262,14 @@ class CB2_Settings
             <?php
             $cmb_bookings = new_cmb2_box(
                 array(
-                'id' => CB2_TEXTDOMAIN . '_options-' . $slug,
-                'show_on' => array(
-                'key' => 'options-page',
-                'value' => array('commons-booking'),
-                                                ),
-                                                'show_names' => true,
-                                                'fields' => self::get_settings_group_fields($slug)
-                                                )
+									'id' => CB2_TEXTDOMAIN . '_options-' . $slug,
+									'show_on' => array(
+									'key' => 'options-page',
+									'value' => array('commons-booking'),
+								),
+								'show_names' => true,
+								'fields' => self::get_settings_group_fields($slug)
+								)
             );
 
             cmb2_metabox_form(CB2_TEXTDOMAIN . '_options-' . $slug, self::$settings_slug . $slug);
