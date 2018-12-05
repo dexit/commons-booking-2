@@ -33,7 +33,7 @@ class CB2_Query {
   public static $javascript_date_format = 'Y-m-d H:i:s';
   public static $date_format     = 'Y-m-d';
   public static $datetime_format = 'Y-m-d H:i:s';
-  // TODO: make configurable: follow wordpress setting for week start day
+  // TODO: make configurable: follow wordpress setting
 	public static $days            = array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
 
   // -------------------------------------------------------------------- WordPress integration
@@ -67,23 +67,18 @@ class CB2_Query {
 			throw new Exception( "[$post_type] not managed" );
 
 		// Redirect
-		if ( ! self::redirect_wpdb_for_post_type( $post_type ) ) {
-			// Posts was NOT redirected
-			// this could be because we are querying a normal WP post_type
-			//   location, item
-			// So we need to set the posts to its normal place
-			// TODO: multisite design and support with $wpdb->set_blog_id()
-			if ( is_multisite() )
-				throw new Exception( 'Multisite not supported. Please disable CommonsBooking plugin on Multisite installations.' );
-			// TODO: can we set posts in a more programatic way?
-			// What if other plugins are redirecting, like multisite does
+		$old_wpdb_posts = $wpdb->posts;
+		if ( $posts_table = CB2_Database::posts_table( $Class ) ) {
+			$wpdb->posts = "$wpdb->prefix$posts_table";
+			$redirected_post_request = TRUE;
+		} else {
 			$wpdb->posts = "{$wpdb->prefix}posts";
 		}
 		if ( CB2_DEBUG_SAVE && TRUE
 			&& ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE )
 			&& $wpdb->posts == "{$wpdb->prefix}posts"
 		) {
-			throw new Exception( "[$Class] get_post_with_type() using [{$wpdb->posts}]" );
+			throw new Exception( "[$Class] get_post_with_type() using wp_posts table" );
 		}
 
 		// TODO: get_post() will populate ALL fields from the post table: take advantage of this
@@ -102,10 +97,10 @@ class CB2_Query {
 			throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
 
 		// Reset and Annotate
-		$post->cb2_redirected_post_request = $redirected_post_request;
-		self::unredirect_wpdb();
 		// This will make a get_metadata_assign() call
-		$cb2_post = self::ensure_correct_class( $post, $instance_container, TRUE ); // TRUE = prevent_auto_draft_publish_transition
+		$post->cb2_redirected_post_request = $redirected_post_request;
+		$wpdb->posts = $old_wpdb_posts;
+		$cb2_post    = self::ensure_correct_class( $post, $instance_container, TRUE ); // TRUE = prevent_auto_draft_publish_transition
 
 		return $cb2_post;
 	}
@@ -536,7 +531,9 @@ class CB2_Query {
 		// convert *_ID(s) => objects using
 		//   get_or_create_new(ids)
 		//
-		// TODO: move all this in to the CB2_DatabaseTable_PostNavigator Class to use the database schema knowledge instead :)
+		// TODO: document the naming conventions of course
+		// TODO: move all this in to the CB2_DatabaseTable_PostNavigator Class
+		// to use the database schema knowledge instead :)
 		if ( ! is_null( $value ) ) {
 			if      ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
 			else if ( $name == 'date' )                      $value = self::ensure_datetime( $name, $value );
@@ -550,12 +547,9 @@ class CB2_Query {
 			else if ( substr( $name, -6 ) == '_index' )      $value = self::ensure_int(  $name, $value );
 			else if ( $name == 'ID' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
 			else if ( $name == 'id' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
-			else if ( in_array( $name, array(
-				'location_icon' ,
-			) ) ) $value = unserialize( $value );
 
 			if ( self::check_for_serialisation( $value ) )
-				throw new Exception( "[$name] = [$value] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
+				throw new Exception( "[$value] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
 		}
 
 		return $value;
