@@ -74,3 +74,22 @@ function cb2_load_plugin_textdomain()
 	load_textdomain(CB2_TEXTDOMAIN, trailingslashit(WP_PLUGIN_DIR) . CB2_TEXTDOMAIN . '/languages/' . CB2_TEXTDOMAIN . '-' . $locale . '.mo');
 }
 add_action('plugins_loaded', 'cb2_load_plugin_textdomain', 1);
+
+if ( WP_DEBUG ) {
+	function cb2_save_post_periodent_user_booked_example( $post_id, $post ) {
+		// post_status is always published here
+		krumo( 'cb2_save_post_periodent_user_booked_example', $post );
+	}
+	// Custom CB2 action save_post_{post_type}_{period_status}
+	add_action( 'save_post_periodent-user_booked', 'cb2_save_post_periodent_user_booked_example', 10, 2 );
+
+	function cb2_save_post_example( $post_id, $post ) {
+		// Any post_status including auto-draft
+		if ( property_exists( $post, 'post_status' ) && $post->post_status == 'publish' && $post->post_type == 'periodent-location' ) {
+			$cb2_post = CB2_Query::ensure_correct_class( $post );
+			krumo( 'cb2_save_post_periodent_location_debug', $cb2_post );
+		}
+	}
+	// WordPress action save_post
+	add_action( 'save_post', 'cb2_save_post_example', 1000, 2 );
+}

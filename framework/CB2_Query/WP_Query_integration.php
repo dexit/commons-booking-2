@@ -60,9 +60,11 @@ add_filter( 'query_vars',       'cb2_query_vars' );
 // CMB2 MetaBoxes DO NOT use meta-data!
 // instead, they hook in to the save_post and write the meta-data manually
 // so there will be no meta-data available at pre_post_update stage
-define( 'CB2_DS_PRIORITY',  100 );
-add_action( 'save_post', 'cb2_save_post_debug',                   CB2_DS_PRIORITY, 3 ); // Just print out debug info
-add_action( 'save_post', 'cb2_save_post_move_to_native',          110, 3 ); // Create $native_ID, and $ID
+// Create $native_ID, and $ID
+define( 'CB2_DS_PRIORITY',   1000000 );
+define( 'CB2_MTN_PRIORITY',  1100000 );
+add_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY, 3 );
+add_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY, 3 );
 
 // Prevent updates of wp_posts
 add_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 1, 2 );
@@ -349,6 +351,9 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				exit();
 			}
 		}
+
+		// Further requests can come from the native tables now
+		//$auto_draft_publish_transition = FALSE;
 	}
 
 	return $native_ID;
