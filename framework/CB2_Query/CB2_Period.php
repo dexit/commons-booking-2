@@ -318,7 +318,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		);
 	}
 
-	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+	static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		// This may not exist in post creation
 		// We do not create the CB2_PeriodGroup objects here
 		// because it could create a infinite circular creation
@@ -328,15 +328,15 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			$period_group_IDs = CB2_Query::ensure_ints( 'period_group_IDs', $properties['period_group_IDs'], TRUE );
 
 		$object = self::factory(
-			$properties['ID'],
-			$properties['post_title'],
+			( isset( $properties['period_ID'] )  ? $properties['period_ID']            : $properties['ID']   ),
+			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
 			$properties['datetime_part_period_start'],
 			$properties['datetime_part_period_end'],
 			$properties['datetime_from'],
 			( isset( $properties['datetime_to'] )          ? $properties['datetime_to']          : NULL ),
-			$properties['recurrence_type'],
+			( isset( $properties['recurrence_type'] )      ? $properties['recurrence_type']      : NULL ),
 			( isset( $properties['recurrence_frequency'] ) ? $properties['recurrence_frequency'] : NULL ),
-			$properties['recurrence_sequence'],
+			( isset( $properties['recurrence_sequence'] )  ? $properties['recurrence_sequence']  : NULL ),
 			$period_group_IDs
 		);
 
@@ -394,6 +394,8 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 				 );
 
     if ( $ID ) self::$all[$ID] = $this;
+
+    parent::__construct();
   }
 
   function not_used() {

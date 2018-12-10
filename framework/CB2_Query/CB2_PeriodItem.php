@@ -504,7 +504,7 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
     );
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			$properties['ID'],
 			NULL, // period_entity
@@ -585,11 +585,11 @@ class CB2_PeriodItem_Global extends CB2_PeriodItem {
     );
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Global' ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Global' ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
 			$properties['datetime_period_item_end'],
@@ -663,11 +663,11 @@ class CB2_PeriodItem_Location extends CB2_PeriodItem {
     array_push( $this->posts, $this->period_entity->location );
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Location' ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Location' ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
 			$properties['datetime_period_item_end'],
@@ -783,11 +783,11 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
     $this->period_entity->item->add_perioditem( $this );
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe' ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe' ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
 			$properties['datetime_period_item_end'],
@@ -902,11 +902,11 @@ class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
     $this->period_entity->user->add_perioditem( $this );
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			$properties['ID'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe_User' ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_ID',        $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe_User' ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_ID',        $instance_container ),
 			$properties['recurrence_index'],
 			$properties['datetime_period_item_start'],
 			$properties['datetime_period_item_end'],

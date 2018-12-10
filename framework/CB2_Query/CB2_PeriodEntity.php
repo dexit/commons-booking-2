@@ -117,20 +117,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $options;
 	}
 
-	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
-		$object = self::factory(
-			$properties['ID'],
-			$properties['post_title'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
-			$properties['enabled']
-		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
-
-		return $object;
-	}
-
   protected static function factory_from_perioditem(
 		CB2_PeriodItem $perioditem,
 		$new_periodentity_Class,
@@ -281,13 +267,20 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->enabled            = $enabled;
   }
 
-  function save( $update = FALSE, $fire_wordpress_events = TRUE, $depth = 0 ) {
-		$post_type               = $this->post_type();
-		$period_status_type_name = $this->period_status_type->name;
-		$action                  = "save_post_{$post_type}_{$period_status_type_name}";
-		$ret = parent::save( $update, $fire_wordpress_events, $depth );
-		krumo( $this, $action );
-		do_action( $action, $this->ID, $this );
+  function save( $update = FALSE, $fire_wordpress_events = TRUE, $depth = 0, $debug = NULL ) {
+		$ret = parent::save( $update, $fire_wordpress_events, $depth, $debug );
+
+		// Additional event
+		if ( $fire_wordpress_events ) {
+			$Class                   = get_class( $this );
+			$post_type               = $this->post_type();
+			$period_status_type_name = $this->period_status_type->name;
+			$action                  = "save_post_{$post_type}_{$period_status_type_name}";
+			if ( CB2_DEBUG_SAVE )
+				print( "<div class='cb2-WP_DEBUG-small'>{$Class}[$this->ID] fires event [$action]</div>" );
+			do_action( $action, $this->ID, $this );
+		}
+
 		return $ret;
   }
 
@@ -396,13 +389,13 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+	static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID'],
-			$properties['post_title'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
-			$properties['enabled']
+			( isset( $properties['global_period_group_ID'] ) ? $properties['global_period_group_ID'] : $properties['ID'] ),
+			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
+			( isset( $properties['enabled'] ) && $properties['enabled'] ) // Can come from a checkbox
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -486,15 +479,15 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+	static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID'],
-			$properties['post_title'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
-			$properties['enabled'],
+			( isset( $properties['location_period_group_ID'] ) ? $properties['location_period_group_ID'] : $properties['ID'] ),
+			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
+			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
 
-			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID',           $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -584,16 +577,16 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+	static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID'],
-			$properties['post_title'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
-			$properties['enabled'],
+			( isset( $properties['timeframe_period_group_ID'] ) ? $properties['timeframe_period_group_ID'] : $properties['ID'] ),
+			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
+			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
 
-			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID',           $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'item_ID',               $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -691,17 +684,17 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+	static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID'],
-			$properties['post_title'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_group_ID',       $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_status_type_ID', $instance_container ),
-			$properties['enabled'],
+			( isset( $properties['timeframe_user_period_group_ID'] ) ? $properties['timeframe_user_period_group_ID'] : $properties['ID'] ),
+			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
+			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
 
-			CB2_PostNavigator::get_or_create_new( $properties, 'location_ID',           $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'item_ID',               $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, 'user_ID',               $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID',           $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'item_ID',               $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'user_ID',               $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );

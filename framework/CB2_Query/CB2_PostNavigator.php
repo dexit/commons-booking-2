@@ -1,7 +1,8 @@
 <?php
-abstract class CB2_PostNavigator {
+abstract class CB2_PostNavigator extends stdClass {
   public static $database_table = 'cb2_post_types';
   public static $description    = 'CB2_MAX_DAYS is set to 10000 which is 10 years.';
+	private $saveable             = TRUE;
 
   static function database_table_name() { return self::$database_table; }
 
@@ -204,11 +205,19 @@ abstract class CB2_PostNavigator {
 		return $Class;
   }
 
-  protected static function get_or_create_new( &$properties, $ID_property_name, &$instance_container = NULL, $Class = FALSE ) {
+  protected static function get_or_create_new( &$properties, $force_properties, $ID_property_name, &$instance_container = NULL, $Class = FALSE ) {
 		// "get":    the database record(s) exist already and we have their ID
 		// "create": create a placeholder object that will be saved to the database later, ID = 0
 		// If $ID_property_name is plural, an array will be returned
 		$TargetClass = self::class_from_ID_property_name( $ID_property_name, $object_property_name, $plural, $Class );
+
+		if ( WP_DEBUG ) {
+			if ( ! $TargetClass )
+				throw new Exception( 'get_or_create_new() failed to ascertain TargetClass' );
+			$ReflectionClass = new ReflectionClass( $TargetClass );
+			if ( ! $ReflectionClass->isSubclassOf( 'CB2_PostNavigator' ) )
+				throw new Exception( "get_or_create_new($TargetClass) not derived from CB2_PostNavigator" );
+		}
 
 		if ( ! isset( $properties[ $ID_property_name ] ) ) {
 			krumo( $properties );
@@ -237,16 +246,18 @@ abstract class CB2_PostNavigator {
 				krumo( $property_ID_value );
 				throw new Exception( "$ID_property_name needs to be an array" );
 			}
-			foreach ( $property_ID_value as $ID_value) {
-				if ( ! is_numeric( $ID_value ) ) {
-					krumo( $ID_value );
+			foreach ( $property_ID_value as $array_ID_value ) {
+				if ( ! is_numeric( $array_ID_value ) ) {
+					krumo( $array_ID_value );
 					throw new Exception( "$ID_property_name must be numeric" );
 				}
-				$ID_value  = (int) $ID_value;
-
-				$subobject = ( $ID_value == CB2_CREATE_NEW
-					? $TargetClass::factory_from_properties( $properties, $instance_container )
-					: CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $ID_value, $instance_container )
+				$subobject = self::get_or_create_new_internal(
+					$ID_property_name,
+					(int) $array_ID_value,
+					$TargetClass,
+					$properties,
+					$force_properties,
+					$instance_container
 				);
 				array_push( $object, $subobject );
 			}
@@ -256,10 +267,13 @@ abstract class CB2_PostNavigator {
 				krumo( $property_ID_value );
 				throw new Exception( "$ID_property_name must be numeric" );
 			}
-			$property_ID_value = (int) $property_ID_value;
-			$object            = ( $property_ID_value == CB2_CREATE_NEW
-				? $TargetClass::factory_from_properties( $properties, $instance_container )
-				: CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container )
+			$object = self::get_or_create_new_internal(
+				$ID_property_name,
+				(int) $property_ID_value,
+				$TargetClass,
+				$properties,
+				$force_properties,
+				$instance_container
 			);
 		}
 
@@ -270,7 +284,43 @@ abstract class CB2_PostNavigator {
 		return $object;
 	}
 
-	static function copy_all_wp_post_properties( $properties, $object, $overwrite = TRUE ) {
+	private static function get_or_create_new_internal( String $ID_property_name, Int $property_ID_value, String $TargetClass, Array $properties, Bool $force_properties, Object $instance_container = NULL ) {
+		// ID is very generic in the case of multiple object properties
+		// also, the specific ID, e.g. period_id, is not available in this Array case
+		// let us use the value we have
+		$original_ID      = $properties['ID'];
+		$properties['ID'] = $property_ID_value;
+		$object            = ( $property_ID_value == CB2_CREATE_NEW || $force_properties
+			? $TargetClass::factory_from_properties( $properties, $instance_container, $force_properties )
+			: CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container )
+		);
+		$properties['ID'] = $original_ID;
+
+		// Is this object created with intention to save?
+		// this could also be ascertained by the object itself:
+		// if not all properties are sent through then reject saving
+		// but here we allow the interface to indicate its intentions instead
+		$save_indicator_name = "{$ID_property_name}_save";
+		if ( isset( $properties[$save_indicator_name] ) )
+			$object->set_saveable( (Bool) $properties[$save_indicator_name] );
+
+		return $object;
+	}
+
+	function set_saveable( Bool $saveable ) {
+		// If set to FALSE, the save() process will ignore this object
+		if ( CB2_DEBUG_SAVE ) {
+			$Class = get_class( $this );
+			if ( ! $saveable ) print( "<div class='cb2-WP_DEBUG-small'>{$Class}[$this->ID] set not saveable</div>" );
+		}
+		$this->saveable = $saveable;
+	}
+
+	function is_saveable() {
+		return $this->saveable;
+	}
+
+	static function copy_all_wp_post_properties( Array $properties, stdClass $object, Bool $overwrite = TRUE ) {
 		// Important to overwrite
 		// because these objects are CACHED
 		if ( is_null( $properties ) )    throw new Exception( 'copy_all_wp_post_properties( $properties null )' );

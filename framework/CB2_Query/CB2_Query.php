@@ -412,7 +412,10 @@ class CB2_Query {
 			}
 			else if ( is_numeric( $object ) ) $int = (int) $object;
 			else if ( is_string( $object ) && empty( $object ) ) $int = 0;
-			else throw new Exception( "[$name] is not numeric [$object]" );
+			else if ( is_array( $object ) )
+				throw new Exception( "[$name] is not numeric [Array(...)]" );
+			else
+				throw new Exception( "[$name] is not numeric [$object]" );
 		}
 		return $int;
 	}
@@ -627,6 +630,15 @@ class CB2_Query {
 				print( "<td><button style='$css_button' onclick='$expand'>+</button></td>" );
 				print( "<td><b>$function_name_full</b>( " );
 				$first_arg = TRUE;
+				$cutdir    = 'right';
+				$cutoff    = 40;
+
+				switch ( $function_name_full ) {
+					case 'require_once':
+						$cutoff = 80;
+						$cutdir = 'left';
+						break;
+				}
 
 				foreach ( $line['args'] as $arg ) {
 					if ( is_null( $arg ) )     $argstring = ( 'NULL' );
@@ -656,7 +668,7 @@ class CB2_Query {
 					else $argstring = ( $arg );
 
 					$argstring = htmlspecialchars( $argstring );
-					if ( strlen( $argstring ) > 30 ) $argstring = substr( $argstring, 0, 20 ) . '...';
+					if ( strlen( $argstring ) > $cutoff ) $argstring = ( $cutdir == 'right' ? substr( $argstring, 0, $cutoff ) . '...' :  '...' . substr( $argstring, -$cutoff) );
 					if ( ! $first_arg ) print( ', ' );
 					print( $argstring );
 					$first_arg = FALSE;
@@ -682,7 +694,6 @@ class CB2_Query {
 				$i++;
 			}
 			print( '</table>' );
-			exit();
 		}
 	}
 }
