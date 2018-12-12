@@ -31,7 +31,6 @@ require_once('CB2_Query/CB2_Database.php');
 require_once('CB2_Query/CB2_PostNavigator.php');
 require_once('CB2_Query/CB2_DatabaseTable_PostNavigator.php');
 require_once('CB2_Query/CB2_PeriodItem.php');
-require_once('CB2_Query/CB2_Entities.php');
 require_once('CB2_Query/CB2_PeriodEntity.php');
 require_once('CB2_Query/CB2_PeriodInteractionStrategies.php');
 require_once('CB2_Query/CB2_Time_Classes.php');
@@ -39,7 +38,16 @@ require_once('CB2_Query/WP_Query_integration.php');
 require_once('CB2_Query/CB2_Forms.php');
 
 /**
- * Includes - Classes
+ * Includes - CB2 Post Types
+ */
+require_once('CB2_Entities/CB2_Post.php');
+require_once('CB2_Entities/CB2_Item.php');
+require_once('CB2_Entities/CB2_Location.php');
+require_once('CB2_Entities/CB2_User.php');
+
+
+/**
+ * Includes - Classes @TODO: Clean up
  */
 require_once('includes/CB2_Strings.php');
 require_once('includes/CB2_Settings.php');
