@@ -22,7 +22,7 @@ define( 'CB2_MAX_CB2_POSTS', 10000 );
 
 define( 'CB2_CREATE_NEW',    -1 );
 define( 'CB2_UPDATE', TRUE );
-define( 'GET_METADATA_ASSIGN', '_get_metadata_assign' );
+define( 'CB2_GET_METADATA_ASSIGN', '_get_metadata_assign' );
 define( 'CB2_ALLOW_CREATE_NEW', TRUE ); // Allows CB2_CREATE_NEW to be passed as a numeric ID
 define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 
@@ -30,11 +30,9 @@ define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 class CB2_Query {
-  public static $javascript_date_format = 'Y-m-d H:i:s';
-  public static $date_format     = 'Y-m-d';
-  public static $datetime_format = 'Y-m-d H:i:s';
-  // TODO: make configurable: follow wordpress setting
-	public static $days            = array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
+  public static $json_date_format = 'Y-m-d H:i:s';
+  public static $date_format      = 'Y-m-d';
+  public static $datetime_format  = 'Y-m-d H:i:s';
 
   // -------------------------------------------------------------------- WordPress integration
   // Complementary to WordPress
@@ -287,7 +285,7 @@ class CB2_Query {
 		$ID              = $post->ID;
 		$post_type       = $post->post_type;
 
-		if ( ! property_exists( $post, GET_METADATA_ASSIGN ) || ! $post->{GET_METADATA_ASSIGN} ) {
+		if ( ! property_exists( $post, CB2_GET_METADATA_ASSIGN ) || ! $post->{CB2_GET_METADATA_ASSIGN} ) {
 			// get_metadata( $meta_type, ... )
 			//   meta.php has _get_meta_table( $meta_type );
 			//   $table_name = $meta_type . 'meta';
@@ -305,7 +303,7 @@ class CB2_Query {
 			}
 
 			// Register that all metadata is present
-			$post->{GET_METADATA_ASSIGN} = TRUE;
+			$post->{CB2_GET_METADATA_ASSIGN} = TRUE;
 
 			if ( WP_DEBUG ) {
 				// Check that some meta data is returned
@@ -412,7 +410,10 @@ class CB2_Query {
 			}
 			else if ( is_numeric( $object ) ) $int = (int) $object;
 			else if ( is_string( $object ) && empty( $object ) ) $int = 0;
-			else throw new Exception( "[$name] is not numeric [$object]" );
+			else if ( is_array( $object ) )
+				throw new Exception( "[$name] is not numeric [Array(...)]" );
+			else
+				throw new Exception( "[$name] is not numeric [$object]" );
 		}
 		return $int;
 	}
@@ -627,6 +628,15 @@ class CB2_Query {
 				print( "<td><button style='$css_button' onclick='$expand'>+</button></td>" );
 				print( "<td><b>$function_name_full</b>( " );
 				$first_arg = TRUE;
+				$cutdir    = 'right';
+				$cutoff    = 40;
+
+				switch ( $function_name_full ) {
+					case 'require_once':
+						$cutoff = 80;
+						$cutdir = 'left';
+						break;
+				}
 
 				foreach ( $line['args'] as $arg ) {
 					if ( is_null( $arg ) )     $argstring = ( 'NULL' );
@@ -656,7 +666,7 @@ class CB2_Query {
 					else $argstring = ( $arg );
 
 					$argstring = htmlspecialchars( $argstring );
-					if ( strlen( $argstring ) > 30 ) $argstring = substr( $argstring, 0, 20 ) . '...';
+					if ( strlen( $argstring ) > $cutoff ) $argstring = ( $cutdir == 'right' ? substr( $argstring, 0, $cutoff ) . '...' :  '...' . substr( $argstring, -$cutoff) );
 					if ( ! $first_arg ) print( ', ' );
 					print( $argstring );
 					$first_arg = FALSE;
@@ -682,7 +692,6 @@ class CB2_Query {
 				$i++;
 			}
 			print( '</table>' );
-			exit();
 		}
 	}
 }

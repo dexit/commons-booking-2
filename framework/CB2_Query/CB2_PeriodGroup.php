@@ -83,11 +83,11 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		return $metaboxes;
 	}
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID'],
-			$properties['post_title'],
-			CB2_PostNavigator::get_or_create_new( $properties, 'period_IDs', $instance_container )
+			( isset( $properties['period_group_ID'] ) ? $properties['period_group_ID'] : $properties['ID'] ),
+			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_IDs', $instance_container )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -119,6 +119,8 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 		parent::__construct( $this->periods );
 		if ( $ID ) self::$all[$ID] = $this;
+
+    parent::__construct();
   }
 
   function add_period( $period ) {

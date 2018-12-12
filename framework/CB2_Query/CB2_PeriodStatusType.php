@@ -34,6 +34,12 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 					'id' => 'exceptions',
 					'type' => 'title',
 				),
+				array(
+					'name'    => __( 'No Saves', 'commons-booking-2' ),
+					'id'      => 'period_status_type_ID_save',
+					'type'    => 'hidden',
+					'default' => FALSE,
+				),
 			),
 		);
 	}
@@ -168,17 +174,19 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 
     parent::__construct();
 		if ( $ID ) self::$all[$ID] = $this;
-  }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+		parent::__construct();
+	}
+
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID'],
-			$properties['post_title'],
-			$properties['colour'],
-			$properties['opacity'],
-			$properties['priority'],
-			$properties['flags'],
-			$properties['system']
+			( isset( $properties['period_status_type_ID'] ) ? $properties['period_status_type_ID'] : $properties['ID'] ),
+			( isset( $properties['post_title'] ) ? $properties['post_title'] : $properties['name'] ),
+			( isset( $properties['colour'] )     ? $properties['colour']   : NULL ),
+			( isset( $properties['opacity'] )    ? $properties['opacity']  : NULL ),
+			( isset( $properties['priority'] )   ? $properties['priority'] : NULL ),
+			( isset( $properties['flags'] )      ? $properties['flags']    : NULL ),
+			( isset( $properties['system'] )     ? $properties['system']   : NULL )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );

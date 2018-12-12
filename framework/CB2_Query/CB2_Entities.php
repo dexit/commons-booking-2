@@ -60,9 +60,9 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable {
     self::$all[$ID] = $this;
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID'],
+			( isset( $properties['user_ID'] ) ? $properties['user_ID'] : $properties['ID'] ),
 			$properties['user_login']
 		);
 
@@ -183,7 +183,7 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
     array_push( $this->perioditems, $perioditem );
   }
 
-  function get_field_this( $class = '', $date_format = 'H:i' ) {
+  function get_field_this( $class = '', $date_format = NULL ) {
 		$permalink = get_the_permalink( $this );
 		return "<a href='$permalink' class='$class' title='view $this->post_title'>$this->post_title</a>";
 	}
@@ -261,9 +261,9 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
     $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID']
+			( isset( $properties['location_ID'] ) ? $properties['location_ID'] : $properties['ID'] )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -456,9 +456,9 @@ class CB2_Item extends CB2_Post implements JsonSerializable {
     $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL ) {
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			$properties['ID']
+			( isset( $properties['item_ID'] ) ? $properties['item_ID'] : $properties['ID'] )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );

@@ -1,5 +1,31 @@
 <?php
 class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
+	protected function __construct( &$posts = NULL ) {
+		global $wpdb;
+
+		if ( WP_DEBUG ) {
+			$Class = get_class( $this );
+			$class_database_table = CB2_Database::database_table( $Class );
+			if ( $class_database_table ) {
+				$full_table = "$wpdb->prefix$class_database_table";
+				$id_field   = CB2_Database::id_field( $Class );
+
+				// If we are instantiating with an ID then it must exist already in the Database
+				if ( property_exists( $this, 'ID' ) && $this->ID && $this->ID != CB2_CREATE_NEW ) {
+					if ( ! is_numeric( $this->ID ) )
+						throw new Exception( "$Class has non-numeric ID [$this->ID]" );
+
+					$id    = $this->id();
+					$count = $wpdb->get_var( "select count(*) from $full_table where $id_field=$id" );
+					if ( ! $count )
+						throw new Exception( "$Class::__construct($id_field=[$id]) does not exist in DB!" );
+				}
+			}
+		}
+
+		parent::__construct( $posts );
+	}
+
 	// ------------------------------------------------------------------ Trashing
 	function untrash() {
 		// This sets enabled to FALSE
@@ -180,7 +206,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 	}
 
 	// ------------------------------------------------------------------ Saving
-  function save( $update = FALSE, $fire_wordpress_events = TRUE, $depth = 0 ) {
+  function save( $update = FALSE, $fire_wordpress_events = TRUE, $depth = 0, $debug = NULL ) {
 		// Save dependent leaf objects before saving this
 		// will also reset the metadata for $post, e.g.
 		//   $post->period_group_ID = CB2_CREATE_NEW => 800000034
@@ -205,7 +231,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			print( "<div class='cb2-WP_DEBUG$class'>" );
 			if ( $depth ) print( '<span>' . str_repeat( '&nbsp;', $depth * 5 ) . "</span>$depth ⟿&nbsp;" );
 			$update_string = ( $update ? 'UPDATE' : 'CREATE_ONLY' ) . ( $fire_wordpress_events ? ' with wordpress events' : '' );
-			print( "$Class::save($update_string)" );
+			print( "{$Class}[$this->ID]::save($update_string) $debug" );
 			print( "</div>" );
 		}
 
@@ -220,18 +246,22 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		foreach ( $this as $name => $value ) {
 			if ( is_array( $value ) ) {
 				$new_array = array();
-				foreach ( $value as $name2 => $value2 ) {
-					if ( $value2 instanceof CB2_DatabaseTable_PostNavigator ) {
-						$value2->save( $update, $fire_wordpress_events, $depth + 1 );
+				$i         = 1;
+				$count     = count( $value );
+				foreach ( $value as $name2 => $array_value ) {
+					if ( $array_value instanceof CB2_DatabaseTable_PostNavigator && $array_value->is_saveable() ) {
+						$array_value->save( $update, $fire_wordpress_events, $depth + 1, "$name => Array($count)[$i]" );
 					}
-					array_push( $new_array, $value2 );
+					array_push( $new_array, $array_value );
+					$i++;
 				}
 				$value = $new_array;
 			} else {
-				if ( $value instanceof CB2_DatabaseTable_PostNavigator )
+				if ( $value instanceof CB2_DatabaseTable_PostNavigator && $value->is_saveable() )
 					$value->save( $update, $fire_wordpress_events, $depth + 1 );
 			}
 
+			// Re-write the object live for outer saving
 			$this->$name = $value;
 		}
 
@@ -253,8 +283,6 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 				$field_data = CB2_Database::sanitize_data_for_table( $Class, $properties, $formats );
 				if ( CB2_DEBUG_SAVE ) krumo( $field_data, $formats );
 				$this->update_row( $field_data, $formats, $fire_wordpress_events );
-				if ( CB2_DEBUG_SAVE )
-					print( "<div class='cb2-WP_DEBUG-small'>updated $Class(ID $this->ID)</div>" );
 			} else {
 				if ( CB2_DEBUG_SAVE )
 					print( "<div class='cb2-WP_DEBUG-small'>no update mode for $Class(ID $this->ID)</div>" );
@@ -267,12 +295,13 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 	}
 
   protected function post_post_update() {
-		// Examine many-to-many knowledge
+		// TODO: Examine many-to-many knowledge
   }
 
 	protected function update_row( $update_data, $formats = NULL, $fire_wordpress_events = TRUE ) {
 		global $wpdb;
 
+		$Class       = get_class( $this );
 		$post_before = ( $fire_wordpress_events ? CB2_Query::get_post_with_type( $this->post_type, $this->ID ) : NULL );
 
 		$class_database_table = CB2_Database::database_table( get_class( $this ) );
@@ -283,7 +312,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		$id_field   = CB2_Database::id_field( get_class( $this ) );
 		$id         = $this->id();
 		$where      = array( $id_field => $id );
-		if ( CB2_DEBUG_SAVE ) print( '<div class="cb2-WP_DEBUG-small">' . get_class( $this ) . "::update($id_field=$id)</div>" );
+		if ( CB2_DEBUG_SAVE )
+			print( '<div class="cb2-WP_DEBUG-small">' . get_class( $this ) . "::update($id_field=$id)</div>" );
 		$result   = $wpdb->update(
 			$full_table,
 			$update_data,
@@ -292,11 +322,21 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		);
 
 		if ( $result === 0 ) {
-			krumo( $result, $full_table, $where );
-			throw new Exception( "Failed to Update $Class row" );
+			// Nothing to update
+			// krumo( $result, $full_table, $where );
+			// throw new Exception( "Failed to Update $Class row" );
+			if ( CB2_DEBUG_SAVE ) {
+				$count = $wpdb->get_var( "select count(*) from $full_table where $id_field=$id" );
+				if ( $count )
+					print( "<div class='cb2-WP_DEBUG-small'>$Class row not updated. Probably no changes.</div>" );
+				else
+					print( "<div class='cb2-WP_DEBUG-small' style='color:red;'>$Class row not updated. $id_field=[$id] does not exist!</div>" );
+			}
 		} else if ( is_wp_error( $result ) || $result === FALSE ) {
 			krumo( $result, $full_table, $where );
 			throw new Exception( "Update $Class Error: $wpdb->last_error" );
+		} else {
+			print( "<div class='cb2-WP_DEBUG-small' style='font-weight:bold;'>$Class updated. $id_field=[$id]</div>" );
 		}
 
 		if ( $fire_wordpress_events ) {
@@ -312,7 +352,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			do_action( "save_post_{$post->post_type}", $post_ID, $post, $update );
 			do_action( 'save_post', $post_ID, $post, $update );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
-			if ( CB2_DEBUG_SAVE ) print( '<div class="cb2-WP_DEBUG-small">' . get_class( $this ) . ' wordpress events fired</div>' );
+			if ( CB2_DEBUG_SAVE )
+				print( '<div class="cb2-WP_DEBUG-small">' . get_class( $this ) . ' wordpress events fired</div>' );
 		}
 
 		return $this->ID;

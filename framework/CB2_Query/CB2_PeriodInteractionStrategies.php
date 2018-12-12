@@ -65,6 +65,8 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 			'key'     => 'enabled',
 			'value'   => '1',
 		);
+		$filter = strtolower( get_class( $this ) ) . '_query';
+		$query  = apply_filters( $filter, $query );
 
 		// Retrieve all the posts immediately (like WP_Query)
 		$this->logs  = array();

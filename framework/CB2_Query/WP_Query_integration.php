@@ -61,14 +61,15 @@ add_filter( 'query_vars',       'cb2_query_vars' );
 // instead, they hook in to the save_post and write the meta-data manually
 // so there will be no meta-data available at pre_post_update stage
 // Create $native_ID, and $ID
-define( 'CB2_DS_PRIORITY',   1000000 );
-define( 'CB2_MTN_PRIORITY',  1100000 );
+define( 'CB2_DS_PRIORITY',   100 );
+define( 'CB2_MTN_PRIORITY',  110 );
 add_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY, 3 );
 add_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY, 3 );
 
 // Prevent updates of wp_posts
 add_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 1, 2 );
 //add_filter( 'edit_post', 'cb2_edit_post', 1, 2 );
+add_action( 'cmb2_save_post_fields',        'cb2_cmb2_save_post_fields_debug', 10, 4 );
 
 // Direct metadata updates
 // CMB2 MetaBoxes DO NOT use meta-data!
@@ -228,6 +229,7 @@ function cb2_pre_delete_post( $delete, $post, $force_delete ) {
 // Update integration
 function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 	global $wpdb, $auto_draft_publish_transition;
+	static $updated = array();
 
 	$consider_empty_post = FALSE;
 	$post_id     = ( isset( $postarr['ID'] ) ? $postarr['ID'] : NULL );
@@ -239,27 +241,54 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 		if ( ! $auto_draft_publish_transition ) {
 			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 				if ( $class_database_table = CB2_Database::database_table( $Class ) ) {
-					// Prevent Class::factory_from_properties()
-					//  get_metadata_assign() calling for the old meta-data
-					// BECAUSE this is not a wp_post
-					$post->{GET_METADATA_ASSIGN} = TRUE;
+					// wp_update_post() will return 0 because we return consider_empty_post = TRUE
+					// causing post.php:377 wp_update_post() to try an update again
+					$consider_empty_post = TRUE; // Do not continue the update procedure!
+					if ( isset( $updated[$post_id] ) ) {
+						if ( CB2_DEBUG_SAVE )
+							print( "<div class='cb2-WP_DEBUG-small'>re-attempt by post.php:388 to wp_update_post($post_id) rejected. Happens because we intercept, return 0 and it re-trys.</div>" );
+					} else {
+						$updated[$post_id] = TRUE;
 
-					$cb2_post = CB2_Query::ensure_correct_class( $post );
-					$cb2_post->save( TRUE, FALSE ); // TRUE = Update, FALSE = fire_wordpress_events
+						// CMB2 saves its fields on save_post hook normally to
+						//   wp_postmeta
+						// We are early intercepting and preventing
+						// which unfortunately means that we deny the rest of the valuable update procedure
+						// We cannot redirect to a view because we cannot write to the view
+						// We cannot manually save the meta-data in advance
+						// because, in this multiple-object update, we do not know which Class/table it needs to go to
+						// Instead, we need the data, and to pump in to
+						//   factory_from_properties() recursive
+						if ( CB2_DEBUG_SAVE ) krumo($_POST);
+						$properties = $_POST;
 
-					// Prevent post.php wp_insert_post() from continuing
-					// with its update of wp_posts
-					if ( CB2_DEBUG_SAVE ) {
-						print( "<h1>CB2_DEBUG_SAVE:</h1><div>cb2_wp_insert_post_empty_content() preventing update to {$wpdb->prefix}posts and remaining save process</div>" );
-						krumo($postarr);
+						// Prevent post.php wp_insert_post() from continuing
+						// with its update of wp_posts
+						if ( CB2_DEBUG_SAVE ) {
+							print( "<h1>CB2_DEBUG_SAVE:</h1><div>cb2_wp_insert_post_empty_content() preventing update to {$wpdb->prefix}posts and remaining save process</div>" );
+							krumo($postarr);
+						}
+
+						// ----------------------------------------------------- save()
+						// TODO: running $fire_wordpress_events will cause CMB2 to save its data also!
+						$update                = TRUE;
+						$container             = NULL; // Not used yet
+						$fire_wordpress_events = FALSE; //$consider_empty_post; // We are preventing normal update procedure events
+						$cb2_post              = $Class::factory_from_properties( $properties, $container, $update ); // Recursive
+						$cb2_post->save( $update, $fire_wordpress_events );
 					}
-					$consider_empty_post = TRUE;
 				}
 			}
 		}
 	}
 
 	return $consider_empty_post;
+}
+
+function cb2_cmb2_save_post_fields_debug( $object_id, $cmb_id, $updated, $cmb2 ) {
+	if ( CB2_DEBUG_SAVE ) {
+		print( "<div class='cb2-WP_DEBUG-small'>CMB2::save_post_fields($object_id)</div>" );
+	}
 }
 
 function cb2_save_post_debug( $post_id, $post, $update ) {
@@ -276,7 +305,7 @@ function cb2_save_post_debug( $post_id, $post, $update ) {
 
 			print( '<p>Debug info will be shown and redirect will be suppressed, but printed at the bottom</p>' );
 			print( '<div class="cb2-WP_DEBUG-small">auto_draft_publish_transition ' . ( $auto_draft_publish_transition ? '<b class="cb2-warning">TRUE</b>' : 'FALSE' ) . '</div>' );
-			// krumo( $_POST, $post );
+			krumo( $_POST );
 		}
 		// Bug https://core.trac.wordpress.org/ticket/9968
 		// will prevent the next action (cb2_save_post_move_to_native)
@@ -328,9 +357,11 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// Important: $post->ID is the ID from wp_posts
 				// 0 ID this causes save() => create()
 				// we do not want it to try and update() the wp_posts ID
-				$properties['ID'] = CB2_CREATE_NEW;
-				$cb2_post         = $Class::factory_from_properties( $properties ); // recursive create
-				$native_ID        = $cb2_post->save( FALSE, FALSE );                // FALSE = update, FALSE = fire_wordpress_events
+				$properties['ID']      = CB2_CREATE_NEW;
+				$update                = FALSE;
+				$fire_wordpress_events = FALSE; // This is a late firing save_post action, save_post_{post_type} has already fired
+				$cb2_post              = $Class::factory_from_properties( $properties ); // recursive create
+				$native_ID             = $cb2_post->save( $update, $fire_wordpress_events );
 				if ( ! $native_ID )
 					throw new Exception( 'native_ID blank during immediate redirection' );
 
@@ -347,13 +378,14 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				$action    = 'edit';
 				$URL       = admin_url( "admin.php?page=$page&post=$native_ID&post_type=$post_type&action=$action" );
 				// If CB2_DEBUG_SAVE the redirect will be printed, not acted
+				// TODO: this exit() will prevent other save_post actions firing on post create...
 				wp_redirect( $URL );
 				exit();
 			}
 		}
 
 		// Further requests can come from the native tables now
-		//$auto_draft_publish_transition = FALSE;
+		$auto_draft_publish_transition = FALSE;
 	}
 
 	return $native_ID;
@@ -402,9 +434,13 @@ function cb2_update_post_metadata( $allow, $object_id, $meta_key, $meta_value, $
 	// Return value:
 	//   TRUE = prevent update
 	//   NULL = allow update
-	if ( WP_DEBUG && $meta_key && $meta_key[0] != '_' && CB2_Query::wpdb_postmeta_is_redirected() )
-		throw new Exception( "Attempt to update non system meta [$meta_key] on [$object_id] with redirected wpdb" );
-	return ( CB2_Query::wpdb_postmeta_is_redirected() ? TRUE : NULL );
+	global $wpdb;
+
+	$is_system_meta = ( $meta_key && $meta_key[0] == '_' );
+	if ( WP_DEBUG && ! $is_system_meta && CB2_Query::wpdb_postmeta_is_redirected() )
+		throw new Exception( "Attempt to update non system meta [$meta_key] on post [$object_id] with redirected wpdb [$wpdb->postmeta]" );
+	$prevent_update = ( CB2_Query::wpdb_postmeta_is_redirected() ? TRUE : NULL );
+	return $prevent_update;
 }
 add_filter( 'update_post_metadata',  'cb2_update_post_metadata', 10, 5 );
 
