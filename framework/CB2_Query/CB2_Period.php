@@ -108,6 +108,13 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		$morning_format = CB2_Query::$date_format . ' 08:00:00';
 		$evening_format = CB2_Query::$date_format . ' 18:00:00';
 
+		$days_of_week  = array();
+		$start_of_week = get_option( 'start_of_week' );
+		for ( $i = 0; $i < count( CB2_Query::$days ); $i++ ) {
+			$days_of_week[pow(2, $i)] = __( CB2_Query::$days[( $i + $start_of_week ) % 7] );
+		}
+
+
 		return array(
 			array(
 				'title' => __( 'Period', 'commons-booking-2' ),
@@ -170,15 +177,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'sanitization_cb' => array( 'CB2_Period', 'recurrence_sequence_sanitization' ),
 						// TODO: does not work default recurrence_sequence
 						'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
-						'options' => array(
-							'1'  => __( 'Sunday', 'commons-booking-2' ),
-							'2'  => __( 'Monday', 'commons-booking-2' ),
-							'4'  => __( 'Tuesday', 'commons-booking-2' ),
-							'8'  => __( 'Wednesday', 'commons-booking-2' ),
-							'16' => __( 'Thursday', 'commons-booking-2' ),
-							'32' => __( 'Friday', 'commons-booking-2' ),
-							'64' => __( 'Saturday', 'commons-booking-2' ),
-						),
+						'options' => $days_of_week,
 					),
 					/*
 					TODO: Monthly Sequence
@@ -448,12 +447,15 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $summary;
   }
 
-  function summary_date( $date, $format_date = 'M-d', $format_time = 'H:m' ) {
-		$summary = '';
-		$now     = new DateTime();
-		if ( $now->format( 'Y' ) == $date->format( 'Y' ) ) $summary .= $date->format( $format_date );
-		else $summary .= $date->format( "Y-$format_date" );
-		return $summary;
+  function summary_date( $date, $format_date = NULL, $format_time = NULL ) {
+		if ( is_null( $format_date ) ) {
+			$now = new DateTime();
+			if ( $now->format( 'Y' ) == $date->format( 'Y' ) )
+				$format_date = CB2_Day::no_year_date_format();
+			else
+				$format_date = CB2_Day::with_year_date_format();
+		}
+		return $date->format( $format_date );
   }
 
   function summary_recurrence_type( ) {
@@ -467,17 +469,19 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $recurrence_string;
   }
 
-  function summary_date_period( $format_date = 'M-d', $format_time = 'H:m' ) {
+  function summary_date_period( $format_date = NULL, $format_time = NULL ) {
 		$summary = '';
 		$now     = new DateTime();
+		if ( is_null( $format_time ) ) $format_time = get_option( 'time_format' );
+
 		if ( $this->datetime_part_period_start->format( CB2_Query::$date_format ) == $this->datetime_part_period_end->format( CB2_Query::$date_format ) ) {
 			if ( $now->format( CB2_Query::$date_format ) == $this->datetime_part_period_start->format( CB2_Query::$date_format ) )
-				$summary .= 'Today';
+				$summary .= __( 'Today' );
 			else
 				$summary .= $this->summary_date( $this->datetime_part_period_start );
 
-			if      ( $this->fullday )     $summary .= ' full day';
-			else if ( $this->fullworkday ) $summary .= ' full working day';
+			if      ( $this->fullday )     $summary .= ' ' . __( 'full day' );
+			else if ( $this->fullworkday ) $summary .= ' ' . __( 'full working day' );
 			else {
 				$summary .= ' ';
 				$summary .= $this->datetime_part_period_start->format( $format_time );
@@ -485,7 +489,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 				$summary .= $this->datetime_part_period_end->format( $format_time );
 			}
 		} else {
-			$format   = "Y-$format_date $format_time";
+			$format   = CB2_Day::with_year_date_format( $format_time );
 			$summary .= $this->datetime_part_period_start->format( $format );
 			$summary .= ' - ';
 			$summary .= $this->datetime_part_period_end->format( $format );

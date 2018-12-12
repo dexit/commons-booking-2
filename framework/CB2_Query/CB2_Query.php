@@ -22,7 +22,7 @@ define( 'CB2_MAX_CB2_POSTS', 10000 );
 
 define( 'CB2_CREATE_NEW',    -1 );
 define( 'CB2_UPDATE', TRUE );
-define( 'GET_METADATA_ASSIGN', '_get_metadata_assign' );
+define( 'CB2_GET_METADATA_ASSIGN', '_get_metadata_assign' );
 define( 'CB2_ALLOW_CREATE_NEW', TRUE ); // Allows CB2_CREATE_NEW to be passed as a numeric ID
 define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 
@@ -33,8 +33,7 @@ class CB2_Query {
   public static $javascript_date_format = 'Y-m-d H:i:s';
   public static $date_format     = 'Y-m-d';
   public static $datetime_format = 'Y-m-d H:i:s';
-  // TODO: make configurable: follow wordpress setting
-	public static $days            = array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
+	public static $days            = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
 
   // -------------------------------------------------------------------- WordPress integration
   // Complementary to WordPress
@@ -287,7 +286,7 @@ class CB2_Query {
 		$ID              = $post->ID;
 		$post_type       = $post->post_type;
 
-		if ( ! property_exists( $post, GET_METADATA_ASSIGN ) || ! $post->{GET_METADATA_ASSIGN} ) {
+		if ( ! property_exists( $post, CB2_GET_METADATA_ASSIGN ) || ! $post->{CB2_GET_METADATA_ASSIGN} ) {
 			// get_metadata( $meta_type, ... )
 			//   meta.php has _get_meta_table( $meta_type );
 			//   $table_name = $meta_type . 'meta';
@@ -305,7 +304,7 @@ class CB2_Query {
 			}
 
 			// Register that all metadata is present
-			$post->{GET_METADATA_ASSIGN} = TRUE;
+			$post->{CB2_GET_METADATA_ASSIGN} = TRUE;
 
 			if ( WP_DEBUG ) {
 				// Check that some meta data is returned

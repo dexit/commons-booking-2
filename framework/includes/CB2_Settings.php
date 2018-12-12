@@ -740,7 +740,7 @@ class CB2_Settings
                         'name' => __('Opening time', 'commons-booking'),
                         'id' => 'location-open-mon-from',
                         'type' => 'text_time',
-                        'time_format' => 'H:i',
+                        'time_format' => 'H:i', // TODO: convert to get_option( 'time_format' )?
                         'classes' => 'mon-hidden'
         ),
         array(

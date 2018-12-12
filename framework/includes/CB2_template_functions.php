@@ -114,9 +114,11 @@ class CB2 {
 		switch ( $schema_type ) {
 			case CB2_Week::$static_post_type:
 				// TODO: use wordpress WeekStartsOn
-				$html .= ( $before );
-				foreach ( CB2_Query::$days as $dayname ) {
-					$html .= ( "<$type>$dayname</$type>" );
+				$html         .= ( $before );
+				$start_of_week = get_option( 'start_of_week' );
+				for ( $i = 0; $i < count( CB2_Query::$days ); $i++ ) {
+					$dayname = CB2_Query::$days[( $i + $start_of_week ) % 7];
+					$html   .= ( "<$type>$dayname</$type>" );
 				}
 				$html .= ( $after );
 				break;
@@ -154,11 +156,11 @@ class CB2 {
 		return ( is_object( $post ) && method_exists( $post, 'summary' ) ? $post->summary() : '' );
 	}
 
-	public static function the_time_period( $format = 'H:i' ) {
+	public static function the_time_period( $format = NULL ) {
 		echo self::get_the_time_period( $format );
 	}
 
-	public static function get_the_time_period( $format = 'H:i' ) {
+	public static function get_the_time_period( $format = NULL ) {
 		global $post;
 		return ( is_object( $post ) && method_exists( $post, 'get_the_time_period' ) ? $post->get_the_time_period( $format ) : '' );
 	}
@@ -188,81 +190,6 @@ class CB2 {
 	public static function can_select() {
 		global $post;
 		return $post && ! property_exists( $post, 'no_select' );
-	}
-
-	public static function get_field( $field_name, $class = '', $date_format = 'H:i' ) {
-		global $post;
-		$object  = $post;
-		$value   = NULL;
-		$missing = FALSE;
-
-		if ( is_object( $object ) ) {
-			// Syntax: object->object->field_name
-			if ( strstr( $field_name, '->' ) !== FALSE ) {
-				$object_hierarchy = explode( '->' , $field_name );
-				$field_name = array_pop( $object_hierarchy ); // Last is the fieldname
-				foreach ( $object_hierarchy as $object_name ) {
-					if ( property_exists( $object, $object_name ) && is_object( $object->$object_name ) )
-						$object = $object->$object_name;
-					else $missing = TRUE;
-				}
-			}
-
-			if ( ! $missing ) {
-				$custom_render_function_name = "field_value_string_$field_name";
-				if ( method_exists( $object, $custom_render_function_name ) ) {
-					$value = $object->{$custom_render_function_name}( $object, $class = '', $date_format );
-				}
-
-				else if ( property_exists( $object, $field_name ) ) {
-					$value = $object->$field_name;
-					if ( is_object( $value ) ) {
-						if ( method_exists( $value, 'get_field_this' ) ) {
-							$value = $value->get_field_this( $class, $date_format );
-						} else {
-							switch ( get_class( $value ) ) {
-								case 'DateTime':
-									$value = $value->format( $date_format );
-									break;
-								case 'WP_Post':
-									$permalink = get_the_permalink( $value, TRUE );
-									$value     = "<a href='$permalink' title='view $value'>$value</a>";
-									break;
-								case 'WP_User':
-									$value = $value->user_login;
-									break;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return $value;
-	}
-
-	public static function the_field( $field_name, $class = '', $date_format = 'H:i' ) {
-		echo self::get_field( $field_name, $class, $date_format );
-	}
-
-	public static function the_fields( $field_names, $before = '<td>', $after = '</td>', $class = '', $date_format = 'H:i' ) {
-		global $post;
-
-		if ( is_object( $post ) ) {
-			// TODO: remove the_fields() functionality
-			// allow better placement of class here
-			// that respects the possibility of complex tags being passed in
-			$before_open = ( substr( $before, -1 ) == '>' ? substr( $before, 0, -1 ) : $before );
-			foreach ( $field_names as $field_name ) {
-				$class = 'cb2-' . str_replace( '_', '-', str_replace( '->', '-', $field_name ) );
-				echo $before_open, ' class="', $class, '">';
-				echo "<span class='cb2-field-name'>$field_name";
-				echo '<span class="cb2-colon">:</span></span>';
-				echo '<span class="cb2-field-value">';
-				self::the_field( $field_name, $class, $date_format );
-				echo '</span>', $after;
-			}
-		}
 	}
 
 	public static function the_class_actions() {

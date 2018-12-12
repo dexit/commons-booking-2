@@ -342,24 +342,6 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
     return $classes;
   }
 
-  function field_value_string_name( $object, $class = '', $date_format = 'H:i' ) {
-		$name_value = NULL;
-		$name_field_names = 'name';
-		if ( method_exists( $this, 'name_field' ) ) $name_field_names = $this->name_field();
-
-		if ( is_array( $name_field_names ) ) {
-			$name_value = '';
-			foreach ( $name_field_names as $name_field_name ) {
-				if ( $name_value ) $name_value .= ' ';
-				$name_value .= CB2::get_field( $name_field_name, $class, $date_format );
-			}
-		} else if ( property_exists( $object, $name_field_names ) ) {
-			$name_value = $object->$name_field_names;
-		}
-
-		return $name_value;
-	}
-
 	function period_status_type() {
 		return $this->period_entity->period_status_type;
 	}
@@ -372,8 +354,11 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		return ( $this->period_status_type() ? $this->period_status_type()->name : NULL );
 	}
 
-	function get_the_time_period( $format = 'H:i' ) {
-		$time_period = $this->datetime_period_item_start->format( $format ) . ' - ' . $this->datetime_period_item_end->format( $format );
+	function get_the_time_period( $format = NULL ) {
+		if ( is_null( $format ) ) $format = get_option( 'time_format' );
+		$time_period = $this->datetime_period_item_start->format( $format )
+			. ' - '
+			. $this->datetime_period_item_end->format( $format );
 		if ( $this->period->fullday ) $time_period = 'all day';
 		return $time_period;
 	}
@@ -441,7 +426,7 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
 
 		return new WP_Post( (object) array(
 			'ID' => self::$fake_ID++,         // Complete fake ID
-			GET_METADATA_ASSIGN => TRUE,      // Prevent meta-data analysis ($postmeta_table = FALSE does this also)
+			CB2_GET_METADATA_ASSIGN => TRUE,      // Prevent meta-data analysis ($postmeta_table = FALSE does this also)
 			'post_status'    => 'auto-draft', // auto-draft to allow WP_Query selection
 			'post_type'      => self::$static_post_type, // Does not exist in database
 			'post_author'    => 1,

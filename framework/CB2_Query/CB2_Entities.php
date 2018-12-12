@@ -183,7 +183,7 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
     array_push( $this->perioditems, $perioditem );
   }
 
-  function get_field_this( $class = '', $date_format = 'H:i' ) {
+  function get_field_this( $class = '', $date_format = NULL ) {
 		$permalink = get_the_permalink( $this );
 		return "<a href='$permalink' class='$class' title='view $this->post_title'>$this->post_title</a>";
 	}

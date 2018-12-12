@@ -2,7 +2,7 @@
 	<?php
 		// Empty day cells before the startdate in the week starts
 		global $post;
-    for ($day = 1; $day < $post->pre_days(); $day++ ) {
+    for ($day = 0; $day < $post->pre_days(); $day++ ) {
       print( '<td class="cb2-empty-pre-cell">&nbsp;</td>' );
     }
   ?>
