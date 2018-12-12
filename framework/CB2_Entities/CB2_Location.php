@@ -47,20 +47,25 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
 		$metaboxes = array(
 			array(
-				'title'      => __( 'Icon', 'commons-booking-2' ),
-				'context'    => 'side',
-				'show_names' => FALSE,
+				'title'      => __( 'Geodata', 'commons-booking-2' ),
+				'context'    => 'normal',
+				'priority' 	 => 'high',
+				'show_names' => TRUE,
 				'fields'     => array(
 					array(
-						'name' => __( 'Icon', 'commons-booking-2' ),
-						'id'   => 'location_icon',
-						'type' => 'icon',
-						'desc' => 'Used in Maps.',
-						'options' => array(
-							'paths' => array(
-								'http://www.flaticon.com/packs/holiday-travelling-3',
-							),
-						),
+						'id' => 'geo_address',
+						'name' => __('Address', 'commons-booking-2'),
+						'type' => 'text',
+					),
+					array(
+						'id' => 'geo_latitude',
+						'name' => __('Latitude', 'commons-booking-2'),
+						'type' => 'text',
+					),
+					array(
+						'id' => 'geo_longitude',
+						'name' => __('Longitude', 'commons-booking-2'),
+						'type' => 'text',
 					),
 				),
 			),

@@ -44,6 +44,35 @@ class CB2_Admin {
 
 		/* @TODO: add all filters & functions from WP_Admin_Integration */
 
+    // function add_another_metabox($args)
+    // {
+    //     $args[] = array(
+    //             'title'      => __('Icon two', 'commons-booking-2'),
+    //             'context'    => 'side',
+    //             'show_names' => false,
+    //             'fields'     => array(
+    //                     array(
+    //                             'name' => __('Icon', 'commons-booking-2'),
+    //                             'id'   => 'location_icon',
+    //                             'type' => 'icon',
+    //                             'desc' => 'Used in Maps.',
+    //                             'options' => array(
+    //                                     'paths' => array(
+    //                                             'http://www.flaticon.com/packs/holiday-travelling-3',
+    //                                     ),
+    //                             ),
+    //                     ),
+    //                 ),
+    //     );
+
+    //     return $args;
+    // }
+
+    // add_filter('cb2_location_metaboxes', 'add_another_metabox');
+
+
+
+
 	}
 	/**
 	 * Return an instance of this class.
