@@ -592,6 +592,7 @@ function cb2_init_register_post_types() {
 			$supports = ( property_exists( $Class, 'supports' ) ? $Class::$supports : array(
 				'title',
 			) );
+			$rewrite = ( property_exists( $Class, 'rewrite' ) ? $Class::$rewrite : array ( 'slug' => $Class::$static_post_type));
 
 			$args = array(
 				'label'  => ucfirst($post_type) . 's',
@@ -606,6 +607,7 @@ function cb2_init_register_post_types() {
 				'has_archive'        => TRUE,
 				'show_in_rest'       => TRUE,
 				'supports'           => $supports,
+				'rewrite'						 => $rewrite,
 				// This is not advised in the WordPress codex
 				// TODO: change _edit_link redirect_post() in our post.php instead?
 				'_edit_link' => "admin.php?page=cb2-post-edit&post_type=$post_type&post=%d",

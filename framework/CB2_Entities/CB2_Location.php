@@ -1,6 +1,14 @@
 <?php
 /**
- * CB2 Location class
+ *
+ * CB2 Location Class
+ *
+ * Post type config
+ * Post type selection metabox
+ * Location edit metaboxes
+ * Content filters
+ * Actions related to the item (booking)
+ * Admin column setup
  *
  *
  *
@@ -13,10 +21,11 @@
 
 
 class CB2_Location extends CB2_Post implements JsonSerializable {
-  static $static_post_type  = 'location';
+	static $static_post_type  = 'location';
+	public static $rewrite   = array( 'slug' => 'location' );
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-tools',
-  );
+	);
 
 	static function selector_metabox() {
 		return array(
@@ -34,28 +43,30 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		);
 	}
 
-	// static function metaboxes() {
-	// 	return array(
-	// 		array(
-	// 			'title'      => __( 'Icon', 'commons-booking-2' ),
-	// 			'context'    => 'side',
-	// 			'show_names' => FALSE,
-	// 			'fields'     => array(
-	// 				array(
-	// 					'name' => __( 'Icon', 'commons-booking-2' ),
-	// 					'id'   => 'location_icon',
-	// 					'type' => 'icon',
-	// 					'desc' => 'Used in Maps.',
-	// 					'options' => array(
-	// 						'paths' => array(
-	// 							'http://www.flaticon.com/packs/holiday-travelling-3',
-	// 						),
-	// 					),
-	// 				),
-	// 			),
-	// 		),
-	// 	);
-	// }
+	static function metaboxes() {
+
+		$metaboxes = array(
+			array(
+				'title'      => __( 'Icon', 'commons-booking-2' ),
+				'context'    => 'side',
+				'show_names' => FALSE,
+				'fields'     => array(
+					array(
+						'name' => __( 'Icon', 'commons-booking-2' ),
+						'id'   => 'location_icon',
+						'type' => 'icon',
+						'desc' => 'Used in Maps.',
+						'options' => array(
+							'paths' => array(
+								'http://www.flaticon.com/packs/holiday-travelling-3',
+							),
+						),
+					),
+				),
+			),
+		);
+		return apply_filters('cb2_location_metaboxes', $metaboxes);
+	}
 
   function post_type() {return self::$static_post_type;}
 

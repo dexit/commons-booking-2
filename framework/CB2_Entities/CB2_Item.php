@@ -2,6 +2,12 @@
 /**
  * CB2 Item class
  *
+ * Post type config
+ * Post type selection metabox
+ * Editor metaboxes
+ * Content filters
+ * Actions related to the item (booking)
+ * Admin column setup
  *
  *
  * @package   CommonsBooking2
@@ -19,10 +25,11 @@ class CB2_Item extends CB2_Post implements JsonSerializable
     // For example: a separate plugin which creates a room post_type should be then bookable
     // by presenting a CB2 list of registered post_types and selecting which should be bookable
     // and eventually a CB2 UI allowing new ones with customizeable supports
-    public static $static_post_type   = 'item';
+		public static $static_post_type   = 'item';
+		public static $rewrite   = array( 'slug' => 'item' );
     public static $post_type_args = array(
         'menu_icon' => 'dashicons-video-alt',
-  );
+	);
     public static function selector_metabox()
     {
         return array(
@@ -38,7 +45,14 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 ),
             ),
         );
-    }
+		}
+
+	static function metaboxes() {
+
+		$metaboxes = array();
+
+		return apply_filters('cb2_item_metaboxes', $metaboxes);
+	}
 
     public function post_type()
     {
