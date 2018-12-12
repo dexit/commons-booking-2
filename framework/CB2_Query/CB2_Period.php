@@ -108,10 +108,10 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		$morning_format = CB2_Query::$date_format . ' 08:00:00';
 		$evening_format = CB2_Query::$date_format . ' 18:00:00';
 
-		$days_of_week  = array();
-		$start_of_week = get_option( 'start_of_week' );
-		for ( $i = 0; $i < count( CB2_Query::$days ); $i++ ) {
-			$days_of_week[pow(2, $i)] = __( CB2_Query::$days[( $i + $start_of_week ) % 7] );
+		$day_options  = array();
+		$days_of_week = CB2_Week::days_of_week();
+		for ( $i = 0; $i < count( $days_of_week ); $i++ ) {
+			$day_options[pow(2, $i)] = __( $days_of_week[$i] );
 		}
 
 
@@ -177,7 +177,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'sanitization_cb' => array( 'CB2_Period', 'recurrence_sequence_sanitization' ),
 						// TODO: does not work default recurrence_sequence
 						'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
-						'options' => $days_of_week,
+						'options' => $day_options,
 					),
 					/*
 					TODO: Monthly Sequence

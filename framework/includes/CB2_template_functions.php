@@ -115,10 +115,9 @@ class CB2 {
 			case CB2_Week::$static_post_type:
 				// TODO: use wordpress WeekStartsOn
 				$html         .= ( $before );
-				$start_of_week = get_option( 'start_of_week' );
-				for ( $i = 0; $i < count( CB2_Query::$days ); $i++ ) {
-					$dayname = CB2_Query::$days[( $i + $start_of_week ) % 7];
-					$html   .= ( "<$type>$dayname</$type>" );
+				$days_of_week  = CB2_Week::days_of_week();
+				for ( $i = 0; $i < count( $days_of_week ); $i++ ) {
+					$html   .= ( "<$type>$days_of_week[$i]</$type>" );
 				}
 				$html .= ( $after );
 				break;

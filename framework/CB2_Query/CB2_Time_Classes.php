@@ -158,6 +158,7 @@ class CB2_Week extends CB2_TimePostNavigator {
   static $all = array();
   static $static_post_type = 'week';
   public $is_current = FALSE;
+	private static $days_sunday_start = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
 
   function post_type() {return self::$static_post_type;}
   public function __toString() {return $this->post_title;}
@@ -177,6 +178,19 @@ class CB2_Week extends CB2_TimePostNavigator {
 
     parent::__construct( $this->days );
   }
+
+  public static function days_of_week() {
+		static $days = array();
+
+		if ( ! count( $days ) ) {
+			$start_of_week = get_option( 'start_of_week' );
+			for ( $i = 0; $i < count( self::$days_sunday_start ); $i++ ) {
+				array_push( $days, self::$days_sunday_start[( $i + $start_of_week ) % 7] );
+			}
+		}
+
+		return $days;
+	}
 
   private static function weekinyear( CB2_Day $day ) {
 		// How many start_of_week are there between inclusive 2 and $date?
@@ -315,7 +329,7 @@ class CB2_Day extends CB2_TimePostNavigator {
 
   function jsonSerialize() {
     return [
-      'date'        => $this->date->format( CB2_Query::$javascript_date_format ),
+      'date'        => $this->date->format( CB2_Query::$json_date_format ),
       //'year'        => $this->year->year,
       //'weekinyear'  => $this->week->weekinyear,
       //'monthinyear' => $this->month->monthinyear,

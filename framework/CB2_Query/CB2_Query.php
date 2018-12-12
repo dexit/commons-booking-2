@@ -30,10 +30,9 @@ define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 class CB2_Query {
-  public static $javascript_date_format = 'Y-m-d H:i:s';
-  public static $date_format     = 'Y-m-d';
-  public static $datetime_format = 'Y-m-d H:i:s';
-	public static $days            = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
+  public static $json_date_format = 'Y-m-d H:i:s';
+  public static $date_format      = 'Y-m-d';
+  public static $datetime_format  = 'Y-m-d H:i:s';
 
   // -------------------------------------------------------------------- WordPress integration
   // Complementary to WordPress
