@@ -326,6 +326,20 @@ class CB2 {
 		return $content;
 	}
 
+	public static function the_title( $title, $id ) {
+		global $post;
+		if ( $post ) {
+			$post_type = $post->post_type;
+			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+				$post_class = CB2_Query::ensure_correct_class( $post );
+				$post       = &$post_class;
+				if ( method_exists( $post, 'get_the_title' ) )
+					$title = $post->get_the_title( $title, $id );
+			}
+		}
+		return $title;
+	}
+
 	public static function template_path() {
 		return dirname( dirname( dirname( __FILE__ ) ) ) . '/templates';
 	}
@@ -333,3 +347,6 @@ class CB2 {
 
 // TODO: move the_content() filter to CB2_Templates utilities files
 add_filter( 'the_content', array( 'CB2', 'the_content' ), 1 );
+add_filter( 'the_title',   array( 'CB2', 'the_title' ),   10, 2 );
+
+

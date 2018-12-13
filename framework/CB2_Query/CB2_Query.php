@@ -327,12 +327,13 @@ class CB2_Query {
 
   // -------------------------------------------------------------------- Class, Function and parameter utilities
   // meta-data => objects
-  static function ensure_bitarray_integer( $name, $object ) {
-		$object = self::ensure_bitarray( $name, $object );
+  static function ensure_assoc_bitarray_integer( String $name, $object ) {
+		// Array(4,32,64) = 4 + 32 + 64 => 100
+		$object = self::ensure_bitarray( $name, $object, TRUE );
 		return CB2_Database::bitarray_to_int( $object );
   }
 
-  static function ensure_assoc_bitarray( $name, $object ) {
+  static function ensure_assoc_bitarray( String $name, $object ) {
 		$object = self::ensure_bitarray( $name, $object );
 		$assoc_array = array();
 		foreach ( $object as $loc => $on ) {
@@ -341,17 +342,12 @@ class CB2_Query {
 		return $assoc_array;
   }
 
-  static function ensure_bitarray( $name, $object ) {
-		// This can also be an associative array:
-		// Array(
-		//   (string) '0' => 4,
-		//   (string) '1' => 16
-		// ) => 20
-
+  static function ensure_bitarray( String $name, $object, $assoc = FALSE ) {
+		// 6 => array(0,1,1)
 		if ( is_null( $object ) ) {
 			$object = array();
 		} else if ( is_array( $object ) ) {
-			if ( self::array_has_associative( $object ) ) {
+			if ( self::array_has_associative( $object ) || $assoc ) {
 				$object = array_sum( $object );
 				$object = CB2_Database::int_to_bitarray( $object );
 			}
@@ -370,7 +366,7 @@ class CB2_Query {
 		return $object;
   }
 
-	static function ensure_datetime( $name, $object ) {
+	static function ensure_datetime( String $name, $object ) {
 		// Maintains NULLs
 		// empty = NULL
 		$datetime     = NULL;
@@ -396,12 +392,12 @@ class CB2_Query {
 		return $datetime;
 	}
 
-	static function ensure_time( $name, $object ) {
+	static function ensure_time( String $name, $object ) {
 		// TODO: ensure_time()
 		return $object;
 	}
 
-	static function ensure_int( $name, $object, $allow_create_new = FALSE ) {
+	static function ensure_int( String $name, $object, Bool $allow_create_new = FALSE ) {
 		$int = NULL;
 		if ( ! is_null( $object ) ) {
 			if      ( $allow_create_new && $object == CB2_CREATE_NEW ) {
@@ -410,15 +406,16 @@ class CB2_Query {
 			}
 			else if ( is_numeric( $object ) ) $int = (int) $object;
 			else if ( is_string( $object ) && empty( $object ) ) $int = 0;
-			else if ( is_array( $object ) )
-				throw new Exception( "[$name] is not numeric [Array(...)]" );
-			else
+			else if ( is_array( $object ) )   $int = array_sum( $object );
+			else {
+				krumo($object);
 				throw new Exception( "[$name] is not numeric [$object]" );
+			}
 		}
 		return $int;
 	}
 
-	static function ensure_boolean( $name, $object ) {
+	static function ensure_boolean( String $name, $object ) {
 		$boolean = FALSE;
 		if      ( is_null( $object ) )    $boolean = FALSE;
 		else if ( is_object( $object ) && method_exists( $object, '__Boolean' ) ) $boolean = $object->__Boolean();
@@ -428,7 +425,7 @@ class CB2_Query {
 		return $boolean;
 	}
 
-	static function ensure_ints( $name, $object, $allow_create_new = FALSE ) {
+	static function ensure_ints( String $name, $object, Bool $allow_create_new = FALSE ) {
 		$array = array();
 		if ( ! is_null( $object ) ) {
 			if ( is_array( $object ) ) {
@@ -463,7 +460,7 @@ class CB2_Query {
 		return $array;
 	}
 
-	static function assign_all_parameters( $object, $parameter_values, $class_name = NULL, $method = '__construct' ) {
+	static function assign_all_parameters( $object, Array $parameter_values, String $class_name = NULL, String $method = '__construct' ) {
 		// Take all function parameters
 		// And make them properties of the class
 		// Typical usage:
@@ -512,7 +509,7 @@ class CB2_Query {
 		}
 	}
 
-	static function to_object( $name, $value ) {
+	static function to_object( String $name, $value ) {
 		// Assigning attributes of PHP Objects
 		//   string => object
 		// based on the property name
@@ -557,7 +554,7 @@ class CB2_Query {
 	}
 
   // ---------------------------------------------- General utilities
-  static function has_own_method( $Class, $method ) {
+  static function has_own_method( String $Class, String $method ) {
 		$ReflectionClass = new ReflectionClass( $Class );
 		return ( $ReflectionClass->hasMethod( $method )
 			&& ( $method_object = $ReflectionClass->getMethod( $method ) )
@@ -565,23 +562,23 @@ class CB2_Query {
 		);
   }
 
-  static function substring_before( $string, $delimiter = '-' ) {
+  static function substring_before( String $string, String $delimiter = '-' ) {
 		return ( strpos( $string, $delimiter ) === FALSE ? $string : substr( $string, 0, strpos( $string, $delimiter ) ) );
 	}
 
-  static function substring_after( $string, $delimiter = '-' ) {
+  static function substring_after( String $string, String $delimiter = '-' ) {
 		return ( strrpos( $string, $delimiter ) === FALSE ? $string : substr( $string, strrpos( $string, $delimiter ) + 1 ) );
 	}
 
-	static function check_for_serialisation( $object, $type = 'a-z' ) {
+	static function check_for_serialisation( $object, String $type = 'a-z' ) {
 		return ( is_string( $object ) && preg_match( "/^[$type]:[0-9]+:/", $object ) );
 	}
 
-	static function array_has_associative( $array ) {
+	static function array_has_associative( Array $array ) {
 		return array_keys($array) !== range(0, count($array) - 1);
 	}
 
-	static function debug_print_backtrace( $message = NULL ) {
+	static function debug_print_backtrace( String $message = NULL ) {
 		// This function is here because QueryMonitor traps all PHP errors
 		// and prevents a decent Stack Trace in xdebug
 		static $css_bubble   = "font-size:10px; display:inline-block; margin:1px 0 0 2px; padding:0 5px; min-width:7px; height:17px; border-radius:11px; color:#444; font-size:9px; line-height:17px; text-align:center; box-shadow:0px 0px 1px #aaa;background-color:#fff;";

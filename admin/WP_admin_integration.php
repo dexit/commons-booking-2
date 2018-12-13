@@ -493,7 +493,7 @@ function cb2_reflection() {
 				<option>utf8_general_ci</option>
 			</select>
 		</div></form>" );
-	if ( WP_DEBUG ) print( " | <form><div>
+	if ( WP_DEBUG ) print( "<br/><form><div>
 			<input type='hidden' name='page' value='cb2-reflection'/>
 			<input type='hidden' name='section' value='reinstall'>
 			<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='re-install'/>
@@ -507,7 +507,7 @@ function cb2_reflection() {
 			<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>Clear all <b>CB2</b> wp_post data</label>
 			<input id='testdata'  $testdata_checked  type='checkbox' name='testdata'/> <label for='testdata'><b>Overwrite</b> wp_posts with test data</label>
 		</div></form>" );
-	print( '</div>' );
+	print( '</div><hr/>' );
 
 	if ( isset( $_GET['section'] ) ) {
 		switch ( $_GET['section'] ) {

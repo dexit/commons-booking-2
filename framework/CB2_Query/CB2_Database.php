@@ -111,6 +111,8 @@ class CB2_Database {
 		$sqls = array_merge( $sqls, self::get_install_sqls() );
 		$sqls = array_merge( $sqls, self::get_install_SQL_footer( $wpdb->prefix ) );
 
+		$sqls = preg_replace( '/ using utf8mb4\)/i', " using $character_set)", $sqls );
+
 		// DELIMITER ;; is rendered DELIMITER ;;;
 		// and so are the trigger END;; rendered END;;;
 		return implode( ";\n", $sqls );
@@ -441,7 +443,7 @@ class CB2_Database {
 		// MySQL inserts CONVERT() statements for its local COLLATION
 		// this will FAIL for double embedded CONVERTs
 		// TODO: on the final system this should not be necessary
-		if ( preg_match( '/ utf8[A-Z0-9]+| latin1/i', $body ) )
+		if ( preg_match( '/ using [^uU]/', $body ) )
 			throw new Exception( "Function body [$identifier] has wrong collation string in it" );
 		// MySQL inserts fully qualified Database names
 		if ( preg_match( '/commonsbooking_2|wp47/', $body ) )
@@ -452,6 +454,8 @@ class CB2_Database {
 
 	// -------------------------------- Conversion Utilities
   static function bitarray_to_int( $bit_array ) {
+    // array(1,0,1)
+		// array(on,,on) = 2^0 + 2^2 => 1 + 4 = 5
     $int = NULL;
     if ( is_array( $bit_array ) ) {
       $int = 0;
@@ -460,21 +464,6 @@ class CB2_Database {
       }
     } else throw new Exception( 'bit_array is not an array' );
     return $int;
-  }
-
-  static function bitarray_to_bitstring( $bit_array, $offset = 1 ) {
-		// array(0,1,1) => b'011'
-    $str = NULL;
-    if ( is_array( $bit_array ) ) {
-      $str = '000000';
-      $strlen = strlen($str);
-      foreach ( $bit_array as $loc ) {
-        if ( $loc - $offset < $strlen )
-          $str[$loc - $offset] = '1';
-      }
-      $str = "b'$str'";
-    } else throw new Exception( 'bit_array is not an array' );
-    return $str;
   }
 
   static function int_to_bitstring( $int ) {
@@ -607,6 +596,7 @@ class CB2_Database {
 				// int works on input:
 				// 6 will successfully set bits 2 (2) and 3 (4)
 				// b'01010' bit syntax is tricky because WordPress does not provide a format for it
+				if ( CB2_DEBUG_SAVE ) krumo( $data_value_array );
 				if ( count( $data_value_array ) > 1 )
 					throw new Exception( "Multiple number array detected [$column_name]: bit arrays are set with a single unsigned" );
 				foreach ( $data_value_array as &$value ) {
@@ -619,6 +609,7 @@ class CB2_Database {
 				}
 				$data_value = CB2_Query::ensure_int( $column_name, $data_value_array[0] );
 				$format     = "%d";
+				if ( CB2_DEBUG_SAVE ) krumo( $data_value );
 				break;
 			case CB2_TINYINT:
 			case CB2_INT:

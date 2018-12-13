@@ -2,8 +2,9 @@
 require_once( 'CB2_PeriodStatusType.php' );
 require_once( 'CB2_PeriodGroup.php' );
 
-//add_filter( 'cmb2_override_recurrence_sequence_meta_value', array( 'CB2_Period', 'cmb2_override_recurrence_sequence_meta_value' ), 10, 4 );
-
+//------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------
 class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializable {
   public static $database_table = 'cb2_periods';
   public static $all = array();
@@ -98,8 +99,8 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 
   static function database_views( $prefix ) {
 		return array(
-			'cb2_view_period_posts' => "select (`p`.`period_id` + `pt_p`.`ID_base`) AS `ID`,1 AS `post_author`,`p`.`datetime_from` AS `post_date`,`p`.`datetime_from` AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`period_id` + `pt_p`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`p`.`datetime_to` AS `post_modified`,`p`.`datetime_to` AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,'period' AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_id` AS `period_id`,`p`.`datetime_part_period_start` AS `datetime_part_period_start`,`p`.`datetime_part_period_end` AS `datetime_part_period_end`,`p`.`datetime_from` AS `datetime_from`,`p`.`datetime_to` AS `datetime_to`,`p`.`recurrence_type` AS `recurrence_type`,`p`.`recurrence_sequence` AS `recurrence_sequence`,`p`.`recurrence_frequency` AS `recurrence_frequency`,(select group_concat((`pgp`.`period_group_id` + `pt`.`ID_base`) separator ',') from (`{$prefix}cb2_period_group_period` `pgp` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup'))) where (`pgp`.`period_id` = `p`.`period_id`)) AS `period_group_IDs` from ((`{$prefix}cb2_periods` `p` join `{$prefix}cb2_post_types` `pt_p` on((`pt_p`.`post_type` = 'period'))) join `{$prefix}cb2_post_types` `pt_pst` on((`pt_pst`.`post_type` = 'periodstatustype')))",
-			'cb2_view_periodmeta'   => "select ((`p`.`period_id` * 10) + `pt`.`ID_base`) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'period_id' AS `meta_key`,`p`.`period_id` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8)))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 1) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_part_period_start' AS `meta_key`,`p`.`datetime_part_period_start` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8)))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 2) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_part_period_end' AS `meta_key`,`p`.`datetime_part_period_end` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8)))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 3) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_from' AS `meta_key`,`p`.`datetime_from` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8)))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 4) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_to' AS `meta_key`,`p`.`datetime_to` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8)))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 5) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_type' AS `meta_key`,`p`.`recurrence_type` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8)))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 6) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_frequency' AS `meta_key`,`p`.`recurrence_frequency` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8)))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 7) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_sequence' AS `meta_key`,cast(`p`.`recurrence_sequence` as unsigned) AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8)))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 8) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'period_group_IDs' AS `meta_key`,`p`.`period_group_IDs` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = convert(`p`.`post_type` using utf8))))",
+			'cb2_view_period_posts' => "select (`p`.`period_id` + `pt_p`.`ID_base`) AS `ID`,1 AS `post_author`,`p`.`datetime_from` AS `post_date`,`p`.`datetime_from` AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`period_id` + `pt_p`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`p`.`datetime_to` AS `post_modified`,`p`.`datetime_to` AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,'period' AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_id` AS `period_id`,`p`.`datetime_part_period_start` AS `datetime_part_period_start`,`p`.`datetime_part_period_end` AS `datetime_part_period_end`,`p`.`datetime_from` AS `datetime_from`,`p`.`datetime_to` AS `datetime_to`,`p`.`recurrence_type` AS `recurrence_type`,`p`.`recurrence_sequence` AS `recurrence_sequence`,`p`.`recurrence_frequency` AS `recurrence_frequency`,(select group_concat((`pgp`.`period_group_id` + `pt`.`ID_base`) separator ',') from (`wp_cb2_period_group_period` `pgp` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type_id` = 2))) where (`pgp`.`period_id` = `p`.`period_id`)) AS `period_group_IDs` from ((`wp_cb2_periods` `p` join `{$prefix}cb2_post_types` `pt_p` on((`pt_p`.`post_type_id` = 1))) join `{$prefix}cb2_post_types` `pt_pst` on((`pt_pst`.`post_type_id` = 8)))",
+			'cb2_view_periodmeta'   => "select ((`p`.`period_id` * 10) + `pt`.`ID_base`) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'period_id' AS `meta_key`,`p`.`period_id` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 1) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_part_period_start' AS `meta_key`,`p`.`datetime_part_period_start` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 2) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_part_period_end' AS `meta_key`,`p`.`datetime_part_period_end` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 3) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_from' AS `meta_key`,`p`.`datetime_from` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 4) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'datetime_to' AS `meta_key`,`p`.`datetime_to` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 5) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_type' AS `meta_key`,`p`.`recurrence_type` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 6) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_frequency' AS `meta_key`,`p`.`recurrence_frequency` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 7) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'recurrence_sequence' AS `meta_key`,cast(`p`.`recurrence_sequence` as unsigned) AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`))) union all select (((`p`.`period_id` * 10) + `pt`.`ID_base`) + 8) AS `meta_id`,`p`.`ID` AS `post_id`,`p`.`ID` AS `period_id`,'period_group_IDs' AS `meta_key`,`p`.`period_group_IDs` AS `meta_value` from (`{$prefix}cb2_view_period_posts` `p` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = `p`.`post_type`)))",
 		);
 	}
 
@@ -263,27 +264,30 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return ( $post && $post->post_status == CB2_Post::$PUBLISH );
 	}
 
-	static function cmb2_override_recurrence_sequence_meta_value( $data, $object_id, $a, $field ) {
-		// TODO: this is a permanent fix because of a bug we think is in CMB2
-		// recurrence_sequence is a multi-value meta-data
-		// which should be serialised in the wp_postmeta
-		// however, it comes from wp_cb2_periods and is stored as a bit() field
-		// wp_cb2_view_periodmeta returns it as an int
-		// thus it does not set the checkboxes correctly
-		// Asking wp_cb2_view_periodmeta to return a serialised array representation of the bit field
-		// will also fail because CMB2 does not honour the array properly
-		$int = get_metadata( 'period', $object_id, 'recurrence_sequence', TRUE );
-		$int = CB2_Query::ensure_int( 'recurrence_sequence', $int );
-		return CB2_Query::ensure_assoc_bitarray( 'recurrence_sequence', $int );
-	}
-
 	static function recurrence_sequence_escape( $value, $field_args, $field ) {
+		// Input filter from database to CMB2
+		// $value is numeric
+		// b'1000010' == 66 in the database, right to left, 2 + 64
+		// which is the second day and the sixth day
+		// needs to be converted to an array, e.g. (
+		//   0 => 4,
+		//   1 => 32,
+		//   2 => 64,
+		// )
 		$value = CB2_Query::ensure_int( 'recurrence_sequence', $value );
 		return CB2_Query::ensure_assoc_bitarray( 'recurrence_sequence', $value );
 	}
 
 	static function recurrence_sequence_sanitization( $value, $field_args, $field ) {
-		return CB2_Query::ensure_bitarray_integer( 'recurrence_sequence', $value );
+		// Output filter for saving to database
+		// Array(4,32,64) = 4 + 32 + 64 => 100
+		$old = implode( ',', $value );
+		$new = CB2_Query::ensure_assoc_bitarray_integer( 'recurrence_sequence', $value );
+		if ( CB2_DEBUG_SAVE ) {
+			$field_name = $field->args['id'];
+			print( "<div class='cb2-WP_DEBUG-small'>CMB2 [$field_name] sanitization ($old =&gt; $new)</div>" );
+		}
+		return $new;
 	}
 
   static function selector_metabox( $multiple = FALSE, $context_normal = FALSE ) {

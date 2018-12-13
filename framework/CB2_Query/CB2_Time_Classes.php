@@ -299,7 +299,7 @@ class CB2_Day extends CB2_TimePostNavigator {
 		// e.g. if Tuesday is the WordPress start of the week, then Tuesday is 0, Monday is 6
     $dayofweek          = (int) $this->date->format( 'w' ); // 0-6 Sunday start day (see below)
     $start_of_week      = get_option( 'start_of_week', 0 ); // 0-6 Sunday == 0
-    return $dayofweek - $start_of_week + ( $dayofweek < $start_of_week ? 7 : 0 );
+    return ( $dayofweek - $start_of_week + 7 ) % 7;
   }
 
   function row_actions( &$actions, $post ) {

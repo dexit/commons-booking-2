@@ -306,6 +306,10 @@ body input.cb2-tick-only:not([checked]):after {
 	color:red;
 	opacity:0.7;
 }
+.cb2-calendar .cb2-periodstatustype-name {
+	color: #006600;
+	font-style: italic;
+}
 .cb2-calendar table {
 	border-collapse:collapse;
 }
@@ -388,7 +392,9 @@ body input.cb2-tick-only:not([checked]):after {
 	font-size:12px;
 }
 .cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td.type-day.cb2-current {
-	background-color:#f7f7f7;
+	position:relative;
+	box-shadow: 0px 0px 12px 0px #bcb;
+	z-index:1000;
 }
 .cb2-calendar .type-day.cb2-current > .entry-header {
 	color:#111;
