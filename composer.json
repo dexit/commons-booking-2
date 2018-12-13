@@ -77,7 +77,7 @@
 				"flegfleg\/cmb2-field-icon",
 				"flegfleg\/cmb2-field-paragraph",
 				"flegfleg\/cmb2-field-calendar",
-				"drmonty/leaflet"
+				"drmonty\/leaflet"
 			],
 			".\/admin\/includes\/lib\/{$name}": [
 				"nathanielks\/wp-admin-notice",
