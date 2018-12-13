@@ -136,8 +136,13 @@ class CB2_Database {
 	public static function get_install_sqls() {
 		global $wpdb;
 
-		$install_SQLs  = array();
+		$install_SQLs = array();
 		$schema_array = self::schema_array();
+
+		$database_collation = $wpdb->get_var( 'select @@collation_database' );
+		$database_charset   = $wpdb->get_var( 'select @@character_set_database' );
+		//if ( is_null( $database_charset   ) ) $database_charset   = 'utf8mb4';
+		//if ( is_null( $database_collation ) ) $database_collation = 'utf8mb4_unicode_ci';
 
 		foreach ( $schema_array as $Class => $objects ) {
 				if ( isset( $objects['table'] ) ) {
@@ -166,7 +171,7 @@ class CB2_Database {
 		foreach ( $schema_array as $Class => $objects ) {
 				if ( isset( $objects['views'] ) ) {
 					foreach ( $objects['views'] as $name => $body ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body ) );
+							$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body, $database_charset, $database_collation ) );
 					}
 				}
 		}
@@ -368,9 +373,11 @@ class CB2_Database {
 		return $sqls;
 	}
 
-	private static function database_views_SQL( $prefix, $name, $body ) {
+	private static function database_views_SQL( String $prefix, String $name, String $body, String $database_charset, String $database_collation = 'utf8mb4' ) {
 		$sqls = array();
 		$body = str_replace( "@@VIEW_NAME@@", "'$name'", $body );
+		$body = str_replace( ' collate @@collation_database', " collate $database_collation", $body );
+		$body = str_replace( '_@@character_set_database',     "_$database_charset",           $body );
 		self::check_fuction_bodies( "view::$name", $body );
 		array_push( $sqls, "DROP VIEW IF EXISTS `$prefix$name`" );
 		array_push( $sqls, "CREATE VIEW `$prefix$name` AS\n  $body" );

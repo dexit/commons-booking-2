@@ -328,6 +328,7 @@ class CB2 {
 
 	public static function the_title( $title, $id ) {
 		global $post;
+
 		if ( $post ) {
 			$post_type = $post->post_type;
 			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
