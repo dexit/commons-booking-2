@@ -271,6 +271,7 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 
 						// ----------------------------------------------------- save()
 						// TODO: running $fire_wordpress_events will cause CMB2 to save its data also!
+						// TODO: enable wordpress events on update
 						$update                = TRUE;
 						$container             = NULL; // Not used yet
 						$fire_wordpress_events = FALSE; //$consider_empty_post; // We are preventing normal update procedure events

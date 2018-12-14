@@ -20,6 +20,7 @@ require_once('includes/lib/cmb2-tabs/cmb2-tabs.php');
 require_once('includes/lib/cmb2-field-icon/cmb2-field-icon.php');
 require_once('includes/lib/cmb2-field-calendar/cmb2-field-calendar.php');
 require_once('includes/lib/cmb2-field-paragraph/cmb2-field-paragraph.php');
+require_once('includes/lib/cmb2-field-openinghours/cmb2-field-openinghours.php');
 require_once(CB2_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php'); /* TODO */
 
 

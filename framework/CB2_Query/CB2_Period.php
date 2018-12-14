@@ -116,8 +116,20 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			$day_options[pow(2, $i)] = __( $days_of_week[$i] );
 		}
 
-
 		return array(
+			array(
+				'title'      => '<span class="cb2-todo">' . __( 'Opening Hours (Wizard / daily slot based)', 'commons-booking-2' ) . '</span>',
+				'closed_cb'  => array( 'CB2_Period', 'metabox_closed_when_published' ),
+				'show_names' => FALSE,
+				'fields'     => array(
+					array(
+						'name'    => __( 'Week Hours', 'commons-booking-2' ),
+						'id'      => 'period_openinghours',
+						'type'    => 'openinghours',
+					),
+				),
+			),
+
 			array(
 				'title' => __( 'Period', 'commons-booking-2' ),
 				'closed_cb' => array( 'CB2_Period', 'metabox_closed_when_published' ),

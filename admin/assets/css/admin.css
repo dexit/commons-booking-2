@@ -82,7 +82,8 @@ body a.thickbox {
 	font-weight:normal;
 	color:#555;
 }
-body .cmb2-id-recurrence-sequence li {
+body .cmb2-id-recurrence-sequence li,
+body .cmb2-id-period-openinghours li {
 	text-align:center;
 	border:1px solid #c7c7c7;
 	background-color:#e7e7e7;
@@ -93,7 +94,8 @@ body .cmb2-id-datetime-from .cmb2-timepicker,
 body .cmb2-id-datetime-to .cmb2-timepicker {
 	display:none;
 }
-body .cmb2-id-recurrence-sequence input[type=checkbox] {
+body .cmb2-id-recurrence-sequence input[type=checkbox],
+body .cmb2-id-period-openinghours input[type=checkbox] {
 	display:block;
 	margin: 0px auto 3px auto;
 }
