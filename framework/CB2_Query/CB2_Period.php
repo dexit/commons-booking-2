@@ -281,11 +281,11 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 	static function recurrence_sequence_sanitization( $value, $field_args, $field ) {
 		// Output filter for saving to database
 		// Array(4,32,64) = 4 + 32 + 64 => 100
-		$old = implode( ',', $value );
+		$old = ( is_array( $value ) ? implode( ',', $value ) : '' );
 		$new = CB2_Query::ensure_assoc_bitarray_integer( 'recurrence_sequence', $value );
 		if ( CB2_DEBUG_SAVE ) {
 			$field_name = $field->args['id'];
-			print( "<div class='cb2-WP_DEBUG-small'>CMB2 [$field_name] sanitization ($old =&gt; $new)</div>" );
+			print( "<div class='cb2-WP_DEBUG-small'>CMB2 [$field_name] sanitization ([$old] =&gt; $new)</div>" );
 		}
 		return $new;
 	}

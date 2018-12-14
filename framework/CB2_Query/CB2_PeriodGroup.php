@@ -194,7 +194,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 	}
 
 	function manage_columns( $columns ) {
-		$columns['periods'] = 'Periods <a href="admin.php?page=cb2-periods">view all</a>';
+		$columns['periods']  = 'Periods <a href="admin.php?page=cb2-periods">view all</a>';
 		$columns['entities'] = 'Entities';
 		$this->move_column_to_end( $columns, 'date' );
 		return $columns;

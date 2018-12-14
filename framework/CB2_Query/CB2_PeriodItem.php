@@ -376,9 +376,9 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
     return $html;
   }
 
-  function get_the_title() {
+  function get_the_title( $HTML = FALSE ) {
 		return ( property_exists( $this, 'period_entity' ) && $this->period_entity
-			? $this->period_entity->get_the_title()
+			? $this->period_entity->get_the_title( $HTML )
 			: $this->post_title
 		);
   }

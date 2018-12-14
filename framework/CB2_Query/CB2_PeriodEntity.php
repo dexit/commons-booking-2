@@ -349,14 +349,19 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $html;
 	}
 
-	function get_the_title() {
+	function get_the_title( $HTML = FALSE ) {
 		$title = '';
 		foreach ( $this->posts as $entity ) {
 			$post_type = $entity->post_type;
-			$title .= "<span class='cb2-$post_type-name'>$entity->post_title</span> ";
+			if ( $HTML ) $title .= "<span class='cb2-$post_type-name'>";
+			$title .= $entity->post_title;
+			if ( $HTML ) $title .= "</span>";
+			$title .= ' ';
 		}
 		$period_status_type_name = $this->period_status_type->name;
-		$title .= "<span class='cb2-periodstatustype-name'>$period_status_type_name</span>";
+		if ( $HTML ) $title .= "<span class='cb2-periodstatustype-name'>";
+		$title .= $period_status_type_name;
+		if ( $HTML ) $title .= "</span>";
 
 		return $title;
 	}

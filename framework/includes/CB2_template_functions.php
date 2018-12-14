@@ -326,8 +326,15 @@ class CB2 {
 		return $content;
 	}
 
-	public static function the_title( $title, $id ) {
+	public static function the_title( $HTML = TRUE ) {
+		print( self::get_the_title( $HTML ) );
+	}
+
+	public static function get_the_title( $HTML = TRUE ) {
 		global $post;
+
+		// Unlike the_content() above, this is not a filter call
+		$title = ( property_exists( $post, 'post_title' ) ? $post->post_title : 'no title' );
 
 		if ( $post ) {
 			$post_type = $post->post_type;
@@ -335,7 +342,7 @@ class CB2 {
 				$post_class = CB2_Query::ensure_correct_class( $post );
 				$post       = &$post_class;
 				if ( method_exists( $post, 'get_the_title' ) )
-					$title = $post->get_the_title( $title, $id );
+					$title = $post->get_the_title( $HTML );
 			}
 		}
 		return $title;
@@ -348,6 +355,5 @@ class CB2 {
 
 // TODO: move the_content() filter to CB2_Templates utilities files
 add_filter( 'the_content', array( 'CB2', 'the_content' ), 1 );
-add_filter( 'the_title',   array( 'CB2', 'the_title' ),   10, 2 );
 
 
