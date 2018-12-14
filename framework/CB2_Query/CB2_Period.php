@@ -105,9 +105,10 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 	}
 
 	static function metaboxes( $multiple_period_group = TRUE ) {
-		$now            = new DateTime();
-		$morning_format = CB2_Query::$date_format . ' 08:00:00';
-		$evening_format = CB2_Query::$date_format . ' 18:00:00';
+		$now              = new DateTime();
+		$day_start_format = CB2_Query::$date_format . ' 00:00:00';
+		$morning_format   = CB2_Query::$date_format . ' 08:00:00';
+		$evening_format   = CB2_Query::$date_format . ' 18:00:00';
 
 		$day_options  = array();
 		$days_of_week = CB2_Week::days_of_week();
@@ -148,8 +149,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			),
 
 			array(
-				'title' => __( 'Recurrence', 'commons-booking-2' ) .
-					( CB2_Period::metabox_recurrence_type_show() ? ' (optional)' : '' ),
+				'title' => __( 'Recurrence', 'commons-booking-2' ),
 				'context' => 'normal',
 				'show_names' => TRUE,
 				'add_button'    => __( 'Add Another Entry', 'commons-booking-2' ),
@@ -160,7 +160,6 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'name' => __( 'Type', 'commons-booking-2' ),
 						'id' => 'recurrence_type',
 						'type' => 'radio_inline',
-						'classes' => ( CB2_Period::metabox_recurrence_type_show() ? '' : 'hidden' ),
 						'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB2_Database::$NULL_indicator ),
 						'options' => array(
 							CB2_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
@@ -219,7 +218,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'id' => 'datetime_from',
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB2_Database::$database_date_format,
-						'default' => ( isset( $_GET['datetime_from'] ) ? $_GET['datetime_from'] : $now->format( $morning_format ) ),
+						'default' => ( isset( $_GET['datetime_from'] ) ? $_GET['datetime_from'] : $now->format( $day_start_format ) ),
 					),
 					array(
 						'name' => __( 'Recurrence To Date (optional)', 'commons-booking-2' ),
@@ -248,10 +247,6 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 
 			CB2_PeriodGroup::selector_metabox( $multiple_period_group ),
 		);
-	}
-
-	static function metabox_recurrence_type_show() {
-		return ( ! isset( $_GET['recurrence_type_show'] ) || $_GET['recurrence_type_show'] == 'yes' );
 	}
 
 	static function metabox_show_when_published() {
@@ -309,6 +304,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			'show_names' => FALSE,
 			'context'    => $context,
 			'closed'     => $closed,
+			'debug-only' => TRUE,
 			'fields'     => array(
 				array(
 					'name'    => __( $title, 'commons-booking-2' ),

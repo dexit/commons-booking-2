@@ -574,6 +574,19 @@ class CB2_Query {
 		return ( is_string( $object ) && preg_match( "/^[$type]:[0-9]+:/", $object ) );
 	}
 
+	static function implode( $delimiter, $array, $associative_delimiter = '=' ) {
+		$string = NULL;
+		if ( self::array_has_associative( $array ) ) {
+			$string = '';
+			foreach ( $array as $key => $value ) {
+				if ( $string ) $string .= $delimiter;
+				$string .= "$key$associative_delimiter$value";
+			}
+		} else $string = implode( $delimiter, $array );
+
+		return $string;
+	}
+
 	static function array_has_associative( Array $array ) {
 		return array_keys($array) !== range(0, count($array) - 1);
 	}

@@ -69,7 +69,7 @@
 
 		$('form').submit(function(){
 			var datepickers = $('.cmb2-id-datetime-part-period-start .cmb2-datepicker, .cmb2-id-datetime-part-period-end .cmb2-datepicker');
-			datepickers.removeAttr('disabled');
+			datepickers.show();
 		});
 
 		$('.cmb2-id-recurrence-type input').click(function(){
@@ -78,7 +78,7 @@
 			var sequence        = $('.cmb2-id-recurrence-sequence');
 			var sequence_inputs = sequence.find('input');
 
-			datepickers.removeAttr('disabled', '1');
+			datepickers.show();
 			sequence.addClass('cb2-disabled');
 			sequence_inputs.attr('disabled', '1');
 
@@ -90,7 +90,7 @@
 					break;
 				}
 				case 'D': {
-					datepickers.attr('disabled', '1');
+					datepickers.hide();
 					explanation.html('Only the times are relevant now because the period repeats every day.');
 					sequence.removeClass('cb2-disabled');
 					sequence_inputs.removeAttr('disabled');

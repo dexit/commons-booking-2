@@ -89,6 +89,10 @@ body .cmb2-id-recurrence-sequence li {
 	padding:10px 5px;
 	min-width:80px;
 }
+body .cmb2-id-datetime-from .cmb2-timepicker,
+body .cmb2-id-datetime-to .cmb2-timepicker {
+	display:none;
+}
 body .cmb2-id-recurrence-sequence input[type=checkbox] {
 	display:block;
 	margin: 0px auto 3px auto;

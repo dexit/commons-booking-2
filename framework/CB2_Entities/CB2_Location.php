@@ -224,15 +224,55 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				),
 			),
 		) );
-		$period_count = $wp_query->post_count;
-		$count_ok           = 'warning';
-		if ( $period_count ) $count_ok = 'ok';
-		$page               = 'cb2-opening-hours';
-		$help_text          = __( 'Number of registered opening periods' );
-		$opening_hours_text = __( 'Opening Hours' );
+		$period_count       = $wp_query->post_count;
+		$opening_hours_text = '';
+		$help_text          = '';
+		$count_class        = 'ok';
+		$link               = 'admin.php?page=';
+
+		switch ( $period_count ) {
+			case 0:
+				// Directly add a / the opening hours
+				$help_text          = __( 'No opening hours set yet' );
+				$opening_hours_text = __( 'Set the Opening Hours' );
+				$page               = 'cb2-post-new';
+				$post_type          = 'periodent-location';
+				$settings           = array(
+					'recurrence_type'       => 'D',
+					'recurrence_type_show'  => 'no',
+					'CB2_PeriodEntity_Location_metabox_0_show' => 'no',
+					'title_show'            => 'no',
+					'period_status_type_id' => 4,
+					'post_title'            => "Opening Hours for $this->post_title",
+					'add_new_label'         => "Set Opening Hours for $this->post_title",
+				);
+				$settings_string    = CB2_Query::implode( '&', $settings );
+				$link              .= "$page&location_ID=$this->ID&post_type=$post_type&$settings_string";
+				$count_class        = 'warning';
+				break;
+			case 1:
+				// Exactly one opening hour: edit it
+				$help_text          = __( '1 opening hours set' );
+				$opening_hours_text = __( 'Edit Opening Hours' );
+				$page               = 'cb2-post-edit';
+				$post_type          = 'periodent-location';
+				$settings           = array(
+					'CB2_PeriodEntity_Location_metabox_0_show' => 'no',
+				);
+				$settings_string    = CB2_Query::implode( '&', $settings );
+				$period_ID          = $wp_query->post->ID;
+				$link              .= "$page&post=$period_ID&post_type=$post_type&action=edit&$settings_string";
+				break;
+			default:
+				// Several opening hours created: manage them
+				$help_text          = __( 'Number of registered opening periods' );
+				$opening_hours_text = __( 'Manage Opening Hours' );
+				$page               = 'cb2-opening-hours';
+				$link              .= "$page&location_ID=$this->ID";
+		}
 		$action  = "<span style='white-space:nowrap;'>";
-		$action .= "<a href='admin.php?page=$page&location_ID=$this->ID'>$opening_hours_text";
-		$action .= " <span class='cb2-usage-count-$count_ok' title='$help_text'>$period_count</span> ";
+		$action .= "<a href='$link'>$opening_hours_text";
+		$action .= " <span class='cb2-usage-count-$count_class' title='$help_text'>$period_count</span> ";
 		$action .= '</a></span>';
 
 		$actions[ 'manage_opening_hours' ] = $action;

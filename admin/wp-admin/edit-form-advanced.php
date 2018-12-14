@@ -493,7 +493,7 @@ echo esc_html( $title );
 
 <?php
 if ( isset( $post_new_file ) && current_user_can( $post_type_object->cap->create_posts ) ) {
-	echo ' <a href="' . esc_url( admin_url( $post_new_file ) ) . '" class="page-title-action">' . esc_html( $post_type_object->labels->add_new ) . '</a>';
+	echo ' <a href="' . esc_url( admin_url( $post_new_file ) ) . '" class="cb2-todo page-title-action">' . esc_html( $post_type_object->labels->add_new ) . '</a>';
 }
 if ( WP_DEBUG ) print( ' <span class="cb2-WP_DEBUG">' . basename( __FILE__ ) . ", post_type=[<i>$post_type</i>], post_status=[<i>$post->post_status</i>], post->ID=[<i>$post->ID</i>]</span>" ); // CB2/Annesley: debug
 ?>

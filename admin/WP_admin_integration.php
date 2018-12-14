@@ -193,28 +193,64 @@ function cb2_admin_pages() {
 }
 
 function cb2_metaboxes() {
+	$hidden_class = 'hidden';
+
 	foreach ( CB2_PostNavigator::post_type_classes() as $post_type => $Class ) {
 		if ( method_exists( $Class, 'metaboxes' ) ) {
 			foreach ( $Class::metaboxes() as $i => $metabox ) {
-				$metabox['id']           = "{$Class}_metabox_{$i}";
-				$metabox['object_types'] = array( $post_type );
-				$metabox['priority']     = 'low'; // Under the standard boxes
+				if ( ! isset( $metabox['id'] ) )           $metabox['id']           = "{$Class}_metabox_{$i}";
+				if ( ! isset( $metabox['object_types'] ) ) $metabox['object_types'] = array( $post_type );
+				if ( ! isset( $metabox['priority'] ) )     $metabox['priority']     = 'low'; // Under the standard boxes
 
-				if ( WP_DEBUG ) {
-					// Extended checks
-					foreach ( $metabox['fields'] as $field ) {
-						$name = ( isset( $field['name'] ) ? $field['name'] : '<no field name>' );
-						switch ( $field['type'] ) {
-							case 'text_date':
-							case 'text_datetime_timestamp':
-								if ( $field['date_format'] != CB2_Database::$database_date_format )
-									throw new Exception( "[$name] metabox field needs the CB2_Database::\$database_date_format" );
-								break;
-						}
-					}
+				$id = $metabox['id'];
+
+				// Meta-box level visibility by query-string
+				$query_name = "{$id}_show";
+				$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
+				$hide       = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
+				if ( $hide ) {
+					// TODO: inject this CSS properly
+					print( "<style>#$id {display:none;}</style>" );
+					// This below line affects ALL fields, not the container
+					//$metabox['classes'] = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
 				}
 
-				new_cmb2_box( $metabox );
+				$debug_only_value = ( isset( $metabox['debug-only'] ) ? $metabox['debug-only'] : FALSE );
+				$debug_only = ( $debug_only_value == TRUE || $debug_only_value == 'yes' || $debug_only_value == '1' );
+				if ( WP_DEBUG || ! $debug_only ) {
+					if ( $debug_only ) {
+						$metabox['title'] = '<span class="cb2-WP_DEBUG">' . ( isset( $metabox['title'] ) ? $metabox['title'] : '' ) . '</span>';
+					}
+
+					foreach ( $metabox['fields'] as &$field ) {
+						$id   = $field['id'];
+						$name = ( isset( $field['name'] ) ? $field['name'] : '<no field name>' );
+						$type = $field['type'];
+
+						// Live hiding and showing of fields by query-string
+						$query_name = "{$id}_show";
+						$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
+						$hide       = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
+						if ( $hide ) {
+							$optional_text     = __( 'optional' );
+							$field['classes']  = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
+							$field['name']     = ( isset( $field['name'] ) ? $field['name'] . " ($optional_text)" : '' );
+						}
+
+						if ( WP_DEBUG ) {
+							// Extended checks
+							switch ( $type ) {
+								case 'text_date':
+								case 'text_datetime_timestamp':
+									if ( $field['date_format'] != CB2_Database::$database_date_format )
+										throw new Exception( "[$name] metabox field needs the CB2_Database::\$database_date_format" );
+									break;
+							}
+						}
+					}
+
+					new_cmb2_box( $metabox );
+				}
 			}
 		}
 	}
@@ -748,19 +784,7 @@ function cb2_settings_list_page() {
 
 			// Append input query string to post_new
 			$post_new_file_custom = ( isset( $details_page['post_new_page'] ) ? $details_page['post_new_page'] : 'admin.php?page=cb2-post-new' );
-			if ( count( $_GET ) ) {
-				$existing_query_string = array();
-				if ( strchr( $post_new_file_custom, '?' ) ) {
-					$existing_query_string_pairs = explode( '&', explode( '?', $post_new_file_custom, 2 )[1] );
-					foreach ( $existing_query_string_pairs as $value ) $existing_query_string[ CB2_Query::substring_before( $value, '=' ) ] = 1;
-				}
-				foreach ( $_GET as $name => $value ) {
-					if ( ! isset( $existing_query_string[ $name ] ) ) {
-						$post_new_file_custom .= ( strchr( $post_new_file_custom, '?' ) ? '&' : '?' );
-						$post_new_file_custom .= urlencode( $name ) . '=' . urlencode( $value );
-					}
-				}
-			}
+			$post_new_file_custom = CB2_Query::pass_through_query_string( $post_new_file_custom );
 
 			// Global params used in included file
 			// WP_Query arguments
@@ -824,6 +848,11 @@ function cb2_settings_post_new() {
 	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb2-post-edit' );
 	$post_submit_custom = CB2_Query::pass_through_query_string( $post_submit_custom, $add_parameters, $remove_parameters );
 
+	// TODO: inject the CSS properly
+	$title_show_value = ( isset( $_GET['title_show'] ) ? $_GET['title_show'] : '' );
+	$title_hide       = ( $title_show_value == 'no' || $title_show_value == '0' || $title_show_value == 'hide' );
+	if ( $title_hide ) print( '<style>#titlediv {display:none;}</style>' );
+
 	// Global params used in included file
 	$post_type = $_GET[ 'post_type' ];
 	$typenow   = $post_type;
@@ -841,7 +870,6 @@ function cb2_settings_post_new() {
 	}
 
 	// This is a COPY of the normal wp-admin file
-
 	$screen = WP_Screen::get( $typenow );
 	set_current_screen( $screen );
 	require_once( dirname( __FILE__ ) . '/wp-admin/post-new.php' );
@@ -878,13 +906,18 @@ function cb2_settings_post_edit() {
 	// Append input query string to post_new
 	// post.php altered to accept $post_new_file_custom
 	$post_new_file_custom = ( isset( $_GET[ 'post_new_file_custom' ] ) ? $_GET[ 'post_new_file_custom' ] : 'admin.php?page=cb2-post-new' );
-	$post_new_file_custom = CB2_Query::pass_through_query_string( $post_new_file_custom );
+	$post_new_file_custom = CB2_Query::pass_through_query_string( $post_new_file_custom, array(), array( 'action', 'post' ) );
 
 	// edit-form-advanced.php altered to accept $post_submit_custom
 	// post_type will be passed through
 	$remove_parameters  = array( 'post', 'action', 'auto_draft_publish_transition' );
 	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb2-post-edit' );
 	$post_submit_custom = CB2_Query::pass_through_query_string( $post_submit_custom, array(), $remove_parameters );
+
+	// TODO: inject the CSS properly
+	$title_show_value = ( isset( $_GET['title_show'] ) ? $_GET['title_show'] : '' );
+	$title_hide       = ( $title_show_value == 'no' || $title_show_value == '0' || $title_show_value == 'hide' );
+	if ( $title_hide ) print( '<style>#titlediv {display:none;}</style>' );
 
 	// Global params used in included file
 	$post_type = $_GET[ 'post_type' ];

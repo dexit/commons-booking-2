@@ -20,7 +20,8 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 			'title'      => __( 'Period Status Type', 'commons-booking-2' ),
 			'show_names' => FALSE,
 			'context'    => 'side',
-			'closed'     => true,
+			'closed'     => TRUE,
+			'debug-only' => TRUE,
 			'fields'     => array(
 				array(
 					'name'    => __( 'PeriodStatusType', 'commons-booking-2' ),
