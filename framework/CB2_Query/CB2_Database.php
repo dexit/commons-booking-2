@@ -139,11 +139,6 @@ class CB2_Database {
 		$install_SQLs = array();
 		$schema_array = self::schema_array();
 
-		$database_collation = $wpdb->get_var( 'select @@collation_database' );
-		$database_charset   = $wpdb->get_var( 'select @@character_set_database' );
-		//if ( is_null( $database_charset   ) ) $database_charset   = 'utf8mb4';
-		//if ( is_null( $database_collation ) ) $database_collation = 'utf8mb4_unicode_ci';
-
 		foreach ( $schema_array as $Class => $objects ) {
 				if ( isset( $objects['table'] ) ) {
 					foreach ( $objects['table'] as $table ) {
@@ -171,7 +166,7 @@ class CB2_Database {
 		foreach ( $schema_array as $Class => $objects ) {
 				if ( isset( $objects['views'] ) ) {
 					foreach ( $objects['views'] as $name => $body ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body, $database_charset, $database_collation ) );
+							$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body ) );
 					}
 				}
 		}
@@ -373,11 +368,9 @@ class CB2_Database {
 		return $sqls;
 	}
 
-	private static function database_views_SQL( String $prefix, String $name, String $body, String $database_charset, String $database_collation = 'utf8mb4' ) {
+	private static function database_views_SQL( String $prefix, String $name, String $body ) {
 		$sqls = array();
 		$body = str_replace( "@@VIEW_NAME@@", "'$name'", $body );
-		$body = str_replace( ' collate @@collation_database', " collate $database_collation", $body );
-		$body = str_replace( '_@@character_set_database',     "_$database_charset",           $body );
 		self::check_fuction_bodies( "view::$name", $body );
 		array_push( $sqls, "DROP VIEW IF EXISTS `$prefix$name`" );
 		array_push( $sqls, "CREATE VIEW `$prefix$name` AS\n  $body" );
@@ -450,10 +443,10 @@ class CB2_Database {
 		// MySQL inserts CONVERT() statements for its local COLLATION
 		// this will FAIL for double embedded CONVERTs
 		// TODO: on the final system this should not be necessary
-		if ( preg_match( '/ using [^uU]/', $body ) )
-			throw new Exception( "Function body [$identifier] has wrong collation string in it" );
+		if ( preg_match( '/ using /', $body ) )
+			throw new Exception( "Function body [$identifier] has using statement string in it" );
 		// MySQL inserts fully qualified Database names
-		if ( preg_match( '/commonsbooking_2|wp47/', $body ) )
+		if ( preg_match( '/commonsbooking_2|wp47|wp501/', $body ) )
 			throw new Exception( "Function body [$identifier] has database name string in it" );
 
 		return $body;

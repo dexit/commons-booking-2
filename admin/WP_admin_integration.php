@@ -467,7 +467,20 @@ function cb2_calendar() {
 function cb2_reflection() {
 	global $wpdb;
 
-	print( '<h1>Reflection</h1>' );
+	$DB_NAME = DB_NAME;
+
+	print( "<h1>Reflection ($DB_NAME)</h1>" );
+	print( "<p>A note on collation: string literals, e.g. 'period', can cause collation issues.
+		By default they will adopt the <b>server</b> collation, not the database collation.
+		Thus any database field data being concatenated with them or compared to them will cause an error.
+		To avoid this always pull all data from the database.
+		Returning a variety of charsets and collations with string literals and database data is not a problem for the PHP.
+		<br/>
+		You cannot collate to the default database collation with MySQL.
+		If you really need to do this then carry out a string replacement in the PHP layer.
+		This would replace @@character_set_database with the actual characterset name, gained through a database call with get_var(select @@character_set_database).
+		String literals can be collated efficiently with _@@character_set_database'string' collate @@collation_database
+	</p>");
 	$and_posts         = isset( $_GET['and_posts'] ); // Checkbox
 	$and_posts_checked = ( $and_posts ? 'checked="1"' : '' );
 	$testdata          = isset( $_GET['testdata'] );  // Checkbox
@@ -535,25 +548,22 @@ function cb2_reflection() {
 
 		// ---------------------------------------------------- Database reflection
 		$exsiting_tables   = $exsiting_tables = $wpdb->get_col( 'SHOW TABLES;' );
-		$exsiting_views    = $wpdb->get_results( 'select table_name, view_definition from INFORMATION_SCHEMA.views', OBJECT_K );
+		$view_results      = $wpdb->get_results( 'select table_name, view_definition from INFORMATION_SCHEMA.views', OBJECT_K );
 		$triggers_results  = $wpdb->get_results( 'select trigger_name, action_statement from INFORMATION_SCHEMA.triggers', OBJECT_K );
+		$existing_views    = array();
 		$existing_triggers = array();
-		$variable_database_name = '/`commons[-_]?booking[0-9a-z_-]+`\\.|`wp47`\\./i';
 		// The compilation procedure adds things in to the definitions
 		// that we do not specifiy, like collation
 		foreach ( $triggers_results as $name => $definition ) {
-			$action_statement = preg_replace( $variable_database_name, '',  $definition->action_statement );
+			$action_statement = preg_replace( "/`$DB_NAME`\./", '',  $definition->action_statement );
 			$action_statement = preg_replace( '/^BEGIN\\n|\\nEND$/',   '',  $action_statement );
 			$action_statement = trim( preg_replace( '/\\s+/', ' ', $action_statement ) );
-			$action_statement = str_replace(  'convert(',                   '', $action_statement );
-			$action_statement = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $action_statement );
 			array_push( $existing_triggers, $action_statement );
 		}
-		foreach ( $exsiting_views as $name => &$definition ) {
-			$definition->view_definition = preg_replace( $variable_database_name, '', $definition->view_definition );
-			// We are including conversions but cannot reliably remove them
-			$definition->view_definition = str_replace(  'convert(',                   '', $definition->view_definition );
-			$definition->view_definition = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $definition->view_definition );
+		foreach ( $view_results as $name => &$definition ) {
+			$view_body = preg_replace( "/`$DB_NAME`\./", '', $definition->view_definition );
+			$view_body = trim( preg_replace( '/\\s+/', ' ', $view_body ) );
+			$existing_views[$name] = $view_body;
 		}
 
 		// ---------------------------------------------------- System setup
@@ -648,8 +658,6 @@ function cb2_reflection() {
 								print( "<div><b>$trigger_type</b> trigger</div>" );
 								$trigger_body = CB2_Database::check_fuction_bodies( "$table_name::trigger", $trigger_body );
 								$trigger_body = trim( preg_replace( '/\\s+/', ' ', $trigger_body ) );
-								$trigger_body = str_replace(  'convert(',                   '', $trigger_body );
-								$trigger_body = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $trigger_body );
 								if ( ! in_array( $trigger_body, $existing_triggers ) ) {
 									krumo($trigger_body, $existing_triggers);
 									print( "&nbsp;<span class='cb2-warning'>trigger different, or does not exist</span>" );
@@ -675,12 +683,10 @@ function cb2_reflection() {
 						print( "<li>$first$name" );
 						$full_name = "$wpdb->prefix$name";
 						$view_body = CB2_Database::check_fuction_bodies( "view::$name", $view_body );
-						$view_body = str_replace(  'convert(',                   '', $view_body );
-						$view_body = preg_replace( '/ using utf8[a-z0-9_]*\\)/', '', $view_body );
-						if ( ! isset( $exsiting_views[$full_name] ) )
+						if ( ! isset( $existing_views[$full_name] ) )
 							print( " <span class='cb2-warning'>does not exist</span>" );
-						else if ( $exsiting_views[$full_name]->view_definition != $view_body ) {
-							krumo($exsiting_views[$full_name]->view_definition, $view_body);
+						else if ( $existing_views[$full_name] != $view_body ) {
+							krumo($existing_views[$full_name], $view_body);
 							print( " <span class='cb2-warning'>has different body</span>" );
 						} else {
 							$row_count = $wpdb->get_var( "SELECT count(*) from $full_name" );
