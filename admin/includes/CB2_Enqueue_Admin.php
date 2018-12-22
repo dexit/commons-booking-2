@@ -91,7 +91,7 @@ class CB2_Enqueue_Admin {
 		 *  possible conflict with WP_Admin_Integration?
 		 */
 		// $this->admin_view_page = add_submenu_page( CB2_MENU_SLUG, __( 'Settings', CB2_TEXTDOMAIN ), __( 'Settings', CB2_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
-		$this->admin_view_page = add_menu_page( __('CommonsBooking 2 Settings', 'commons-booking'), __('Settings', 'commons-booking'), 'manage_options', 'cb_settings_page', array($this, 'display_plugin_admin_page'));
+		$this->admin_view_page = add_menu_page( __('CommonsBooking 2 Settings', 'commons-booking'), __('Settings', 'commons-booking'), 'manage_options', 'cb2_settings_page', array($this, 'display_plugin_admin_page'));
 	}
 	/**
 	 * Render the settings page for this plugin.
@@ -101,7 +101,7 @@ class CB2_Enqueue_Admin {
 	 * @return void
 	 */
 	public function display_plugin_admin_page() {
-		include_once( CB2_PLUGIN_ROOT . 'admin/views/settings.php' );
+		 echo CB2_Settings::settings_screen();
 	}
 	/**
 	 * Add settings action link to the plugins page.

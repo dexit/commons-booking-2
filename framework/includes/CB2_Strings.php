@@ -5,6 +5,10 @@
  * Allows admins to change frontend strings in settings
  * without editing the plugin code.
  *
+ * Text with placholder example:
+ *  echo CB2_Strings::get('general', 'test-variable', 'i am replacing this');
+ *
+ *
  *
  * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
@@ -65,6 +69,14 @@ class CB2_Strings {
 	public static function initialize() {
 
 		self::$strings = array(
+			'nomenclature' => array(
+				'item-singular' => __('item', 'commons-booking-2'),
+				'item-plural' => __('items', 'commons-booking-2'),
+				'location-singular' => __('location', 'commons-booking-2'),
+				'location-plural' => __('locations', 'commons-booking-2'),
+				'booking-singular' => __('booking', 'commons-booking-2'),
+				'booking-plural' => __('bookings', 'commons-booking-2'),
+			),
 			'general' => array(
 				'not-defined' => __('No booking timeframes found, this item cannot be booked right now.', 'commons-booking-2'),
 				'general-error' => __('Something went wrong.', 'commons-booking-2'),

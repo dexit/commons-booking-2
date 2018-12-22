@@ -12,12 +12,14 @@
  * This file contains helper functions
  */
 /**
- * Get a List of all wordpress pages for use in dropdown selects.
+ * Return an array of all wordpress pages
+ *
+ * For use in meta box forms dropdown selects.
  *
  * @return Array of wordpress pages as [pagedID][title]
  */
 
-function cb_get_pages_dropdown() {
+function cb2_form_get_pages() {
   // dropdown for page select
   $pages = get_pages();
   $dropdown = array();
@@ -27,6 +29,31 @@ function cb_get_pages_dropdown() {
   }
   return $dropdown;
 }
+/**
+ * Return an array of all wordpress user roles
+ *
+ * For use in meta box forms.
+ *
+ * @return Array  wordpress user roles as [rolename][rolename]
+ */
+
+function cb2_form_get_user_roles()
+{
+	// make sure wp user is available
+	if (! function_exists('get_editable_roles')) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+	}
+	// dropdown for page select
+	$roles = get_editable_roles();
+	$return = array();
+
+
+	foreach ($roles as $role_name => $role_info) {
+		$return[$role_name] = $role_info['name'];
+	}
+	return $return;
+}
+
 /**
  * Get a List of slot templates for use in dropdown selects.
  * @TODO Hardcoded for now
