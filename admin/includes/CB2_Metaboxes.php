@@ -26,7 +26,6 @@ class CB2_Metaboxes {
 		require_once( 'lib/cmb2-field-icon/cmb2-field-icon.php' );
 		require_once( 'lib/CMB2-field-Calendar/cmb-field-calendar.php' );
 		require_once( 'lib/CMB2-field-Paragraph/cmb-field-paragraph.php' );
-		require_once( 'lib/cmb2-field-openinghours/cmb2-field-openinghours.php' );
 
 		/* @TODO: add metaboxes for items & locations */
 		// add_action( 'cmb2_init', array( $this, 'cmb_demo_metaboxes' ) );

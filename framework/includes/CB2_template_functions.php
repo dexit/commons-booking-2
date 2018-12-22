@@ -1,5 +1,35 @@
 <?php
 class CB2 {
+	public static function has_inner_posts( $post_type = NULL, $post_navigator = NULL ) {
+		global $post;
+		$has_posts = FALSE;
+		if ( is_null( $post_navigator ) ) $post_navigator = $post;
+
+		if ( property_exists( $post_navigator, 'posts' ) && is_array( $post_navigator->posts ) ) {
+			if ( is_null( $post_type ) ) {
+				$has_posts = ( count( $post_navigator->posts ) > 0 );
+			} else {
+				foreach ( $post_navigator->posts as $inner_post ) {
+					if ( $inner_post->post_type == $post_type ) {
+						$has_posts = TRUE;
+						break;
+					}
+				}
+			}
+		}
+
+		return $has_posts;
+	}
+
+	public static function is_published() {
+		global $post;
+		return ( $post && $post->post_status == CB2_Post::$PUBLISH );
+	}
+
+	public static function is_not_published() {
+		return ! self::is_published();
+	}
+
 	public static function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
 		echo self::get_the_inner_loop( $post_navigator, $context, $template_type, $before, $after );
 	}
@@ -57,27 +87,10 @@ class CB2 {
 			foreach( $actions as $action ) {
 				// Convert array specifications
 				if ( is_array( $action ) ) {
-					$setup_args_string = '';
-					$action['link_text'] = ( isset( $action['link_text'] ) ? __( $action['link_text'] ) : __( 'Do Stuff' ) );
 					if ( ! isset( $action['page'] ) ) $action['page'] = 'cb2-post-new';
 					if ( ! isset( $action['base'] ) ) $action['base'] = 'admin.php';
-					foreach ( $action as $name => $value ) {
-						if ( strchr( $value, '%' ) ) {
-							// e.g. date->time
-							$property_path = explode( '->', substr( $value, 1, -1 ) );
-							$properties    = (array) $post;
-							foreach ( $property_path as $property_step ) {
-								if ( is_array( $properties ) && isset( $properties[$property_step] ) ) {
-									$value      = $properties[$property_step];
-									$properties = (array) $value;
-								} else if ( WP_DEBUG ) {
-									krumo( $properties, $property_step );
-									throw new Exception( "[$property_step] not found on object" );
-								}
-							}
-						}
-						$setup_args_string .= "$name=$value&";
-					}
+					$action['link_text'] = ( isset( $action['link_text'] ) ? __( $action['link_text'] ) : __( 'Do Stuff' ) );
+					$setup_args_string   = CB2_Query::implode( '&', $action, '=', $post );
 					$action = "<a href='$action[base]?$setup_args_string'>$action[link_text]</a>";
 				}
 				print( "<li>$action</li>" );

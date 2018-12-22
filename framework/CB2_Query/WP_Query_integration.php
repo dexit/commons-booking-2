@@ -685,14 +685,14 @@ function cb2_posts_results_add_automatic( $posts, $wp_query ) {
 			$startdate_string = $wp_query->query['date_query']['after'];
 			$enddate_string   = $wp_query->query['date_query']['before'];
 			if ( $startdate_string && $enddate_string ) {
-				$startdate = new DateTime( $startdate_string );
-				$enddate   = new DateTime( $enddate_string );
+				$startdate = new CB2_DateTime( $startdate_string );
+				$enddate   = new CB2_DateTime( $enddate_string );
 				$startdate->setTime( 0, 0 );
 				$enddate->setTime( 23, 59 );
 
-				while ( $startdate < $enddate ) {
+				while ( $startdate->before( $enddate ) ) {
 					array_push( $posts,  CB2_PeriodItem_Automatic::post_from_date( $startdate ) );
-					$startdate->add( new DateInterval( 'P1D' ));
+					$startdate->add( 1 );
 				}
 
 				usort( $posts, "cb2_posts_date_order" );

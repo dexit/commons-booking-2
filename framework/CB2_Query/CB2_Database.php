@@ -65,7 +65,7 @@ class CB2_Database {
 		// then CONCAT(field_value, "string literal") will throw a collation error
 		//
 		// We are removing foreign key checks although we do not need to
-		$date          = (new DateTime())->format( 'c' );
+		$date          = (new CB2_DateTime())->format( 'c' );
 		$host          = $_SERVER['HTTP_HOST'];
 
 		$sqls = array();
@@ -652,8 +652,8 @@ class CB2_Database {
 						$value = CB2_Query::ensure_datetime( $column_name, $value );
 						$value = $value->format( CB2_Database::$database_datetime_format );
 					}
-					if ( new DateTime( $value ) === FALSE )
-						throw new Exception( "Failed to parse [$value] for datetime field [$column_name]" );
+					// Check the value can be parsed
+					new CB2_DateTime( $value, "Failed to parse [$value] for datetime field [$column_name]" );
 				}
 				$data_value = $data_value_array[0];
 				break;

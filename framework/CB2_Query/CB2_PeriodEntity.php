@@ -59,7 +59,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				'fields' => array(
 					array(
 						'name' => __( 'Enabled', 'commons-booking-2' ),
-						'id' => 'enabled',
+						'id'   => 'enabled',
 						'type' => 'checkbox',
 						'default' => 1,
 					),
@@ -71,7 +71,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				'title'      => __( 'Calendar view', 'commons-booking-2' ),
 				'context'    => 'normal',
 				'show_names' => FALSE,
-				'show_on_cb' => array( 'CB2_Period', 'metabox_show_when_published' ),
+				'show_on_cb' => array( 'CB2', 'is_published' ),
 				'fields' => array(
 					array(
 						'name'    => __( 'Timeframe', 'commons-booking-2' ),
@@ -98,8 +98,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 					'link_text' => __( 'Make Available' ),
 					'post_type' => CB2_PeriodEntity_Timeframe::$static_post_type,
 					'period_status_type_ID'      => CB2_PeriodStatusType_Available::bigID(),
-					'datetime_part_period_start' => '%date->date%',
-					'datetime_part_period_end'   => '%date->date%',
 				),
 				'set-times' => '<form><div>Example form:<input/></div></form>',
 			),
@@ -136,7 +134,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			// We do not want to clone the period_group
 			// only the period item *instance*
 			// TODO: contiguous bookings in factory_from_perioditem()
-			$datetime_now = new DateTime();
+			$datetime_now = new CB2_DateTime();
 			$period = new CB2_Period(
 				CB2_CREATE_NEW,
 				( $name ? $name : $perioditem->post_title ),

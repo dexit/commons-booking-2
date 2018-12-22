@@ -246,32 +246,35 @@ class CB2_Day extends CB2_TimePostNavigator {
   function post_type() {return self::$static_post_type;}
   public function __toString() {return $this->post_title;}
 
-  protected function __construct( $date, $title_format = NULL ) {
-    $this->perioditems    = array();
+  protected function __construct( CB2_DateTime $date = NULL, String $title_format = NULL ) {
+		if ( is_null( $date ) ) $date = new CB2_DateTime();
+		$date->clearTime();
+    $this->perioditems  = array();
 
     // http://php.net/manual/en/function.date.php
     $this->date         = $date;
-    $this->dayinmonth   = (int) $date->format( 'j' );  // 1-31 day in month
-    $this->dayofweek    = $this->dayofweek_adjusted(); // 0-6 WordPress start_of_week start day
-    $this->dayofyear    = (int) $date->format( 'z' );  // 0-364
-    $this->today        = ( $date->setTime( 0, 0 ) == (new DateTime())->setTime( 0, 0 ) );
+    $this->dayinmonth   = (int) $date->format( 'j' );        // 1-31 day in month
+    $this->dayofweek    = self::dayofweek_adjusted( $date ); // 0-6 WordPress start_of_week start day
+    $this->dayofyear    = (int) $date->format( 'z' );        // 0-364
+    $this->today        = $date->is( (new CB2_DateTime())->clearTime() );
     $this->is_current   = $this->today;
-    $this->title        = $date->format( $title_format );
+    $this->title        = $date->format( $title_format ? $title_format : get_option( 'date_format' ) );
     $this->first        = ($this->dayinmonth == 1);
 
-    $this->week  = CB2_Week::factory(  $this );
-    $this->month = CB2_Month::factory( $this );
-    $this->year  = CB2_Year::factory(  $this );
+    $this->week         = CB2_Week::factory(  $this );
+    $this->month        = CB2_Month::factory( $this );
+    $this->year         = CB2_Year::factory(  $this );
 
     // WP_Post values
-    $this->post_title    = $date->format( $title_format ? $title_format : self::no_year_date_format() );
-    $this->ID            = $this->dayofyear + 1;
-    $this->post_type     = self::$static_post_type;
+    $this->post_title   = $date->format( $title_format ? $title_format : self::no_year_date_format() );
+    $this->ID           = $this->dayofyear + 1;
+    $this->post_type    = self::$static_post_type;
+    $this->post_date    = $date->format( CB2_Query::$date_format );
 
     parent::__construct( $this->perioditems );
   }
 
-  static function &factory( $date, $title_format = NULL ) {
+  static function &factory( CB2_DateTime $date, String $title_format = NULL ) {
     // Design Patterns: Factory Singleton with Multiton
     $key = $date->format( 'Y-z' );
     if ( isset( self::$all[$key] ) ) $object = self::$all[$key];
@@ -294,11 +297,11 @@ class CB2_Day extends CB2_TimePostNavigator {
 		return $format . ( $append_format ? " $append_format" : '' );
   }
 
-  private function dayofweek_adjusted() {
+  static function dayofweek_adjusted( $date ) {
 		// 0-6 with WordPress start_of_week start day
 		// e.g. if Tuesday is the WordPress start of the week, then Tuesday is 0, Monday is 6
-    $dayofweek          = (int) $this->date->format( 'w' ); // 0-6 Sunday start day (see below)
-    $start_of_week      = get_option( 'start_of_week', 0 ); // 0-6 Sunday == 0
+    $dayofweek          = (int) $date->format( 'w' ); // 0-6 Sunday start day (see below)
+    $start_of_week      = (int) get_option( 'start_of_week', 0 ); // 0-6 Sunday == 0
     return ( $dayofweek - $start_of_week + 7 ) % 7;
   }
 

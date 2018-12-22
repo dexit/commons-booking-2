@@ -202,55 +202,52 @@ function cb2_metaboxes() {
 				if ( ! isset( $metabox['object_types'] ) ) $metabox['object_types'] = array( $post_type );
 				if ( ! isset( $metabox['priority'] ) )     $metabox['priority']     = 'low'; // Under the standard boxes
 
-				$id = $metabox['id'];
+				$id               = $metabox['id'];
+				$debug_only_value = ( isset( $metabox['debug-only'] ) ? $metabox['debug-only'] : FALSE );
+				$debug_only       = ( $debug_only_value == TRUE || $debug_only_value == 'yes' || $debug_only_value == '1' );
 
 				// Meta-box level visibility by query-string
 				$query_name = "{$id}_show";
 				$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
-				$hide       = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
-				if ( $hide ) {
+				$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
+				if ( $query_hide || ( $debug_only && ! WP_DEBUG ) ) {
 					// TODO: inject this CSS properly
 					print( "<style>#$id {display:none;}</style>" );
 					// This below line affects ALL fields, not the container
 					//$metabox['classes'] = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
 				}
 
-				$debug_only_value = ( isset( $metabox['debug-only'] ) ? $metabox['debug-only'] : FALSE );
-				$debug_only = ( $debug_only_value == TRUE || $debug_only_value == 'yes' || $debug_only_value == '1' );
-				if ( WP_DEBUG || ! $debug_only ) {
-					if ( $debug_only ) {
-						$metabox['title'] = '<span class="cb2-WP_DEBUG">' . ( isset( $metabox['title'] ) ? $metabox['title'] : '' ) . '</span>';
+				if ( $debug_only )
+					$metabox['title'] = '<span class="cb2-WP_DEBUG">' . ( isset( $metabox['title'] ) ? $metabox['title'] : '' ) . '</span>';
+
+				foreach ( $metabox['fields'] as &$field ) {
+					$id   = $field['id'];
+					$name = ( isset( $field['name'] ) ? $field['name'] : '<no field name>' );
+					$type = $field['type'];
+
+					// Live hiding and showing of fields by query-string
+					$query_name = "{$id}_show";
+					$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
+					$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
+					if ( $query_hide ) {
+						$optional_text     = __( 'optional' );
+						$field['classes']  = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
+						$field['name']     = ( isset( $field['name'] ) ? $field['name'] . " ($optional_text)" : '' );
 					}
 
-					foreach ( $metabox['fields'] as &$field ) {
-						$id   = $field['id'];
-						$name = ( isset( $field['name'] ) ? $field['name'] : '<no field name>' );
-						$type = $field['type'];
-
-						// Live hiding and showing of fields by query-string
-						$query_name = "{$id}_show";
-						$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
-						$hide       = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
-						if ( $hide ) {
-							$optional_text     = __( 'optional' );
-							$field['classes']  = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
-							$field['name']     = ( isset( $field['name'] ) ? $field['name'] . " ($optional_text)" : '' );
-						}
-
-						if ( WP_DEBUG ) {
-							// Extended checks
-							switch ( $type ) {
-								case 'text_date':
-								case 'text_datetime_timestamp':
-									if ( $field['date_format'] != CB2_Database::$database_date_format )
-										throw new Exception( "[$name] metabox field needs the CB2_Database::\$database_date_format" );
-									break;
-							}
+					if ( WP_DEBUG ) {
+						// Extended checks
+						switch ( $type ) {
+							case 'text_date':
+							case 'text_datetime_timestamp':
+								if ( $field['date_format'] != CB2_Database::$database_date_format )
+									throw new Exception( "[$name] metabox field needs the CB2_Database::\$database_date_format" );
+								break;
 						}
 					}
-
-					new_cmb2_box( $metabox );
 				}
+
+				new_cmb2_box( $metabox );
 			}
 		}
 	}

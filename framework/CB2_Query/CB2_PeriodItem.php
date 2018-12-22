@@ -90,7 +90,7 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
 		// Some sanity checks
-		if ( $this->datetime_period_item_start > $this->datetime_period_item_end )
+		if ( $this->datetime_period_item_start->after( $this->datetime_period_item_end ) )
 			throw new Exception( 'datetime_period_item_start > datetime_period_item_end' );
 
 		// Add the period to all the days it appears in
@@ -102,8 +102,8 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 				$day = CB2_Day::factory( clone $date );
 				$day->add_perioditem( $this );
 				array_push( $this->days, $day );
-				$date->add( new DateInterval( 'P1D' ) );
-			} while ( $date < $this->datetime_period_item_end );
+				$date->add( 1 );
+			} while ( $date->before( $this->datetime_period_item_end ) );
 
 			// Overlapping periods
 			// Might partially overlap many different non-overlapping periods
@@ -241,10 +241,10 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
   }
 
   function overlaps_time( $period ) {
-		return ( $this->datetime_period_item_start >= $period->datetime_period_item_start
-			    && $this->datetime_period_item_start <= $period->datetime_period_item_end )
-			||   ( $this->datetime_period_item_end   >= $period->datetime_period_item_start
-			    && $this->datetime_period_item_end   <= $period->datetime_period_item_end );
+		return ( $this->datetime_period_item_start->moreThanOrEqual( $period->datetime_period_item_start )
+			    && $this->datetime_period_item_start->lessThanOrEqual( $period->datetime_period_item_end ) )
+			||   ( $this->datetime_period_item_end->moreThanOrEqual( $period->datetime_period_item_start )
+			    && $this->datetime_period_item_end->lessThanOrEqual( $period->datetime_period_item_end ) );
   }
 
   function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
@@ -429,8 +429,8 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
 
 		return new WP_Post( (object) array(
 			'ID' => self::$fake_ID++,         // Complete fake ID
-			CB2_GET_METADATA_ASSIGN => TRUE,      // Prevent meta-data analysis ($postmeta_table = FALSE does this also)
-			'post_status'    => 'auto-draft', // auto-draft to allow WP_Query selection
+			CB2_GET_METADATA_ASSIGN => TRUE,  // Prevent meta-data analysis ($postmeta_table = FALSE does this also)
+			'post_status'    => CB2_Post::$AUTODRAFT,    // auto-draft to allow WP_Query selection
 			'post_type'      => self::$static_post_type, // Does not exist in database
 			'post_author'    => 1,
 			'post_date'      => $startdate->format( CB2_Query::$datetime_format ),

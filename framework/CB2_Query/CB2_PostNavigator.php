@@ -385,7 +385,7 @@ abstract class CB2_PostNavigator extends stdClass {
 					&& ( ! isset( CB2_Post::$POST_PROPERTIES[$name] ) || CB2_Post::$POST_PROPERTIES[$name] )
 					&& ( ! in_array( $name, array( 'zeros', 'post_type' ) ) )
 				) {
-					if      ( $value instanceof DateTime ) $value = $value->format( CB2_Query::$datetime_format );
+					if      ( method_exists( $value, 'format' ) ) $value = $value->format( CB2_Query::$datetime_format );
 					else if ( is_array( $value ) ) {
 						/*
 						$debug .= "<ul>";

@@ -1,7 +1,7 @@
 <?php
 // --------------------------------------- Defaults
-$yesterday        = (new DateTime())->sub( new DateInterval( 'P2D' ) );
-$plus3months      = (clone $yesterday)->add( new DateInterval( 'P3M' ) );
+$yesterday        = (new CB2_DateTime())->sub( 2 );
+$plus3months      = (clone $yesterday)->add( 'P3M' );
 
 // --------------------------------------- Query Parameters
 $startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : $yesterday->format(   CB2_Query::$datetime_format ) );
@@ -119,7 +119,7 @@ print( <<<HTML
 HTML
 );
 
-if ( new DateTime( $startdate_string ) > new DateTime( $enddate_string ) ) // PHP 5.2.2
+if ( (new CB2_DateTime( $startdate_string ))->after( new CB2_DateTime( $enddate_string ) ) ) // PHP 5.2.2
 	print( '<div class="cb2-warning cb2-notice">start date is more than end date</div>' );
 
 // --------------------------------------- Debug

@@ -370,20 +370,21 @@ class CB2_Query {
 		// Maintains NULLs
 		// empty = NULL
 		$datetime     = NULL;
-		$now          = new DateTime();
+		$now          = new CB2_DateTime();
 		$epoch_min    = 20000000; // Thursday, 20 August 1970
 
 		if      ( is_null( $object ) )          $datetime = NULL;
 		else if ( is_string( $object ) && empty( $object ) )
 																						$datetime = NULL;
 		else if ( $object === FALSE )           $datetime = NULL; // Happens when object->property fails
-		else if ( $object instanceof DateTime ) $datetime = &$object;
+		else if ( $object instanceof DateTime ) $datetime = new CB2_DateTime( $object );
+		else if ( $object instanceof CB2_DateTime ) $datetime = $object;
 		else if ( is_numeric( $object ) && $object > $epoch_min )
 																						$datetime = $now->setTimestamp( (int) $object );
-		else if ( is_string( $object ) )        $datetime = new DateTime( $object );
+		else if ( is_string( $object ) )        $datetime = new CB2_DateTime( $object );
 		else if ( is_array( $object ) && isset( $object['date'] ) ) {
 			$string = trim( implode( ' ', $object ) );
-			if ( $string ) $datetime = new DateTime( $string );
+			if ( $string ) $datetime = new CB2_DateTime( $string );
 		} else {
 			krumo( $object );
 			throw new Exception( "[$name] has unhandled datetime type" );
@@ -494,7 +495,7 @@ class CB2_Query {
 				$new_value = self::to_object( $name, $value );
 				if ( $new_value !== $value ) {
 					print( ' =&gt; ' );
-					if      ( $new_value instanceof DateTime ) print( 'new DateTime(' . $new_value->format( CB2_Database::$database_datetime_format ) . ')' );
+					if      ( $new_value instanceof DateTime ) print( 'new CB2_DateTime(' . $new_value->format( CB2_Database::$database_datetime_format ) . ')' );
 					else if ( is_object( $new_value ) ) krumo( $new_value );
 					else if ( is_array(  $new_value ) ) krumo( $new_value );
 					else print( $new_value );
@@ -562,6 +563,36 @@ class CB2_Query {
 		);
   }
 
+  static public function array_walk_paths( &$array, $object ) {
+		array_walk_recursive( $array, array( 'CB2_Query', 'array_walk_paths_callback' ), $object );
+  }
+
+  static public function array_walk_paths_callback( &$value, $name, $object ) {
+		if ( is_string( $value ) && preg_match( '/%[^%]+%/', $value ) )
+			$value = self::object_value_path( $object, $value );
+  }
+
+	static public function object_value_path( $object, $spec ) {
+		// $spec = %object_property_name->object_property_name->...%
+		// e.g. date->time
+		$value = $spec;
+		if ( is_string( $spec ) && preg_match( '/%[^%]+%/', $spec ) ) {
+			$property_path = explode( '->', substr( $spec, 1, -1 ) );
+			$properties    = (array) $object;
+			foreach ( $property_path as $property_step ) {
+				if ( is_array( $properties ) && isset( $properties[$property_step] ) ) {
+					$value      = $properties[$property_step];
+					$properties = (array) $value;
+				} else if ( WP_DEBUG ) {
+					krumo( $properties, $property_step );
+					throw new Exception( "[$property_step] not found on object" );
+				}
+			}
+			// if ( WP_DEBUG ) print( "$spec = $value " );
+		}
+		return $value;
+	}
+
   static function substring_before( String $string, String $delimiter = '-' ) {
 		return ( strpos( $string, $delimiter ) === FALSE ? $string : substr( $string, 0, strpos( $string, $delimiter ) ) );
 	}
@@ -574,12 +605,13 @@ class CB2_Query {
 		return ( is_string( $object ) && preg_match( "/^[$type]:[0-9]+:/", $object ) );
 	}
 
-	static function implode( $delimiter, $array, $associative_delimiter = '=' ) {
+	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL ) {
 		$string = NULL;
 		if ( self::array_has_associative( $array ) ) {
 			$string = '';
 			foreach ( $array as $key => $value ) {
 				if ( $string ) $string .= $delimiter;
+				if ( $object ) $value = self::object_value_path( $object, $value );
 				$string .= "$key$associative_delimiter$value";
 			}
 		} else $string = implode( $delimiter, $array );

@@ -34,8 +34,8 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 
 	function __construct( DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = NULL, Array $query = NULL ) {
 		// Defaults
-		if ( is_null( $startdate ) ) $startdate   = ( isset( $_GET['startdate'] ) ? new DateTime( $_GET['startdate'] ) : new DateTime() );
-		if ( is_null( $enddate ) )   $enddate     = ( isset( $_GET['enddate'] )   ? new DateTime( $_GET['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
+		if ( is_null( $startdate ) ) $startdate   = ( isset( $_GET['startdate'] ) ? new CB2_DateTime( $_GET['startdate'] ) : new CB2_DateTime() );
+		if ( is_null( $enddate ) )   $enddate     = ( isset( $_GET['enddate'] )   ? new CB2_DateTime( $_GET['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
 		if ( is_null( $view_mode ) ) $view_mode   = ( isset( $_GET['view_mode'] ) ? $_GET['view_mode'] : CB2_Week::$static_post_type );
 		if ( is_null( $query ) )     $query       = array();
 
@@ -158,10 +158,10 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 	}
 
 	function overlaps_time( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
-		return ( $perioditem1->datetime_period_item_start >= $perioditem2->datetime_period_item_start
-			    && $perioditem1->datetime_period_item_start <= $perioditem2->datetime_period_item_end )
-			||   ( $perioditem1->datetime_period_item_end   >= $perioditem2->datetime_period_item_start
-			    && $perioditem1->datetime_period_item_end   <= $perioditem2->datetime_period_item_end );
+		return ( $perioditem1->datetime_period_item_start->moreThanOrEqual( $perioditem2->datetime_period_item_start )
+			    && $perioditem1->datetime_period_item_start->lessThanOrEqual( $perioditem2->datetime_period_item_end ) )
+			||   ( $perioditem1->datetime_period_item_end->moreThanOrEqual(   $perioditem2->datetime_period_item_start )
+			    && $perioditem1->datetime_period_item_end->lessThanOrEqual(   $perioditem2->datetime_period_item_end ) );
   }
 
   function overlaps_object( $object1, $object2 ) {

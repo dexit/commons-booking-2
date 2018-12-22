@@ -49,8 +49,7 @@ h3 a {
 	font-size:12px;
 	font-weight:normal;
 }
-body a.thickbox {
-	color:inherit;
+.cb2-bald {
 	text-decoration:none;
 }
 .cb2-actions form,
@@ -83,7 +82,7 @@ body a.thickbox {
 	color:#555;
 }
 body .cmb2-id-recurrence-sequence li,
-body .cmb2-id-period-openinghours li {
+body .cmb2-id-period-openinghours .cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td {
 	text-align:center;
 	border:1px solid #c7c7c7;
 	background-color:#e7e7e7;
