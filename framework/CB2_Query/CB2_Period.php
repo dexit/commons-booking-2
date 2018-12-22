@@ -145,7 +145,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			array_push( $metaboxes,
 				array(
 					'title'      => '<span class="cb2-todo">' . __( 'Opening Hours Wizard', 'commons-booking-2' ) . '</span>',
-					'show_on_cb' => array( 'CB2', 'is_not_published' ),
+					//'show_on_cb' => array( 'CB2', 'is_not_published' ),
 					'show_names' => TRUE,
 					'fields'     => array(
 						array(
