@@ -99,25 +99,30 @@ class CB2_Settings
      */
     public static function initialize()
     {
+    	require_once(CB2_PLUGIN_ROOT . 'framework/CB2_Settings/includes/settings_groups.php');
+
+			self::$plugin_settings_groups = $cb2_settings_groups;
+
 			self::settings_tabs();
 
 			// cmb2 action on metabox save
-			add_action('cmb2_save_options-page_fields', array( 'CB2_Settings','action_cmb2_save_object_type_fields'), 10, 4);
+			add_action('cmb2_save_options-page_fields', array( 'CB2_Settings','todo_action_cmb2_save_object_type_fields'), 10, 4);
 
 		}
 
     // define the cmb2_save_<object_type>_fields callback
-    public static function action_cmb2_save_object_type_fields($object_id, $this_cmb_id, $this_updated, $instance)
-            {
-								echo ("hello" );
-								var_dump( $this_cmb_id);
-            }
+    public static function todo_action_cmb2_save_object_type_fields($object_id, $this_cmb_id, $this_updated, $instance)
+			{
+					echo ("hello" );
+					var_dump( $this_cmb_id );
+					var_dump( $object_id );
+			}
     /**
-     * Add tabs
+     * Plugins Settings GUI: Screen
      *
      * @since 2.0.0
 		 *
-     * @return string $group_name
+     * @return string $html
      */
 
     public static function settings_screen( ) {
@@ -143,10 +148,6 @@ class CB2_Settings
      * Add tabs
      *
      * @since 2.0.0
-		 *
-		 * @param string $group_id
-     *
-     * @return string $group_name
      */
 
     public static function settings_tabs( )
@@ -162,14 +163,13 @@ class CB2_Settings
 			);
 			/* Tab: General */
 			self::add_settings_tab(
-							array(
-							'title' => __('General', 'commons-booking-2'),
-							'id' => 'general',
-							'tab_show' => true, // or callback
-							'content' => self::tab_general() // or callback
-							)
+					array(
+					'title' => __('General', 'commons-booking-2'),
+					'id' => 'general',
+					'tab_show' => true, // or callback
+					'content' => self::tab_general() // or callback
+					)
 			);
-
 			/* Tab: bookings */
 			self::add_settings_tab(
 					array(
@@ -218,18 +218,24 @@ class CB2_Settings
 
     }
     /**
-     * Get settings group name
+     * Get settings group
      *
      * @since 2.0.0
 		 *
-		 * @param string $group_id
+		 * @param string $group_name
      *
-     * @return string $group_name
+     * @return array $group
      */
 
-    public static function get_group_name( )
+    public static function get_settings_group( $group_name )
     {
-			return 'Codes are here';
+			$settings = CB2_Settings::$plugin_settings_groups;
+
+			if (array_key_exists($group_name, $settings)) {
+					return $settings[$group_name];
+			}		else {
+				return false;
+			}
     }
 
     /**
@@ -241,28 +247,8 @@ class CB2_Settings
      */
     public static function tab_general( )
     {
-			$metabox_pages = array(
-				'title' => 'Plugin pages',
-				'id' => self::$settings_prefix . 'pages',
-				'description' => 'Set up the plugin pages.',
-				'fields' => array(
-					array(
-						'name' => __('Booking Finalize', 'commons-booking-2'),
-						'desc' => __('Shows booking details, asks for user confirmation', 'commons-booking-2'),
-						'id' => 'page-booking-finalize',
-						'type' => 'select',
-						'options' => cb2_form_get_pages()
-						),
-					array(
-						'name' => __('Booking confirmation', 'commons-booking-2'),
-						'desc' => __('Displays successful booking message, booking details and codes (if enabled).', 'commons-booking-2'),
-						'id' => 'page-booking-confirmed',
-						'type' => 'select',
-						'options' => cb2_form_get_pages()
-						),
-        )
-			);
-			return self::render_settings_group_metabox ( $metabox_pages );
+			$metabox = self::get_settings_group( 'pages' );
+			return self::render_settings_group_metabox ( $metabox );
     }
     /**
      * Contents for the plugin settings tab "features"
@@ -273,34 +259,7 @@ class CB2_Settings
      */
     public static function tab_features( )
     {
-			$metabox = array(
-				'title' => 'Plugin features',
-				'id' => self::$settings_prefix . 'features',
-				'description' => 'Enable or disable plugin features site-wide. You can configure each feature´s settings after save.',
-				'fields' => array(
-					array(
-						'name' => __('Enable Maps', 'commons-booking-2'),
-						'description' => __('Enable maps and geocoding of adresses.', 'commons-booking-2'),
-						'id' => 'enable-maps',
-						'type' => 'checkbox',
-						'default' => cmb2_set_checkbox_default_for_new_post(false)
-						),
-					array(
-						'name' => __('Enable Codes', 'commons-booking-2'),
-						'description' => __('Enable codes for the booking process.', 'commons-booking-2'),
-						'id' => 'enable-codes',
-						'type' => 'checkbox',
-						'default' => cmb2_set_checkbox_default_for_new_post(false),
-						),
-					array(
-						'name' => __('Enable Holidays', 'commons-booking-2'),
-						'description' => __('Show holidays on the calendar, automatically close locations.', 'commons-booking-2'),
-						'id' => 'enable-holidays',
-						'type' => 'checkbox',
-						'default' => cmb2_set_checkbox_default_for_new_post(false),
-						),
-        )
-			);
+			$metabox = self::get_settings_group('features');
 			return self::render_settings_group_metabox ( $metabox );
     }
     /**
@@ -313,54 +272,10 @@ class CB2_Settings
 
     public static function tab_bookings( )
     {
-			$metabox_permissions = array(
-				'title' => 'Permissions',
-				'id' => self::$settings_prefix . 'permissions',
-				'description' => 'this is the description',
-				'fields' => array(
-					array(
-						'name' => __('Allow booking for', 'commons-booking-2'),
-						'id' => 'user-roles',
-						'type' => 'multicheck',
-						'options' => cb2_form_get_user_roles()
-						),
-					array(
-						'name' => __('Approval needed', 'commons-booking-2'),
-						'desc' => __('Bookings need to be approved by an admin', 'commons-booking-2'),
-						'id' => 'approval-needed',
-						'type' => 'checkbox',
-						'default' => cmb2_set_checkbox_default_for_new_post(false)
-					)
-				)
-			);
-			$metabox_booking_options = array(
-				'title' => 'Usage restrictions',
-				'id' => self::$settings_prefix . 'booking-options',
-				'description' => 'this is the description',
-				'fields' => array(
-					array(
-						'name' => __('Minimum usage time', 'commons-booking-2'),
-						'id' => 'min-usage',
-						'desc' => __('hh:mm', 'commons-booking-2'),
-						'type' => 'text_time',
-						'time_format' => 'H:i',
-						),
-					array(
-						'name' => __('Maximum usage time', 'commons-booking-2'),
-						'id' => 'max-usage',
-						'desc' => __('hh:mm', 'commons-booking-2'),
-						'type' => 'text_time',
-						'time_format' => 'H:i',
-						),
-					array(
-						'name' => __('Approval needed', 'commons-booking-2'),
-						'desc' => __('Bookings need to be approved by an admin', 'commons-booking-2'),
-						'id' => 'approval-needed',
-						'type' => 'checkbox',
-						'default' => cmb2_set_checkbox_default_for_new_post(false)
-					)
-				)
-			);
+			$metabox_permissions = self::get_settings_group('permissions');
+
+			$metabox_booking_options = self::get_settings_group('booking_options');
+
 			return self::render_settings_group_metabox ( $metabox_permissions ) . self::render_settings_group_metabox ( $metabox_booking_options );
     }
     /**
@@ -373,21 +288,8 @@ class CB2_Settings
 
     public static function tab_maps( )
     {
-      $metabox = array(
-        'title' => 'Maps',
-				'id' => self::$settings_prefix . 'maps',
-				'description' => 'this is the description',
-      	'fields' => array(
-					array(
-					'name' => __('API Key', 'commons-booking-2'),
-					'desc' => __('Get your API key at https://geocoder.opencagedata.com/users/sign_up, comma-separated', 'commons-booking-2'),
-					'id' => 'api-key',
-					'type' => 'text',
-					'default' => '',
-					),
-				)
-      );
-    return self::render_settings_group_metabox($metabox);
+			$metabox = self::get_settings_group('maps');
+    	return self::render_settings_group_metabox($metabox);
 
     }
     /**
@@ -416,7 +318,7 @@ class CB2_Settings
 		}
 
     /**
-     * Strings (for possible overwrite in the backend
+     * Strings (Gui Strings for the front-end)
      *
      * @since 2.0.0
      *
@@ -494,7 +396,7 @@ class CB2_Settings
 			}
 		}
     /**
-     * Locations meta box: opening times template
+     * Enable Settings to be overwritten in timeframe admin.
      *
      * @since 2.0.0
      *
@@ -504,7 +406,7 @@ class CB2_Settings
     public static function cb2_enable_timeframe_option($group_id)
     {
 
-        array_push(self::$timeframe_options, $group_id);
+        array_push( self::$timeframe_options, $group_id );
 
     }
     /**
@@ -596,7 +498,7 @@ class CB2_Settings
 					</div>' ,
 					$settings_group['title'],
 					$settings_group['description'],
-					cmb2_metabox_form($settings_group, $settings_group['id'], array ('echo' => FALSE ))
+					cmb2_metabox_form( $settings_group, $settings_group['id'], array ('echo' => FALSE ))
 				);
 			return $html;
     }
