@@ -78,18 +78,17 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         return $object;
     }
 
-    public static function &factory($ID)
+    public static function &factory( Int $ID )
     {
         // Design Patterns: Factory Singleton with Multiton
         $object = null;
+        $key    = $ID;
 
-        if ($ID) {
-            if (isset(self::$all[$ID])) {
-                $object = self::$all[$ID];
-            } else {
-                $object = new self($ID);
-            }
-        }
+        if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) {
+						$object = self::$all[$ID];
+				} else {
+						$object = new self($ID);
+				}
 
         return $object;
     }
@@ -236,13 +235,14 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 print("<div class='cb2-column-actions'>");
                 $page       = 'cb2-post-new';
                 $post_title = __('Booking of') . " $this->post_title";
+								$booked_ID  = CB2_PeriodStatusType_Booked::bigID();
                 $add_new_booking_text = __('add new booking');
-                if ($has_locations) {
-                    $add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_id=2&post_title=$post_title";
+                if ( $has_locations ) {
+                    $add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
                     print(" <a href='$add_link'>$add_new_booking_text</a>");
                     $page       = 'cb2-calendar';
                     $view_booking_text = __('view in calendar');
-                    $view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_id=2";
+                    $view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
                     print(" | <a href='$view_link'>$view_booking_text</a>");
                 } else {
                     print('<span class="cb2-no-data-notice">' . __('Add a Location first') . '</span>');

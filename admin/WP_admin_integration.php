@@ -193,10 +193,14 @@ function cb2_admin_pages() {
 }
 
 function cb2_metaboxes() {
-	$hidden_class = 'hidden';
+	$hidden_class      = 'hidden';
+	$metabox_wizard_ids = ( isset( $_GET['metabox_wizard_ids'] ) ? $_GET['metabox_wizard_ids'] : '' );
+	$metabox_wizard_ids = ( $metabox_wizard_ids ? explode( ',', $metabox_wizard_ids ) : array() );
+	$requests_only      = (bool) count( $metabox_wizard_ids );
 
 	foreach ( CB2_PostNavigator::post_type_classes() as $post_type => $Class ) {
-		if ( method_exists( $Class, 'metaboxes' ) ) {
+		// TODO: inheritance is running this multiple times for the CB2_PeriodEntity_*
+		if ( CB2_Query::has_own_method( $Class, 'metaboxes' ) ) {
 			foreach ( $Class::metaboxes() as $i => $metabox ) {
 				if ( ! isset( $metabox['id'] ) )           $metabox['id']           = "{$Class}_metabox_{$i}";
 				if ( ! isset( $metabox['object_types'] ) ) $metabox['object_types'] = array( $post_type );
@@ -205,49 +209,60 @@ function cb2_metaboxes() {
 				$id               = $metabox['id'];
 				$debug_only_value = ( isset( $metabox['debug-only'] ) ? $metabox['debug-only'] : FALSE );
 				$debug_only       = ( $debug_only_value == TRUE || $debug_only_value == 'yes' || $debug_only_value == '1' );
+				$on_request       = ( isset( $metabox['on_request'] ) ? $metabox['on_request'] : FALSE );
+				$requested        = in_array( $id, $metabox_wizard_ids );
+				$include_metabox  = ( ! $requests_only && ! $on_request ) || ( $requests_only && $requested );
 
-				// Meta-box level visibility by query-string
-				$query_name = "{$id}_show";
-				$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
-				$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
-				if ( $query_hide || ( $debug_only && ! WP_DEBUG ) ) {
-					// TODO: inject this CSS properly
-					print( "<style>#$id {display:none;}</style>" );
-					// This below line affects ALL fields, not the container
-					//$metabox['classes'] = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
-				}
-
-				if ( $debug_only )
-					$metabox['title'] = '<span class="cb2-WP_DEBUG">' . ( isset( $metabox['title'] ) ? $metabox['title'] : '' ) . '</span>';
-
-				foreach ( $metabox['fields'] as &$field ) {
-					$id   = $field['id'];
-					$name = ( isset( $field['name'] ) ? $field['name'] : '<no field name>' );
-					$type = $field['type'];
-
-					// Live hiding and showing of fields by query-string
+				if ( $include_metabox ) {
+					// Meta-box level visibility by query-string
 					$query_name = "{$id}_show";
 					$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
 					$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
-					if ( $query_hide ) {
-						$optional_text     = __( 'optional' );
-						$field['classes']  = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
-						$field['name']     = ( isset( $field['name'] ) ? $field['name'] . " ($optional_text)" : '' );
+					if ( $query_hide || ( $debug_only && ! WP_DEBUG ) ) {
+						// TODO: inject this CSS properly
+						print( "<style>#$id {display:none;}</style>" );
+						// This below line affects ALL fields, not the container
+						//$metabox['classes'] = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
 					}
 
-					if ( WP_DEBUG ) {
-						// Extended checks
-						switch ( $type ) {
-							case 'text_date':
-							case 'text_datetime_timestamp':
-								if ( $field['date_format'] != CB2_Database::$database_date_format )
-									throw new Exception( "[$name] metabox field needs the CB2_Database::\$database_date_format" );
-								break;
+					if ( $debug_only )
+						$metabox['title'] = '<span class="cb2-WP_DEBUG">' . ( isset( $metabox['title'] ) ? $metabox['title'] : '' ) . '</span>';
+
+					foreach ( $metabox['fields'] as &$field ) {
+						$field_id = $field['id'];
+						$name     = ( isset( $field['name'] ) ? $field['name'] : '<no field name>' );
+						$type     = $field['type'];
+
+						// Live hiding and showing of fields by query-string
+						$query_name = "{$field_id}_show";
+						$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
+						$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
+						if ( $query_hide ) {
+							$optional_text     = __( 'optional' );
+							$field['classes']  = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
+							$field['name']     = ( isset( $field['name'] ) ? $field['name'] . " ($optional_text)" : '' );
+						}
+
+						if ( WP_DEBUG ) {
+							// Extended type checks
+							switch ( $type ) {
+								case 'text_date':
+								case 'text_datetime_timestamp':
+									if ( $field['date_format'] != CB2_Database::$database_date_format )
+										throw new Exception( "[$name] metabox field needs the CB2_Database::\$database_date_format" );
+									break;
+							}
+
+							// Check callbacks are valid
+							foreach ( $field as $field_name => $field_value ) {
+								if ( substr( $field_name, -3 ) == '_cb' && ! is_callable( $field_value ) )
+									throw new Exception( "metabox [$id/$field_name] is not callable" );
+							}
 						}
 					}
-				}
 
-				new_cmb2_box( $metabox );
+					new_cmb2_box( $metabox );
+				} // on_request
 			}
 		}
 	}
@@ -502,7 +517,7 @@ function cb2_reflection() {
 
 	$DB_NAME = DB_NAME;
 
-	print( "<h1>Reflection ($DB_NAME)</h1>" );
+	print( "<h1>Reflection (Database `$DB_NAME`)</h1>" );
 	print( "<p>A note on collation: string literals, e.g. 'period', can cause collation issues.
 		By default they will adopt the <b>server</b> collation, not the database collation.
 		Thus any database field data being concatenated with them or compared to them will cause an error.
@@ -542,7 +557,7 @@ function cb2_reflection() {
 	if ( WP_DEBUG ) print( "<br/><form><div>
 			<input type='hidden' name='page' value='cb2-reflection'/>
 			<input type='hidden' name='section' value='reinstall'>
-			<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='re-install'/>
+			<input onclick='$processing' disabled='1' class='cb2-submit cb2-dangerous' type='submit' value='re-install (4 views out-of-line)'/>
 			<input name='password' placeholder='password (fryace4)' value=''>
 		</div></form>" );
 	if ( WP_DEBUG ) print( " | <form><div>
@@ -637,25 +652,34 @@ function cb2_reflection() {
 
 			if ( $table_definitions ) {
 				foreach ( $table_definitions as $table_definition ) {
-					$table_name = ( $table_definition ? $table_definition['name'] : NULL );
+					$existing_columns = array();
+					$table_name    = $table_definition['name'];
+					$pseudo        = ( isset( $table_definition['pseudo'] )  ? $table_definition['pseudo']  : FALSE );
+					$pseudo_class  = ( $pseudo ? 'cb2-pseudo' : 'cb2-real' );
+					$pseudo_title  = ( $pseudo ? ' <b style="color:red">(pseudo)</b>' : '' );
+					$managed       = ( isset( $table_definition['managed'] ) ? $table_definition['managed'] : TRUE );
+					$managed_class = ( $managed ? '' : 'cb2-unmanaged' );
+					$managed_title = ( $managed ? '' : ' <b style="color:red">(unmanaged)</b>' );
 
 					// ----------------------------------------------- TABLE
-					print( "<table class='cb2-database-table'><thead>" );
-					print( "<tr><th colspan='100'><i class='cb2-database-prefix'>$wpdb->prefix</i>$table_name</th></tr>" );
+					print( "<table class='cb2-database-table $managed_class'><thead>" );
+					print( "<tr><th colspan='100'><i class='cb2-database-prefix'>$wpdb->prefix</i>$table_name$pseudo_title$managed_title</th></tr>" );
 					print( "<tr>" );
 					foreach ( CB2_Database::$columns as $column )
 						print( "<th>$column</th>" );
 					print( "</tr>" );
 					print( "</thead><tbody>" );
-					$existing_columns = $wpdb->get_results( "DESC {$wpdb->prefix}$table_name;", OBJECT_K );
-					if ( count( $existing_columns ) > count( $table_definition['columns'] ) )
-						print( "<div class='cb2-warning'>$table_name has new columns</div>");
+					if ( ! $pseudo ) {
+						$existing_columns = $wpdb->get_results( "DESC {$wpdb->prefix}$table_name;", OBJECT_K );
+						if ( count( $existing_columns ) > count( $table_definition['columns'] ) )
+							print( "<div class='cb2-warning'>$table_name has new columns</div>");
+					}
 
 					foreach ( $table_definition['columns'] as $name => $column_definition ) {
 						print( "<tr>" );
 
 						print( "<td>$name" );
-						if ( ! isset( $existing_columns[$name] ) )
+						if ( ! $pseudo && ! isset( $existing_columns[$name] ) )
 							print( " <span class='cb2-warning'>not found</span>" );
 						print( "</td>" );
 
@@ -678,11 +702,13 @@ function cb2_reflection() {
 					print( "</tbody></table>" );
 
 					// ----------------------------------------------- stats
-					$row_count  = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}$table_name" );
-					$class      = ( $row_count >= 1000 ? 'cb2-warning' : '' );
-					print( "<div class='$class'>row count: $row_count</div>" );
-					if ( ! in_array( "$wpdb->prefix$table_name", $exsiting_tables ) )
-						print( "<div class='cb2-warning'>[$wpdb->prefix$table_name] not found in the database</div>" );
+					if ( ! $pseudo ) {
+						$row_count  = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}$table_name" );
+						$class      = ( $row_count >= 1000 ? 'cb2-warning' : '' );
+						print( "<div class='$class'>row count: $row_count</div>" );
+						if ( ! in_array( "$wpdb->prefix$table_name", $exsiting_tables ) )
+							print( "<div class='cb2-warning'>[$wpdb->prefix$table_name] not found in the database</div>" );
+					}
 
 					// ----------------------------------------------- TRIGGERS
 					if ( isset( $table_definition['triggers'] ) ) {
@@ -707,30 +733,30 @@ function cb2_reflection() {
 						}
 					}
 				}
+			}
 
-				// ----------------------------------------------- VIEWS
-				if ( count( $views ) ) {
-					print( "<div>views: <ul class='cb2-database-views'>" );
-					$first = '';
-					foreach ( $views as $name => $view_body ) {
-						print( "<li>$first$name" );
-						$full_name = "$wpdb->prefix$name";
-						$view_body = CB2_Database::check_fuction_bodies( "view::$name", $view_body );
-						if ( ! isset( $existing_views[$full_name] ) )
-							print( " <span class='cb2-warning'>does not exist</span>" );
-						else if ( $existing_views[$full_name] != $view_body ) {
-							krumo($existing_views[$full_name], $view_body);
-							print( " <span class='cb2-warning'>has different body</span>" );
-						} else {
-							$row_count = $wpdb->get_var( "SELECT count(*) from $full_name" );
-							$class     = ( $row_count >= 1000 ? 'cb2-warning' : '' );
-							print( "&nbsp;<span class='$class'>($row_count)</span>" );
-						}
-						print( '</li>' );
-						$first = ', ';
+			// ----------------------------------------------- VIEWS
+			if ( count( $views ) ) {
+				print( "<div>views: <ul class='cb2-database-views'>" );
+				$first = '';
+				foreach ( $views as $name => $view_body ) {
+					print( "<li>$first$name" );
+					$full_name = "$wpdb->prefix$name";
+					$view_body = CB2_Database::check_fuction_bodies( "view::$name", $view_body );
+					if ( ! isset( $existing_views[$full_name] ) )
+						print( " <span class='cb2-warning'>does not exist</span>" );
+					else if ( $existing_views[$full_name] != $view_body ) {
+						krumo($existing_views[$full_name], $view_body);
+						print( " <span class='cb2-warning'>has different body</span>" );
+					} else {
+						$row_count = $wpdb->get_var( "SELECT count(*) from $full_name" );
+						$class     = ( $row_count >= 1000 ? 'cb2-warning' : '' );
+						print( "&nbsp;<span class='$class'>($row_count)</span>" );
 					}
-					print( "</ul></div>" );
+					print( '</li>' );
+					$first = ', ';
 				}
+				print( "</ul></div>" );
 			}
 		}
 

@@ -4,11 +4,18 @@
 	</header>
 
 	<div class="entry-content">
-		<table class="cb2-subposts"><tbody>
-			<?php CB2::the_inner_loop( NULL, 'list', 'openinghours' ); ?>
-		</tbody></table>
+		<?php CB2::the_inner_loop( NULL, 'list', 'openinghours' ); ?>
 
-		<?php $add_times_text = __( 'Add Times' ); ?>
+		<div><select name="period_IDs[]">
+			<option value="<?php the_date( 'D' ); ?>:08:00-12:00"/>8:00 am - 12:00 pm</option>
+			<option value=""/>-- select --</option>
+		</select></div>
+		<div><select name="period_IDs[]">
+			<option value=""/>-- select --</option>
+			<option value="<?php echo get_the_date( 'D' ); ?>:13:00-18:00"/>1:00 pm - 6:00 pm</option>
+		</select></div>
+
+		<?php $add_times_text = __( 'Add Slot' ); ?>
 		<a class="thickbox" name="opening times" href="?inlineId=day_popup_<?php the_ID(); ?>&amp;title=opening+hours&amp;width=300&amp;height=500&amp;#TB_inline">
 			<button class="cb2-perioditem-selector"><?php echo $add_times_text; ?></button>
 		</a>

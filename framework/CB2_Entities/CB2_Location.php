@@ -92,15 +92,13 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		return $object;
   }
 
-  static function factory( $ID ) {
+  static function factory( Int $ID ) {
     // Design Patterns: Factory Singleton with Multiton
     $object = NULL;
     $key    = $ID;
 
-    if ( $ID ) {
-			if ( isset( self::$all[$ID] ) ) $object = self::$all[$ID];
-			else $object = new self( $ID );
-		}
+    if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) $object = self::$all[$key];
+		else $object = new self( $ID );
 
     return $object;
   }
@@ -182,13 +180,14 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				}
 				print( "<div class='cb2-column-actions'>" );
 				$page       = 'cb2-post-new';
+				$booked_ID  = CB2_PeriodStatusType_Booked::bigID();
 				$add_new_text = __( 'add new booking' );
 				$post_title = __( 'Booking at' ) . " $this->post_title";
-				$add_link   = "admin.php?page=$page&location_ID=$this->ID&post_type=periodent-user&period_status_type_id=2&post_title=$post_title";
+				$add_link   = "admin.php?page=$page&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
 				print( " <a href='$add_link'>$add_new_text</a>" );
 				$page       = 'cb2-calendar';
 				$view_text  = __( 'view in calendar' );
-				$view_link  = "admin.php?page=$page&location_ID=$this->ID&period_status_type_id=2";
+				$view_link  = "admin.php?page=$page&location_ID=$this->ID&period_status_type_ID=$booked_ID";
 				print( " | <a href='$view_link'>$view_text</a>" );
 				print( '</div>' );
 				break;
@@ -238,9 +237,13 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				$page               = 'cb2-post-new';
 				$post_type          = 'periodent-location';
 				$settings           = array(
+					// Non-wizard setup of advanced
 					'recurrence_type'       => 'D',
 					'recurrence_type_show'  => 'no',
 					'CB2_PeriodEntity_Location_metabox_0_show' => 'no',
+
+					// Wizard setup
+					'metabox_wizard_ids'    => 'CB2_PeriodEntity_Location_metabox_openinghours_wizard',
 					'title_show'            => 'no',
 					'period_status_type_id' => 4,
 					'post_title'            => "Opening Hours for $this->post_title",

@@ -185,8 +185,7 @@ abstract class CB2_PostNavigator extends stdClass {
 		$no_excpeption = ( $property_name === FALSE );
 
 		if ( $is_ID ) {
-			$is_plural     = ( substr( $ID_property_name, -1 ) == 's' );
-			$base_name     = ( $is_plural ? substr( $ID_property_name, 0, -1 ) : $ID_property_name ); // period_group_ID
+			$is_plural     = CB2_Query::is_plural( $ID_property_name, $base_name );
 			$property_type = substr( $base_name, 0, -3 );                // period_group
 			$property_name = $property_type . ( $is_plural ? 's' : '' ); // period_group(s)
 
@@ -210,6 +209,7 @@ abstract class CB2_PostNavigator extends stdClass {
 		// "create": create a placeholder object that will be saved to the database later, ID = 0
 		// If $ID_property_name is plural, an array will be returned
 		$TargetClass = self::class_from_ID_property_name( $ID_property_name, $object_property_name, $plural, $Class );
+		$from_IDs    = FALSE;
 
 		if ( WP_DEBUG ) {
 			if ( ! $TargetClass )
@@ -219,22 +219,24 @@ abstract class CB2_PostNavigator extends stdClass {
 				throw new Exception( "get_or_create_new($TargetClass) not derived from CB2_PostNavigator" );
 		}
 
-		if ( ! isset( $properties[ $ID_property_name ] ) ) {
+		// For example: period_IDs or periods
+		if      ( isset( $properties[ $ID_property_name ] ) ) {
+			$property_ID_value = $properties[ $ID_property_name ];
+			$from_IDs          = TRUE;
+		} else if ( isset( $properties[ $object_property_name ] ) ) {
+			$property_ID_value = $properties[ $object_property_name ];
+		} else {
 			krumo( $properties );
-			throw new Exception( "$ID_property_name required" );
+			throw new Exception( "{$TargetClass}::[$ID_property_name] or [$object_property_name] required" );
 		}
-
-		$property_ID_value = $properties[ $ID_property_name ];
-
-		if ( is_object( $property_ID_value ) )
-			throw new Exception( "value for [$ID_property_name] is already an object. get_or_create_new() is for IDs" );
 
 		if ( $plural ) {
 			// -------------------------------------------------------- Plural
 			$object = array();
+			$ID_property_name_singular = substr( $ID_property_name, 0, -1 );
 
 			// Cumulative: if the object property is already set, then add to it
-			if ( isset( $properties[ $object_property_name ] ) ) {
+			if ( $from_IDs && isset( $properties[ $object_property_name ] ) ) {
 				$object = $properties[ $object_property_name ];
 				if ( ! is_array( $object ) ) {
 					krumo( $object );
@@ -247,13 +249,9 @@ abstract class CB2_PostNavigator extends stdClass {
 				throw new Exception( "$ID_property_name needs to be an array" );
 			}
 			foreach ( $property_ID_value as $array_ID_value ) {
-				if ( ! is_numeric( $array_ID_value ) ) {
-					krumo( $array_ID_value );
-					throw new Exception( "$ID_property_name must be numeric" );
-				}
 				$subobject = self::get_or_create_new_internal(
-					$ID_property_name,
-					(int) $array_ID_value,
+					$ID_property_name_singular,
+					$array_ID_value,
 					$TargetClass,
 					$properties,
 					$force_properties,
@@ -263,13 +261,9 @@ abstract class CB2_PostNavigator extends stdClass {
 			}
 		} else {
 			// -------------------------------------------------------- Singular
-			if ( ! is_numeric( $property_ID_value ) ) {
-				krumo( $property_ID_value );
-				throw new Exception( "$ID_property_name must be numeric" );
-			}
 			$object = self::get_or_create_new_internal(
 				$ID_property_name,
-				(int) $property_ID_value,
+				$property_ID_value,
 				$TargetClass,
 				$properties,
 				$force_properties,
@@ -284,17 +278,34 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $object;
 	}
 
-	private static function get_or_create_new_internal( String $ID_property_name, Int $property_ID_value, String $TargetClass, Array $properties, Bool $force_properties, Object $instance_container = NULL ) {
-		// ID is very generic in the case of multiple object properties
-		// also, the specific ID, e.g. period_id, is not available in this Array case
-		// let us use the value we have
-		$original_ID      = $properties['ID'];
-		$properties['ID'] = $property_ID_value;
+	private static function get_or_create_new_internal( String $ID_property_name, $property_ID_value, String $TargetClass, Array $properties, Bool $force_properties, Object $instance_container = NULL ) {
+		if ( is_array( $property_ID_value ) ) {
+			// Sub-properties defined in sub-associative array
+			$properties = $property_ID_value;
+			if ( ! isset( $properties['ID'] ) ) {
+				krumo( $properties );
+				throw new Exception( "$ID_property_name ID not defined in sub-property array" );
+			}
+			$property_ID_value = $properties['ID'];
+		}
+
+		if ( ! is_numeric( $property_ID_value ) ) {
+			krumo( $property_ID_value );
+			throw new Exception( "$ID_property_name ID not numeric" );
+		}
+		if ( ! $property_ID_value ) {
+			CB2_Query::debug_print_backtrace();
+			throw new Exception( "{$TargetClass}::$ID_property_name == 0" );
+		}
+
+		$property_ID_value = (int) $property_ID_value;
+		$original_ID       = $properties['ID'];
+		$properties['ID']  = $property_ID_value;
 		$object            = ( $property_ID_value == CB2_CREATE_NEW || $force_properties
 			? $TargetClass::factory_from_properties( $properties, $instance_container, $force_properties )
 			: CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container )
 		);
-		$properties['ID'] = $original_ID;
+		$properties['ID']  = $original_ID;
 
 		// Is this object created with intention to save?
 		// this could also be ascertained by the object itself:
@@ -302,7 +313,7 @@ abstract class CB2_PostNavigator extends stdClass {
 		// but here we allow the interface to indicate its intentions instead
 		$save_indicator_name = "{$ID_property_name}_save";
 		if ( isset( $properties[$save_indicator_name] ) )
-			$object->set_saveable( (Bool) $properties[$save_indicator_name] );
+			$object->set_saveable( (bool) $properties[$save_indicator_name] );
 
 		return $object;
 	}
@@ -337,7 +348,7 @@ abstract class CB2_PostNavigator extends stdClass {
 			$wp_is_post_property = isset( CB2_Post::$POST_PROPERTIES[$name] );
 			if ( $wp_is_post_property ) {
 				try {
-					$new_value = CB2_Query::to_object( $name, $from_value );
+					$new_value = CB2_Query::to_object( $name, $from_value, FALSE ); // Do not convert dates
 				} catch ( Exception $ex ) {
 					krumo( $properties );
 					throw $ex;

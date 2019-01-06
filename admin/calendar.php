@@ -78,7 +78,7 @@ $period_entity_options = CB2_Forms::select_options( CB2_Forms::period_entity_opt
 $output_options    = CB2_Forms::select_options( array( 'HTML' => 'HTML', 'JSON' => 'JSON' ), $output_type );
 $schema_options    = CB2_Forms::select_options( CB2_Forms::schema_options(), $schema_type );
 $template_options  = CB2_Forms::select_options( array( 'available' => 'available' ), $template_part );
-$display_strategys = CB2_Forms::select_options( CB2_Forms::subclasses( 'CB2_PeriodInteractionStrategy' ), $display_strategy, TRUE, TRUE );
+$display_strategys = CB2_Forms::select_options( CB2_Query::subclasses( 'CB2_PeriodInteractionStrategy' ), $display_strategy, TRUE, TRUE );
 $class_WP_DEBUG    = ( WP_DEBUG ? '' : 'hidden' );
 $show_overridden_periods_checked = ( $show_overridden_periods ? 'checked="1"' : '' );
 
@@ -101,7 +101,7 @@ print( <<<HTML
 		$user_text:<select name="user_ID">$user_options</select>
 		<div style='display:$extended_class'>
 			<input type="hidden" name="extended$extended_class" value="1"/>
-			Period Status:
+			Period Status Type:
 				$period_status_type_options_html
 				<select name="period_status_type_ID">$period_status_type_options</select>
 			Period Entity:
@@ -138,8 +138,8 @@ if ( WP_DEBUG ) {
 		print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
 			<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
 			<div style='margin-left:5px;color:#448;'>$query->request</div></div>" );
-		print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
-		// krumo( $query );
+		//print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
+		krumo( $query );
 		print( "</div></div>" );
 	} else print( "<div>No posts returned!</div>" );
 }

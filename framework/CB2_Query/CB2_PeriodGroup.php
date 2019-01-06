@@ -102,7 +102,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		$periods = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -333,6 +333,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		$wpdb->delete( $table, array(
 			'period_group_id' => $this->id()
 		) );
+
 		foreach ( $this->periods as $period ) {
 			$wpdb->insert( $table, array(
 				'period_group_id' => $this->id(),

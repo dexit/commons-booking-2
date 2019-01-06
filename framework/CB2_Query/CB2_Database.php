@@ -4,6 +4,7 @@ define( 'CB2_TINYINT',   'TINYINT' );
 define( 'CB2_BIGINT',    'BIGINT' );
 define( 'CB2_VARCHAR',   'VARCHAR' );
 define( 'CB2_CHAR',      'CHAR' );
+define( 'CB2_TEXT',      'TEXT' );
 define( 'CB2_LONGTEXT',  'LONGTEXT' );
 define( 'CB2_DATETIME',  'DATETIME' );
 define( 'CB2_TIMESTAMP', 'TIMESTAMP' );
@@ -140,35 +141,39 @@ class CB2_Database {
 		$schema_array = self::schema_array();
 
 		foreach ( $schema_array as $Class => $objects ) {
-				if ( isset( $objects['table'] ) ) {
-					foreach ( $objects['table'] as $table ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_table_schema_SQL( $wpdb->prefix, $table ) );
-					}
+			if ( isset( $objects['table'] ) ) {
+				foreach ( $objects['table'] as $table ) {
+					$pseudo  = ( isset( $table['pseudo'] )  ? $table['pseudo']  : FALSE );
+					$managed = ( isset( $table['managed'] ) ? $table['managed'] : TRUE );
+					if ( ! $pseudo && $managed ) $install_SQLs = array_merge( $install_SQLs, self::database_table_schema_SQL( $wpdb->prefix, $table ) );
 				}
+			}
 		}
 
 		foreach ( $schema_array as $Class => $objects ) {
-				if ( isset( $objects['data'] ) ) {
-					// TODO: only the primary table can be populated at the moment
-					$table_name = $Class::database_table_name();
-					$install_SQLs = array_merge( $install_SQLs, self::database_data_SQL( $wpdb->prefix, $table_name, $objects['data'] ) );
-				}
+			if ( isset( $objects['data'] ) ) {
+				// TODO: only the primary table can be populated at the moment
+				$table_name = $Class::database_table_name();
+				$install_SQLs = array_merge( $install_SQLs, self::database_data_SQL( $wpdb->prefix, $table_name, $objects['data'] ) );
+			}
 		}
 
 		foreach ( $schema_array as $Class => $objects ) {
-				if ( isset( $objects['table'] ) ) {
-					foreach ( $objects['table'] as $table ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_table_constraints_SQL( $wpdb->prefix, $table ) );
-					}
+			if ( isset( $objects['table'] ) ) {
+				foreach ( $objects['table'] as $table ) {
+					$pseudo  = ( isset( $table['pseudo'] )  ? $table['pseudo']  : FALSE );
+					$managed = ( isset( $table['managed'] ) ? $table['managed'] : TRUE );
+					if ( ! $pseudo && $managed ) $install_SQLs = array_merge( $install_SQLs, self::database_table_constraints_SQL( $wpdb->prefix, $table ) );
 				}
+			}
 		}
 
 		foreach ( $schema_array as $Class => $objects ) {
-				if ( isset( $objects['views'] ) ) {
-					foreach ( $objects['views'] as $name => $body ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body ) );
-					}
+			if ( isset( $objects['views'] ) ) {
+				foreach ( $objects['views'] as $name => $body ) {
+					$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body ) );
 				}
+			}
 		}
 
 		return $install_SQLs;
@@ -180,6 +185,9 @@ class CB2_Database {
 		static $i = 1;
 		$table_name = $definition['name'];
 		$full_table = "$prefix$table_name";
+		$pseudo     = ( isset( $definition['pseudo'] )  ? $definition['pseudo']  : FALSE );
+		$managed    = ( isset( $definition['managed'] ) ? $definition['managed'] : TRUE );
+		if ( $pseudo || ! $managed ) throw new Exception( "$table_name is not managed. Why is constraints drop SQL being requested?" );
 		$mysql_constraint_drop = 'DROP FOREIGN KEY';
 
 		$sqls = array();
@@ -205,8 +213,11 @@ class CB2_Database {
 	}
 
 	private static function database_table_drops_SQL( $prefix, $definition ) {
-		$sqls = array();
+		$sqls       = array();
 		$table_name = $definition['name'];
+		$pseudo     = ( isset( $definition['pseudo'] )  ? $definition['pseudo']  : FALSE );
+		$managed    = ( isset( $definition['managed'] ) ? $definition['managed'] : TRUE );
+		if ( $pseudo || ! $managed ) throw new Exception( "$table_name is not managed. Why is drop SQL being requested?" );
 		array_push( $sqls, "DROP TABLE IF EXISTS `$prefix$table_name`" );
 		return $sqls;
 	}
@@ -216,6 +227,9 @@ class CB2_Database {
 
 		$sqls = array();
 		$table_name = $definition['name'];
+		$pseudo     = ( isset( $definition['pseudo'] )  ? $definition['pseudo']  : FALSE );
+		$managed    = ( isset( $definition['managed'] ) ? $definition['managed'] : TRUE );
+		if ( $pseudo || ! $managed ) throw new Exception( "$table_name is not managed. Why is create SQL being requested?" );
 		$sql        = "CREATE TABLE `$prefix$table_name` (\n";
 		foreach ( $definition['columns'] as $name => $column ) {
 			// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
@@ -306,6 +320,9 @@ class CB2_Database {
 
 		$sqls = array();
 		$table_name = $definition['name'];
+		$pseudo     = ( isset( $definition['pseudo'] )  ? $definition['pseudo']  : FALSE );
+		$managed    = ( isset( $definition['managed'] ) ? $definition['managed'] : TRUE );
+		if ( $pseudo || ! $managed ) throw new Exception( "$table_name is not managed. Why is constraints SQL being requested?" );
 		$full_table = "$prefix$table_name";
 		array_push( $sqls, "# Constraints for $table_name" );
 
@@ -418,22 +435,51 @@ class CB2_Database {
 		$schema_array = self::schema_array();
 
 		foreach ( $schema_array as $Class => $objects ) {
-				if ( isset( $objects['table'] ) ) {
-					foreach ( $objects['table'] as $table ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_constraint_drops_SQL( $wpdb->prefix, $table ) );
-					}
+			if ( isset( $objects['table'] ) ) {
+				foreach ( $objects['table'] as $table ) {
+					$pseudo  = ( isset( $table['pseudo'] )  ? $table['pseudo']  : FALSE );
+					$managed = ( isset( $table['managed'] ) ? $table['managed'] : TRUE );
+					if ( ! $pseudo && $managed ) $install_SQLs = array_merge( $install_SQLs, self::database_constraint_drops_SQL( $wpdb->prefix, $table ) );
 				}
+			}
 		}
 
 		foreach ( $schema_array as $Class => $objects ) {
 				if ( isset( $objects['table'] ) ) {
 					foreach ( $objects['table'] as $table ) {
-							$install_SQLs = array_merge( $install_SQLs, self::database_table_drops_SQL( $wpdb->prefix, $table ) );
+						$pseudo  = ( isset( $table['pseudo'] )  ? $table['pseudo']  : FALSE );
+						$managed = ( isset( $table['managed'] ) ? $table['managed'] : TRUE );
+						if ( ! $pseudo && $managed ) $install_SQLs = array_merge( $install_SQLs, self::database_table_drops_SQL( $wpdb->prefix, $table ) );
 					}
 				}
 		}
 
 		return $install_SQLs;
+	}
+
+	public static function column_types() {
+		static $columns = array();
+
+		if ( count( $columns ) == 0 ) {
+			$schema_array = self::schema_array();
+			foreach ( $schema_array as $Class => $objects ) {
+					if ( isset( $objects['table'] ) ) {
+						foreach ( $objects['table'] as $table ) {
+							foreach ( $table['columns'] as $name => $details ) {
+								// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+								if ( isset( $columns[$name] ) ) {
+									if ( WP_DEBUG && $columns[$name][1] != $details[1] )
+										throw new Exception( "Column [$name] has inconsistent types between tables" );
+								} else {
+									$columns[$name] = $details;
+								}
+							}
+						}
+					}
+			}
+		}
+
+		return $columns;
 	}
 
 	public static function check_fuction_bodies( $identifier, $body ) {
@@ -485,29 +531,74 @@ class CB2_Database {
 		return isset( self::columns( $Class )[$column_name] );
   }
 
-	static function columns( $Class, $table = NULL ) {
-		global $wpdb;
-
-		if ( ! is_null( $table ) )
-			throw new Exception( "Request for [$table] columns not implemented yet. Can only request primary table columns." );
-
+	static function columns( $Class = NULL, $table = NULL ) {
 		// Convert to results of the MySQL DESC results
 		// DESC table
 		// TODO: convert to MySQL DESC results is not necessary
-		$database_table_schemas = $Class::database_table_schemas( $wpdb->prefix );
-		$column_array = $database_table_schemas[0]['columns'];
+		global $wpdb;
+		static $columns_all = array();
+
+		// Cache
+		if ( is_null( $Class ) && count( $columns_all ) ) return $columns_all;
+
+		if ( $Class && ! is_callable( array( $Class, 'database_table_schemas' ) ) )
+			throw new Exception( "Request for [{$Class}::database_table_schemas()] columns has no table." );
+
+		// Select the columns
+		$column_array = array();
+		if ( is_null( $Class ) ) {
+			foreach ( CB2_Query::Classes() as $ClassX ) {
+				if ( CB2_Query::has_own_method( $ClassX, 'database_table_schemas' ) ) {
+					$database_table_schemas = $ClassX::database_table_schemas( $wpdb->prefix );
+					foreach ( $database_table_schemas as $database_table_schema ) {
+						if ( isset( $database_table_schema['columns'] ) )
+							$column_array = array_merge( $column_array, $database_table_schema['columns'] );
+					}
+				}
+			}
+		} else {
+			$database_table_schemas = $Class::database_table_schemas( $wpdb->prefix );
+			if ( is_null( $table ) ) {
+				// Primary (first) table
+				$column_array = $database_table_schemas[0]['columns'];
+			} else {
+				// Columns from specific table
+				foreach ( $database_table_schemas as $database_table_schema ) {
+					if ( $database_table_schema['name'] == $table ) {
+						$column_array = $database_table_schema['columns'];
+						break;
+					}
+				}
+			}
+		}
+
+		// Create the MySQL DESC output
 		$columns      = array();
 		foreach ( $column_array as $column_name => $column_definition ) {
 			// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
 			$count = count( $column_definition );
+			if ( isset( $columns[$column_name] ) ) {
+				if ( WP_DEBUG && $columns[$column_name][1] != $column_definition[1] )
+					throw new Exception( "Column [$name] has inconsistent types between tables" );
+			}
 			$columns[$column_name] = (object) array(
 				'Field'   => $column_name,
 				'Type'    => $column_definition[0],
 				'Null'    => ( $count > 3 && $column_definition[3] === CB2_NOT_NULL ? 'NO' : NULL ),
 				'Extra'   => ( $count > 4 && $column_definition[4] ? 'auto_increment' : NULL ),
 				'Default' => ( $count > 5 && ! is_null( $column_definition[5] ) ? TRUE : NULL ),
+				// Non MySQL DESC
+				'Size'    => $column_definition[1],
+				'Signed'  => $column_definition[2],
+				'Comment' => ( $count > 6 && $column_definition[6] ? $column_definition[6] : NULL ),
+				// Custom
+				'Plural'  => CB2_Query::is_plural( $column_name ),
 			);
 		}
+		if ( WP_DEBUG ) ksort( $columns );
+
+		// Cacheing
+		if ( is_null( $Class ) ) $columns_all = $columns;
 
 		return $columns;
   }
@@ -660,6 +751,7 @@ class CB2_Database {
 			case CB2_CHAR:
 			case CB2_VARCHAR:
 			case CB2_LONGTEXT:
+			case CB2_TEXT:
 			default:
 				// PostGRES supports CHAR and VARCHAR
 				// TODO: PostGRES calls LONGTEXT TEXT

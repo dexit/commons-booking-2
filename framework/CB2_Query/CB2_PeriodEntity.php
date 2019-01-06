@@ -48,7 +48,33 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 	}
 
 	static function metaboxes() {
-		$metaboxes = CB2_Period::metaboxes( FALSE );
+		$metaboxes         = CB2_Period::metaboxes();
+
+		// Default period times
+		$now               = new CB2_DateTime();
+		$day_start_format  = CB2_Query::$date_format . ' 00:00:00';
+		$morning_format    = CB2_Query::$date_format . ' 08:00:00';
+		$evening_format    = CB2_Query::$date_format . ' 18:00:00';
+
+		array_push( $metaboxes, CB2_Period::selector_metabox( TRUE ) ); // Multiple
+		array_push( $metaboxes,
+			array(
+				'title'      => __( 'Calendar view', 'commons-booking-2' ),
+				'context'    => 'normal',
+				'show_names' => FALSE,
+				'show_on_cb' => array( 'CB2', 'is_published' ),
+				'fields' => array(
+					array(
+						'name'    => __( 'Timeframe', 'commons-booking-2' ),
+						'id'      => 'calendar',
+						'type'    => 'calendar',
+						'options_cb' => array( 'CB2_PeriodEntity', 'metabox_calendar_options_cb' ),
+					),
+				),
+			)
+		);
+
+		// Standard
 		array_push( $metaboxes,
 			array(
 				// TODO: link this Enabled in to the Publish meta-box status instead
@@ -66,24 +92,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				),
 			)
 		);
-		array_push( $metaboxes,
-			array(
-				'title'      => __( 'Calendar view', 'commons-booking-2' ),
-				'context'    => 'normal',
-				'show_names' => FALSE,
-				'show_on_cb' => array( 'CB2', 'is_published' ),
-				'fields' => array(
-					array(
-						'name'    => __( 'Timeframe', 'commons-booking-2' ),
-						'id'      => 'calendar',
-						'type'    => 'calendar',
-						'options_cb' => array( 'CB2_PeriodEntity', 'metabox_calendar_options_cb' ),
-					),
-				),
-			)
-		);
+		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox() );
 		array_push( $metaboxes, CB2_PeriodStatusType::selector_metabox() );
-		array_push( $metaboxes, CB2_Period::selector_metabox( TRUE ) ); // Multiple
 
 		return $metaboxes;
 	}
@@ -182,7 +192,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$user     = NULL
 	) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -431,7 +441,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 		$user     = NULL
 	) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -467,13 +477,177 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
   static $Class_PeriodItem      = 'CB2_PeriodItem_Location'; // Associated CB2_PeriodItem
 
 	static function metaboxes() {
-		$metaboxes = parent::metaboxes();
+		$metaboxes         = parent::metaboxes();
+		$Class             = get_class();
 		array_unshift( $metaboxes, CB2_Location::selector_metabox() );
 		// array_push(    $metaboxes, CB2_Location::summary_metabox() );
+
+		// Default period times
+		$now               = new CB2_DateTime();
+		$day_start_format  = CB2_Query::$date_format . ' 00:00:00';
+		$morning_format    = CB2_Query::$date_format . ' 08:00:00';
+		$evening_format    = CB2_Query::$date_format . ' 18:00:00';
+
+		// TODO: make slot types configurable
+		// TODO: build these slot time specs in to CB2_DateTime
+		$slot_types = array(
+			'Custom' => array(),
+			'The day is the slot!' => array(
+				array( 'day start', 'day end' )
+			),
+			'2 slots: Morning and Afternoon' => array(
+				array( 'day start', 'lunch start' ),
+				array( 'lunch end', 'day end' ),
+			),
+			//'Hourly slots',
+		);
+		foreach ( $slot_types as $name => $slot_type ) {
+			$slot_types[json_encode( $slot_type )] = $name;
+			unset($slot_types[$name]);
+		}
+
+		// ------------------------------------------ Calendar based metabox showing just one week
+		// TODO: calendar opening hours wizard
+		array_push( $metaboxes,
+			array(
+				'id'         => "{$Class}_metabox_openinghours_wizard",
+				'title'      => '<span class="cb2-todo">' . __( 'Opening Hours Wizard', 'commons-booking-2' ) . '</span>',
+				//'show_on_cb' => array( 'CB2', 'is_not_published' ),
+				'on_request' => TRUE, // Prevents the metabox being shown unless explicitly asked
+				'show_names' => TRUE,
+				'fields'     => array(
+					array(
+						'name'    => __( 'Preset selector', 'commons-booking-2' ),
+						'id'      => 'period_openinghours_preset_selector',
+						'type'    => 'radio',
+						'default' => '[]',
+						'options' => $slot_types,
+					),
+					array(
+						'id'      => 'period_group_ID',
+						'default' => CB2_CREATE_NEW,
+						'type'    => 'hidden',
+					),
+					array(
+						'id'      => 'location_ID',
+						'default' => ( isset( $_GET['location_ID'] ) ? $_GET['location_ID'] : NULL ),
+						'type'    => ( isset( $_GET['location_ID'] ) ? 'hidden' : 'text' ),
+					),
+					array(
+						'id'      => 'enabled',
+						'default' => TRUE,
+						'type'    => 'hidden',
+					),
+					array(
+						'id'      => 'period_status_type_ID',
+						'default' => CB2_PeriodStatusType_Open::bigID(),
+						'type'    => 'hidden',
+					),
+					array(
+						'name'    => '',
+						'id'      => 'period_IDs',
+						'type'    => 'calendar',
+						'sanitization_cb' => array( $Class, 'period_openinghours_sanitize' ),
+						'classes' => array( 'cb2-calendar-grey' ),
+						'options' => array(
+							'template' => 'openinghours',
+							'actions'  => array(
+								'make-available' => array(
+									'link_text'   => __( 'Open today' ),
+									'post_type'   => CB2_PeriodEntity_Location::$static_post_type,
+									'period_status_type_ID' => CB2_PeriodStatusType_Open::bigID(),
+									'day_post_ID' => '%ID%',
+								),
+							),
+							'style'  => 'bare', // Day TDs only
+							'query'  => array(
+								'post_status' => 'any',
+								'date_query' => array(
+									'after'   => CB2_DateTime::next_week_start()->format( CB2_Query::$date_format ),
+									'before'  => CB2_DateTime::next_week_end()->format(   CB2_Query::$date_format ),
+									'compare' => CB2_Week::$static_post_type,
+								),
+								'meta_query' => array(
+									'location_ID_clause' => array(
+										'key'     => 'location_ID',
+										'value'   => '%location->ID%',
+										'compare' => 'IN',
+									),
+									'period_status_type_ID_clause' => array(
+										'key'     => 'period_status_type_ID',
+										'value'   => CB2_PeriodStatusType_Open::$id,
+									),
+								),
+							),
+						),
+					),
+				),
+			)
+		);
+
 		return $metaboxes;
 	}
 
-  static function database_table_name() { return self::$database_table; }
+	static function period_openinghours_sanitize( $value, $field_args, $field ) {
+		// Rationalise into time group(s)
+		// $value = array( 'Mon:08:00-20:00', ... )
+		$periods       = array();
+		$now           = CB2_DateTime::today();
+		$datetime_from = $now->format( CB2_Query::$date_format );
+
+		if ( CB2_DEBUG_SAVE ) {
+			krumo($value);
+			$name = $field_args['id'];
+			print( "<div class='cb2-WP_DEBUG-small'>CMB2::sanitize [$name]</div>" );
+		}
+
+		// Group similar time periods together so they can be declared in one period
+		$groups = array();
+		foreach ( $value as $interval ) {
+			if ( $interval ) {
+				preg_match( '/^([A-Z][a-z][a-z]):([0-9][0-9]:[0-9][0-9])-([0-9][0-9]:[0-9][0-9])$/', $interval, $matches );
+				if ( count( $matches ) != 4 )
+					throw new Exception( 'Opening Hours Time Interval specification invalid' );
+				$day         = $matches[1];
+				$start_time  = $matches[2];
+				$end_time    = $matches[3];
+				$time_period = "$start_time-$end_time";
+				if ( isset( $groups[$time_period] ) ) array_push( $groups[$time_period], $day );
+				else $groups[$time_period] = array( $day );
+			}
+		}
+
+		// Specifiy the periods
+		foreach ( $groups as $time_period => $days ) {
+			$name = '';
+			$recurrence_sequence = array();
+			foreach ( $days as $day ) {
+				if ( $name ) $name .= ',';
+				$name .= __( $day );
+
+				$dayofweek = CB2_Day::dayofweek_adjusted( new DateTime( $day ) );
+				array_push( $recurrence_sequence, pow( 2, $dayofweek ) );
+			}
+			$name = __( 'Opening hours' ) . ": $name";
+
+			$period_start = substr( $time_period, 0, 5 );
+			$period_end   = substr( $time_period, 6, 10 );
+
+			array_push( $periods, array(
+				'ID'              => CB2_CREATE_NEW,
+				'name'            => $name,
+				'datetime_from'   => $datetime_from,
+				'recurrence_type' => CB2_Period::$recurrence_type_daily,
+				'recurrence_sequence' => $recurrence_sequence,
+				'datetime_part_period_start' => $period_start,
+				'datetime_part_period_end'   => $period_end,
+			) );
+		}
+
+		return $periods;
+	}
+
+	static function database_table_name() { return self::$database_table; }
 
   static function database_table_schemas( $prefix ) {
 		$database_table_name  = self::database_table_name();
@@ -521,7 +695,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -620,7 +794,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -729,7 +903,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 		$user     = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );

@@ -63,6 +63,10 @@ h3 a {
 	box-shadow: 1px 1px 5px #aaa;
 	margin:3px 5px;
 }
+.cb2-unmanaged {
+	border:2px dotted #aaa;
+	opacity: 0.7;
+}
 .cb2-database-views li,
 .cb2-database-views {
 	display:inline;
@@ -82,7 +86,7 @@ h3 a {
 	color:#555;
 }
 body .cmb2-id-recurrence-sequence li,
-body .cmb2-id-period-openinghours .cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td {
+body .cb2-calendar-grey .cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td {
 	text-align:center;
 	border:1px solid #c7c7c7;
 	background-color:#e7e7e7;
@@ -94,7 +98,7 @@ body .cmb2-id-datetime-to .cmb2-timepicker {
 	display:none;
 }
 body .cmb2-id-recurrence-sequence input[type=checkbox],
-body .cmb2-id-period-openinghours input[type=checkbox] {
+body .cb2-calendar-grey input[type=checkbox] {
 	display:block;
 	margin: 0px auto 3px auto;
 }
