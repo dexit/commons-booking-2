@@ -518,13 +518,13 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 		array_push( $metaboxes,
 			array(
 				'id'         => "{$Class}_metabox_openinghours_wizard",
-				'title'      => '<span class="cb2-todo">' . __( 'Opening Hours Wizard', 'commons-booking-2' ) . '</span>',
+				'title'      => __( 'Opening Hours Wizard', 'commons-booking-2' ),
 				//'show_on_cb' => array( 'CB2', 'is_not_published' ),
 				'on_request' => TRUE, // Prevents the metabox being shown unless explicitly asked
 				'show_names' => TRUE,
 				'fields'     => array(
 					array(
-						'name'    => __( 'Preset selector', 'commons-booking-2' ),
+						'name'    => '<span class="cb2-todo">' . __( 'Preset selector', 'commons-booking-2' ) . '</span>',
 						'id'      => 'period_openinghours_preset_selector',
 						'type'    => 'radio_inline',
 						'classes' => 'cb2-cmb2-compact',
