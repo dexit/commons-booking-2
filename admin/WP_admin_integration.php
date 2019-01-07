@@ -557,7 +557,7 @@ function cb2_reflection() {
 	if ( WP_DEBUG ) print( "<br/><form><div>
 			<input type='hidden' name='page' value='cb2-reflection'/>
 			<input type='hidden' name='section' value='reinstall'>
-			<input onclick='$processing' disabled='1' class='cb2-submit cb2-dangerous' type='submit' value='re-install (4 views out-of-line)'/>
+			<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='re-install'/>
 			<input name='password' placeholder='password (fryace4)' value=''>
 		</div></form>" );
 	if ( WP_DEBUG ) print( " | <form><div>
