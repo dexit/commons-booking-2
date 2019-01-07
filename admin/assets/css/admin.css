@@ -324,6 +324,7 @@ body input.cb2-tick-only:not([checked]):after {
 	font-style: italic;
 }
 .cb2-calendar table {
+	width:100%;
 	border-collapse:collapse;
 }
 

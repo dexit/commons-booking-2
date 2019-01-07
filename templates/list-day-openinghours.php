@@ -7,12 +7,12 @@
 		<?php CB2::the_inner_loop( NULL, 'list', 'openinghours' ); ?>
 
 		<div><select name="period_IDs[]">
-			<option value="<?php the_date( 'D' ); ?>:08:00-12:00"/>8:00 am - 12:00 pm</option>
+			<option value="<?php the_date( 'D' ); ?>:08:00-12:00"/>08:00 - 12:00</option>
 			<option value=""/>-- select --</option>
 		</select></div>
 		<div><select name="period_IDs[]">
 			<option value=""/>-- select --</option>
-			<option value="<?php echo get_the_date( 'D' ); ?>:13:00-18:00"/>1:00 pm - 6:00 pm</option>
+			<option value="<?php echo get_the_date( 'D' ); ?>:13:00-18:00"/>13:00 - 18:00</option>
 		</select></div>
 
 		<?php $add_times_text = __( 'Add Slot' ); ?>

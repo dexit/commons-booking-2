@@ -19,7 +19,6 @@ define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
 define( 'CB2_ID_SHARING',    TRUE );
 define( 'CB2_ID_BASE',       0 );
 define( 'CB2_MAX_CB2_POSTS', 10000 );
-define( 'CB2_CLASS_PREFIX',  'CB2_' );
 
 define( 'CB2_CREATE_NEW',    -1 );
 define( 'CB2_UPDATE', TRUE );

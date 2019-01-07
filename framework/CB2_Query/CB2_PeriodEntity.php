@@ -526,7 +526,8 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 					array(
 						'name'    => __( 'Preset selector', 'commons-booking-2' ),
 						'id'      => 'period_openinghours_preset_selector',
-						'type'    => 'radio',
+						'type'    => 'radio_inline',
+						'classes' => 'cb2-cmb2-compact',
 						'default' => '[]',
 						'options' => $slot_types,
 					),
@@ -555,7 +556,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 						'id'      => 'period_IDs',
 						'type'    => 'calendar',
 						'sanitization_cb' => array( $Class, 'period_openinghours_sanitize' ),
-						'classes' => array( 'cb2-calendar-grey' ),
+						'classes' => array( 'cb2-calendar-grey', 'cb2-cmb2-compact' ),
 						'options' => array(
 							'template' => 'openinghours',
 							'actions'  => array(
