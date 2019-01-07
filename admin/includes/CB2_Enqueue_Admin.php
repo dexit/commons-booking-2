@@ -101,7 +101,7 @@ class CB2_Enqueue_Admin {
 	 * @return void
 	 */
 	public function display_plugin_admin_page() {
-		 echo CB2_Settings::settings_screen();
+		 echo CB2_Settings::render_plugin_settings_screen();
 	}
 	/**
 	 * Add settings action link to the plugins page.

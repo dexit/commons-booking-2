@@ -12,38 +12,54 @@
 
 class CB2_Admin_Screen
 {
-	/**
-	 * Screens
+	 /**
+	 * Admin screen slug
 	 *
-	 * @var object
+	 * @var string
 	 */
-	public $screens;
+	public $title;
 	/**
-	 * Tabs
-	 *
-	 * @var object
-	 */
-	public $tabs;
-	/**
-	 * Tabs
-	 *
-	 * @var object
-	 */
-	public $metaboxes;
-	/**
-	 * Slug
+	 * Admin screen slug
 	 *
 	 * @var string
 	 */
 	public $slug;
 	/**
+	 * Admin screen tabs
+	 *
+	 * @var array
+	 */
+	public $tabs;
+	/**
+	 * Admin screen content
+	 *
+	 * @var object
+	 */
+	public $other_content;
+	/**
+	 * Show on
+	 *
+	 * @var string
+	 */
+	public $show_on;
+	/**
+	 * Show on
+	 *
+	 * @var string
+	 */
+  private $metabox_options_defaults = array (
+			'show_on' => array(
+        'key' => 'options-page',
+        'value' => array('commons-booking'),
+      ),
+			'show_names' => true,
+		);
+	/**
 	 * Initialize the Admin screen
 	 */
 	public function __construct()
 	{
-			if (!apply_filters('cb2_admin_screen', true)) {
-					return;
-			}
+
 	}
 	/**
 	 * Add a new tab
@@ -55,20 +71,31 @@ class CB2_Admin_Screen
 
 	}
 	/**
-	 * Add a new tab
+	 * Add a new metabox
 	 *
-	 * @param array $tab
+	 * @param array $metabox
+	 * @param string|bool $target tab
 	 */
-	public function add_metabox( $metabox )
+	public function add_metabox( $metabox, $tab = '' )
 	{
 
 	}
 	/**
-	 * Add a new tab
+	 * Add a new metabox
+	 *
+	 * @param mixed $content
+	 * @param string|bool $target tab
+	 */
+	public function add_content( $content, $tab = '' )
+	{
+
+	}
+	/**
+	 * Render the page
 	 *
 	 * @param return $html
 	 */
-	public function render_page( )
+	public function render_admin_screen( )
 	{
 
 	}

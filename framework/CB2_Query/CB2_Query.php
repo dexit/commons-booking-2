@@ -1,7 +1,7 @@
 <?php
 // -------------------------------------------- WP_DEBUG setup
 error_reporting( 0 );
-if ( WP_DEBUG ) include( 'krumo/class.krumo.php' );
+// if ( WP_DEBUG ) include( 'krumo/class.krumo.php' );
 error_reporting( E_ALL );
 if ( ! function_exists( 'krumo' ) ) {
 	function krumo( ...$params ) {
