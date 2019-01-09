@@ -824,8 +824,34 @@ class CB2_Query {
 		return $string;
 	}
 
+	static function array_sum( Array $array, String $property = NULL ) {
+		if ( ! is_null( $property ) ) {
+			if ( count( $array ) ) {
+				$numbered_array = array_values( $array );
+				$array          = array();
+				foreach ( $numbered_array as $subarray ) {
+					$value = NULL;
+					// Support sub-arrays and sub-objects
+					if ( is_object( $subarray ) ) {
+						if ( property_exists( $subarray, $property ) ) $value = $subarray->$property;
+					} else if ( is_array( $subarray ) ) {
+						if ( isset( $subarray[$property] ) ) $value = $subarray[$property];
+					}
+
+					// Sum array counts if property points to them
+					if ( is_numeric( $value ) ) {
+						array_push( $array, $value );
+					} else if ( is_array( $value ) ) {
+						array_push( $array, count( $value ) );
+					}
+				}
+			}
+		}
+		return array_sum( $array );
+	}
+
 	static function array_has_associative( Array $array ) {
-		return array_keys($array) !== range(0, count($array) - 1);
+		return array_keys( $array ) !== range( 0, count( $array ) - 1 );
 	}
 
 	static function debug_print_backtrace( String $message = NULL ) {

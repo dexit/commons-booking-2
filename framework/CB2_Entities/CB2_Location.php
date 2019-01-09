@@ -223,7 +223,8 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				),
 			),
 		) );
-		$period_count       = $wp_query->post_count;
+		CB2_Query::ensure_correct_classes( $wp_query->posts );
+		$period_count       = CB2_Query::array_sum( $wp_query->posts, 'period_count' );
 		$opening_hours_text = '';
 		$help_text          = '';
 		$count_class        = 'ok';

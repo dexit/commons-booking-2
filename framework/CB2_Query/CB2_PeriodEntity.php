@@ -280,6 +280,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->period_group       = $period_group;
 		$this->period_status_type = $period_status_type;
 		$this->enabled            = $enabled;
+		$this->period_count       = count( $this->period_group->periods );
   }
 
   function save( $update = FALSE, $fire_wordpress_events = TRUE, $depth = 0, $debug = NULL ) {

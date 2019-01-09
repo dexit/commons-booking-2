@@ -627,17 +627,12 @@ abstract class CB2_PostNavigator extends stdClass {
   }
 
   function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
-		global $post;
-		$old_post = $post;
-		$post = $this;
-
-		ob_start();
-		edit_post_link( $text, $before, $after, $id, $class );
-		$html = ob_get_contents();
-		ob_end_clean();
-
-		$post = $old_post;
-		return $html;
+		// TODO: This does not work
+		$url   = get_edit_post_link( $this->ID );
+		$class = esc_attr( $class );
+		$url   = esc_url( $url );
+		if ( is_null( $text ) ) $text = __( 'Edit This' );
+		return "$before<a class='cb2-todo $class' href='$url'>$text</a>$after";
   }
 
   function get_the_excerpt() {
