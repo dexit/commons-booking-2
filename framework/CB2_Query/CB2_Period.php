@@ -12,6 +12,10 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-settings',
   );
+  public static $recurrence_type_daily  = 'D';
+  public static $recurrence_type_weekly = 'W';
+  public static $recurrence_type_monthy = 'M';
+  public static $recurrence_type_yearly = 'Y';
 
   function post_type() {return self::$static_post_type;}
 
@@ -104,10 +108,8 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		);
 	}
 
-	static function metaboxes( $multiple_period_group = TRUE ) {
+	static function metaboxes() {
 		$metaboxes         = array();
-
-		// Default period times
 		$now               = new CB2_DateTime();
 		$day_start_format  = CB2_Query::$date_format . ' 00:00:00';
 		$morning_format    = CB2_Query::$date_format . ' 08:00:00';
@@ -120,199 +122,121 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			$day_options[pow(2, $i)] = __( $days_of_week[$i] );
 		}
 
-		// TODO: make slot types configurable
-		// TODO: build these slot time specs in to CB2_DateTime
-		$slot_types = array(
-			'Custom' => array(),
-			'The day is the slot!' => array(
-				array( 'day start', 'day end' )
+		// ------------------------------------------ Full advanced interface for period definition
+		array_push( $metaboxes,
+			array(
+				'title'      => __( 'Period', 'commons-booking-2' ),
+				//'show_on_cb' => array( 'CB2', 'is_published' ),
+				'fields'     => array(
+					array(
+						'id'      => 'period_explanation',
+						'type'    => 'paragraph',
+						'float'   => 'right',
+						'width'   => 300,
+						'html'    => 'To create separate repeating slots see <b>Recurrence</b> below.
+							For example: repeats Mon - Fri 8:00 - 18:00 should use Daily <b>Recurrence Type</b>
+							and Mon - Fri <b>Sequence</b>.',
+					),
+					array(
+						'name' => __( 'Start', 'commons-booking-2' ),
+						'id' => 'datetime_part_period_start',
+						'type' => 'text_datetime_timestamp',
+						'date_format' => CB2_Database::$database_date_format,
+						'default' => ( isset( $_GET['datetime_part_period_start'] ) ? $_GET['datetime_part_period_start'] : $now->format( $morning_format ) ),
+					),
+					array(
+						'name' => __( 'End', 'commons-booking-2' ),
+						'id' => 'datetime_part_period_end',
+						'type' => 'text_datetime_timestamp',
+						'date_format' => CB2_Database::$database_date_format,
+						'default' => ( isset( $_GET['datetime_part_period_end'] ) ? $_GET['datetime_part_period_end'] : $now->format( $evening_format ) ),
+					),
+				),
 			),
-			'2 slots: Morning and Afternoon' => array(
-				array( 'day start', 'lunch start' ),
-				array( 'lunch end', 'day end' ),
-			),
-			//'Hourly slots',
+
+			array(
+				'title' => __( 'Recurrence', 'commons-booking-2' ),
+				'context'    => 'normal',
+				'show_names' => TRUE,
+				'add_button'    => __( 'Add Another Entry', 'commons-booking-2' ),
+				'remove_button' => __( 'Remove Entry', 'commons-booking-2' ),
+				//'show_on_cb' => array( 'CB2', 'is_published' ),
+				'closed'     => ! isset( $_GET['recurrence_type'] ),
+				'fields' => array(
+					array(
+						'name' => __( 'Type', 'commons-booking-2' ),
+						'id' => 'recurrence_type',
+						'type' => 'radio_inline',
+						'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB2_Database::$NULL_indicator ),
+						'options' => array(
+							CB2_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
+							'D' => __( 'Daily', 'commons-booking-2' ),
+							'W' => __( 'Weekly', 'commons-booking-2' ),
+							'M' => __( 'Monthly', 'commons-booking-2' ),
+							'Y' => __( 'Yearly', 'commons-booking-2' ),
+						),
+					),
+					array(
+						'name' => __( 'Daily Sequence', 'commons-booking-2' ),
+						'id' => 'recurrence_sequence',
+						'type' => 'multicheck_inline',
+						'escape_cb'       => array( 'CB2_Period', 'recurrence_sequence_escape' ),
+						'sanitization_cb' => array( 'CB2_Period', 'recurrence_sequence_sanitization' ),
+						// TODO: does not work default recurrence_sequence
+						'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
+						'options' => $day_options,
+					),
+					/*
+					TODO: Monthly Sequence
+					array(
+						'name' => __( 'Monthly Sequence', 'commons-booking-2' ),
+						'id' => 'recurrence_sequence',
+						'type' => 'multicheck',
+						'escape_cb'       => array( 'CB2_Period', 'recurrence_sequence_escape' ),
+						'sanitization_cb' => array( 'CB2_Period', 'recurrence_sequence_sanitization' ),
+						// TODO: does not work default recurrence_sequence
+						'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
+						'options' => array(
+							'1'  => __( 'January', 'commons-booking-2' ),
+							'2'  => __( 'February', 'commons-booking-2' ),
+							'4'  => __( 'March', 'commons-booking-2' ),
+							'8'  => __( 'April', 'commons-booking-2' ),
+							'16' => __( 'May', 'commons-booking-2' ),
+							'32' => __( 'June', 'commons-booking-2' ),
+							'64' => __( 'July', 'commons-booking-2' ),
+							'128' => __( 'August', 'commons-booking-2' ),
+							'256' => __( 'September', 'commons-booking-2' ),
+							'1024' => __( 'October', 'commons-booking-2' ),
+							'2048' => __( 'November', 'commons-booking-2' ),
+							'4096' => __( 'December', 'commons-booking-2' ),
+						),
+					),
+					*/
+					array(
+						'id'      => 'validity_explanation',
+						'type'    => 'paragraph',
+						'float'   => 'right',
+						'width'   => 300,
+						'html'    => 'The recurrence will repeat indefinitely.
+							Here you can provide start and end dates for that recurrnce.',
+					),
+					array(
+						'name' => __( 'Recurrence From Date', 'commons-booking-2' ),
+						'id' => 'datetime_from',
+						'type' => 'text_datetime_timestamp',
+						'date_format' => CB2_Database::$database_date_format,
+						'default' => ( isset( $_GET['datetime_from'] ) ? $_GET['datetime_from'] : $now->format( $day_start_format ) ),
+					),
+					array(
+						'name' => __( 'Recurrence To Date (optional)', 'commons-booking-2' ),
+						'id' => 'datetime_to',
+						'type' => 'text_datetime_timestamp',
+						'date_format' => CB2_Database::$database_date_format,
+						'default' => ( isset( $_GET['datetime_to'] ) ? $_GET['datetime_to'] : NULL ),
+					),
+				),
+			)
 		);
-		foreach ( $slot_types as $name => $slot_type ) {
-			$slot_types[json_encode( $slot_type )] = $name;
-			unset($slot_types[$name]);
-		}
-
-		// ------------------------------------------ Calendar based metabox showing just one week
-		// TODO: calendar opening hours wizard
-		$use_new_stuff = isset( $_GET['new_stuff'] );
-		if ( $use_new_stuff ) {
-			array_push( $metaboxes,
-				array(
-					'title'      => '<span class="cb2-todo">' . __( 'Opening Hours Wizard', 'commons-booking-2' ) . '</span>',
-					'show_on_cb' => array( 'CB2', 'is_not_published' ),
-					'show_names' => TRUE,
-					'fields'     => array(
-						array(
-							'name'    => __( 'Preset selector', 'commons-booking-2' ),
-							'id'      => 'period_openinghours_preset_selector',
-							'type'    => 'radio',
-							'default' => '[]',
-							'options' => $slot_types,
-						),
-						array(
-							'name'    => '',
-							'id'      => 'period_openinghours',
-							'type'    => 'calendar',
-							'options' => array(
-								'template' => 'openinghours',
-								'actions'  => array(
-									'make-available' => array(
-										'link_text'   => __( 'Open today' ),
-										'post_type'   => CB2_PeriodEntity_Location::$static_post_type,
-										'period_status_type_ID' => CB2_PeriodStatusType_Open::bigID(),
-										'day_post_ID' => '%ID%',
-									),
-								),
-								'style'  => 'bare', // Day TDs only
-								'query'  => array(
-									'post_status' => 'any',
-									'date_query' => array(
-										'after'   => CB2_DateTime::next_week_start()->format( CB2_Query::$date_format ),
-										'before'  => CB2_DateTime::next_week_end()->format(   CB2_Query::$date_format ),
-										'compare' => CB2_Week::$static_post_type,
-									),
-									'meta_query' => array(
-										'location_ID_clause' => array(
-											'key'     => 'location_ID',
-											'value'   => '%location->ID%',
-											'compare' => 'IN',
-										),
-										'period_status_type_ID_clause' => array(
-											'key'     => 'period_status_type_ID',
-											'value'   => CB2_PeriodStatusType_Open::$id,
-										),
-									),
-								),
-							),
-						),
-					),
-				)
-			);
-		} else {
-			// ------------------------------------------ Full advanced interface for period definition
-			array_push( $metaboxes,
-				array(
-					'title'      => __( 'Period', 'commons-booking-2' ),
-					//'show_on_cb' => array( 'CB2', 'is_published' ),
-					'fields'     => array(
-						array(
-							'id'      => 'period_explanation',
-							'type'    => 'paragraph',
-							'float'   => 'right',
-							'width'   => 300,
-							'html'    => 'To create separate repeating slots see <b>Recurrence</b> below.
-								For example: repeats Mon - Fri 8:00 - 18:00 should use Daily <b>Recurrence Type</b>
-								and Mon - Fri <b>Sequence</b>.',
-						),
-						array(
-							'name' => __( 'Start', 'commons-booking-2' ),
-							'id' => 'datetime_part_period_start',
-							'type' => 'text_datetime_timestamp',
-							'date_format' => CB2_Database::$database_date_format,
-							'default' => ( isset( $_GET['datetime_part_period_start'] ) ? $_GET['datetime_part_period_start'] : $now->format( $morning_format ) ),
-						),
-						array(
-							'name' => __( 'End', 'commons-booking-2' ),
-							'id' => 'datetime_part_period_end',
-							'type' => 'text_datetime_timestamp',
-							'date_format' => CB2_Database::$database_date_format,
-							'default' => ( isset( $_GET['datetime_part_period_end'] ) ? $_GET['datetime_part_period_end'] : $now->format( $evening_format ) ),
-						),
-					),
-				),
-
-				array(
-					'title' => __( 'Recurrence', 'commons-booking-2' ),
-					'context'    => 'normal',
-					'show_names' => TRUE,
-					'add_button'    => __( 'Add Another Entry', 'commons-booking-2' ),
-					'remove_button' => __( 'Remove Entry', 'commons-booking-2' ),
-					//'show_on_cb' => array( 'CB2', 'is_published' ),
-					'closed'     => ! isset( $_GET['recurrence_type'] ),
-					'fields' => array(
-						array(
-							'name' => __( 'Type', 'commons-booking-2' ),
-							'id' => 'recurrence_type',
-							'type' => 'radio_inline',
-							'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB2_Database::$NULL_indicator ),
-							'options' => array(
-								CB2_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
-								'D' => __( 'Daily', 'commons-booking-2' ),
-								'W' => __( 'Weekly', 'commons-booking-2' ),
-								'M' => __( 'Monthly', 'commons-booking-2' ),
-								'Y' => __( 'Yearly', 'commons-booking-2' ),
-							),
-						),
-						array(
-							'name' => __( 'Daily Sequence', 'commons-booking-2' ),
-							'id' => 'recurrence_sequence',
-							'type' => 'multicheck_inline',
-							'escape_cb'       => array( 'CB2_Period', 'recurrence_sequence_escape' ),
-							'sanitization_cb' => array( 'CB2_Period', 'recurrence_sequence_sanitization' ),
-							// TODO: does not work default recurrence_sequence
-							'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
-							'options' => $day_options,
-						),
-						/*
-						TODO: Monthly Sequence
-						array(
-							'name' => __( 'Monthly Sequence', 'commons-booking-2' ),
-							'id' => 'recurrence_sequence',
-							'type' => 'multicheck',
-							'escape_cb'       => array( 'CB2_Period', 'recurrence_sequence_escape' ),
-							'sanitization_cb' => array( 'CB2_Period', 'recurrence_sequence_sanitization' ),
-							// TODO: does not work default recurrence_sequence
-							'default' => ( isset( $_GET['recurrence_sequence'] ) ? $_GET['recurrence_sequence'] : 0 ),
-							'options' => array(
-								'1'  => __( 'January', 'commons-booking-2' ),
-								'2'  => __( 'February', 'commons-booking-2' ),
-								'4'  => __( 'March', 'commons-booking-2' ),
-								'8'  => __( 'April', 'commons-booking-2' ),
-								'16' => __( 'May', 'commons-booking-2' ),
-								'32' => __( 'June', 'commons-booking-2' ),
-								'64' => __( 'July', 'commons-booking-2' ),
-								'128' => __( 'August', 'commons-booking-2' ),
-								'256' => __( 'September', 'commons-booking-2' ),
-								'1024' => __( 'October', 'commons-booking-2' ),
-								'2048' => __( 'November', 'commons-booking-2' ),
-								'4096' => __( 'December', 'commons-booking-2' ),
-							),
-						),
-						*/
-						array(
-							'id'      => 'validity_explanation',
-							'type'    => 'paragraph',
-							'float'   => 'right',
-							'width'   => 300,
-							'html'    => 'The recurrence will repeat indefinitely.
-								Here you can provide start and end dates for that recurrnce.',
-						),
-						array(
-							'name' => __( 'Recurrence From Date', 'commons-booking-2' ),
-							'id' => 'datetime_from',
-							'type' => 'text_datetime_timestamp',
-							'date_format' => CB2_Database::$database_date_format,
-							'default' => ( isset( $_GET['datetime_from'] ) ? $_GET['datetime_from'] : $now->format( $day_start_format ) ),
-						),
-						array(
-							'name' => __( 'Recurrence To Date (optional)', 'commons-booking-2' ),
-							'id' => 'datetime_to',
-							'type' => 'text_datetime_timestamp',
-							'date_format' => CB2_Database::$database_date_format,
-							'default' => ( isset( $_GET['datetime_to'] ) ? $_GET['datetime_to'] : NULL ),
-						),
-					),
-				),
-
-				CB2_PeriodGroup::selector_metabox( $multiple_period_group )
-			);
-		}
 
 		return $metaboxes;
 	}
@@ -403,7 +327,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 	}
 
   static function &factory(
-		$ID,
+		Int $ID,
     $name,
 		$datetime_part_period_start,
 		$datetime_part_period_end,
@@ -415,7 +339,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		$period_group_IDs = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -524,6 +448,29 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			case 'M': $recurrence_string = 'Monthly'; break;
 			case 'Y': $recurrence_string = 'Yearly';  break;
 		}
+
+		if ( $this->recurrence_sequence ) {
+			$periods  = NULL;
+			switch ( $this->recurrence_type ) {
+				// TODO: only days supported so far
+				case 'D':
+					$periods = CB2_Week::days_of_week();
+					break;
+			}
+
+			if ( $periods ) {
+				$sequence = '';
+				$missing  = FALSE;
+				for ( $i = 0; $i < count( $periods ); $i++ ) {
+					if ( $this->recurrence_sequence & pow( 2, $i ) ) {
+						if ( $sequence ) $sequence .= ',';
+						$sequence .= $periods[$i];
+					} else $missing = TRUE;
+				}
+				if ( $sequence && $missing ) $recurrence_string .= " ($sequence)";
+			}
+		}
+
 		return $recurrence_string;
   }
 

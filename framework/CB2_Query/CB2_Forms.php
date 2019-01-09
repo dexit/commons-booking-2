@@ -58,19 +58,12 @@ class CB2_Forms {
 		return $options;
   }
 
-  static function subclasses( $BaseClass ) {
-    $subclasses = array();
-    foreach ( get_declared_classes() as $Class ) { // PHP 4
-			$ReflectionClass = new ReflectionClass( $Class );
-			if ( $ReflectionClass->isSubclassOf( $BaseClass ) ) // PHP 5
-				array_push( $subclasses, $Class );
-    }
-    return $subclasses;
-	}
-
   static function select_options( $records, $current_value = NULL, $add_none = TRUE, $by_name = FALSE ) {
     $html = '';
-    if ( $add_none ) $html .= "<option value=''>--none--</option>";
+    if ( $add_none ) {
+			if ( $add_none === TRUE ) $add_none = '--none--';
+			$html .= "<option value=''>$add_none</option>";
+		}
     foreach ( $records as $value => $name ) {
       if ( is_object( $name ) ) $name  = $name->name;
       if ( $by_name )           $value = $name;

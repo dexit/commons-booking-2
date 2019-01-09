@@ -21,53 +21,84 @@ $extended_class   = ( isset( $_GET['extended'] )    ? '' : 'none' );
 $show_overridden_periods = isset( $_GET['show_overridden_periods'] );
 
 // --------------------------------------- Query
-$meta_query       = array();
-$meta_query_items = array();
-$post_status      = array( CB2_Post::$PUBLISH );
-if ( $location_ID )
-	$meta_query_items[ 'location_clause' ] = array(
-		'key' => 'location_ID',
-		'value' => array( $location_ID, 0 ),
-	);
-if ( $item_ID )
-	$meta_query_items[ 'item_clause' ] = array(
-		'key' => 'item_ID',
-		'value' => array( $item_ID, 0 ),
-	);
-if ( $period_status_type_ID )
-	$meta_query_items[ 'period_status_type_clause' ] = array(
-		'key' => 'period_status_type_ID',
-		'value' => array( $period_status_type_ID, 0 ),
-	);
-if ( $period_entity_ID )
-	$meta_query_items[ 'period_entity_clause' ] = array(
-		'key' => 'period_entity_ID',
-		'value' => array( $period_entity_ID, 0 ),
-	);
-
-if ( $meta_query_items ) {
-	if ( ! isset( $meta_query_items[ 'relation' ] ) )
-		$meta_query_items[ 'relation' ] = 'AND';
-	$meta_query[ 'items' ] = $meta_query_items;
-}
-
-$args = array(
-	'author'         => $user_ID,
-	'post_status'    => $post_status,
-	'post_type'      => CB2_PeriodItem::$all_post_types,
-	'posts_per_page' => -1,
-	'order'          => 'ASC',          // defaults to post_date
-	'show_overridden_periods' => 'yes', // TODO: doesnt work yet: use the query string
-	'date_query'     => array(
-		'after'   => $startdate_string,
-		'before'  => $enddate_string,
-		'compare' => $schema_type,
-	),
-	'meta_query' => $meta_query,        // Location, Item, User
-);
-// Here we should instantiate with stated CB2_PeriodInteractionStrategy
+$query = NULL;
+// TODO: Here we should instantiate with stated CB2_PeriodInteractionStrategy
 // same as WP_Query
-$query = new WP_Query( $args );
+// maybe using a factory( $args )?
+$args  = array(
+	'startdate'        => $startdate_string,
+	'enddate'          => $enddate_string,
+	'location_ID'      => $location_ID,
+	'item_ID'          => $item_ID,
+	'user_ID'          => $user_ID,
+	'period_group_id'  => $period_group_id,
+	'period_status_type_ID' => $period_status_type_ID,
+	'period_entity_ID' => $period_entity_ID,
+	'schema_type'      => $schema_type,
+	'template_part'    => $template_part,
+	'display_strategy' => $display_strategy,
+	'show_debug'       => $show_debug,
+	'output_type'      => $output_type,
+	'extended_class'   => $extended_class,
+	'show_overridden_periods' => $show_overridden_periods,
+);
+
+switch ( $display_strategy ) {
+	case 'WP_Query':
+		// TODO: meta_query assembly needs to be placed in the Strategy and generally used everywhere
+		$meta_query       = array();
+		$meta_query_items = array();
+		$post_status      = array( CB2_Post::$PUBLISH );
+		if ( $location_ID )
+			$meta_query_items[ 'location_clause' ] = array(
+				'key' => 'location_ID',
+				'value' => array( $location_ID, 0 ),
+			);
+		if ( $item_ID )
+			$meta_query_items[ 'item_clause' ] = array(
+				'key' => 'item_ID',
+				'value' => array( $item_ID, 0 ),
+			);
+		if ( $period_status_type_ID )
+			$meta_query_items[ 'period_status_type_clause' ] = array(
+				'key' => 'period_status_type_ID',
+				'value' => array( $period_status_type_ID, 0 ),
+			);
+		if ( $period_entity_ID )
+			$meta_query_items[ 'period_entity_clause' ] = array(
+				'key' => 'period_entity_ID',
+				'value' => array( $period_entity_ID, 0 ),
+			);
+
+		if ( $meta_query_items ) {
+			if ( ! isset( $meta_query_items[ 'relation' ] ) )
+				$meta_query_items[ 'relation' ] = 'AND';
+			$meta_query[ 'items' ] = $meta_query_items;
+		}
+
+		$args = array(
+			'author'         => $user_ID,
+			'post_status'    => $post_status,
+			'post_type'      => CB2_PeriodItem::$all_post_types,
+			'posts_per_page' => -1,
+			'order'          => 'ASC',          // defaults to post_date
+			'show_overridden_periods' => 'yes', // TODO: doesnt work yet: use the query string
+			'date_query'     => array(
+				'after'   => $startdate_string,
+				'before'  => $enddate_string,
+				'compare' => $schema_type,
+			),
+			'meta_query' => $meta_query,        // Location, Item, User
+		);
+		$query = new WP_Query( $args );
+		break;
+	case 'CB2_AllItemAvailability':
+		$query = new $display_strategy();
+		break;
+	default:
+		print( "<div style='color:red;'>$display_strategy not supported yet</div>" );
+		exit();
+}
 
 // --------------------------------------- Filter selection Form
 $location_options  = CB2_Forms::select_options( CB2_Forms::location_options(), $location_ID );
@@ -78,7 +109,7 @@ $period_entity_options = CB2_Forms::select_options( CB2_Forms::period_entity_opt
 $output_options    = CB2_Forms::select_options( array( 'HTML' => 'HTML', 'JSON' => 'JSON' ), $output_type );
 $schema_options    = CB2_Forms::select_options( CB2_Forms::schema_options(), $schema_type );
 $template_options  = CB2_Forms::select_options( array( 'available' => 'available' ), $template_part );
-$display_strategys = CB2_Forms::select_options( CB2_Forms::subclasses( 'CB2_PeriodInteractionStrategy' ), $display_strategy, TRUE, TRUE );
+$display_strategys = CB2_Forms::select_options( CB2_Query::subclasses( 'CB2_PeriodInteractionStrategy' ), $display_strategy, 'WP_Query', TRUE );
 $class_WP_DEBUG    = ( WP_DEBUG ? '' : 'hidden' );
 $show_overridden_periods_checked = ( $show_overridden_periods ? 'checked="1"' : '' );
 
@@ -101,7 +132,7 @@ print( <<<HTML
 		$user_text:<select name="user_ID">$user_options</select>
 		<div style='display:$extended_class'>
 			<input type="hidden" name="extended$extended_class" value="1"/>
-			Period Status:
+			Period Status Type:
 				$period_status_type_options_html
 				<select name="period_status_type_ID">$period_status_type_options</select>
 			Period Entity:
@@ -138,8 +169,8 @@ if ( WP_DEBUG ) {
 		print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
 			<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
 			<div style='margin-left:5px;color:#448;'>$query->request</div></div>" );
-		print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
-		// krumo( $query );
+		//print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
+		krumo( $query );
 		print( "</div></div>" );
 	} else print( "<div>No posts returned!</div>" );
 }

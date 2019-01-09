@@ -25,7 +25,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			'show_names' => FALSE,
 			'context'    => 'side',
 			'closed'     => TRUE,
-			'debug-only' => TRUE,
+			'debug-only' => TRUE, // TODO: actually this is needed when saving the Period otherwise it will loose its preiod_group
 			'fields'     => array(
 				array(
 					'name'    => __( $title, 'commons-booking-2' ),
@@ -102,7 +102,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		$periods = array()
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -333,6 +333,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		$wpdb->delete( $table, array(
 			'period_group_id' => $this->id()
 		) );
+
 		foreach ( $this->periods as $period ) {
 			$wpdb->insert( $table, array(
 				'period_group_id' => $this->id(),

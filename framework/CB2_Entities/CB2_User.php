@@ -79,8 +79,8 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
     public static function &factory_from_properties(&$properties, &$instance_container = null, $force_properties = false)
     {
         $object = self::factory(
-            (isset($properties['user_ID']) ? $properties['user_ID'] : $properties['ID']),
-            $properties['user_login']
+            ( isset( $properties['user_ID'] )    ? $properties['user_ID']    : $properties['ID'] ),
+            ( isset( $properties['user_login'] ) ? $properties['user_login'] : NULL )
         );
 
         self::copy_all_wp_post_properties($properties, $object);
@@ -90,7 +90,7 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
 
     public static function factory_current()
     {
-        $cb_user = null;
+        $cb_user = NULL;
         $wp_user = wp_get_current_user();
         if ($wp_user instanceof WP_User && $wp_user->ID) {
             $cb_user = new self($wp_user->ID, $wp_user->user_login);
@@ -98,18 +98,14 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         return $cb_user;
     }
 
-    public static function factory($ID, $user_login = null)
+    public static function factory( Int $ID, String $user_login = NULL )
     {
         // Design Patterns: Factory Singleton with Multiton
-        $object = null;
+        $object = NULL;
+				$key    = $ID;
 
-        if ($ID) {
-            if (isset(self::$all[$ID])) {
-                $object = self::$all[$ID];
-            } else {
-                $object = new self($ID, $user_login);
-            }
-        }
+        if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) $object = self::$all[$key];
+				else $object = new self($ID, $user_login);
 
         return $object;
     }

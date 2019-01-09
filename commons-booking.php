@@ -75,6 +75,7 @@ function cb2_load_plugin_textdomain()
 }
 add_action('plugins_loaded', 'cb2_load_plugin_textdomain', 1);
 
+// TODO: remove this debug checking code
 if ( WP_DEBUG ) {
 	function cb2_save_post_periodent_user_booked_example( $post_id, $post ) {
 		// post_status is always published here
@@ -82,6 +83,12 @@ if ( WP_DEBUG ) {
 	}
 	// Custom CB2 action save_post_{post_type}_{period_status}
 	add_action( 'save_post_periodent-user_booked', 'cb2_save_post_periodent_user_booked_example', 10, 2 );
+
+	function cb2_save_post_booked( $cb2_post ) {
+		$Class = get_class( $cb2_post );
+		print( "<div class='cb2-WP_DEBUG-small'>{$Class}[$cb2_post->ID] fired event [cb2_save_post_booked]</div>" );
+	}
+	add_action( 'cb2_save_post_booked', 'cb2_save_post_booked' );
 
 	function cb2_save_post_example( $post_id, $post ) {
 		// Any post_status including auto-draft

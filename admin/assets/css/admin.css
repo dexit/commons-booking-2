@@ -56,12 +56,20 @@ h3 a {
 .cb2-actions form > div {
 	display:inline;
 }
+body #wpcontent .cmb2-wrap > .cmb-field-list > .cmb-row.cb2-cmb2-compact {
+	padding:0px;
+	margin:0px;
+}
 .cb2-database-table {
 	border-collapse:collapse;
 	background-color:#fff;
 	border:1px solid #d7d7d7;
 	box-shadow: 1px 1px 5px #aaa;
 	margin:3px 5px;
+}
+.cb2-unmanaged {
+	border:2px dotted #aaa;
+	opacity: 0.7;
 }
 .cb2-database-views li,
 .cb2-database-views {
@@ -82,7 +90,7 @@ h3 a {
 	color:#555;
 }
 body .cmb2-id-recurrence-sequence li,
-body .cmb2-id-period-openinghours .cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td {
+body .cb2-calendar-grey .cb2-calendar > .entry-content > table.cb2-subposts > tbody > tr > td {
 	text-align:center;
 	border:1px solid #c7c7c7;
 	background-color:#e7e7e7;
@@ -94,7 +102,7 @@ body .cmb2-id-datetime-to .cmb2-timepicker {
 	display:none;
 }
 body .cmb2-id-recurrence-sequence input[type=checkbox],
-body .cmb2-id-period-openinghours input[type=checkbox] {
+body .cb2-calendar-grey input[type=checkbox] {
 	display:block;
 	margin: 0px auto 3px auto;
 }
@@ -316,6 +324,7 @@ body input.cb2-tick-only:not([checked]):after {
 	font-style: italic;
 }
 .cb2-calendar table {
+	width:100%;
 	border-collapse:collapse;
 }
 

@@ -30,6 +30,7 @@ define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 class CB2_Query {
+	// TODO: rename CB2_Query to CB2_Utility
   public static $json_date_format = 'Y-m-d H:i:s';
   public static $date_format      = 'Y-m-d';
   public static $datetime_format  = 'Y-m-d H:i:s';
@@ -81,18 +82,21 @@ class CB2_Query {
 
 		// TODO: get_post() will populate ALL fields from the post table: take advantage of this
 		$post = get_post( $post_id, $output, $filter );
+		if ( is_null( $post ) )
+			throw new Exception( "[$Class/$post_type] not found in [$wpdb->posts] for [$post_id]" );
+
 		if ( $post->post_type != $post_type ) {
 			// WP_Post::get_instance() will check the cache
 			// In some modes, post IDs can conflict
 			// the DB is redirected now, so try again
 			wp_cache_delete( $post_id, 'posts' );
 			$post = get_post( $post_id, $output, $filter );
+			if ( is_null( $post ) )
+				throw new Exception( "[$Class/$post_type] not found in [$wpdb->posts] for [$post_id]" );
 			if ( $post->post_type != $post_type )
 				throw new Exception( "[$Class/$post_id] fetched a [$post->post_type] post_type from [$posts_table], not a [$post_type]" );
 		}
 
-		if ( is_null( $post ) )
-			throw new Exception( "[$Class/$post_type] not found in [$wpdb->prefix] [$wpdb->posts] for [$post_id]" );
 
 		// Reset and Annotate
 		// This will make a get_metadata_assign() call
@@ -173,9 +177,14 @@ class CB2_Query {
 		return $post;
 	}
 
-	static function pass_through_query_string( $path, $additional_parameters = array(), $remove_parameters = array() ) {
+	static function is_system_metadata( String $meta_name ) {
+		return ( $meta_name && $meta_name[0] == '_' );
+	}
+
+	static function pass_through_query_string( $path = NULL, $additional_parameters = array(), $remove_parameters = array() ) {
 		$get = array_merge( $_GET, $additional_parameters );
 		foreach ( $remove_parameters as $name ) unset( $get[$name] );
+		if ( is_null( $path ) ) $path = $_SERVER['PHP_SELF'];
 
 		if ( count( $get ) ) {
 			$existing_query_string = array();
@@ -297,9 +306,21 @@ class CB2_Query {
 
 			// Convert to objects
 			foreach ( $metadata as $meta_key => &$meta_value_array ) {
-				$meta_value      = CB2_Query::to_object( $meta_key, $meta_value_array[0] );
-				$post->$meta_key = $meta_value;
-				//if ( ! is_object( $meta_value ) ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key = $meta_value $meta_value_array[0]</div>" );
+				if ( ! self::is_system_metadata( $meta_key ) ) {
+					if ( WP_DEBUG ) {
+						if ( ! is_array( $meta_value_array ) )
+							throw new Exception( "[$post_type/$meta_key] is not an array" );
+						/* Not sure why some values are multiple at the moment
+						if ( count( $meta_value_array ) > 1 ) {
+							krumo( $meta_value_array );
+							throw new Exception( "[$post_type/$meta_key] yielded a multi-value array" );
+						}
+						*/
+					}
+					$meta_value      = CB2_Query::to_object( $meta_key, $meta_value_array[0] );
+					$post->$meta_key = $meta_value;
+					//if ( ! is_object( $meta_value ) ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key = $meta_value $meta_value_array[0]</div>" );
+				}
 			}
 
 			// Register that all metadata is present
@@ -309,8 +330,7 @@ class CB2_Query {
 				// Check that some meta data is returned
 				$has_metadata = FALSE;
 				foreach ( $metadata as $meta_key => $meta_value_array ) {
-					$is_system_metadata = ( substr( $meta_key, 0, 1 ) == '_' );
-					if ( ! $is_system_metadata ) $has_metadata = TRUE;
+					if ( ! self::is_system_metadata( $meta_key ) ) $has_metadata = TRUE;
 				}
 				if ( ! $has_metadata && $meta_type != 'post' ) {
 					krumo( $wpdb );
@@ -398,6 +418,23 @@ class CB2_Query {
 		return $object;
 	}
 
+	static function ensure_array( String $name, $object ) {
+		if ( ! is_array( $object ) ) {
+			if ( self::check_for_serialisation( $object, 'a' ) ) {
+				$object = unserialize( $object );
+			} else if ( is_string( $object ) ) {
+				if ( empty( $object ) )
+					$object = array();
+				else if ( preg_match( '/^[0-9, ]+$/', $object ) )
+					$object = explode( ',', $object );
+				else
+					throw new Exception( "[$name] array not understood" );
+			}
+		}
+
+		return $object;
+	}
+
 	static function ensure_int( String $name, $object, Bool $allow_create_new = FALSE ) {
 		$int = NULL;
 		if ( ! is_null( $object ) ) {
@@ -424,6 +461,12 @@ class CB2_Query {
 		else if ( is_numeric( $object ) ) $boolean = (int) $object != 0;
 		else                              $boolean = (bool) $object;
 		return $boolean;
+	}
+
+	static function ensure_char( String $name, $object ) {
+		if ( $object instanceof DateTime ) $object = $object->format( self::$datetime_format );
+		else if ( ! is_string( $object ) ) $object = (string) $object;
+		return $object;
 	}
 
 	static function ensure_ints( String $name, $object, Bool $allow_create_new = FALSE ) {
@@ -510,7 +553,46 @@ class CB2_Query {
 		}
 	}
 
-	static function to_object( String $name, $value ) {
+	static function is_IDs( String $name, String &$object_name = NULL, Bool &$is_plural = NULL ) {
+		// TRUE for _ID and _IDs
+		$is_plural   = self::is_plural( $name, $base_name );
+		$is_ID       = ( substr( $base_name, -3 ) == '_ID' );
+		$object_name = ( $is_ID ? substr( $base_name, 0, -3 ) : $base_name );
+		return $is_ID;
+	}
+
+	static function is_plural( String $name, String &$base_name = NULL ) {
+		$is_plural = FALSE;
+		$base_name = $name;
+		$last_part = CB2_Query::substring_after( $name, '_' );
+
+		switch ( $last_part ) {
+			case 'status':
+				break;
+			default:
+				$is_plural = ( substr( $name, -1 ) == 's' );
+				$base_name = ( $is_plural ? substr( $name, 0, -1 ) : $name );
+		}
+
+		return $is_plural;
+	}
+
+	static function cmb2_fields() {
+		static $fields = NULL;
+
+		if ( is_null( $fields ) && class_exists( 'CMB2_Boxes' ) ) {
+			$fields     = array();
+			$cmb2_boxes = CMB2_Boxes::get_all();
+			foreach ( $cmb2_boxes as $cmb2_box ) {
+				$fields = array_merge( $fields, $cmb2_box->prop( 'fields' ) );
+			}
+			if ( WP_DEBUG ) ksort( $fields );
+		}
+
+		return $fields;
+	}
+
+	static function to_object( String $name, $value, Bool $convert_dates = TRUE ) {
 		// Assigning attributes of PHP Objects
 		//   string => object
 		// based on the property name
@@ -521,8 +603,10 @@ class CB2_Query {
 		// comma delimited strings are not permitted
 		// because they cannot be reliably differentiated from serialised arrays
 		//
-		// Used by:
-		//   copy_all_wp_post_properties(): post->*         => object
+		// Used during:
+		//   factory_from_properties()
+		// by:
+		//   copy_all_wp_post_properties(): post->*         => object (no date conversion)
 		//   assign_all_parameters():       get_func_args() => object
 		//   get_metadata_assign():         meta-data       => object
 		//
@@ -530,26 +614,109 @@ class CB2_Query {
 		// convert *_ID(s) => objects using
 		//   get_or_create_new(ids)
 		//
-		// TODO: document the naming conventions of course
 		// TODO: move all this in to the CB2_DatabaseTable_PostNavigator Class
 		// to use the database schema knowledge instead :)
-		if ( ! is_null( $value ) ) {
-			if      ( substr( $name, 0, 9 ) == 'datetime_' ) $value = self::ensure_datetime( $name, $value );
-			else if ( $name == 'date' )                      $value = self::ensure_datetime( $name, $value );
-			else if ( $name == 'enabled' )                   $value = self::ensure_boolean(  $name, $value );
-			else if ( substr( $name, 0, 5 ) == 'time_' )     $value = self::ensure_time( $name, $value );
-			else if ( substr( $name, -9 ) == '_sequence' )   $value = self::ensure_int(  $name, $value );
-			else if ( substr( $name, -3 ) == '_id' )         $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW  );
-			else if ( substr( $name, -4 ) == '_ids' )        $value = self::ensure_ints( $name, $value, CB2_ALLOW_CREATE_NEW );
-			else if ( substr( $name, -3 ) == '_ID' )         $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
-			else if ( substr( $name, -4 ) == '_IDs' )        $value = self::ensure_ints( $name, $value, CB2_ALLOW_CREATE_NEW );
-			else if ( substr( $name, -6 ) == '_index' )      $value = self::ensure_int(  $name, $value );
-			else if ( $name == 'ID' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
-			else if ( $name == 'id' )                        $value = self::ensure_int(  $name, $value, CB2_ALLOW_CREATE_NEW );
 
-			if ( self::check_for_serialisation( $value ) )
-				throw new Exception( "[$value] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
+		// All these are static cached
+		$object_types = self::class_fields();
+		$columns      = CB2_Database::columns();
+		$cmb2_fields  = self::cmb2_fields();
+
+		$debug        = WP_DEBUG && FALSE;
+		$is_IDs       = self::is_IDs( $name, $object_name, $is_plural ); // TRUE for _ID and _IDs
+
+		// UnSerialize multiple meta-values and serialized arrays
+		if ( $is_plural ) {
+			if ( ! is_array( $value ) && $debug )
+				print( "<div class='cb2-WP_DEBUG-small'>converting [$name/$object_name] to an array</div>" );
+			$value = self::ensure_array( $name, $value );
 		}
+
+		if ( isset( $object_types[$object_name] ) ) {
+			// -------------------------------------------------- Object type
+			// it could be a request to create object(s)
+			// TODO: allow columns to handle _ID(s) requests instead?
+			//   period_ID  = -1
+			//   period_IDs = array(array(-1, details...), array(-1, details...), ...)
+			// or the actual object
+			//   period     = <Object>
+			//   periods    = array(<Object>, <Object>, ...)
+			if ( $is_IDs ) {
+				// _IDs _ID
+				if ( $is_plural ) {
+					if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>[$name/$object_name] is a [$object_name] object ID list</div>" );
+					// TODO: to_object(): we support arrays of arrays now as well
+					// when specifying object creatio
+					//   period_IDs = array(array(-1, details...), array(-1, details...), ...)
+					//$value = self::ensure_ints( $name, $value, CB2_ALLOW_CREATE_NEW );
+				} else {
+					if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>[$name/$object_name] is a [$object_name] object ID</div>" );
+					$value = self::ensure_int( $name, $value, CB2_ALLOW_CREATE_NEW );
+				}
+			} else if ( WP_DEBUG ) {
+				// base classes: period_entity, ...
+				// and derived classes: preioditem_location, ...
+				// and final classes: period, period_status_type, ...
+				$Class = $object_types[$object_name];
+				if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>[$name/$object_name] is a [$Class] object</div>" );
+				if ( ! is_null( $value )  ) {
+					if ( $is_plural ) {
+						if ( count( $value ) && ! ( $value[0] instanceof $Class ) ) {
+							krumo( $value );
+							throw new Exception( "[$name/$object_name] is not instance of [$Class]" );
+						}
+					} else {
+						if ( ! ( $value instanceof $Class ) ) {
+							krumo( $value );
+							throw new Exception( "[$name/$object_name] is not instance of [$Class]" );
+						}
+					}
+				}
+			}
+		} else if ( isset( $columns[$name] ) ) {
+			// -------------------------------------------------- Database field
+			// ID, period_id, post_status, ...
+			$column = $columns[$name];
+			if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>[$name/$object_name] is a column</div>" );
+			switch ( $column->Type ) {
+				case CB2_INT:
+				case CB2_TINYINT:
+				case CB2_BIGINT:
+					if ( $is_plural ) $value = self::ensure_ints( $name, $value );
+					else              $value = self::ensure_int( $name, $value );
+					break;
+				case CB2_VARCHAR:
+				case CB2_CHAR:
+				case CB2_LONGTEXT:
+				case CB2_TEXT:
+					$value = self::ensure_char( $name, $value );
+					break;
+				case CB2_DATETIME:
+					// WP_Post properties store datetime as string, not object
+					// copy_all_wp_post_properties() will set $convert_dates = FALSE
+					if ( $convert_dates ) $value = self::ensure_datetime( $name, $value );
+					break;
+				case CB2_TIMESTAMP:
+					$value = self::ensure_time( $name, $value );
+					break;
+				case CB2_BIT:
+					if ( $column->Size == 1 ) $value = self::ensure_boolean( $name, $value );
+					else $value = self::ensure_int( $name, $value );
+					break;
+			}
+		} else if ( isset( $cmb2_fields[$name] ) ) {
+			// -------------------------------------------------- CMB2 pseudo meta data
+			// Do nothing: get_metadata_assign() is capturing the value of a metabox
+			// Use sanitize_value() to change it
+			if ( $debug ) print( "<div class='cb2-WP_DEBUG-small' style='color:red;font-weight:bold;'>[$name/$object_name] is a CMB2 pseudo-field</div>" );
+		} else {
+			krumo( $cmb2_fields, $object_types, $columns );
+			self::debug_print_backtrace( "[$name/$object_name] Field is unknown CB2_Database column, CB2_PostNavigator object type or a CMB2 field" );
+			exit();
+		}
+
+		if ( self::check_for_serialisation( $value ) )
+			throw new Exception( "[$value] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
 
 		return $value;
 	}
@@ -563,11 +730,46 @@ class CB2_Query {
 		);
   }
 
-  static public function array_walk_paths( &$array, $object ) {
+  static function class_fields() {
+		static $class_fields = NULL;
+
+		if ( is_null( $class_fields ) ) {
+			$class_fields = array();
+			foreach ( self::Classes() as $Class ) {
+				$class_name = preg_replace( '/^[A-Z][A-Za-z0-9]*_/', '', $Class );
+				$class_name = preg_replace( '/([^A-Z])([A-Z])/', '\1_\2', $class_name );
+				$class_name = strtolower( $class_name );
+				$class_fields[$class_name] = $Class;
+				if ( property_exists( $Class, 'static_post_type' ) )
+					$class_fields[$Class::$static_post_type] = $Class;
+			}
+		}
+
+		return $class_fields;
+  }
+
+  static function Classes() {
+		// TODO: place these in to CB2_PostNavigator?
+		static $Classes = array();
+		if ( ! count( $Classes ) ) $Classes = self::subclasses( 'CB2_PostNavigator' );
+		return $Classes;
+  }
+
+  static function subclasses( String $BaseClass ) {
+    $subclasses = array();
+    foreach ( get_declared_classes() as $Class ) { // PHP 4
+			$ReflectionClass = new ReflectionClass( $Class );
+			if ( $ReflectionClass->isSubclassOf( $BaseClass ) ) // PHP 5
+				array_push( $subclasses, $Class );
+    }
+    return $subclasses;
+	}
+
+  static public function array_walk_paths( Array &$array, stdClass $object ) {
 		array_walk_recursive( $array, array( 'CB2_Query', 'array_walk_paths_callback' ), $object );
   }
 
-  static public function array_walk_paths_callback( &$value, $name, $object ) {
+  static public function array_walk_paths_callback( &$value, String $name, stdClass $object ) {
 		if ( is_string( $value ) && preg_match( '/%[^%]+%/', $value ) )
 			$value = self::object_value_path( $object, $value );
   }
@@ -605,6 +807,10 @@ class CB2_Query {
 		return ( is_string( $object ) && preg_match( "/^[$type]:[0-9]+:/", $object ) );
 	}
 
+	static function camel_to_underscore( String $name ) {
+		return preg_replace( '/([a-z0-9])([A-Z])/', '\1_\2', $name );
+	}
+
 	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL ) {
 		$string = NULL;
 		if ( self::array_has_associative( $array ) ) {
@@ -619,8 +825,34 @@ class CB2_Query {
 		return $string;
 	}
 
+	static function array_sum( Array $array, String $property = NULL ) {
+		if ( ! is_null( $property ) ) {
+			if ( count( $array ) ) {
+				$numbered_array = array_values( $array );
+				$array          = array();
+				foreach ( $numbered_array as $subarray ) {
+					$value = NULL;
+					// Support sub-arrays and sub-objects
+					if ( is_object( $subarray ) ) {
+						if ( property_exists( $subarray, $property ) ) $value = $subarray->$property;
+					} else if ( is_array( $subarray ) ) {
+						if ( isset( $subarray[$property] ) ) $value = $subarray[$property];
+					}
+
+					// Sum array counts if property points to them
+					if ( is_numeric( $value ) ) {
+						array_push( $array, $value );
+					} else if ( is_array( $value ) ) {
+						array_push( $array, count( $value ) );
+					}
+				}
+			}
+		}
+		return array_sum( $array );
+	}
+
 	static function array_has_associative( Array $array ) {
-		return array_keys($array) !== range(0, count($array) - 1);
+		return array_keys( $array ) !== range( 0, count( $array ) - 1 );
 	}
 
 	static function debug_print_backtrace( String $message = NULL ) {
@@ -648,9 +880,9 @@ class CB2_Query {
 				$class          = ( isset( $line['class'] )  ? $line['class']  : NULL );
 				$object         = ( isset( $line['object'] ) ? $line['object'] : NULL );
 				$type           = ( isset( $line['type'] )   ? $line['type']   : '->' );
-				$absolute_path  = $line['file'];
-				$lineno         = $line['line'];
-				$file_contents  = file_get_contents( $absolute_path );
+				$absolute_path  = ( isset( $line['file'] )   ? $line['file']   : NULL );
+				$lineno         = ( isset( $line['line'] )   ? $line['line']   : NULL );
+				$file_contents  = ( $absolute_path ? file_get_contents( $absolute_path ) : '' );
 				$file_lines     = explode( "\n", $file_contents );
 				$function_lines = array_splice( $file_lines,
 														( $lineno > $backlines ? $lineno - $backlines : 0 ),
@@ -659,7 +891,7 @@ class CB2_Query {
 				$relative_path  = substr( $absolute_path, $document_root_len );
 				$dir            = dirname( $relative_path );
 				$file           = basename( $relative_path );
-				$link           = "file://$line[file]";
+				$link           = "file://$absolute_path";
 
 				if ( strlen( $dir ) > 30 ) $dir = '...' . substr( $dir, strlen( $dir ) - 30 );
 				$function_name_full = ( $class ? "$class$type$function_name" : $function_name );

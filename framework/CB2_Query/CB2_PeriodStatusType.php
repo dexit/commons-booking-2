@@ -50,41 +50,53 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
   static function database_table_schemas( $prefix ) {
 		$id_field = CB2_Database::id_field( __class__ );
 
-		return array( array(
-			'name'    => self::$database_table,
-			'columns' => array(
-				// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
-				$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
-				'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL ),
-				'description' => array( CB2_VARCHAR, (1024), NULL,     NULL,         NULL, NULL ),
-				'flags'       => array( CB2_BIT,     (32),   NULL,     CB2_NOT_NULL, NULL,  0 ),
-				'colour'      => array( CB2_VARCHAR, (256),  NULL,     NULL,         NULL, NULL ),
-				'opacity'     => array( CB2_TINYINT, (1),    NULL,     CB2_NOT_NULL, NULL,  100 ),
-				'priority'    => array( CB2_INT,     (11),   NULL,     CB2_NOT_NULL, NULL,  1 ),
-				'author_ID'   => array( CB2_BIGINT,  (20),   CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1 ),
-			),
-			'primary key' => array( $id_field ),
-			'foreign keys' => array(
-				'author_ID' => array( 'users', 'ID' ),
-			),
-			'triggers'    => array(
-				'BEFORE UPDATE' => array( "
-					if old.$id_field <= 6 then
-						if not old.$id_field = new.$id_field then
-							signal sqlstate '45000' set message_text = 'system period status type IDs cannot be updated';
-						end if;
-						if not old.name = new.name then
-							signal sqlstate '45001' set message_text = 'system period status type names cannot be updated';
-						end if;
-					end if;"
+		return array(
+			array(
+				'name'    => self::$database_table,
+				'columns' => array(
+					// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+					$id_field     => array( CB2_INT,     (11),   CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+					'name'        => array( CB2_VARCHAR, (1024), NULL,     CB2_NOT_NULL ),
+					'description' => array( CB2_VARCHAR, (1024), NULL,     NULL,         NULL, NULL ),
+					'flags'       => array( CB2_BIT,     (32),   NULL,     CB2_NOT_NULL, NULL,  0 ),
+					'colour'      => array( CB2_VARCHAR, (256),  NULL,     NULL,         NULL, NULL ),
+					'opacity'     => array( CB2_TINYINT, (1),    NULL,     CB2_NOT_NULL, NULL,  100 ),
+					'priority'    => array( CB2_INT,     (11),   NULL,     CB2_NOT_NULL, NULL,  1 ),
+					'author_ID'   => array( CB2_BIGINT,  (20),   CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1 ),
 				),
-				'BEFORE DELETE' => array( "
-					if old.$id_field <= 6 then
-						signal sqlstate '45000' set message_text = 'system period status types cannot be removed';
-					end if;"
+				'primary key' => array( $id_field ),
+				'foreign keys' => array(
+					'author_ID' => array( 'users', 'ID' ),
+				),
+				'triggers'    => array(
+					'BEFORE UPDATE' => array( "
+						if old.$id_field <= 6 then
+							if not old.$id_field = new.$id_field then
+								signal sqlstate '45000' set message_text = 'system period status type IDs cannot be updated';
+							end if;
+							if not old.name = new.name then
+								signal sqlstate '45001' set message_text = 'system period status type names cannot be updated';
+							end if;
+						end if;"
+					),
+					'BEFORE DELETE' => array( "
+						if old.$id_field <= 6 then
+							signal sqlstate '45000' set message_text = 'system period status types cannot be removed';
+						end if;"
+					),
 				),
 			),
-		) );
+
+			array(
+				'name'    => 'periodstatustype_pseudo_columns',
+				'pseudo'  => TRUE,
+				'columns' => array(
+					// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+					'period_status_type_name' => array( CB2_VARCHAR, (1024), NULL, CB2_NOT_NULL ),
+					'system'                  => array( CB2_BIT,     (1),    NULL, CB2_NOT_NULL, NULL,  0 ),
+				),
+			),
+		);
 	}
 
 	static function database_data() {
@@ -211,7 +223,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     $system    = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
-    if ( $ID && isset( self::$all[$ID] ) )
+    if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) )
 			$object = self::$all[$ID];
     else {
       $Class = 'CB2_UserPeriodStatusType';
@@ -240,8 +252,8 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
   function styles() {
     $styles = '';
     if ( $this->colour   ) $styles .= 'color:#'  . $this->colour           . ';';
-    if ( $this->priority ) $styles .= 'z-index:' . $this->priority + 10000 . ';';
-    if ( $this->opacity && $this->opacity != 100 ) $styles .= 'opacity:' . $this->opacity / 100    . ';';
+    if ( $this->priority ) $styles .= 'z-index:' . ( $this->priority + 10000 ) . ';';
+    if ( $this->opacity && $this->opacity != 100 ) $styles .= 'opacity:' . ( $this->opacity / 100 ) . ';';
     return $styles;
   }
 
@@ -305,7 +317,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		return (int) $wpdb->get_var(
 			$wpdb->prepare( "SELECT count(*)
 				from {$wpdb->prefix}cb2_view_periodent_posts
-				where period_status_ID = %d",
+				where period_status_type_ID = %d",
 				$this->ID
 			)
 		);

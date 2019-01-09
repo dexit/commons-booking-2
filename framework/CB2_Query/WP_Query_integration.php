@@ -62,8 +62,8 @@ add_filter( 'query_vars',       'cb2_query_vars' );
 // so there will be no meta-data available at pre_post_update stage
 // Create $native_ID, and $ID
 define( 'CB2_DS_PRIORITY',   100 );
-define( 'CB2_MTN_PRIORITY',  110 );
 add_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY, 3 );
+define( 'CB2_MTN_PRIORITY',  110 );
 add_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY, 3 );
 
 // Prevent updates of wp_posts
@@ -274,7 +274,7 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 						// TODO: enable wordpress events on update
 						$update                = TRUE;
 						$container             = NULL; // Not used yet
-						$fire_wordpress_events = FALSE; //$consider_empty_post; // We are preventing normal update procedure events
+						$fire_wordpress_events = $consider_empty_post; // We are preventing normal update procedure events
 						$cb2_post              = $Class::factory_from_properties( $properties, $container, $update ); // Recursive
 						$cb2_post->save( $update, $fire_wordpress_events );
 					}
@@ -327,6 +327,7 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 	global $auto_draft_publish_transition;
 	$native_ID = NULL;
 
+	// Updates are handled directly
 	if ( $auto_draft_publish_transition ) {
 		$post_type = $post->post_type;
 		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
@@ -352,6 +353,7 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				if ( CB2_DEBUG_SAVE )
 					print( "<div class='cb2-WP_DEBUG-small'>include wp_post meta-data</div>" );
 				CB2_Query::get_metadata_assign( $post );
+				krumo($post);
 				$properties = (array) $post;
 
 				// ----------------------------------------------------- save() => pre_post_create() recursive
@@ -420,13 +422,28 @@ function cb2_get_cb2_metadata( $type, $post_id, $meta_key, $single ) {
 	global $wpdb;
 	if ( WP_DEBUG && ! CB2_Query::wpdb_postmeta_is_redirected() )
 		CB2_Query::debug_print_backtrace( "Request for CB2 [$type] meta data [$meta_key] without redirected wpdb." );
-	return null; // Continue with normal operation
+	return NULL; // Continue with normal operation
 }
 add_filter( 'get_perioditem_metadata',       'cb2_get_cb2_metadata', 10, 4 );
 add_filter( 'get_periodent_metadata',        'cb2_get_cb2_metadata', 10, 4 );
 add_filter( 'get_period_metadata',           'cb2_get_cb2_metadata', 10, 4 );
 add_filter( 'get_periodgroup_metadata',      'cb2_get_cb2_metadata', 10, 4 );
 add_filter( 'get_periodstatustype_metadata', 'cb2_get_cb2_metadata', 10, 4 );
+
+function cb2_delete_cb2_metadata( $delete, $object_id, $meta_key, $meta_value, $delete_all ) {
+	$prevent = NULL;
+
+	if ( $post = get_post( $object_id ) ) {
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post->post_type ) ) {
+			$prevent = TRUE; // Cancel normal operation
+			if ( WP_DEBUG )
+				print( "<div class='cb2-WP_DEBUG-small'>Attempt to delete meta [$meta_key] on post [$Class/$object_id] suppressed.</div>" );
+		}
+	}
+
+	return $prevent;
+}
+add_filter( 'delete_post_metadata',       'cb2_delete_cb2_metadata', 10, 5 );
 
 function cb2_update_post_metadata( $allow, $object_id, $meta_key, $meta_value, $prev_value ) {
 	// 'post' meta_type update request, e.g. _edit_lock
@@ -439,7 +456,7 @@ function cb2_update_post_metadata( $allow, $object_id, $meta_key, $meta_value, $
 
 	$is_system_meta = ( $meta_key && $meta_key[0] == '_' );
 	if ( WP_DEBUG && ! $is_system_meta && CB2_Query::wpdb_postmeta_is_redirected() )
-		throw new Exception( "Attempt to update non system meta [$meta_key] on post [$object_id] with redirected wpdb [$wpdb->postmeta]" );
+		print( "<div class='cb2-WP_DEBUG-small'>Attempt to update non system meta [$meta_key] on post [$object_id] with redirected wpdb [$wpdb->postmeta] suppressed. Update will be caught by another action.</div>" );
 	$prevent_update = ( CB2_Query::wpdb_postmeta_is_redirected() ? TRUE : NULL );
 	return $prevent_update;
 }

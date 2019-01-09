@@ -23,7 +23,8 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   public static $posts_table    = FALSE;
   public static $postmeta_table = FALSE;
   public static $database_table = FALSE;
-  public static $supports = array(
+	public static $description    = 'CB2_Post details the wp_posts table for column description. It is not managed.<br/>CB2_Query::copy_all_wp_post_properties() uses this table config via CB2_Query::to_object(no date conversion).<br/>So DATETIMEs like post_date will remain strings in this case.';
+	public static $supports = array(
 		'title',
 		'editor',
 		'thumbnail',
@@ -65,7 +66,76 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
 		return $this->id();
 	}
 
-	function id( $why = '' ) {return $this->ID;}
+  static function database_table_schemas( $prefix ) {
+		// NOT MANAGED by CB2 $database_table = FALSE and 'managed' => FALSE
+		// This wp_posts table will not be created by CB2
+		// it is here only for field definition understanding
+		// the views in this case produce these wp_posts fields
+		// and the system needs to unerstand their type
+		// See:
+		//   CB2_Query::to_object() which uses this conversion knowledge
+		// when setting values on objects from string properties
+		// WordPress wp_posts 4.x == 5.x
+		$id_field = 'ID';
+		$date_comment = 'Will remain a string when set with CB2_Query::to_object()';
+
+		return array(
+			array(
+				'name'    => 'posts',
+				'managed' => FALSE, // Not created or removed. Here for data conversion only. Columns used by *_post views.
+				'columns' => array(
+					// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+					$id_field       => array( CB2_BIGINT, 20, CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+					'post_author'   => array( CB2_BIGINT, 20, CB2_UNSIGNED, CB2_NOT_NULL, NULL, '0' ),
+					'post_date'     => array( CB2_DATETIME, NULL, NULL,     CB2_NOT_NULL, NULL, '0000-00-00 00:00:00', $date_comment ),
+					'post_date_gmt' => array( CB2_DATETIME, NULL, NULL,     CB2_NOT_NULL, NULL, '0000-00-00 00:00:00', $date_comment ),
+					'post_content'  => array( CB2_LONGTEXT, NULL, NULL,     CB2_NOT_NULL ),
+					'post_title'    => array( CB2_TEXT,     NULL, NULL,     CB2_NOT_NULL ),
+					'post_excerpt'  => array( CB2_TEXT,     NULL, NULL,     CB2_NOT_NULL ),
+					'post_status'   => array( CB2_VARCHAR, 20,  NULL,       CB2_NOT_NULL, NULL, 'publish' ),
+					'comment_status' => array( CB2_VARCHAR, 20, NULL,       CB2_NOT_NULL, NULL, 'open' ),
+					'ping_status'   => array( CB2_VARCHAR, 20,  NULL,       CB2_NOT_NULL, NULL, 'open' ),
+					'post_password' => array( CB2_VARCHAR, 255, NULL,       CB2_NOT_NULL, NULL, '' ),
+					'post_name'     => array( CB2_VARCHAR, 200, NULL,       CB2_NOT_NULL, NULL, '' ),
+					'to_ping'       => array( CB2_TEXT,   NULL, NULL,       CB2_NOT_NULL ),
+					'pinged'        => array( CB2_TEXT,   NULL, NULL,       CB2_NOT_NULL ),
+					'post_modified' => array( CB2_DATETIME, NULL, NULL,     CB2_NOT_NULL, NULL, '0000-00-00 00:00:00', $date_comment ),
+					'post_modified_gmt' => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, NULL, '0000-00-00 00:00:00', $date_comment ),
+					'post_content_filtered' => array( CB2_LONGTEXT, NULL, NULL, CB2_NOT_NULL ),
+					'post_parent'   => array( CB2_BIGINT,   20, CB2_UNSIGNED, CB2_NOT_NULL, NULL, '0' ),
+					'guid'          => array( CB2_VARCHAR,  255,      NULL, CB2_NOT_NULL, NULL, '' ),
+					'menu_order'    => array( CB2_INT,      11,       NULL, CB2_NOT_NULL, NULL, '0' ),
+					'post_type'     => array( CB2_VARCHAR,  20,       NULL, CB2_NOT_NULL, NULL, 'post' ),
+					'post_mime_type' => array( CB2_VARCHAR, 100,      NULL, CB2_NOT_NULL, NULL, '' ),
+					'comment_count' => array( CB2_BIGINT,   20,       NULL, CB2_NOT_NULL, NULL, '0' ),
+				),
+				'primary key'  => array( $id_field ),
+			),
+
+			array(
+				'name' => 'postmeta',
+				'managed' => FALSE, // Not created or removed. Here for data conversion only. Columns used by *_post views.
+				'columns' => array(
+					'meta_id'    => array( CB2_BIGINT,  (20),  CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+					'post_id'    => array( CB2_BIGINT,  (20),  CB2_UNSIGNED, CB2_NOT_NULL, NULL, '0' ),
+					'meta_key'   => array( CB2_VARCHAR, (255), NULL,         NULL,         NULL, '' ),
+					'meta_value' => array( CB2_LONGTEXT, NULL, NULL ),
+				),
+			),
+
+			array(
+				'name'    => 'extended_post_properties',
+				'description' => 'Not a real database table. Just here to define some more conversions.',
+				'managed' => FALSE,
+				'pseudo'  => TRUE,
+				'columns' => array(
+					'filter' => array( CB2_VARCHAR, 20, NULL, CB2_NOT_NULL, NULL, 'raw' ),
+				),
+			),
+		);
+  }
+
+  function id( $why = '' ) {return $this->ID;}
 
   protected function __construct( $ID ) {
     $this->perioditems = array();

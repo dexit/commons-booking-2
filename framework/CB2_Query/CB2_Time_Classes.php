@@ -201,8 +201,17 @@ class CB2_Week extends CB2_TimePostNavigator {
 
   static function factory( $day ) {
     // Design Patterns: Factory Singleton with Multiton
-    // TODO: Year Boundaries will create 2 weeks over the boundary...
-    $key = $day->date->format( 'Y-' ) . self::weekinyear( $day );
+    $year       = $day->date->format( 'Y' );
+    $last_year  = $year - 1;
+    $weekinyear = self::weekinyear( $day );
+    $key        = "$year-$weekinyear";
+
+    // Year Boundaries will create 2 weeks over the boundary...
+    // a partial 53 and a partial 1
+    // if we already have days in the previous end-of-year week then continue with that one
+    if ( $weekinyear == 1 && isset( self::$all["$last_year-53"] ) )
+			$key = "$last_year-53";
+
     if ( isset( self::$all[$key] ) ) {
       $object = self::$all[$key];
       $object->add_day( $day );
@@ -276,7 +285,7 @@ class CB2_Day extends CB2_TimePostNavigator {
 
   static function &factory( CB2_DateTime $date, String $title_format = NULL ) {
     // Design Patterns: Factory Singleton with Multiton
-    $key = $date->format( 'Y-z' );
+    $key = $date->format( 'Y-z' ); // year-dayofyear: 2019-364
     if ( isset( self::$all[$key] ) ) $object = self::$all[$key];
     else {
       $object = new self( $date, $title_format );
