@@ -296,8 +296,9 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 class CB2_Everything extends CB2_PeriodInteractionStrategy {
-	function __construct( CB2_Post $post ) {
-		parent::__construct();
+	// Direct WP_Query
+	function __construct( Array $query = NULL ) {
+		parent::__construct( NULL, NULL, NULL, $query );
 	}
 }
 
