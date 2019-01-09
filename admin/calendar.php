@@ -22,6 +22,9 @@ $show_overridden_periods = isset( $_GET['show_overridden_periods'] );
 
 // --------------------------------------- Query
 $query = NULL;
+// TODO: Here we should instantiate with stated CB2_PeriodInteractionStrategy
+// same as WP_Query
+// maybe using a factory( $args )?
 $args  = array(
 	'startdate'        => $startdate_string,
 	'enddate'          => $enddate_string,
@@ -40,55 +43,62 @@ $args  = array(
 	'show_overridden_periods' => $show_overridden_periods,
 );
 
-if ( $display_strategy == 'WP_Query' ) {
-	$meta_query       = array();
-	$meta_query_items = array();
-	$post_status      = array( CB2_Post::$PUBLISH );
-	if ( $location_ID )
-		$meta_query_items[ 'location_clause' ] = array(
-			'key' => 'location_ID',
-			'value' => array( $location_ID, 0 ),
-		);
-	if ( $item_ID )
-		$meta_query_items[ 'item_clause' ] = array(
-			'key' => 'item_ID',
-			'value' => array( $item_ID, 0 ),
-		);
-	if ( $period_status_type_ID )
-		$meta_query_items[ 'period_status_type_clause' ] = array(
-			'key' => 'period_status_type_ID',
-			'value' => array( $period_status_type_ID, 0 ),
-		);
-	if ( $period_entity_ID )
-		$meta_query_items[ 'period_entity_clause' ] = array(
-			'key' => 'period_entity_ID',
-			'value' => array( $period_entity_ID, 0 ),
-		);
+switch ( $display_strategy ) {
+	case 'WP_Query':
+		// TODO: meta_query assembly needs to be placed in the Strategy and generally used everywhere
+		$meta_query       = array();
+		$meta_query_items = array();
+		$post_status      = array( CB2_Post::$PUBLISH );
+		if ( $location_ID )
+			$meta_query_items[ 'location_clause' ] = array(
+				'key' => 'location_ID',
+				'value' => array( $location_ID, 0 ),
+			);
+		if ( $item_ID )
+			$meta_query_items[ 'item_clause' ] = array(
+				'key' => 'item_ID',
+				'value' => array( $item_ID, 0 ),
+			);
+		if ( $period_status_type_ID )
+			$meta_query_items[ 'period_status_type_clause' ] = array(
+				'key' => 'period_status_type_ID',
+				'value' => array( $period_status_type_ID, 0 ),
+			);
+		if ( $period_entity_ID )
+			$meta_query_items[ 'period_entity_clause' ] = array(
+				'key' => 'period_entity_ID',
+				'value' => array( $period_entity_ID, 0 ),
+			);
 
-	if ( $meta_query_items ) {
-		if ( ! isset( $meta_query_items[ 'relation' ] ) )
-			$meta_query_items[ 'relation' ] = 'AND';
-		$meta_query[ 'items' ] = $meta_query_items;
-	}
+		if ( $meta_query_items ) {
+			if ( ! isset( $meta_query_items[ 'relation' ] ) )
+				$meta_query_items[ 'relation' ] = 'AND';
+			$meta_query[ 'items' ] = $meta_query_items;
+		}
 
-	$args = array(
-		'author'         => $user_ID,
-		'post_status'    => $post_status,
-		'post_type'      => CB2_PeriodItem::$all_post_types,
-		'posts_per_page' => -1,
-		'order'          => 'ASC',          // defaults to post_date
-		'show_overridden_periods' => 'yes', // TODO: doesnt work yet: use the query string
-		'date_query'     => array(
-			'after'   => $startdate_string,
-			'before'  => $enddate_string,
-			'compare' => $schema_type,
-		),
-		'meta_query' => $meta_query,        // Location, Item, User
-	);
-	$query = new WP_Query( $args );
+		$args = array(
+			'author'         => $user_ID,
+			'post_status'    => $post_status,
+			'post_type'      => CB2_PeriodItem::$all_post_types,
+			'posts_per_page' => -1,
+			'order'          => 'ASC',          // defaults to post_date
+			'show_overridden_periods' => 'yes', // TODO: doesnt work yet: use the query string
+			'date_query'     => array(
+				'after'   => $startdate_string,
+				'before'  => $enddate_string,
+				'compare' => $schema_type,
+			),
+			'meta_query' => $meta_query,        // Location, Item, User
+		);
+		$query = new WP_Query( $args );
+		break;
+	case 'CB2_AllItemAvailability':
+		$query = new $display_strategy();
+		break;
+	default:
+		print( "<div style='color:red;'>$display_strategy not supported yet</div>" );
+		exit();
 }
-// TODO: Here we should instantiate with stated CB2_PeriodInteractionStrategy
-// same as WP_Query
 
 // --------------------------------------- Filter selection Form
 $location_options  = CB2_Forms::select_options( CB2_Forms::location_options(), $location_ID );

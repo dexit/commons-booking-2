@@ -628,11 +628,34 @@ abstract class CB2_PostNavigator extends stdClass {
 
   function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
 		// TODO: This does not work
-		$url   = get_edit_post_link( $this->ID );
-		$class = esc_attr( $class );
-		$url   = esc_url( $url );
-		if ( is_null( $text ) ) $text = __( 'Edit This' );
-		return "$before<a class='cb2-todo $class' href='$url'>$text</a>$after";
+		$link = NULL;
+		$post = $this;
+		$context = 'display';
+
+		// Taken from WordPress link-template.php get_edit_post_link()
+		if ( 'revision' === $post->post_type )
+			$action = '';
+		elseif ( 'display' == $context )
+			$action = '&amp;action=edit';
+		else
+			$action = '&action=edit';
+
+		$post_type_object = get_post_type_object( $post->post_type );
+		if ( !$post_type_object )
+			return;
+
+		if ( !current_user_can( 'edit_post', $post->ID ) )
+			return;
+
+		if ( $post_type_object->_edit_link ) {
+			$url   = admin_url( sprintf( $post_type_object->_edit_link . $action, $post->ID ) );
+			$class = esc_attr( $class );
+			$url   = esc_url( $url );
+			if ( is_null( $text ) ) $text = __( 'Edit This' );
+			$link = "$before<a class='$class' href='$url'>$text</a>$after";
+		}
+
+		return $link;
   }
 
   function get_the_excerpt() {

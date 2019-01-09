@@ -181,9 +181,10 @@ class CB2_Query {
 		return ( $meta_name && $meta_name[0] == '_' );
 	}
 
-	static function pass_through_query_string( $path, $additional_parameters = array(), $remove_parameters = array() ) {
+	static function pass_through_query_string( $path = NULL, $additional_parameters = array(), $remove_parameters = array() ) {
 		$get = array_merge( $_GET, $additional_parameters );
 		foreach ( $remove_parameters as $name ) unset( $get[$name] );
+		if ( is_null( $path ) ) $path = $_SERVER['PHP_SELF'];
 
 		if ( count( $get ) ) {
 			$existing_query_string = array();

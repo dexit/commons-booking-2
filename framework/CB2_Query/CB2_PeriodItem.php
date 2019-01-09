@@ -288,8 +288,8 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
     // 24:00 = 86400
     static $seconds_in_day = 24 * 60 * 60; // 86400
 
-    $seconds_start = $this->seconds_in_day( $this->datetime_part_period_start );
-    $seconds_end   = $this->seconds_in_day( $this->datetime_part_period_end );
+    $seconds_start = $this->seconds_in_day( $this->datetime_period_item_start );
+    $seconds_end   = $this->seconds_in_day( $this->datetime_period_item_end );
     $seconds_start_percent = (int) ( $seconds_start / $seconds_in_day * 100 );
     $seconds_end_percent   = (int) ( $seconds_end   / $seconds_in_day * 100 );
     $seconds_diff_percent  = $seconds_end_percent - $seconds_start_percent;
@@ -386,23 +386,22 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 
   function jsonSerialize() {
     return array(
-      'period_id' => $this->period_id,
+      'period_ID' => $this->period->ID,
       'recurrence_index' => $this->recurrence_index,
-      'name' => $this->name,
-      'datetime_part_period_start' => $this->datetime_part_period_start->format( CB2_Query::$json_date_format ),
-      'datetime_part_period_end' => $this->datetime_part_period_end->format( CB2_Query::$json_date_format ),
-      'datetime_from' => $this->datetime_from->format( CB2_Query::$json_date_format ),
-      'datetime_to' => ( $this->datetime_to ? $this->datetime_to->format( CB2_Query::$json_date_format ) : '' ),
+      'name' => $this->post_title,
+      'datetime_period_item_start' => $this->datetime_period_item_start->format( CB2_Query::$json_date_format ),
+      'datetime_period_item_end' => $this->datetime_period_item_start->format( CB2_Query::$json_date_format ),
+      'datetime_from' => $this->period->datetime_from->format( CB2_Query::$json_date_format ),
+      'datetime_to' => ( $this->period->datetime_to ? $this->datetime_to->format( CB2_Query::$json_date_format ) : '' ),
       'period_status_type' => $this->period_entity->period_status_type,
-      'recurrence_type' => $this->recurrence_type,
-      'recurrence_frequency' => $this->recurrence_frequency,
-      'recurrence_sequence' => $this->recurrence_sequence,
-      'type' => $this->type(),
+      'recurrence_type' => $this->period->recurrence_type,
+      'recurrence_frequency' => $this->period->recurrence_frequency,
+      'recurrence_sequence' => $this->period->recurrence_sequence,
       'day_percent_position' => $this->day_percent_position(),
       'classes' => $this->classes(),
       'styles' => $this->styles(),
       'indicators' => $this->indicators(),
-      'fullday' => $this->fullday
+      'fullday' => $this->period->fullday,
     );
   }
 }
@@ -527,6 +526,10 @@ class CB2_PeriodItem_Automatic extends CB2_PeriodItem {
     }
 
     return $object;
+  }
+
+  function jsonSerialize() {
+		return NULL;
   }
 
   function period_status_type_name() {

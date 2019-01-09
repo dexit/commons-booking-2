@@ -25,7 +25,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			'show_names' => FALSE,
 			'context'    => 'side',
 			'closed'     => TRUE,
-			'debug-only' => TRUE,
+			'debug-only' => TRUE, // TODO: actually this is needed when saving the Period otherwise it will loose its preiod_group
 			'fields'     => array(
 				array(
 					'name'    => __( $title, 'commons-booking-2' ),

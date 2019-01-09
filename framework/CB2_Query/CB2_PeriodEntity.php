@@ -524,10 +524,19 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 
 		// ------------------------------------------ Calendar based metabox showing just one week
 		// TODO: calendar opening hours wizard
+		$advanced_url  = CB2_Query::pass_through_query_string( NULL, array(), array(
+			'CB2_PeriodEntity_Location_metabox_0_show',
+			'metabox_wizard_ids',
+			'title_show',
+			'recurrence_type_show',
+		) );
+		$advanced_text = __( 'advanced' );
+		$advanced      = "<span class='dashicons-before dashicons-admin-tools' style='float:right;color:#aaa;'><a href='$advanced_url'>$advanced_text</a></span>";
+
 		array_push( $metaboxes,
 			array(
 				'id'         => "{$Class}_metabox_openinghours_wizard",
-				'title'      => __( 'Opening Hours Wizard', 'commons-booking-2' ),
+				'title'      => __( 'Opening Hours Wizard', 'commons-booking-2' ) . " $advanced",
 				//'show_on_cb' => array( 'CB2', 'is_not_published' ),
 				'on_request' => TRUE, // Prevents the metabox being shown unless explicitly asked
 				'show_names' => TRUE,
