@@ -300,6 +300,10 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		// TODO: Examine many-to-many knowledge
   }
 
+	protected function custom_events( $update ) {
+		// Pure Virtual
+	}
+
 	protected function update_row( $update_data, $formats = NULL, $fire_wordpress_events = TRUE ) {
 		global $wpdb;
 
@@ -350,6 +354,10 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			$update          = TRUE;
 			$post_after      = $this;
 
+			// CB2 events
+			$this->custom_events( TRUE );
+			do_action( 'cb2_data_change', TRUE );
+
 			// Copied from post.php
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event edit_post</div>" );
 			do_action( 'edit_post', $post_ID, $post );
@@ -393,15 +401,19 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		}
 
 		$native_id = $wpdb->insert_id;
-		$ID        = self::ID_from_id_post_type( $native_id, $this->post_type() );
+		$this->ID  = self::ID_from_id_post_type( $native_id, $this->post_type() );
 		if ( CB2_DEBUG_SAVE )
-			print( "<div class='cb2-WP_DEBUG-small'>$class_database_table::$native_id =&gt; $ID</div>" );
+			print( "<div class='cb2-WP_DEBUG-small'>$class_database_table::$native_id =&gt; $this->ID</div>" );
 
 		if ( $fire_wordpress_events ) {
 			$post_ID         = $this->ID;
 			$post            = $this;
 			$post->post_type = $this->post_type();
 			$update          = FALSE;
+
+			// CB2 events
+			$this->custom_events( FALSE );
+			do_action( 'cb2_data_change', FALSE );
 
 			// Copied from post.php
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event save_post_{$post->post_type}</div>" );
@@ -412,6 +424,6 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
 		}
 
-		return $ID;
+		return $this->ID;
 	}
 }
