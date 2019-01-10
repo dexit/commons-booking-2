@@ -95,25 +95,23 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		$new_posts = array();
 		$removals  = array();
 		foreach ( $this->wp_query->posts as $perioditem ) {
-			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
-				if ( WP_DEBUG ) {
-					$period_entity   = $perioditem->period_entity;
-					$Class           = get_class( $perioditem );
-					$PSTClass        = get_class( $period_entity->period_status_type );
-					$datetime_string = $perioditem->datetime_period_item_start->format( 'M-d' );
-					$this->log( "$Class($PSTClass)::$datetime_string" );
-				}
-				$overlap_perioditems = $this->overlap_perioditems( $perioditem );
-				$new_perioditem      = $this->process_perioditem( $perioditem, $overlap_perioditems );
-
-				if ( is_null( $new_perioditem ) ) {
-					array_push( $removals, $perioditem );
-					$this->log( 'removed' );
-				} else {
-					$this->markup( $new_perioditem );
-				}
-				$perioditem = $new_perioditem;
+			if ( WP_DEBUG ) {
+				$period_entity   = $perioditem->period_entity;
+				$Class           = get_class( $perioditem );
+				$PSTClass        = get_class( $period_entity->period_status_type );
+				$datetime_string = $perioditem->datetime_period_item_start->format( 'M-d' );
+				$this->log( "$Class($PSTClass)::$datetime_string" );
 			}
+			$overlap_perioditems = $this->overlap_perioditems( $perioditem );
+			$new_perioditem      = $this->process_perioditem( $perioditem, $overlap_perioditems );
+
+			if ( is_null( $new_perioditem ) ) {
+				array_push( $removals, $perioditem );
+				$this->log( 'removed' );
+			} else {
+				$this->markup( $new_perioditem );
+			}
+			$perioditem = $new_perioditem;
 
 			if ( ! is_null( $perioditem ) )
 				array_push( $new_posts, $perioditem );
@@ -218,11 +216,9 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
   protected function filter_can( Array $perioditems, Int $period_status_type_flags, String $Class = NULL ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
-			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
-				if ( ! $Class || is_a( $perioditem, $Class ) ) {
-					if ( $perioditem->period_entity->period_status_type->flags & $period_status_type_flags )
-						array_push( $perioditems_filtered, $perioditem );
-				}
+			if ( ! $Class || is_a( $perioditem, $Class ) ) {
+				if ( $perioditem->period_entity->period_status_type->flags & $period_status_type_flags )
+					array_push( $perioditems_filtered, $perioditem );
 			}
 		}
 		return $perioditems_filtered;
@@ -231,11 +227,9 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
   protected function filter_cannot( Array $perioditems, Int $period_status_type_flags, String $Class = NULL ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
-			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
-				if ( ! $Class || is_a( $perioditem, $Class ) ) {
-					if ( ! $perioditem->period_entity->period_status_type->flags & $period_status_type_flags )
-						array_push( $perioditems_filtered, $perioditem );
-				}
+			if ( ! $Class || is_a( $perioditem, $Class ) ) {
+				if ( ! $perioditem->period_entity->period_status_type->flags & $period_status_type_flags )
+					array_push( $perioditems_filtered, $perioditem );
 			}
 		}
 		return $perioditems_filtered;
@@ -245,12 +239,10 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		$perioditems_filtered      = array();
 		$any_period_with_this_type = is_null( $entity );
 		foreach ( $perioditems as $perioditem ) {
-			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
-				if ( property_exists( $perioditem->period_entity, $entity_type )
-					&& ( $any_period_with_this_type || $perioditem->period_entity->$entity_type->is( $entity ) )
-				) {
-					array_push( $perioditems_filtered, $perioditem );
-				}
+			if ( property_exists( $perioditem->period_entity, $entity_type )
+				&& ( $any_period_with_this_type || $perioditem->period_entity->$entity_type->is( $entity ) )
+			) {
+				array_push( $perioditems_filtered, $perioditem );
 			}
 		}
 		return $perioditems_filtered;
@@ -259,10 +251,8 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
   protected function filter_higher_priority( Array $perioditems, Int $priority ) {
 		$perioditems_filtered = array();
 		foreach ( $perioditems as $perioditem ) {
-			if ( ! $perioditem instanceof CB2_PeriodItem_Automatic ) {
-				if ( $perioditem->period_entity->period_status_type->priority >= $priority ) {
-					array_push( $perioditems_filtered, $perioditem );
-				}
+			if ( $perioditem->period_entity->period_status_type->priority >= $priority ) {
+				array_push( $perioditems_filtered, $perioditem );
 			}
 		}
 		return $perioditems_filtered;

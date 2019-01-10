@@ -172,7 +172,7 @@ if ( WP_DEBUG ) {
 			<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
 			<div style='margin-left:5px;color:#448;'>$query->request</div></div>" );
 		//print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
-		CB2_Query::ensure_correct_classes( $query->posts );
+		CB2_Query::ensure_correct_classes( $query->posts ); // For debug purposes
 		krumo( $query );
 		print( "</div></div>" );
 	} else print( "<div>No posts returned!</div>" );

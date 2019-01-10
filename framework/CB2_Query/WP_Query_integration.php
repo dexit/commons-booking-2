@@ -685,42 +685,30 @@ function cb2_post_results_unredirect_wpdb( $posts, $wp_query ) {
 }
 
 function cb2_posts_results_add_automatic( $posts, $wp_query ) {
-	// Add Automatic posts if requested
-	$post_type_auto = CB2_PeriodItem_Automatic::$static_post_type;
-
-	if ( isset( $wp_query->query['post_type'] )
-		&& ( $post_type = $wp_query->query['post_type'] )
-		&& (
-			( is_array( $post_type ) && in_array( $post_type_auto, $post_type ) )
-			|| $post_type == $post_type_auto
-		)
+	if ( isset( $wp_query->query['date_query'] )
+		&& isset( $wp_query->query['date_query']['after'] )
+		&& isset( $wp_query->query['date_query']['before'] )
 	) {
-		if ( isset( $wp_query->query['date_query'] )
-			&& isset( $wp_query->query['date_query']['after'] )
-			&& isset( $wp_query->query['date_query']['before'] )
-		) {
-			$startdate_string = $wp_query->query['date_query']['after'];
-			$enddate_string   = $wp_query->query['date_query']['before'];
-			if ( $startdate_string && $enddate_string ) {
-				$startdate = new CB2_DateTime( $startdate_string );
-				$enddate   = new CB2_DateTime( $enddate_string );
-				$startdate->setTime( 0, 0 );
-				$enddate->setTime( 23, 59 );
+		$startdate_string = $wp_query->query['date_query']['after'];
+		$enddate_string   = $wp_query->query['date_query']['before'];
+		if ( $startdate_string && $enddate_string ) {
+			$startdate = new CB2_DateTime( $startdate_string );
+			$enddate   = new CB2_DateTime( $enddate_string );
+			$startdate->setTime( 0, 0 );
+			$enddate->setTime( 23, 59 );
 
-				while ( $startdate->before( $enddate ) ) {
-					//new CB2_Day( $startdate );
-					array_push( $posts,  CB2_PeriodItem_Automatic::post_from_date( $startdate ) );
-					$startdate->add( 1 );
-				}
+			while ( $startdate->before( $enddate ) ) {
+				CB2_Day::factory( $startdate );
+				$startdate->add( 1 );
+			}
 
-				usort( $posts, "cb2_posts_date_order" );
+			usort( $posts, "cb2_posts_date_order" );
 
-				// Reset pointers
-				$wp_query->post_count  = count( $wp_query->posts );
-				$wp_query->found_posts = (boolean) $wp_query->post_count;
-				$wp_query->post = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
-			} else throw new Exception( "Cannot request [$post_type_auto] without date_query after and before" );
-		} else throw new Exception( "Cannot request [$post_type_auto] without date_query after and before" );
+			// Reset pointers
+			$wp_query->post_count  = count( $wp_query->posts );
+			$wp_query->found_posts = (boolean) $wp_query->post_count;
+			$wp_query->post = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
+		}
 	}
 
 	return $posts;
@@ -732,10 +720,15 @@ function cb2_posts_date_order( $post1, $post2 ) {
 }
 
 function cb2_loop_start( &$wp_query ) {
+	return cb2_convert_posts( $wp_query );
+}
+
+function cb2_convert_posts( &$wp_query ) {
 	// Convert the WP_Query CB post_type results from WP_Post in to CB2_* objects
 	if ( $wp_query instanceof WP_Query
 		&& property_exists( $wp_query, 'posts' )
 		&& is_array( $wp_query->posts )
+		&& ! property_exists( $wp_query, '_cb2_converted_posts' )
 	) {
 		// Create the CB2_PeriodItem objects from the WP_Post results
 		// This will also create all the associated CB2_* Objects like CB2_Week
@@ -759,7 +752,10 @@ function cb2_loop_start( &$wp_query ) {
 		$wp_query->post_count  = count( $wp_query->posts );
 		$wp_query->found_posts = (boolean) $wp_query->post_count;
 		$wp_query->post        = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
+		$wp_query->_cb2_converted_posts = TRUE;
 	}
+
+	return $wp_query;
 }
 
 // ------------------------------------------------------------------------------------------
