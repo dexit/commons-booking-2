@@ -54,6 +54,7 @@ function cb2_admin_pages() {
 	$menu_interface = array(
 		'cb2-holidays'      => array(
 			'page_title'    => 'Holidays %(for)% %location_ID%',
+			'menu_visible'  => FALSE,
 			'menu_title'    => 'Holidays',
 			'wp_query_args' => 'post_type=periodent-global&period_status_type_id=6&post_title=Holidays',
 			'description'   => 'Edit the global holidays, and holidays for specific locations.',
@@ -73,6 +74,14 @@ function cb2_admin_pages() {
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Repair::$id,
 			'count_class'   => 'warning',
 		),
+		'cb2-timeframes'    => array(
+			'indent'        => 1,
+			'menu_visible'  => FALSE,
+			'page_title'    => 'Item availibility %(for)% %location_ID%',
+			'menu_title'    => 'Item Availibility',
+			'wp_query_args' => 'post_type=periodent-timeframe&period_status_type_id=1&post_title=Availability %(for)% %item_ID%',
+			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Available::$id,
+		),
 		'cb2-locations'     => array(
 			'page_title'     => 'Locations',
 			'wp_query_args'  => 'post_type=location',
@@ -86,17 +95,7 @@ function cb2_admin_pages() {
 			'wp_query_args' => 'post_type=periodent-location&recurrence_type=D&recurrence_type_show=no&period_status_type_id=4&post_title=Opening Hours %(for)% %location_ID%',
 			'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Open::$id,
 		),
-		'cb2-timeframes'    => array(
-			'indent'        => 1,
-			'menu_visible'  => FALSE,
-			'page_title'    => 'Item availibility %(for)% %location_ID%',
-			'menu_title'    => 'Item Availibility',
-			'wp_query_args' => 'post_type=periodent-timeframe&period_status_type_id=1&post_title=Availability %(for)% %item_ID%',
-			'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Available::$id,
-		),
 		'cb2-bookings'    => array(
-			'indent'        => 1,
-			'menu_visible'  => FALSE,
 			'page_title'    => 'Bookings %(for)% %location_ID%',
 			'menu_title'    => 'Bookings',
 			'wp_query_args' => 'post_type=periodent-user&period_status_type_id=2',
@@ -105,6 +104,7 @@ function cb2_admin_pages() {
 		),
 		'cb2-calendar' => array(
 			'page_title'    => 'Calendar',
+			'menu_visible'  => FALSE,
 			'function'      => 'cb2_calendar',
 		),
 
@@ -415,8 +415,11 @@ function cb2_admin_init_menus() {
 
 	$capability_default   = 'manage_options';
 	$bookings_count       = $wpdb->get_var( "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`" );
-	$notifications_string = ( $bookings_count ? " ($bookings_count)" : '' );
-	add_menu_page( 'CB2', "CB2$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_options_page', 'dashicons-video-alt' );
+	// notifications_string cancelled because too long with "CommonsBooking" title
+	$notifications_string = ''; //( $bookings_count ? " ($bookings_count)" : '' );
+	add_menu_page( 'CB2', "CommonsBooking$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_dashboard_page', 'dashicons-admin-post' );
+	add_submenu_page( CB2_MENU_SLUG, 'Dashboard', 'Dashboard', 'manage_options', CB2_MENU_SLUG, 'cb2_dashboard_page' );
+	add_options_page( 'CommonsBooking', 'CommonsBooking', 'manage_options', 'cb2-options', 'cb2_options_page' );
 
 	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
 		$parent_slug  = ( isset( $details['parent_slug'] )  ? $details['parent_slug']  : CB2_MENU_SLUG );
@@ -454,11 +457,18 @@ function cb2_admin_init_menus() {
 add_action( 'admin_menu', 'cb2_admin_init_menus' );
 
 // ---------------------------------------------------------- Pages
+function cb2_dashboard_page() {
+	// main CB2 options page
+	global $wpdb;
+
+	print( '<h1 class="cb2-todo">Commons Booking 2 Dashboard <a href="options-general.php?page=cb2-options">settings</a></h1>' );
+}
+
 function cb2_options_page() {
 	// main CB2 options page
 	global $wpdb;
 
-	print( '<h1>Commons Booking 2</h1>' );
+	print( '<h1>Commons Booking 2 Settings <a href="admin.php?page=cb2_menu">dashboard</a></h1>' );
 	print( '<ul>' );
 	$capability_default = 'manage_options';
 
@@ -513,6 +523,7 @@ function cb2_calendar() {
 }
 
 function cb2_reflection() {
+	// TODO: move this in to a separate file like calendar.php
 	global $wpdb;
 
 	$DB_NAME = DB_NAME;
