@@ -101,6 +101,9 @@ class CB2_Enqueue_Admin {
 	 * @return void
 	 */
 	public function display_plugin_admin_page() {
+		 echo ("hello");
+		var_dump(CB2_Settings::$plugin_settings_tabs);
+
 		 echo CB2_Settings::render_plugin_settings_screen();
 	}
 	/**

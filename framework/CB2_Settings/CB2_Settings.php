@@ -28,37 +28,37 @@ class CB2_Settings
      *
      * @var object
      */
-    protected static $plugin_settings;
+    static $plugin_settings;
     /**
      * Settings groups, 1 group is 1 metabox
      *
      * @var array
      */
-    protected static $plugin_settings_groups;
+    static $plugin_settings_groups;
     /**
      * Admin menu tabs
      *
      * @var array
      */
-    protected static $plugin_settings_tabs;
+    static $plugin_settings_tabs;
     /**
      * Settings groups used in timeframe options
      *
      * @var array
      */
-    protected static $timeframe_options = array();
+    static $timeframe_options = array();
     /**
      * Settings slug
      *
      * @var string
      */
-    protected static $settings_prefix = 'cb2_settings_';
+    static $settings_prefix = 'cb2_settings_';
     /**
      * Metabox (setting groups) defaults
      *
      * @var array
      */
-    protected static $metabox_defaults = array (
+    static $metabox_defaults = array (
 			'show_on' => array(
         'key' => 'options-page',
         'value' => array('commons-booking'),
@@ -438,7 +438,7 @@ class CB2_Settings
 
 			$tabs = self::$plugin_settings_tabs;
 			$html = '';
-			self::render_admin_tabs();
+			CB2_Settings::render_admin_tabs();
         if (is_array($tabs)) {
             foreach ($tabs as $tab_id => $tab_content) {
               $html .= sprintf (
@@ -492,7 +492,8 @@ class CB2_Settings
 					$slug = $key;
 					$html .= '<li><a href="#tabs-' . $slug . '">' . $value['title'] . '</a></li>';
 			}
-			return apply_filters('cb2_do_admin_tabs', $html);
+			// return apply_filters('cb2_do_admin_tabs', $html);
+			return $html;
     }
     /**
      * Get settings slug, prefix for storing/retrieving options from the wp_options table
