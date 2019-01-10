@@ -708,6 +708,7 @@ function cb2_posts_results_add_automatic( $posts, $wp_query ) {
 				$enddate->setTime( 23, 59 );
 
 				while ( $startdate->before( $enddate ) ) {
+					//new CB2_Day( $startdate );
 					array_push( $posts,  CB2_PeriodItem_Automatic::post_from_date( $startdate ) );
 					$startdate->add( 1 );
 				}
