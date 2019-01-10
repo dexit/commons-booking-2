@@ -30,6 +30,12 @@ class CB2_Settings
      */
     static $plugin_settings;
     /**
+     * Settings array
+     *
+     * @var object
+     */
+    static $page_slug = 'cb2_settings_page';
+    /**
      * Settings groups, 1 group is 1 metabox
      *
      * @var array
@@ -61,7 +67,7 @@ class CB2_Settings
     static $metabox_defaults = array (
 			'show_on' => array(
         'key' => 'options-page',
-        'value' => array('commons-booking'),
+        'value' => array('commons-booking-2'), /* plugin name */
       ),
 			'show_names' => true,
 		);
@@ -113,9 +119,6 @@ class CB2_Settings
     // define the cmb2_save_<object_type>_fields callback
     public static function todo_action_cmb2_save_object_type_fields($object_id, $this_cmb_id, $this_updated, $instance)
 			{
-					echo ("hello" );
-					var_dump( $this_cmb_id );
-					var_dump( $object_id );
 			}
 
 	    /**

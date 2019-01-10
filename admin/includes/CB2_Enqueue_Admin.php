@@ -73,6 +73,8 @@ class CB2_Enqueue_Admin {
 
 		$screen = get_current_screen();
 		if ( $this->admin_view_page === $screen->id ) {
+			new WP_Admin_Notice('Saved', 'error');
+
 			wp_enqueue_script( CB2_TEXTDOMAIN . '-settings-script', plugins_url( 'admin/assets/js/settings.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery', 'jquery-ui-tabs' ), CB2_VERSION );
 		}
 		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-script', plugins_url( 'admin/assets/js/admin.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
@@ -91,7 +93,7 @@ class CB2_Enqueue_Admin {
 		 *  possible conflict with WP_Admin_Integration?
 		 */
 		// $this->admin_view_page = add_submenu_page( CB2_MENU_SLUG, __( 'Settings', CB2_TEXTDOMAIN ), __( 'Settings', CB2_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
-		$this->admin_view_page = add_menu_page( __('CommonsBooking 2 Settings', 'commons-booking'), __('Settings', 'commons-booking'), 'manage_options', 'cb2_settings_page', array($this, 'display_plugin_admin_page'));
+		$this->admin_view_page = add_menu_page( __('CommonsBooking 2 Settings', 'commons-booking-2'), __('Settings', 'commons-booking-2'), 'manage_options', 'cb2_settings_page', array($this, 'display_plugin_admin_page'));
 	}
 	/**
 	 * Render the settings page for this plugin.
@@ -101,8 +103,6 @@ class CB2_Enqueue_Admin {
 	 * @return void
 	 */
 	public function display_plugin_admin_page() {
-		 echo ("hello");
-		var_dump(CB2_Settings::$plugin_settings_tabs);
 
 		 echo CB2_Settings::render_settings_screen();
 	}
