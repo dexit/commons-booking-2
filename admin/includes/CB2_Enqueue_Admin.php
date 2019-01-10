@@ -104,7 +104,7 @@ class CB2_Enqueue_Admin {
 		 echo ("hello");
 		var_dump(CB2_Settings::$plugin_settings_tabs);
 
-		 echo CB2_Settings::render_plugin_settings_screen();
+		 echo CB2_Settings::render_settings_screen();
 	}
 	/**
 	 * Add settings action link to the plugins page.

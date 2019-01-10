@@ -433,7 +433,7 @@ class CB2_Settings
      *
      * @since 2.0.0
      */
-    public static function render_plugin_settings_screen()
+    public static function render_tab_contents()
     {
 
 			$tabs = self::$plugin_settings_tabs;
@@ -449,7 +449,35 @@ class CB2_Settings
 						}
 						return $html;
         }
+		}
+	/**
+	 * Plugins Settings GUI: Screen
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return string $html
+	 */
+	public function render_settings_screen( ) {
+        $html = sprintf(
+            '
+				<div class="wrap">
+					<h2>%s</h2>
+					<div id="tabs" class="settings-tab">
+						<ul>
+							%s
+						</ul>
+						%s
+					</div>
+				</div>
+			</div>',
+    esc_html(get_admin_page_title()),
+    self::render_admin_tabs(),
+    self::render_tab_contents()
+);
+        return $html;
     }
+
+
 	/**
 	 * Render a settings group
 	 *
@@ -492,8 +520,7 @@ class CB2_Settings
 					$slug = $key;
 					$html .= '<li><a href="#tabs-' . $slug . '">' . $value['title'] . '</a></li>';
 			}
-			// return apply_filters('cb2_do_admin_tabs', $html);
-			return $html;
+			return apply_filters('cb2_do_admin_tabs', $html);
     }
     /**
      * Get settings slug, prefix for storing/retrieving options from the wp_options table
