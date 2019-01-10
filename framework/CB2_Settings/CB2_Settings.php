@@ -115,6 +115,73 @@ class CB2_Settings
 			add_action('cmb2_save_options-page_fields', array( 'CB2_Settings','todo_action_cmb2_save_object_type_fields'), 10, 4);
 
 		}
+    /**
+     * Get a setting from the WP options table
+     *
+     * @since 2.0.0
+     *
+     * @param string $option_group
+     * @param string $option      (optional)
+     * @param string $checkbox    (optional, @TODO)
+     *
+     * @return string/array
+     */
+    public static function get($option_group, $option = false, $checkbox = false)
+    {
+
+        $option_group_name = self::$settings_prefix . $option_group;
+        $option_array = get_option($option_group_name);
+
+        if (is_array($option_array) && $option && array_key_exists($option, $option_array)) { // we want a specific setting on the page and key exists
+            return $option_array[$option];
+        } elseif (!$option && is_array($option_array)) {
+            return $option_array;
+        } else {
+            // @TODO rework message system, so it does not block usage.
+            // CB2_Object::throw_error( __FILE__, $options_page . ' is not a valid setting');
+        }
+    }
+
+    /**
+     * Get settings group
+     *
+     * @since 2.0.0
+		 *
+		 * @param string $group_name
+     *
+     * @return array $group
+     */
+
+    public static function get_settings_group( $group_name )
+    {
+			$settings = CB2_Settings::$plugin_settings_groups;
+
+			if (array_key_exists($group_name, $settings)) {
+					return $settings[$group_name];
+			}		else {
+				return false;
+			}
+		}
+    /**
+     * Check if a specific feature/setting checkbox is enabled
+     *
+     * @since 2.0.0
+     *
+     * @param array $group The settings group
+     * @param array $setting  The setting name
+     *
+     * @return bool
+     */
+		public static function is_enabled( $group, $setting ) {
+
+			$setting = self::get( $group, $setting );
+
+			if ( !empty ( $setting ) && $setting == 'on' ) {
+            return true;
+			} else {
+				return FALSE;
+			}
+		}
 
     // define the cmb2_save_<object_type>_fields callback
     public static function todo_action_cmb2_save_object_type_fields($object_id, $this_cmb_id, $this_updated, $instance)
@@ -194,26 +261,7 @@ class CB2_Settings
 			);
 
     }
-    /**
-     * Get settings group
-     *
-     * @since 2.0.0
-		 *
-		 * @param string $group_name
-     *
-     * @return array $group
-     */
 
-    public static function get_settings_group( $group_name )
-    {
-			$settings = CB2_Settings::$plugin_settings_groups;
-
-			if (array_key_exists($group_name, $settings)) {
-					return $settings[$group_name];
-			}		else {
-				return false;
-			}
-    }
 
     /**
      * Contents for the plugin settings tab "general"
@@ -250,7 +298,6 @@ class CB2_Settings
     public static function tab_bookings( )
     {
 			$metabox_permissions = self::get_settings_group('permissions');
-
 			$metabox_booking_options = self::get_settings_group('booking_options');
 
 			return self::render_settings_group_metabox ( $metabox_permissions ) . self::render_settings_group_metabox ( $metabox_booking_options );
@@ -352,26 +399,7 @@ class CB2_Settings
         self::$plugin_settings_tabs[$tab['id']] = $tab;
       }
 		}
-    /**
-     * Check if a specific feature/setting checkbox is enabled
-     *
-     * @since 2.0.0
-     *
-     * @param array $group The settings group
-     * @param array $setting  The setting name
-     *
-     * @return bool
-     */
-		public static function is_enabled( $group, $setting ) {
 
-			$setting = self::get( $group, $setting );
-
-			if ( !empty ( $setting ) && $setting == 'on' ) {
-            return true;
-			} else {
-				return FALSE;
-			}
-		}
     /**
      * Enable Settings to be overwritten in timeframe admin.
      *
@@ -386,51 +414,7 @@ class CB2_Settings
         array_push( self::$timeframe_options, $group_id );
 
     }
-    /**
-     * Render the timeframe options in edit.php
-     *
-     * @since 2.0.0
-     *
-     * @return array
-     */
 
-    public static function do_availability_options_metaboxes()
-    {
-        foreach (self::$timeframe_options as $option) {
-            // Add setting groups
-            CB2_Settings::do_settings_group($option);
-        }
-    }
-    /**
-     * Return field names and values as key/value pair
-     * The options that are available as timeframe options
-     *
-     * @since 2.0.0
-     *
-     * @return array
-     */
-
-    public static function get_timeframe_option_group_fields()
-    {
-
-        $fields = array();
-
-        if (!empty(self::$timeframe_options) && is_array(self::$timeframe_options)) {
-
-            foreach (self::$timeframe_options as $option) {
-
-                $group = self::get_settings_group_fields($option);
-
-                foreach ($group as $group_fields) {
-                    $field = $group_fields['id'];
-                    $val = self::get($option, $field);
-                    $fields[$field] = $val;
-                }
-            }
-            return $fields;
-
-        }
-    }
     /**
      * Render the admin settings screen tabs & groups
      *
@@ -535,33 +519,53 @@ class CB2_Settings
     public static function get_plugin_settings_slug()
     {
         return self::$settings_prefix;
-    }
+		}
     /**
-     * Get a setting from the WP options table
+     * Render the timeframe options in edit.php
      *
      * @since 2.0.0
      *
-     * @param string $option_group
-     * @param string $option      (optional)
-     * @param string $checkbox    (optional, @TODO)
-     *
-     * @return string/array
+     * @return array
      */
-    public static function get($option_group, $option = false, $checkbox = false)
+
+    public static function do_availability_options_metaboxes()
     {
-
-        $option_group_name = self::$settings_prefix . $option_group;
-        $option_array = get_option($option_group_name);
-
-        if (is_array($option_array) && $option && array_key_exists($option, $option_array)) { // we want a specific setting on the page and key exists
-            return $option_array[$option];
-        } elseif (!$option && is_array($option_array)) {
-            return $option_array;
-        } else {
-            // @TODO rework message system, so it does not block usage.
-            // CB2_Object::throw_error( __FILE__, $options_page . ' is not a valid setting');
+        foreach (self::$timeframe_options as $option) {
+            // Add setting groups
+            CB2_Settings::do_settings_group($option);
         }
     }
+    /**
+     * Return field names and values as key/value pair
+     * The options that are available as timeframe options
+     *
+     * @since 2.0.0
+     *
+     * @return array
+     */
+
+    public static function get_timeframe_option_group_fields()
+    {
+
+        $fields = array();
+
+        if (!empty(self::$timeframe_options) && is_array(self::$timeframe_options)) {
+
+            foreach (self::$timeframe_options as $option) {
+
+                $group = self::get_settings_group_fields($option);
+
+                foreach ($group as $group_fields) {
+                    $field = $group_fields['id'];
+                    $val = self::get($option, $field);
+                    $fields[$field] = $val;
+                }
+            }
+            return $fields;
+
+        }
+    }
+
 
     /**
      * Strings (for possible overwrite in the backend
