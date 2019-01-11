@@ -109,15 +109,15 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         // e.g. default period to show
         // package Query Wrangler with CB2
         // POC already done
-        return "<form action='$form_action' method='POST'><div>
-				<input type='hidden' name='name' value='$name' />
-				<input type='hidden' name='do_action' value='$Class::$do_action' />
-				<input type='hidden' name='do_action_post_ID' value='$ID' />
-				<input type='submit' name='submit' value='$submit' />
-				[cb2_calendar view_mode=Week display-strategy=$display_strategy]
-				<input type='submit' name='submit' value='$submit' />
-			</div></form>
-		";
+        $form = "<form action='$form_action' method='POST'><div>
+						<input type='hidden' name='name' value='$name' />
+						<input type='hidden' name='do_action' value='$Class::$do_action' />
+						<input type='hidden' name='do_action_post_ID' value='$ID' />
+						<input type='submit' name='submit' value='$submit' />
+						[cb2_calendar view_mode=Week display-strategy=$display_strategy]
+						<input type='submit' name='submit' value='$submit' />
+					</div></form>";
+				return str_replace( "\n", '', $form );
     }
 
     public function do_action_book(CB2_User $user, array $values)
