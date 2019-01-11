@@ -132,13 +132,68 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $options;
 	}
 
+  protected static function factory_from_to_perioditems(
+		CB2_PeriodItem $perioditem_from,
+		CB2_PeriodItem $perioditem_to,
+		$new_periodentity_Class,
+		$new_period_status_type_Class,
+		$name = NULL,
+
+		$copy_period_group     = TRUE,
+		CB2_Location $location = NULL,
+		CB2_Item     $item     = NULL,
+		CB2_User     $user     = NULL
+  ) {
+		$period_entity = $perioditem_from->period_entity;
+
+		// PeriodGroup, Period and refrences
+		$period_group  = NULL;
+		if ( $copy_period_group ) {
+			// We do not want to clone the period_group
+			// only the period item *instance*
+			// TODO: contiguous bookings in factory_from_perioditem()
+			$datetime_now = new CB2_DateTime();
+			$period = new CB2_Period(
+				CB2_CREATE_NEW,
+				( $name ? $name : $perioditem_from->post_title ),
+				$perioditem_from->datetime_period_item_start, // datetime_part_period_start
+				$perioditem_to->datetime_period_item_end,     // datetime_part_period_end
+				$datetime_now                                 // datetime_from
+			);
+			$period_group = new CB2_PeriodGroup(
+				CB2_CREATE_NEW,
+				( $name ? $name : $perioditem_from->post_title ),
+				array( $period ) // periods
+			);
+		} else {
+			// Linking means that:
+			// changing the original availability period will change the booking as well!
+			$period_group = $period_entity->period_group;
+		}
+
+		// new PeriodEntity
+		$new_period_entity = $new_periodentity_Class::factory(
+			CB2_CREATE_NEW,
+			$name,
+			$period_group,
+			new $new_period_status_type_Class(),
+			TRUE,
+
+			( $location ? $location : $period_entity->location ),
+			( $item     ? $item     : $period_entity->item ),
+			( $user     ? $user     : $period_entity->user )
+		);
+
+		return $new_period_entity;
+  }
+
   protected static function factory_from_perioditem(
 		CB2_PeriodItem $perioditem,
 		$new_periodentity_Class,
 		$new_period_status_type_Class,
 		$name = NULL,
 
-		$copy_period_group    = TRUE,
+		$copy_period_group     = TRUE,
 		CB2_Location $location = NULL,
 		CB2_Item     $item     = NULL,
 		CB2_User     $user     = NULL
@@ -937,6 +992,28 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
     }
 
     return $object;
+  }
+
+  static function factory_booked_from_available_timeframe_item_from_to( CB2_PeriodItem_Timeframe $perioditem_available_from, CB2_PeriodItem_Timeframe $perioditem_available_to, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
+		if ( ! $perioditem_available_from->period_entity->period_status_type instanceof CB2_PeriodStatusType_Available )
+			throw new Exception( 'Tried to morph into perioditem-user from non-available status [' . $perioditem_available->period_status_type->name . ']' );
+		if ( ! $perioditem_available_to->period_entity->period_status_type instanceof CB2_PeriodStatusType_Available )
+			throw new Exception( 'Tried to morph into perioditem-user from non-available status [' . $perioditem_available->period_status_type->name . ']' );
+		if ( ! $user )
+			throw new Exception( 'Tried to morph into periodentity-user without user]' );
+
+		return CB2_PeriodEntity::factory_from_to_perioditems(
+			$perioditem_available_from,
+			$perioditem_available_to,
+			'CB2_PeriodEntity_Timeframe_User',
+			'CB2_PeriodStatusType_Booked',
+			$name,
+
+			$copy_period_group,
+			NULL, // Copy location from $perioditem_available_from
+			NULL, // Copy location from $perioditem_available_from
+			$user
+		);
   }
 
   static function factory_booked_from_available_timeframe_item( CB2_PeriodItem_Timeframe $perioditem_available, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {

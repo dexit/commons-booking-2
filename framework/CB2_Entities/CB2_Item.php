@@ -127,6 +127,14 @@ class CB2_Item extends CB2_Post implements JsonSerializable
             krumo($values);
             throw new Exception("perioditem-timeframes required during [$action]");
         }
+        if (! is_array($values['perioditem-timeframes'])) {
+            krumo($values);
+            throw new Exception("perioditem-timeframes not an array during [$action]");
+        }
+        if ( count($values['perioditem-timeframes']) == 0) {
+            krumo($values);
+            throw new Exception("perioditem-timeframes empty during [$action]");
+        }
 
         // Book these availabilities
         // TODO: should these bookings be combined? (settings)
@@ -134,22 +142,70 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         $name                  = __('Booking');
         $copy_period_group     = true;      // Default
         $count                 = count($available_perioditems);
+        $booking_strategy      = ( isset( $values['booking-strategy'] ) ? $values['booking-strategy'] : 'from_to' );
 
         if (isset($values['name'])) {
             $name = str_replace(__('available'), __('booking'), $values['name']);
         }
 
-        foreach ($available_perioditems as $available_perioditem) {
-            $periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
-                $available_perioditem,
-                $user,
-                $name,
-                $copy_period_group
-            );
-            // Create objects only (e.g. period_status_type will not be updated),
-            // and fire wordpress post events
-            $periodentity_booking->save();
-        }
+        switch ( $booking_strategy ) {
+					case 'direct_availability_convert':
+						foreach ($available_perioditems as $available_perioditem) {
+								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
+										$available_perioditem,
+										$user,
+										$name,
+										$copy_period_group
+								);
+								// Create objects only (e.g. period_status_type will not be updated),
+								// and fire wordpress post events
+								$periodentity_booking->save();
+						}
+						break;
+					case 'from_to':
+						switch ( $count ) {
+							case 1:
+								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
+										$available_perioditems[0],
+										$user,
+										$name,
+										$copy_period_group
+								);
+								// Create object only (e.g. period_status_type will not be updated),
+								// and fire wordpress post events
+								$periodentity_booking->save();
+								break;
+							case 2:
+								// We want the earliest start and the latest end
+								// in the case that one perioditem's time span completely contains the other,
+								// we would send through the larger perioditem twice
+								$available_perioditem_from = (
+									$available_perioditems[0]->datetime_period_item_start->before( $available_perioditems[1]->datetime_period_item_start ) ?
+									$available_perioditems[0] :
+									$available_perioditems[1]
+								);
+								$available_perioditem_to = (
+									$available_perioditems[0]->datetime_period_item_end->after( $available_perioditems[1]->datetime_period_item_end ) ?
+									$available_perioditems[0] :
+									$available_perioditems[1]
+								);
+
+								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item_from_to(
+										$available_perioditem_from,
+										$available_perioditem_to,
+										$user,
+										$name,
+										$copy_period_group
+								);
+								// Create object only (e.g. period_status_type will not be updated),
+								// and fire wordpress post events
+								$periodentity_booking->save();
+								break;
+							default:
+								throw new Exception( "Booking failed because too many [$count] perioditem-timeframes provided. 1 or 2 is acceptable only." );
+						}
+						break;
+				}
 
         return "<div>processed ($count) perioditem availabile in to bookings</div>";
     }
