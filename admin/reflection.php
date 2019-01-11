@@ -4,17 +4,6 @@ global $wpdb;
 $DB_NAME = DB_NAME;
 
 print( "<h1>Reflection (Database `$DB_NAME`)</h1>" );
-print( "<p>A note on collation: string literals, e.g. 'period', can cause collation issues.
-	By default they will adopt the <b>server</b> collation, not the database collation.
-	Thus any database field data being concatenated with them or compared to them will cause an error.
-	To avoid this always pull all data from the database.
-	Returning a variety of charsets and collations with string literals and database data is not a problem for the PHP.
-	<br/>
-	You cannot collate to the default database collation with MySQL.
-	If you really need to do this then carry out a string replacement in the PHP layer.
-	This would replace @@character_set_database with the actual characterset name, gained through a database call with get_var(select @@character_set_database).
-	String literals can be collated efficiently with _@@character_set_database'string' collate @@collation_database
-</p>");
 $and_posts         = isset( $_GET['and_posts'] ); // Checkbox
 $and_posts_checked = ( $and_posts ? 'checked="1"' : '' );
 $testdata          = isset( $_GET['testdata'] );  // Checkbox
@@ -71,8 +60,6 @@ if ( isset( $_GET['section'] ) ) {
 			} else throw new Exception( 'Invalid password' );
 			break;
 		case 'reinstall_sql':
-			// TODO: detect MySQL DB collation and wp-config.php collation
-			// and advise if there are issues
 			$full_sql = CB2_Database::get_reinstall_SQL_full( $_GET['character_set'] );
 			print( "<pre>$full_sql</pre>" );
 			break;
@@ -101,7 +88,28 @@ if ( isset( $_GET['section'] ) ) {
 	}
 
 	// ---------------------------------------------------- System setup
+	print( "<h2>PHP Objects =&gt; Database Tables</h2>" );
+	print( "<p>CB2 PHP Objects define their own database tables and views.
+		The database installation procedure simply asks each CB2 object for its database requirements.
+		Values are loaded from the database directly into object instances converting the values based on the table definitions.
+		For example, a DATETIME column `date_from` in wp_cb2_period will load a PHP DateTime object value on to a CB2_Period instance.
+		See CB2_Query::to_object(). Conversion during saving works in a similar way.
+		CB2 objects can be created with an ID of -1 and then save()ed to create new rows in the database.
+		Below are listed the CB2 objects and their associated tables, views, relationships and triggers.
+	</p>");
+
 	print( "<h2>WordPress and Database setup</h2>" );
+	print( "<p>A note on collation: string literals, e.g. 'period', can cause collation issues.
+		By default they will adopt the <b>server</b> collation, not the database collation.
+		Thus any database field data being concatenated with them or compared to them will cause an error.
+		To avoid this always pull all data from the database.
+		Returning a variety of charsets and collations with string literals and database data is not a problem for the PHP.
+		<br/>
+		You cannot collate to the default database collation with MySQL.
+		If you really need to do this then carry out a string replacement in the PHP layer.
+		This would replace @@character_set_database with the actual characterset name, gained through a database call with get_var(select @@character_set_database).
+		String literals can be collated efficiently with _@@character_set_database'string' collate @@collation_database
+	</p>");
 	$db_charset = $wpdb->get_var( "SELECT @@character_set_database" );
 	$db_collate = $wpdb->get_var( "SELECT @@collation_database;" );
 	print( '<div>WordPress wp-config.php DB_CHARSET: <b>' . ( DB_CHARSET ? DB_CHARSET : '(Blank)' ) . '</b></div>' );
@@ -247,8 +255,22 @@ if ( isset( $_GET['section'] ) ) {
 	}
 
 	// --------------------------- Model
+	$assets_dir = plugins_url( CB2_TEXTDOMAIN . '/admin/assets' );
 	print( '<hr/>' );
-	print( '<h2>model</h2>');
-	print( '<img src="' . plugins_url( CB2_TEXTDOMAIN . '/admin/assets/model.png' ) . '"/>' );
+	print( '<h2>period diagram</h2>');
+	print( '<p>The periods are purely concerned with time and its repetition. For example: every Monday this year.' );
+	print( 'Periods can be grouped together and can have simple exceptions.' );
+	print( 'The 4 leaf tables: Global, Location, Timeframe and Timeframe_User; relate real world objects, their status_type, state and periods.
+		Each leaf table has a different selection of objects it can relate to depending on the type of thing wishing to be expressed.<br/>
+		For Example: a shop (object), open (status_type), every monday morning (period).<br/>
+		For Example: a bicycle (object) booked (status_type) by Henry (object), in the shop (object), next wednesday (period).' );
+	print( '</p>');
+	print( "<img src='$assets_dir/period diagram.png'/>" );
+
+	print( '<hr/><h2>posts and meta</h2>');
+	print( '<p>All tables are exposed as WordPress posts with post_meta.
+		The WordPress framework then, seamlessly, can view, list and edit them with all the usual functions an hooks.' );
+	print( '</p>');
+	print( "<img src='$assets_dir/posts and meta.png'/>" );
 }
 
