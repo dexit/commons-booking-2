@@ -114,7 +114,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 						<input type='hidden' name='do_action' value='$Class::$do_action' />
 						<input type='hidden' name='do_action_post_ID' value='$ID' />
 						<input type='submit' name='submit' value='$submit' />
-						[cb2_calendar view_mode=Week display-strategy=$display_strategy]
+						[cb2_calendar view_mode=Week display-strategy=$display_strategy selection-mode=range]
 						<input type='submit' name='submit' value='$submit' />
 					</div></form>";
 				return str_replace( "\n", '', $form );
@@ -142,27 +142,14 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         $name                  = __('Booking');
         $copy_period_group     = true;      // Default
         $count                 = count($available_perioditems);
-        $booking_strategy      = ( isset( $values['booking-strategy'] ) ? $values['booking-strategy'] : 'from_to' );
+        $selection_mode        = ( isset( $values['selection_mode'] ) ? $values['selection_mode'] : 'range' );
 
         if (isset($values['name'])) {
             $name = str_replace(__('available'), __('booking'), $values['name']);
         }
 
-        switch ( $booking_strategy ) {
-					case 'direct_availability_convert':
-						foreach ($available_perioditems as $available_perioditem) {
-								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
-										$available_perioditem,
-										$user,
-										$name,
-										$copy_period_group
-								);
-								// Create objects only (e.g. period_status_type will not be updated),
-								// and fire wordpress post events
-								$periodentity_booking->save();
-						}
-						break;
-					case 'from_to':
+        switch ( $selection_mode ) {
+					case 'range':
 						switch ( $count ) {
 							case 1:
 								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
@@ -203,6 +190,19 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 								break;
 							default:
 								throw new Exception( "Booking failed because too many [$count] perioditem-timeframes provided. 1 or 2 is acceptable only." );
+						}
+						break;
+					default:
+						foreach ($available_perioditems as $available_perioditem) {
+								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
+										$available_perioditem,
+										$user,
+										$name,
+										$copy_period_group
+								);
+								// Create objects only (e.g. period_status_type will not be updated),
+								// and fire wordpress post events
+								$periodentity_booking->save();
 						}
 						break;
 				}

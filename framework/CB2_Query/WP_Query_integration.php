@@ -97,7 +97,6 @@ add_filter( 'loop_start',    'cb2_loop_start' );
 
 // --------------------------------------------- Custom post types and templates
 add_action( 'init', 'cb2_init_register_post_types' );
-add_action( 'wp_enqueue_scripts',    'cb2_wp_enqueue_scripts' );
 add_action( 'admin_enqueue_scripts', 'cb2_admin_enqueue_scripts' );
 
 function cb2_wpdb_query_select_debug( $sql ) {
@@ -408,7 +407,7 @@ function cb2_post_class_check( $classes, $class, $ID ) {
 			if ( $post_type ) {
 				if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 					if ( CB2_Database::postmeta_table( $Class ) )
-						CB2_Query::debug_print_backtrace( "Please do not use post_class() in CB2 templates because it cannot be cached. Use CB2::post_class() instead." );
+						CB2_Query::debug_print_backtrace( "Please do not use post_class() in CB2 templates with [$post_type] because it cannot be cached. Use CB2::post_class() instead." );
 				}
 			}
 		}
@@ -577,12 +576,6 @@ function cb2_update_post_meta( $meta_id, $ID, $meta_key, $meta_value ) {
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // Framework integration
-function cb2_wp_enqueue_scripts() {
-	// TODO: re-enable CB2_Enqueue for this public/assets/js/public.js
-	wp_enqueue_script(  CB2_TEXTDOMAIN . '-plugin-scripts-public', plugins_url( 'public/assets/js/public.js', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
-	add_thickbox();
-}
-
 function cb2_admin_enqueue_scripts() {
 	// TODO: re-enable CB2_Admin_Enqueue for public/assets/css/public.css
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );

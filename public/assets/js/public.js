@@ -5,12 +5,39 @@
 		// console.log(pn_js_vars.alert);
 
 		$(document).ready(function(){
-			$('.cb2-template-available').click(function(e){
-				var checkbox      = $(this).children('.cb2-perioditem-selector');
-				var cssClass      = $(this).attr('class').trim();
-				var target        = $(e.target);
-				var clicked_input = (target.is(checkbox));
-				var is_checked    = checkbox.attr('checked');
+			$('.cb2-template-available > .cb2-details').click(function(e){
+				var container      = $(this).parent();
+				var checkbox       = $(this).children('.cb2-perioditem-selector');
+				var cssClass       = $(this).attr('class').trim();
+				var target         = $(e.target);
+				var clicked_input  = (target.is(checkbox));
+				var is_checked     = checkbox.attr('checked');
+				var selection_mode = 'none';
+				var selections     = $();
+
+				// See if we have a selection mode
+				var selection_container = $(this).closest('.cb2-selection-container');
+				if (selection_container.length) {
+					var selection_container_class = selection_container.attr('class');
+					var selection_mode_matches    = selection_container_class.match(/cb2-selection-mode-([^ ]+)/);
+					selections = selection_container.find('.cb2-selected');
+					if (selection_mode_matches) selection_mode = selection_mode_matches[1];
+				}
+
+				// Selection styles
+				switch (selection_mode) {
+					case 'range':
+						switch (selections.length) {
+							case 0:
+								break;
+							case 1:
+								// TODO: Create a continuous link between the selected items
+								break;
+							default:
+								// TODO: move the selections to change the range
+						}
+						break;
+				}
 
 				// The default checkbox event will check the checkbox
 				// AFTER this action
@@ -18,11 +45,17 @@
 
 				if (is_checked) {
 					if (!clicked_input) checkbox.removeAttr('checked');
-					$(this).attr( 'class', cssClass.replace(/cb2-booked/, '') );
+					container.attr( 'class', cssClass.replace(/cb2-selected/, '') );
 				} else {
 					if (!clicked_input) checkbox.attr('checked', '1');
-					$(this).attr( 'class', cssClass + ' cb2-booked' );
+					container.attr( 'class', cssClass + ' cb2-selected' );
 				}
+
+				// Prevent any container clicks from bubbling
+				e.stopPropagation();
+
+				// Prevent any default container <a> working
+				if (!clicked_input) e.preventDefault();
 			});
 
 			window.cb2 = {}; // global commons booking object
@@ -94,9 +127,6 @@
 
 			$(window).on('resize',cb2.resize);
 
-
 		});
-
   });
-// Place your public-facing JavaScript here
 })(jQuery);
