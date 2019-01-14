@@ -64,6 +64,12 @@
 			if (!clicked_input) e.preventDefault();
 		});
 
+		$('.cb2-removable-item')
+			.append('<input type="button" value="x"/>')
+			.children('input').click(function(){
+				$(this).parent().remove();
+			});
+
 		$('.cb2-calendar-krumo-show').click(function(){
 			$(this).parent().find('.cb2-calendar-krumo').show();
 		});

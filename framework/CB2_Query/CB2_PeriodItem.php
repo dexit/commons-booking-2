@@ -349,12 +349,14 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		return ( $this->period_status_type() ? $this->period_status_type()->name : NULL );
 	}
 
-	function get_the_time_period( $format = NULL ) {
+	function get_the_time_period( $format = NULL, $human_readable = TRUE, $separator = '-' ) {
 		if ( is_null( $format ) ) $format = get_option( 'time_format' );
 		$time_period = $this->datetime_period_item_start->format( $format )
-			. ' - '
+			. $separator
 			. $this->datetime_period_item_end->format( $format );
-		if ( $this->period->fullday ) $time_period = 'all day';
+		if ( $human_readable ) {
+			if ( $this->period->fullday ) $time_period = 'all day';
+		}
 		return $time_period;
 	}
 

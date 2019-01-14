@@ -452,6 +452,9 @@ body input.cb2-tick-only:not([checked]):after {
 .cb2-calendar .cb2-time-period {
 	white-space:nowrap;
 }
+.cb2-removable-item > input {
+	margin-left:2px!important;
+}
 
 /* Entity types */
 .cb2-calendar .cb2-period-group-type {

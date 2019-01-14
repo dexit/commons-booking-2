@@ -4,7 +4,7 @@
 			<a class="thickbox cb2-bald cb2-debug-control" name="debug" href="?inlineId=debug_popup_<?php the_ID(); ?>&amp;title=debug&amp;width=300&amp;height=500&amp;#TB_inline" />
 			<a class="thickbox" name="opening times" href="?inlineId=perioditem_popup_<?php the_ID(); ?>&amp;title=opening+hours&amp;width=300&amp;height=500&amp;#TB_inline">
 				<!-- Using echo get_the_date() because there is a bug in the_date() -->
-				<input name="period_IDs[]" type="text" value="<?php the_date( 'D' ); ?>:<?php CB2::the_time_period(); ?>"/>
+				<div class="cb2-removable-item"><input name="period_IDs[]" value="<?php echo get_the_date( 'D' ), ':'; CB2::the_time_period(); ?>"/><?php CB2::the_time_period(); ?></div>
 			</a>
 		</div>
 

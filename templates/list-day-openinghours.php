@@ -6,16 +6,9 @@
 	<div class="entry-content">
 		<?php CB2::the_inner_loop( NULL, 'list', 'openinghours' ); ?>
 
-		<div><select name="period_IDs[]">
-			<!-- Using echo get_the_date() because there is a bug in the_date() -->
-			<option value="<?php echo get_the_date( 'D' ); ?>:08:00-12:00"/>08:00 - 12:00</option>
-			<option value=""/>-- select --</option>
-		</select></div>
-		<div><select name="period_IDs[]">
-			<option value=""/>-- select --</option>
-			<!-- Using echo get_the_date() because there is a bug in the_date() -->
-			<option value="<?php echo get_the_date( 'D' ); ?>:13:00-18:00"/>13:00 - 18:00</option>
-		</select></div>
+		<!-- Using echo get_the_date() because there is a bug in the_date() -->
+		<div class="cb2-removable-item"><input class="cb2-hidden" name="period_IDs[]" value="<?php echo get_the_date( 'D' ); ?>:08:00-12:00"/><a href="#">08:00 - 12:00</a></div>
+		<div class="cb2-removable-item"><input class="cb2-hidden" name="period_IDs[]" value="<?php echo get_the_date( 'D' ); ?>:13:00-18:00"/><a href="#">13:00 - 18:00</a></div>
 
 		<?php $add_times_text = '<span class="cb2-todo">' . __( 'Add Slot' ) . '</span>'; ?>
 		<a class="thickbox" name="opening times" href="?inlineId=day_popup_<?php the_ID(); ?>&amp;title=opening+hours&amp;width=300&amp;height=500&amp;#TB_inline">

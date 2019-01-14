@@ -170,13 +170,13 @@ class CB2 {
 		return ( is_object( $post ) && method_exists( $post, 'summary' ) ? $post->summary() : '' );
 	}
 
-	public static function the_time_period( $format = NULL ) {
-		echo self::get_the_time_period( $format );
+	public static function the_time_period( $format = NULL, $human_readable = TRUE, $separator = '-' ) {
+		echo self::get_the_time_period( $format, $human_readable, $separator );
 	}
 
-	public static function get_the_time_period( $format = NULL ) {
+	public static function get_the_time_period( $format = NULL, $human_readable = TRUE, $separator = '-' ) {
 		global $post;
-		return ( is_object( $post ) && method_exists( $post, 'get_the_time_period' ) ? $post->get_the_time_period( $format ) : '' );
+		return ( is_object( $post ) && method_exists( $post, 'get_the_time_period' ) ? $post->get_the_time_period( $format, $human_readable, $separator ) : '' );
 	}
 
 	public static function is_current() {
