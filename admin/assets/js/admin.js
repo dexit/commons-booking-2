@@ -38,11 +38,12 @@
 		});
 
 		$('.cb2-template-available > .cb2-details').click(function(e){
-			var checkbox      = $(this).children('.cb2-perioditem-selector');
-			var cssClass      = $(this).attr('class').trim();
-			var target        = $(e.target);
-			var clicked_input = (target.is(checkbox));
-			var is_checked    = checkbox.attr('checked');
+			var container      = $(this).parent();
+			var checkbox       = $(this).children('.cb2-perioditem-selector');
+			var cssClass       = $(this).attr('class').trim();
+			var target         = $(e.target);
+			var clicked_input  = (target.is(checkbox));
+			var is_checked     = checkbox.attr('checked');
 
 			// The default checkbox event will check the checkbox
 			// AFTER this action
@@ -50,10 +51,10 @@
 
 			if (is_checked) {
 				if (!clicked_input) checkbox.removeAttr('checked');
-				$(this).attr( 'class', cssClass.replace(/cb2-booked/, '') );
+				container.attr( 'class', cssClass.replace(/cb2-selected/, '') );
 			} else {
 				if (!clicked_input) checkbox.attr('checked', '1');
-				$(this).attr( 'class', cssClass + ' cb2-booked' );
+				container.attr( 'class', cssClass + ' cb2-selected' );
 			}
 
 			// Prevent any container clicks from bubbling

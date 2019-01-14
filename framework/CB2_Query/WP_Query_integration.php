@@ -97,7 +97,6 @@ add_filter( 'loop_start',    'cb2_loop_start' );
 
 // --------------------------------------------- Custom post types and templates
 add_action( 'init', 'cb2_init_register_post_types' );
-add_action( 'wp_enqueue_scripts',    'cb2_wp_enqueue_scripts' );
 add_action( 'admin_enqueue_scripts', 'cb2_admin_enqueue_scripts' );
 
 function cb2_wpdb_query_select_debug( $sql ) {
@@ -408,7 +407,7 @@ function cb2_post_class_check( $classes, $class, $ID ) {
 			if ( $post_type ) {
 				if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 					if ( CB2_Database::postmeta_table( $Class ) )
-						CB2_Query::debug_print_backtrace( "Please do not use post_class() in CB2 templates because it cannot be cached. Use CB2::post_class() instead." );
+						CB2_Query::debug_print_backtrace( "Please do not use post_class() in CB2 templates with [$post_type] because it cannot be cached. Use CB2::post_class() instead." );
 				}
 			}
 		}
@@ -577,12 +576,6 @@ function cb2_update_post_meta( $meta_id, $ID, $meta_key, $meta_value ) {
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // Framework integration
-function cb2_wp_enqueue_scripts() {
-	// TODO: re-enable CB2_Enqueue for this public/assets/js/public.js
-	wp_enqueue_script(  CB2_TEXTDOMAIN . '-plugin-scripts-public', plugins_url( 'public/assets/js/public.js', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
-	add_thickbox();
-}
-
 function cb2_admin_enqueue_scripts() {
 	// TODO: re-enable CB2_Admin_Enqueue for public/assets/css/public.css
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
@@ -685,41 +678,30 @@ function cb2_post_results_unredirect_wpdb( $posts, $wp_query ) {
 }
 
 function cb2_posts_results_add_automatic( $posts, $wp_query ) {
-	// Add Automatic posts if requested
-	$post_type_auto = CB2_PeriodItem_Automatic::$static_post_type;
-
-	if ( isset( $wp_query->query['post_type'] )
-		&& ( $post_type = $wp_query->query['post_type'] )
-		&& (
-			( is_array( $post_type ) && in_array( $post_type_auto, $post_type ) )
-			|| $post_type == $post_type_auto
-		)
+	if ( isset( $wp_query->query['date_query'] )
+		&& isset( $wp_query->query['date_query']['after'] )
+		&& isset( $wp_query->query['date_query']['before'] )
 	) {
-		if ( isset( $wp_query->query['date_query'] )
-			&& isset( $wp_query->query['date_query']['after'] )
-			&& isset( $wp_query->query['date_query']['before'] )
-		) {
-			$startdate_string = $wp_query->query['date_query']['after'];
-			$enddate_string   = $wp_query->query['date_query']['before'];
-			if ( $startdate_string && $enddate_string ) {
-				$startdate = new CB2_DateTime( $startdate_string );
-				$enddate   = new CB2_DateTime( $enddate_string );
-				$startdate->setTime( 0, 0 );
-				$enddate->setTime( 23, 59 );
+		$startdate_string = $wp_query->query['date_query']['after'];
+		$enddate_string   = $wp_query->query['date_query']['before'];
+		if ( $startdate_string && $enddate_string ) {
+			$startdate = new CB2_DateTime( $startdate_string );
+			$enddate   = new CB2_DateTime( $enddate_string );
+			$startdate->setTime( 0, 0 );
+			$enddate->setTime( 23, 59 );
 
-				while ( $startdate->before( $enddate ) ) {
-					array_push( $posts,  CB2_PeriodItem_Automatic::post_from_date( $startdate ) );
-					$startdate->add( 1 );
-				}
+			while ( $startdate->before( $enddate ) ) {
+				CB2_Day::factory( $startdate );
+				$startdate->add( 1 );
+			}
 
-				usort( $posts, "cb2_posts_date_order" );
+			usort( $posts, "cb2_posts_date_order" );
 
-				// Reset pointers
-				$wp_query->post_count  = count( $wp_query->posts );
-				$wp_query->found_posts = (boolean) $wp_query->post_count;
-				$wp_query->post = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
-			} else throw new Exception( "Cannot request [$post_type_auto] without date_query after and before" );
-		} else throw new Exception( "Cannot request [$post_type_auto] without date_query after and before" );
+			// Reset pointers
+			$wp_query->post_count  = count( $wp_query->posts );
+			$wp_query->found_posts = (boolean) $wp_query->post_count;
+			$wp_query->post = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
+		}
 	}
 
 	return $posts;
@@ -731,10 +713,15 @@ function cb2_posts_date_order( $post1, $post2 ) {
 }
 
 function cb2_loop_start( &$wp_query ) {
+	return cb2_convert_posts( $wp_query );
+}
+
+function cb2_convert_posts( &$wp_query ) {
 	// Convert the WP_Query CB post_type results from WP_Post in to CB2_* objects
 	if ( $wp_query instanceof WP_Query
 		&& property_exists( $wp_query, 'posts' )
 		&& is_array( $wp_query->posts )
+		&& ! property_exists( $wp_query, '_cb2_converted_posts' )
 	) {
 		// Create the CB2_PeriodItem objects from the WP_Post results
 		// This will also create all the associated CB2_* Objects like CB2_Week
@@ -758,7 +745,10 @@ function cb2_loop_start( &$wp_query ) {
 		$wp_query->post_count  = count( $wp_query->posts );
 		$wp_query->found_posts = (boolean) $wp_query->post_count;
 		$wp_query->post        = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
+		$wp_query->_cb2_converted_posts = TRUE;
 	}
+
+	return $wp_query;
 }
 
 // ------------------------------------------------------------------------------------------

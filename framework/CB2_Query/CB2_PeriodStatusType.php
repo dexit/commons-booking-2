@@ -1,4 +1,5 @@
 <?php
+// TODO: move these CB2_COLLECT etc. in to the database data definition
 define( 'CB2_COLLECT', 1 );
 define( 'CB2_USE',     2 );
 define( 'CB2_RETURN',  4 );

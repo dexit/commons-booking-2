@@ -920,9 +920,14 @@ body .cb2-low-debug {
 .cb2-error {
 	color:red;
 }
+.cb2-calendar .cb2-selected {
+	border:1px solid #d7d7d7;
+	background-color:#f7f7f7;
+	font-weight:bold;
+}
 
 /* TODO: Future start is not invalid for bookings
-.cb2-booked .cb2-future .cb2-invalidity {
+.cb2-selected .cb2-future .cb2-invalidity {
 	display:none;
 }
 */

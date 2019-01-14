@@ -446,7 +446,7 @@ body input.cb2-tick-only:not([checked]):after {
 	padding:1px 4px;
 }
 
-.cb2-calendar .cb2-booked {
+.cb2-calendar .cb2-selected {
 	font-weight:bold;
 }
 .cb2-calendar .cb2-time-period {

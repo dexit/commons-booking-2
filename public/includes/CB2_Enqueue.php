@@ -53,7 +53,8 @@ class CB2_Enqueue {
 	 * @return void
 	 */
 	public static function enqueue_scripts() {
-		wp_enqueue_script( CB2_TEXTDOMAIN . '-plugin-script', plugins_url( 'public/assets/js/public.min.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
+		$min = ( WP_DEBUG ? '' : '.min' );
+		wp_enqueue_script( CB2_TEXTDOMAIN . '-plugin-script', plugins_url( "public/assets/js/public$min.js", CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 	}
 	/**
 	 * Templates for cb_items and cb_locations.

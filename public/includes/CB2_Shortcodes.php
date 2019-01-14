@@ -18,7 +18,7 @@ class CB2_Shortcodes {
 		'item_id'          => FALSE,
 		'view_mode'        => 'week',
 		'display-strategy' => 'CB2_Everything',
-
+		'selection-mode'   => NULL,
 	);
 
 	/**
@@ -42,6 +42,7 @@ class CB2_Shortcodes {
 			'enddate',
 			'view_mode',
 			'display-strategy',
+			'selection-mode',
 		);
 
 		/* TODO: is this for multiple value input?
@@ -53,16 +54,19 @@ class CB2_Shortcodes {
 		*/
 		$args = shortcode_atts( $this->default_query_args, $atts, 'cb_calendar' );
 		$display_strategy_classname = $args['display-strategy'];
+		$selection_mode = ( isset( $args['selection-mode'] ) ? $args['selection-mode'] : 'none' );
 
 		$display_strategy = new $display_strategy_classname( $post );
-		if ( WP_DEBUG ) {
-			krumo( $display_strategy );
-			print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;font-size:10px;background-color:#fff;margin:1em 0em;'>$display_strategy->request</div>" );
+		// if ( WP_DEBUG ) krumo( $display_strategy );
+
+		$html  = "<div class='cb2-selection-container cb2-selection-mode-$selection_mode'>";
+		foreach ( $args as $name => $value ) {
+			$name = str_replace( '-', '_', $name );
+			$html .= "<input type='hidden' name='$name' value='$value'/>";
 		}
 
-		$html = '<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">Calendar</h1></header>';
 		if ( $display_strategy->have_posts() ) {
-				$html = '<table class="cb2-calendar">';
+				$html .= '<table class="cb2-calendar">';
 					$html .= CB2::get_the_calendar_header( $display_strategy );
 					$html .= '<tbody>';
 

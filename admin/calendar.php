@@ -24,6 +24,7 @@ $show_overridden_periods = isset( $_GET['show_overridden_periods'] );
 $query = NULL;
 // TODO: Here we should instantiate with stated CB2_PeriodInteractionStrategy
 // same as WP_Query
+// this all needs to be rationalised
 // maybe using a factory( $args )?
 $args  = array(
 	'startdate'        => $startdate_string,
@@ -165,11 +166,13 @@ if ( WP_DEBUG ) {
 		print( "<div class='cb2-WP_DEBUG' style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
 		print( "<b>$query->post_count</b> posts returned" );
 		print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
-		print( ' <a class="cb2-calendar-krumo-show">more...</a><div class="cb2-calendar-krumo" style="display:none;">' );
+		print( ' <span class="dashicons-before dashicons-admin-tools" style="color:#aaa;"></span><a class="cb2-calendar-krumo-show">more...</a>' );
+		print( '<div class="cb2-calendar-krumo" style="display:none;">' );
 		print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
 			<div><b>NOTE</b>: the GROUP BY clause will fail if run with sql_mode=only_full_group_by</div>
 			<div style='margin-left:5px;color:#448;'>$query->request</div></div>" );
 		//print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
+		CB2_Query::ensure_correct_classes( $query->posts ); // For debug purposes
 		krumo( $query );
 		print( "</div></div>" );
 	} else print( "<div>No posts returned!</div>" );
