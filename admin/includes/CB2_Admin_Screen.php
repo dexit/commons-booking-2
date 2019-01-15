@@ -40,7 +40,7 @@ class CB2_Admin_Screen
      *
      * @var string
      */
-    public $file_path = '';
+    public $file = '';
     /**
      * menu
      *
@@ -272,6 +272,7 @@ class CB2_Admin_Screen
 					$metabox_args['description'],
 					cmb2_metabox_form( $metabox_args, $metabox_args['id'], array ('echo' => FALSE ))
 				);
+
 			echo $html;
     }
 }

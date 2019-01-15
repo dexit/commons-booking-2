@@ -41,6 +41,42 @@ class CB2_Enqueue_Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		// @TODO not working
 		add_filter( 'cmb2_sanitize_toggle', array( $this, 'cmb2_sanitize_checkbox' ), 20, 2 );
+		add_action('cmb2_admin_init', array($this, 'init_admin_pages'));
+
+	}
+		/**
+	 * Init admin pages.
+	 *
+	 * @since 2.0.0
+	 *
+	 */
+	public function init_admin_pages () {
+
+		$parent = new CB2_Admin_Screen();
+		$parent->add_script(
+			array(
+				'cb2_tabs_script',
+				plugins_url('admin/assets/js/admin_tabs.js', CB2_PLUGIN_ABSOLUTE),
+				array('jquery', 'jquery-ui-tabs'),
+				)
+		);
+		$parent->add_style(array(
+				'cb2_tabs_style',
+				plugins_url('admin/assets/css/admin_tabs.css', CB2_PLUGIN_ABSOLUTE),
+		)
+		);
+		$parent->add_tabbed_content(
+				CB2_PLUGIN_ROOT . 'admin/views/settings_welcome.php', 'cb2',
+				__('Welcome', 'commons-booking-2'), true
+		);
+		$parent->add_tabbed_content(
+				CB2_PLUGIN_ROOT . 'admin/views/test.php', 'maps',
+				__('Maps', 'commons-booking-2'), CB2_Settings::is_enabled('features', 'enable-maps')
+		);
+		// $parent->add_content(
+		//     CB2_PLUGIN_ROOT . 'admin/views/test.php'
+		// );
+		$parent->init();
 	}
 
 		/**
