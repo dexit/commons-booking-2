@@ -1,3 +1,4 @@
+console.log("tabs");
 (function($) {
 	'use strict';
 	/** allow jumping to admin tabs via url hash  */

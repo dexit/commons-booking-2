@@ -19,6 +19,36 @@
  * @return Array of wordpress pages as [pagedID][title]
  */
 
+ /**
+ *  Current template file name/path
+ *
+ * @return string  wordpress user roles as [rolename][rolename]
+ */
+function cb2_debug_maybe_print_path( $file_path ) {
+	if ( cb2_is_debug() ) {
+		echo ( '<pre>' . $file_path . '</pre>' );
+	}
+}
+
+/**
+ *  Display debug info.
+ *
+ * @TODO currently equals to WP_DEBUG, which may not be wanted.
+ * Add another condition.
+ *
+ * @return bool  wordpress user roles as [rolename][rolename]
+ */
+function cb2_is_debug()
+{
+    if (WP_DEBUG) {
+			return true;
+    } else {
+			return false;
+		}
+}
+
+
+
 function cb2_form_get_pages() {
   // dropdown for page select
   $pages = get_pages();

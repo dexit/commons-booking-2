@@ -31,6 +31,7 @@ class CB2_Enqueue_Admin {
 
 		$plugin_basename = plugin_basename( plugin_dir_path( realpath( dirname( __FILE__ ) ) ) . CB2_TEXTDOMAIN . '.php' );
 
+
 		// Add the manage menu & options page entry
 		add_action( 'admin_menu', array( $this, 'add_plugin_settings_menu') );
 		// Add an action link pointing to the options page.
@@ -73,7 +74,6 @@ class CB2_Enqueue_Admin {
 
 		$screen = get_current_screen();
 		if ( $this->admin_view_page === $screen->id ) {
-			new WP_Admin_Notice('Saved', 'error');
 
 			wp_enqueue_script( CB2_TEXTDOMAIN . '-settings-script', plugins_url( 'admin/assets/js/settings.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery', 'jquery-ui-tabs' ), CB2_VERSION );
 		}

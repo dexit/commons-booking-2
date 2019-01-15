@@ -35,21 +35,22 @@
 	background: rgb(239, 239, 239) !important;
 }
 
-// Settings page
-.metabox-holder {
-	.postbox {
-		max-width:100%;
-		h3 {
-			padding-left: 10px;
-		}
-	}
-}
-
 .settings-tab {
 	float:left;
 }
 
+// Settings page
 .right-column-settings-page {
 	max-width:270px;
 	float:right;
+}
+
+.metabox-holder {
+	.postbox {
+		max-width: 100%;
+
+		h3 {
+			padding-left: 10px;
+		}
+	}
 }

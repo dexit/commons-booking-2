@@ -112,7 +112,7 @@ class CB2_Settings
 			self::settings_tabs();
 
 			// cmb2 action on metabox save
-			add_action('cmb2_save_options-page_fields', array( 'CB2_Settings','todo_action_cmb2_save_object_type_fields'), 10, 4);
+			// add_action('cmb2_save_options-page_fields', array( 'CB2_Settings','todo_action_cmb2_save_object_type_fields'), 10, 4);
 
 		}
     /**
@@ -176,8 +176,8 @@ class CB2_Settings
 
 			$setting = self::get( $group, $setting );
 
-			if ( !empty ( $setting ) && $setting == 'on' ) {
-            return true;
+			if ( ! empty ( $setting ) && $setting == 'on' ) {
+        return TRUE;
 			} else {
 				return FALSE;
 			}
@@ -259,7 +259,6 @@ class CB2_Settings
 					'content' => self::tab_strings() // or callback
 					)
 			);
-
     }
 
 
@@ -460,7 +459,7 @@ class CB2_Settings
     esc_html(get_admin_page_title()),
     self::render_admin_tabs(),
     self::render_tab_contents()
-);
+		);
         return $html;
     }
 
@@ -613,4 +612,4 @@ class CB2_Settings
 
 
 }
-add_action('cmb2_admin_init', array('CB2_Settings', 'get_instance')); // Settings rely on cmb2, so call it after that is initiatilised
+add_action('plugins_loaded', array('CB2_Settings', 'get_instance')); // Settings rely on cmb2, so call it after that is initiatilised

@@ -30,7 +30,7 @@ $cb2_settings_groups =
         /* features start */
         'features' => array(
                     'title' => 'Plugin features',
-                    'id' => self::$settings_prefix . 'features',
+                    'id' => CB2_Settings::$settings_prefix . 'features',
                     'description' => 'Enable or disable plugin features site-wide. You can configure each feature´s settings after save.',
                     'fields' => array(
                         array(
@@ -60,7 +60,7 @@ $cb2_settings_groups =
                 /* permissions start */
                 'permissions' => array(
                         'title' => 'Permissions',
-                        'id' => self::$settings_prefix . 'permissions',
+                        'id' => CB2_Settings::$settings_prefix . 'permissions',
                         'description' => 'this is the description',
                         'fields' => array(
                                 array(
@@ -82,7 +82,7 @@ $cb2_settings_groups =
                 /* booking options start */
                 'booking_options' => array(
                         'title' => 'Usage restrictions',
-                        'id' => self::$settings_prefix . 'booking-options',
+                        'id' => CB2_Settings::$settings_prefix . 'booking-options',
                         'description' => 'this is the description',
                         'fields' => array(
                                 array(
@@ -112,7 +112,7 @@ $cb2_settings_groups =
       /* maps start */
       'maps' => array(
         'title' => 'Maps',
-                'id' => self::$settings_prefix . 'maps',
+                'id' => CB2_Settings::$settings_prefix . 'maps',
                 'description' => 'this is the description',
           'fields' => array(
                     array(
