@@ -55,9 +55,11 @@ class CB2_Admin_Screen
     private $metabox_options_defaults = array (
     'show_on' => array(
         'key' => 'options-page',
-        'value' => array('commons-booking'),
+        'value' => array('commons-booking-2'),
       ),
-    'show_names' => true,
+		'show_names' => true,
+		'title' => '',
+		'description' => ''
     );
     /**
      * Initialize the Admin screen
@@ -66,7 +68,16 @@ class CB2_Admin_Screen
 		 * @var array $scripts
 		 * @var array $styles
      */
-		public function __construct( $menu_args=array() ) {
+		public function __construct( ) {
+			add_action('admin_menu', array($this, 'register_menu'));
+			add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
+			add_action('admin_enqueue_scripts', array($this, 'enqueue_styles'));
+			add_action('cmb2_save_options-page_fields', array($this, 'cmb2_submitted'), 10, 4);
+		}
+	/**
+	 * Add javascript
+	 */
+	public function add_menu_item( $menu_args=array() ) {
 
 			$menu_args_defaults = array(
 				'page_title' => __('CB2', 'commons-booking-2'),
@@ -77,11 +88,13 @@ class CB2_Admin_Screen
 				'icon_url' => '',
 				'position' => 6,
 				'parent_slug' => '',
-			);
+		);
 
-			$this->menu_args = array_replace( $menu_args_defaults, $menu_args );
-			$this->slug = $this->menu_args['menu_slug'];
-		}
+		$this->menu_args = array_replace($menu_args_defaults, $menu_args);
+		$this->slug = $this->menu_args['menu_slug'];
+
+
+	}
 	/**
 	 * Add javascript
 	 */
@@ -100,10 +113,7 @@ class CB2_Admin_Screen
 	}
 
 	public function init() {
-		add_action('admin_menu', array($this, 'register_menu'));
-		add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
-		add_action('admin_enqueue_scripts', array($this, 'enqueue_styles'));
-		add_action('cmb2_save_options-page_fields', array( $this, 'cmb2_submitted'), 10, 4);
+
 
 	}
 
@@ -168,6 +178,16 @@ class CB2_Admin_Screen
 			}
 		}
     /**
+     * Add meta box
+     *
+     * @since 2.0.0
+     *
+     * @param array $args
+     */
+    public function add_my_content( $function, $tab=FALSE ) {
+
+		}
+    /**
      * Enqueue Scripts
 		 *
      * @param array $scripts name of script
@@ -201,18 +221,17 @@ class CB2_Admin_Screen
      */
     public function the_content() {
 
-			var_dump($this->tabs);
 			print ('<div class="wrap">');
 			print ( 'enable maps' . CB2_Settings::is_enabled('features', 'enable-maps') );
 			printf ('<h1 class="wp-heading">%s</h1>', esc_html(get_admin_page_title()));
 
 			// non-tabbed content
-			if (!empty($this->content)) {
-					foreach ($this->content as $file) {
-							cb2_debug_maybe_print_path($file);
-							include $file;
-					}
-			}
+			// if (!empty($this->content)) {
+			// 		foreach ($this->content as $file) {
+			// 				cb2_debug_maybe_print_path($file);
+			// 				include $file;
+			// 		}
+			// }
 			// tabbed content
 			if (!empty( $this->tabs )) {
 				echo $this->render_admin_tabs();
@@ -225,9 +244,11 @@ class CB2_Admin_Screen
 
 			}
 			print ('</div>');
+			print('enable maps' . CB2_Settings::is_enabled('features', 'enable-maps'));
+
 		}
 
-		public function cmb2_submitted () {
+		public function cmb2_submitted() {
 			new WP_Admin_Notice('Settings saved', 'updated');
 		}
 
@@ -258,20 +279,21 @@ class CB2_Admin_Screen
 	 *
 	 * @return mixed
 	 */
-    public function render_settings_group_metabox( $metabox_args )
-    {
-				$html = sprintf( '
-				 <div class="postbox">
-						<div class="inside">
-						<h3>%s</h3>
-						%s
-						%s
-						</div>
-					</div>',
-					$metabox_args['title'],
-					$metabox_args['description'],
-					cmb2_metabox_form( $metabox_args, $metabox_args['id'], array ('echo' => FALSE ))
-				);
+    public function render_settings_group_metabox( $metabox_args ){
+
+			$args = array_merge ($this->metabox_options_defaults, $metabox_args );
+			$html = sprintf( '
+				<div class="postbox">
+					<div class="inside">
+					<h3>%s</h3>
+					%s
+					%s
+					</div>
+				</div>',
+				$args['title'],
+				$args['description'],
+				cmb2_metabox_form( $args, $args['id'], array ('echo' => FALSE ))
+			);
 
 			echo $html;
     }

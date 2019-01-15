@@ -29,6 +29,20 @@ function cb2_debug_maybe_print_path( $file_path ) {
 		echo ( '<pre>' . $file_path . '</pre>' );
 	}
 }
+/**
+ * Fixed checkbox issue with default is true.
+ *
+ * @param  mixed $override_value Sanitization/Validation override value to return.
+ * @param  mixed $value          The value to be saved to this field.
+ * @return mixed
+ */
+function cmb2_sanitize_checkbox($override_value, $value)
+{
+    // Return 0 instead of false if null value given. This hack for
+    // checkbox or checkbox-like can be setting true as default value.
+    return is_null($value) ? 0 : $value;
+}
+
 
 /**
  *  Display debug info.

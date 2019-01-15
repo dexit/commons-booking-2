@@ -109,9 +109,6 @@ class CB2_Settings
 
 			self::$plugin_settings_groups = $cb2_settings_groups;
 
-			// cmb2 action on metabox save
-			// add_action('cmb2_save_options-page_fields', array( 'CB2_Settings','todo_action_cmb2_save_object_type_fields'), 10, 4);
-
 		}
     /**
      * Get a setting from the WP options table
@@ -220,7 +217,7 @@ class CB2_Settings
             // Add setting groups
             CB2_Settings::do_settings_group($option);
         }
-    }
+		}
     /**
      * Return field names and values as key/value pair
      * The options that are available as timeframe options
@@ -250,51 +247,6 @@ class CB2_Settings
             return $fields;
 
         }
-    }
-
-
-    /**
-     * Strings (for possible overwrite in the backend
-     *
-     * @since 2.0.0
-     *
-     * @uses CB2_Strings
-     *
-     * @return array
-     */
-    public static function get_settings_template_cb2_strings()
-    {
-
-        $strings_array = CB2_Strings::get();
-        $fields_array = array();
-
-        // reformat array to fit our cmb2 settings fields
-        foreach ($strings_array as $category => $fields) {
-            // add title field
-            $fields_array[] = array(
-            'name' => $category,
-            'id' => $category . '-title',
-            'type' => 'title',
-            );
-            foreach ($fields as $field_name => $field_value) {
-
-                  $fields_array[] = array(
-                   'name' => $field_name,
-                   'id' => $category . '_' . $field_name,
-                   'type' => 'textarea_small',
-                   'default' => $field_value
-                  );
-            } // end foreach fields
-
-        } // end foreach strings_array
-
-        $settings_template_cb_strings = array(
-        'name' => __('Strings', 'commons-booking'),
-        'slug' => 'strings',
-        'fields' => $fields_array
-        );
-
-        return $settings_template_cb_strings;
     }
 
 
