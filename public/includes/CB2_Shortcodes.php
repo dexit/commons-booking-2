@@ -13,12 +13,22 @@
 class CB2_Shortcodes {
 
 	private $default_query_args = array(
-		'period_id'        => FALSE,
-		'location_id'      => FALSE,
-		'item_id'          => FALSE,
-		'view_mode'        => 'week',
+		// TODO: Entities
+		'period-group-ID'  => FALSE,
+		'location-ID'      => FALSE,
+		'item-ID'          => FALSE,
+		'user-ID'          => FALSE,
+
+		// Settings
+		'start-date'       => '',
+		'end-date'         => '',
+		'view-mode'        => 'week',      // Reorganise the posts in to a week hierarchy
 		'display-strategy' => 'CB2_Everything',
-		'selection-mode'   => NULL,
+		'selection-mode'   => 'none',      // e.g. range
+		'context'          => 'list',      // => templates/list-week-available.php, week = post_type
+		'template-type'    => 'available', // => templates/list-week-available.php, week = post_type
+
+		'namespace-args'   => '',          // form <input @name=<namespace_args>-<argname>
 	);
 
 	/**
@@ -29,62 +39,76 @@ class CB2_Shortcodes {
 	public function calendar_shortcode ( $atts ) {
 		global $post;
 
-		$html = '';
-		/*
-		These fields pass in a single value or a list of comma separated values. They need to be converted to an array before merging with the default args.
-		*/
-
+		// These fields pass in a single value or a list of comma separated values. They need to be converted to an array before merging with the default args.
 		$array_atts_fields = array(
-			'period_id',
-			'location_id',
-			'item_id',
-			'startdate',
-			'enddate',
-			'view_mode',
+			'period-group-ID',
+			'location-ID',
+			'item-ID',
+			'user-ID',
+
+			'start-date',
+			'end-date',
+			'view-mode',
 			'display-strategy',
 			'selection-mode',
+			'context',
+			'template-type',
+
+			'namespace-args',
 		);
-
-		/* TODO: is this for multiple value input?
-		foreach($array_atts_fields as $field) {
-			if (isset($atts[$field])) {
-				$atts[$field] = explode(',', $atts[$field]);
-			}
-		}
-		*/
 		$args = shortcode_atts( $this->default_query_args, $atts, 'cb_calendar' );
-		$display_strategy_classname = $args['display-strategy'];
-		$selection_mode = ( isset( $args['selection-mode'] ) ? $args['selection-mode'] : 'none' );
+		$period_group_ID = ( isset( $args['period-group-ID'] ) ? $args['period-group-ID'] : NULL );
+		$location_ID     = ( isset( $args['location-ID'] )     ? $args['location-ID']     : NULL );
+		$item_ID         = ( isset( $args['item-ID'] )         ? $args['item-ID']         : NULL );
+		$user_ID         = ( isset( $args['user-ID'] )         ? $args['user-ID']         : NULL );
+		$start_date      = ( isset( $args['start-date'] )      ? $args['start-date']      : NULL );
+		$end_date        = ( isset( $args['end-date'] )        ? $args['end-date']        : NULL );
+		$view_mode       = ( isset( $args['view-mode'] )       ? $args['view-mode']       : 'week' );
+		$display_strategy_classname = ( isset( $args['display-strategy'] ) ? $args['display-strategy'] : 'CB2_Everything' );
+		$selection_mode  = ( isset( $args['selection-mode'] )  ? $args['selection-mode']  : 'none' );
+		$context         = ( isset( $args['context'] )         ? $args['context']         : 'list' );
+		$template_type   = ( isset( $args['template-type'] )   ? $args['template-type']   : '' );
+		$namespace_args  = ( isset( $args['namespace-args'] )  ? $args['namespace-args']  : '' );
 
-		$display_strategy = new $display_strategy_classname( $post );
-		// if ( WP_DEBUG ) krumo( $display_strategy );
+		$start_date = ( $start_date ? new CB2_DateTime( $start_date ) : NULL );
+		$end_date   = ( $end_date   ? new CB2_DateTime( $end_date )   : NULL );
 
-		$html  = "<div class='cb2-selection-container cb2-selection-mode-$selection_mode'>";
+		// TODO: Implement shortcode Entity args
+		if ( $period_group_ID || $location_ID || $item_ID || $user_ID )
+			throw new Exception( 'Entity args not implemented yet' );
+		// TODO: Implement variable Display Strategies in shortcode
+		if ( $display_strategy_classname != 'CB2_SingleItemAvailability' )
+			throw new Exception( "[$display_strategy_classname] Display Strategy not implemented yet. Please set to CB2_SingleItemAvailability" );
+
+		// CSS all args
+		$css_classes = '';
+		foreach ( $args as $name => $value ) {
+			if ( $value ) $css_classes .= "cb2-$name-$value "; // cb2-selection-mode-range ...
+		}
+		$html = "<div class='cb2-selection-container $css_classes'>";
+
+		// Send all input arguments through in the form
+		// this allows, for example, selection_mode to be understood by the submission PHP
+		// namespace these in case their are multiple calendars in 1 page?
 		foreach ( $args as $name => $value ) {
 			$name = str_replace( '-', '_', $name );
+			if ( $namespace_args ) $name = "$namespace_args-$name";
 			$html .= "<input type='hidden' name='$name' value='$value'/>";
 		}
 
-		if ( $display_strategy->have_posts() ) {
-				$html .= '<table class="cb2-calendar">';
-					$html .= CB2::get_the_calendar_header( $display_strategy );
-					$html .= '<tbody>';
+		// Query and display the calendar
+		// TODO: Move to $display_strategy_classname::factory( $args )
+		$display_strategy = new $display_strategy_classname( $post, $start_date, $end_date, $view_mode );
+		// if ( WP_DEBUG ) krumo( $display_strategy );
+		$html .= '<table class="cb2-calendar">';
+		$html .= CB2::get_the_calendar_header( $display_strategy );
+		$html .= '<tbody>';
+		$html .= CB2::get_the_inner_loop( $display_strategy, $context, $template_type );
+		$html .= '</tbody>';
+		$html .= CB2::get_the_calendar_footer( $display_strategy );
+		$html .= '</table>';
 
-					while ( $display_strategy->have_posts() ) {
-						$display_strategy->the_post();
-						$html .= cb2_get_template_part(  CB2_TEXTDOMAIN, 'list', 'week-available', $args , true );
-					}
-
-					$html .= '</tbody>';
-					$html .= CB2::get_the_calendar_footer( $display_strategy );
-				$html .= '</table>';
-		} else {
-			$html .= '<div>No Results</div>';
-		}
 		$html .= '</div>';
-
-		// reset posts
-		wp_reset_postdata();
 
 		return $html;
 	}

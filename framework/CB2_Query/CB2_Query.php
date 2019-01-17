@@ -126,8 +126,10 @@ class CB2_Query {
 
 		// In place change the records
 		$post_classes = CB2_PostNavigator::post_type_classes();
-		foreach ( $posts as &$post )
-			CB2_Query::ensure_correct_class( $post, $instance_container = NULL, $prevent_auto_draft_publish_transition, $post_classes );
+		if ( is_array( $posts ) ) {
+			foreach ( $posts as &$post )
+				CB2_Query::ensure_correct_class( $post, $instance_container = NULL, $prevent_auto_draft_publish_transition, $post_classes );
+		}
 
 		return $posts;
   }
@@ -811,18 +813,40 @@ class CB2_Query {
 		return preg_replace( '/([a-z0-9])([A-Z])/', '\1_\2', $name );
 	}
 
-	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL ) {
+	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL, $include_empty_values = TRUE ) {
 		$string = NULL;
 		if ( self::array_has_associative( $array ) ) {
 			$string = '';
 			foreach ( $array as $key => $value ) {
-				if ( $string ) $string .= $delimiter;
 				if ( $object ) $value = self::object_value_path( $object, $value );
-				$string .= "$key$associative_delimiter$value";
+				if ( $include_empty_values || ! empty( $value ) ) {
+					if ( $string ) $string .= $delimiter;
+					$string .= "$key$associative_delimiter$value";
+				}
 			}
 		} else $string = implode( $delimiter, $array );
 
 		return $string;
+	}
+
+	static function php_array( $value, $key, $output_key = TRUE ) {
+		static $indent = 1;
+		$indent_string = str_repeat( "\t", $indent );
+
+		print( $indent_string );
+		if ( $output_key ) print( "'$key' => " );
+
+		if ( is_array( $value ) ) {
+			print( "array(\n" );
+			$indent++;
+			array_walk( $value, array( get_class(), __FUNCTION__ ), self::array_has_associative( $value ) );
+			$indent--;
+			print( "$indent_string),\n" );
+		} else if ( is_numeric( $value ) ) {
+			print( "$value,\n" );
+		} else {
+			print( "'$value',\n" );
+		}
 	}
 
 	static function array_sum( Array $array, String $property = NULL ) {

@@ -174,6 +174,28 @@ if ( WP_DEBUG ) {
 		//print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
 		CB2_Query::ensure_correct_classes( $query->posts ); // For debug purposes
 		krumo( $query );
+		$template_part_code = ( $template_part ? ", 'list', '$template_part'" : '' );
+		print( "<pre style='border:1px solid #000;padding:4px;'>\n" );
+		if ( $display_strategy != 'WP_Query' ) print( "// **** [$display_strategy] code not supported yet, presenting the equivalent WP_Query code instead\n" );
+		if ( $template_part ) print( "// Note that the template is specified in the CB2::the_inner_loop() call, not the query\n" );
+		print( "// WP_Query arguments for query using WP_Query\n" );
+		print( "// note that the [date_query][compare] value indicates the OO object reorganisation of the resultant posts array\n" );
+		print( "\$query = new WP_Query( array(\n" );
+		array_walk( $query->query, array( 'CB2_Query', 'php_array' ) );
+		print( ");\n" );
+		print( "\n// CB2::the_inner_loop() is a normal WordPress posts loop\n" );
+		print( "// post templates often call CB2::the_inner_loop() on themselves also, thus traversing the object hierarchy\n" );
+		print( htmlspecialchars( <<<HTML
+print( '<table class="cb2-calendar">' );
+CB2::the_calendar_header( \$query );
+print( '<tbody>' );
+CB2::the_inner_loop( \$query$template_part_code );
+print( '</tbody>' );
+CB2::the_calendar_footer( \$query );
+print( '</table>' );
+HTML
+		) );
+		print( '</pre>' );
 		print( "</div></div>" );
 	} else print( "<div>No posts returned!</div>" );
 }

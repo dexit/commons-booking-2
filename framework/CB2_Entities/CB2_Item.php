@@ -95,29 +95,40 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 
     public function get_the_after_content()
     {
-        // Booking form
-        $Class       = get_class($this);
-        $ID          = $this->ID;
-        $form_action = '';
-        $do_action   = 'book';
-        $submit      = __('book the') . " $this->post_title";
-        $name        = __('Booking of') . " $this->post_title";
-        $display_strategy  = 'CB2_SingleItemAvailability';
+				// Booking form
+				$Class       = get_class($this);
+				$ID          = $this->ID;
+				$form_action = '';
+				$do_action   = 'book';
+				$submit      = __('book the')   . " $this->post_title";
+				$name        = __('Booking of') . " $this->post_title";
+				$view_mode   = CB2_Week::$static_post_type;        // posts data reorganised into CB2_TimeClass hierarchy
+				$selection_mode    = 'range'; // Only 1 range, from => to, can be selected
+				$display_strategy  = 'CB2_SingleItemAvailability'; // posts filtered according to use case
+				// TODO: date navigation for item calendar
+				$start_date  = '';
+				$end_date    = '';
 
-        // TODO: WP_Query of the shortcode needs to be configurable
-        // package a form plugin with CB2, e.g. ContactForm 7
-        // e.g. default period to show
-        // package Query Wrangler with CB2
-        // POC already done
+				$shortcode_atts = array(
+					'start-date'       => $start_date,
+					'end-date'         => $end_date,
+					'view-mode'        => $view_mode,
+					'display-strategy' => $display_strategy,
+					'selection-mode'   => $selection_mode,
+        );
+        $shortcode_atts_string = CB2_Query::implode( ' ', $shortcode_atts, '=', NULL, FALSE ); // Ignore empty
+
         $form = "<form action='$form_action' method='POST'><div>
 						<input type='hidden' name='name' value='$name' />
 						<input type='hidden' name='do_action' value='$Class::$do_action' />
 						<input type='hidden' name='do_action_post_ID' value='$ID' />
 						<input type='submit' name='submit' value='$submit' />
-						[cb2_calendar view_mode=Week display-strategy=$display_strategy selection-mode=range]
+						[cb2_calendar $shortcode_atts_string]
 						<input type='submit' name='submit' value='$submit' />
 					</div></form>";
-				return str_replace( "\n", '', $form );
+				$form = str_replace( "\n", '', $form ); // Prevent WordPress replacing with <br>
+
+				return $form;
     }
 
     public function do_action_book(CB2_User $user, array $values)
