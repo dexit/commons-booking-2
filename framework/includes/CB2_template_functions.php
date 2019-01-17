@@ -341,6 +341,15 @@ class CB2 {
 		return $content;
 	}
 
+	public static function the_logs() {
+		print( self::get_the_logs() );
+	}
+
+	public static function get_the_logs() {
+		global $post;
+		return ( is_object( $post ) && method_exists( $post, 'get_the_logs' ) ? $post->get_the_logs() : '' );
+	}
+
 	public static function the_title( $HTML = TRUE ) {
 		print( self::get_the_title( $HTML ) );
 	}

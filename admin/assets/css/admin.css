@@ -451,7 +451,27 @@ body input.cb2-tick-only:not([checked]):after {
 }
 .cb2-calendar .cb2-time-period {
 	white-space:nowrap;
+	float:right;
 }
+.cb2-calendar .cb2-logs {
+	margin:0px;
+	padding:0px;
+}
+.cb2-calendar .cb2-logs li {
+	background-color:#ffd7d7;
+	font-style:italic;
+}
+.cb2-calendar .cb2-logs li:before {
+	content:'x';
+	background-color:#ff0000;
+	color:#fff;
+	margin-right:2px;
+	padding:2px 4px;
+	font-weight:bold;
+	font-size:12px;
+	font-style:normal;
+}
+
 .cb2-removable-item > input {
 	margin-left:2px!important;
 }

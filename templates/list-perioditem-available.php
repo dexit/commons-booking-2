@@ -7,6 +7,7 @@
 			<?php } ?>
 			<?php CB2::the_period_status_type_name(); ?>
 			<?php CB2::the_blocked(); ?>
+			<?php CB2::the_logs(); ?>
 		</div>
 
 		<a class="thickbox cb2-bald cb2-debug-control" name="debug" href="?inlineId=debug_popup_<?php the_ID(); ?>&amp;title=debug&amp;width=300&amp;height=500&amp;#TB_inline"></a>

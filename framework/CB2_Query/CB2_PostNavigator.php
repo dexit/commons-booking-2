@@ -3,6 +3,7 @@ abstract class CB2_PostNavigator extends stdClass {
   public static $database_table = 'cb2_post_types';
   public static $description    = 'CB2_MAX_DAYS is set to 10000 which is 10 years.';
 	private $saveable             = TRUE;
+	private $logs                 = array(); // What happened to me
 
   static function database_table_name() { return self::$database_table; }
 
@@ -318,6 +319,22 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $object;
 	}
 
+	function log( $string ) {
+		array_push( $this->logs, $string );
+	}
+
+	function get_the_logs() {
+		$html = '';
+		if ( count( $this->logs ) ) {
+			$html .= '<ul class="cb2-logs">';
+			foreach ( $this->logs as $string ) {
+				$html .= "<li>$string</li>";
+			}
+			$html .= '</ul>';
+		}
+		return $html;
+	}
+
 	function set_saveable( Bool $saveable ) {
 		// If set to FALSE, the save() process will ignore this object
 		if ( CB2_DEBUG_SAVE ) {
@@ -396,7 +413,8 @@ abstract class CB2_PostNavigator extends stdClass {
 					&& ( ! isset( CB2_Post::$POST_PROPERTIES[$name] ) || CB2_Post::$POST_PROPERTIES[$name] )
 					&& ( ! in_array( $name, array( 'zeros', 'post_type' ) ) )
 				) {
-					if      ( method_exists( $value, 'format' ) ) $value = $value->format( CB2_Query::$datetime_format );
+					if      ( is_null( $value ) ) $value = '<i>NULL</i>';
+					else if ( method_exists( $value, 'format' ) ) $value = $value->format( CB2_Query::$datetime_format );
 					else if ( is_array( $value ) ) {
 						/*
 						$debug .= "<ul>";

@@ -428,7 +428,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $html;
 	}
 
-	function get_the_title( $HTML = FALSE ) {
+	function get_the_title( $HTML = FALSE, $parent = NULL ) {
 		$title = '';
 		foreach ( $this->posts as $entity ) {
 			$post_type = $entity->post_type;
@@ -437,7 +437,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			if ( $HTML ) $title .= "</span>";
 			$title .= ' ';
 		}
-		$period_status_type_name = $this->period_status_type->name;
+		$period_status_type_name = $this->period_status_type->get_the_title( $HTML, $parent );
 		if ( $HTML ) $title .= "<span class='cb2-periodstatustype-name'>";
 		$title .= $period_status_type_name;
 		if ( $HTML ) $title .= "</span>";

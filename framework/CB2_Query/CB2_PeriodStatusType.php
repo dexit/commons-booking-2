@@ -258,6 +258,10 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     return $styles;
   }
 
+	function get_the_title( $HTML = FALSE, $parent = NULL ) {
+		return $this->name;
+	}
+
   function row_actions( &$actions, $post ) {
 		if ( property_exists( $post, 'system' ) && $post->system ) {
 			array_unshift( $actions, '<b style="color:#000;">System Status Type</b>' );
