@@ -31,11 +31,11 @@ class CB2 {
 		return ! self::is_published();
 	}
 
-	public static function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
-		echo self::get_the_inner_loop( $post_navigator, $context, $template_type, $before, $after );
+	public static function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $template_args = NULL ) {
+		echo self::get_the_inner_loop( $post_navigator, $context, $template_type, $before, $after, $template_args );
 	}
 
-	public static function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
+	public static function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $template_args = NULL ) {
 		global $post;
 		$html = '';
 		$outer_post = $post;
@@ -50,7 +50,7 @@ class CB2 {
 				while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 					$html .= $before;
 					CB2_Query::redirect_wpdb_for_post_type( $post->post_type() );
-					$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', array(), TRUE );
+					$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', $template_args, TRUE );
 					CB2_Query::unredirect_wpdb();
 					$html .= $after;
 				endwhile;

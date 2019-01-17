@@ -57,6 +57,7 @@ class CB2_Shortcodes {
 			'namespace-args',
 		);
 		$args = shortcode_atts( $this->default_query_args, $atts, 'cb_calendar' );
+		$template_args   = array_merge( $atts, $args );
 		$period_group_ID = ( isset( $args['period-group-ID'] ) ? $args['period-group-ID'] : NULL );
 		$location_ID     = ( isset( $args['location-ID'] )     ? $args['location-ID']     : NULL );
 		$item_ID         = ( isset( $args['item-ID'] )         ? $args['item-ID']         : NULL );
@@ -103,7 +104,7 @@ class CB2_Shortcodes {
 		$html .= '<table class="cb2-calendar">';
 		$html .= CB2::get_the_calendar_header( $display_strategy );
 		$html .= '<tbody>';
-		$html .= CB2::get_the_inner_loop( $display_strategy, $context, $template_type );
+		$html .= CB2::get_the_inner_loop( $display_strategy, $context, $template_type, NULL, NULL, $template_args );
 		$html .= '</tbody>';
 		$html .= CB2::get_the_calendar_footer( $display_strategy );
 		$html .= '</table>';
