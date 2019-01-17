@@ -153,8 +153,8 @@ abstract class CB2_PostNavigator extends stdClass {
 			if ( property_exists( $Class, 'all' ) ) {
 				if ( $values_only ) $all = array_values( $Class::$all );
 				else $all = $Class::$all;
-			}
-		}
+			} else throw new Exception( "[$Class/$post_type] has no global \$all collection" );
+		} else throw new Exception( "[$post_type] has no associated Class for \$all operation" );
 		return $all;
   }
 

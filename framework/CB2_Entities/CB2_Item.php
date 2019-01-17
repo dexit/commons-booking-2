@@ -20,16 +20,18 @@
 
 class CB2_Item extends CB2_Post implements JsonSerializable
 {
-    // TODO: Extend CB2_Item to integrate with all / new custom post_types
-    // can integrate with the commonsbooking
-    // For example: a separate plugin which creates a room post_type should be then bookable
-    // by presenting a CB2 list of registered post_types and selecting which should be bookable
-    // and eventually a CB2 UI allowing new ones with customizeable supports
+		// TODO: Extend CB2_Item to integrate with all / new custom post_types
+		// can integrate with the commonsbooking
+		// For example: a separate plugin which creates a room post_type should be then bookable
+		// by presenting a CB2 list of registered post_types and selecting which should be bookable
+		// and eventually a CB2 UI allowing new ones with customizeable supports
+		public static $all = array();
 		public static $static_post_type   = 'item';
 		public static $rewrite   = array( 'slug' => 'item' );
-    public static $post_type_args = array(
-        'menu_icon' => 'dashicons-video-alt',
-	);
+		public static $post_type_args = array(
+			'menu_icon' => 'dashicons-video-alt',
+		);
+
     public static function selector_metabox()
     {
         return array(
@@ -62,6 +64,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
     protected function __construct($ID)
     {
         parent::__construct($ID);
+				self::$all[$ID] = $this;
 
         // WP_Post values
         $this->post_type = self::$static_post_type;

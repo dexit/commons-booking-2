@@ -6,7 +6,7 @@ class CB2 {
 		if ( is_null( $post_navigator ) ) $post_navigator = $post;
 
 		if ( property_exists( $post_navigator, 'posts' ) && is_array( $post_navigator->posts ) ) {
-			cb2_convert_posts( $post_navigator );
+			CB2_Query::reorganise_posts_structure( $post_navigator );
 			if ( is_null( $post_type ) ) {
 				$has_posts = ( count( $post_navigator->posts ) > 0 );
 			} else {
@@ -45,7 +45,7 @@ class CB2 {
 
 		if ( ! $post_navigator ) $post_navigator = $post;
 		if ( $post_navigator instanceof CB2_PostNavigator || $post_navigator instanceof WP_Query ) {
-			cb2_convert_posts( $post_navigator );
+			if ( $post_navigator instanceof WP_Query ) CB2_Query::reorganise_posts_structure( $post_navigator );
 			if ( $post_navigator->have_posts() ) {
 				while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 					$html .= $before;

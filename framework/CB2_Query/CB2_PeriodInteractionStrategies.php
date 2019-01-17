@@ -281,6 +281,8 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
   }
 
 	function jsonSerialize() {
+		// Need to manually do this because normally it is triggered by the loop_start action
+		CB2_Query::reorganise_posts_structure( $this->wp_query );
 		return $this->wp_query->posts;
 	}
 }

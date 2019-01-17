@@ -91,10 +91,10 @@ switch ( $display_strategy ) {
 			),
 			'meta_query' => $meta_query,        // Location, Item, User
 		);
-		$query = new WP_Query( $args );
+		$query = new $display_strategy( $args );
 		break;
 	case 'CB2_AllItemAvailability':
-		$query = new $display_strategy();
+		$query = new $display_strategy( NULL, NULL, $schema_type );
 		break;
 	default:
 		print( "<div style='color:red;'>$display_strategy not supported yet</div>" );
@@ -140,8 +140,8 @@ print( <<<HTML
 				$period_entity_options_html
 				<select name="period_entity_ID">$period_entity_options</select>
 			<br/>
-			Output type:<select name="output_type">$output_options</select>
-			Post Type:<select name="schema_type">$schema_options</select>
+			Output Type:<select name="output_type">$output_options</select>
+			Schema Hierarchy:<select name="schema_type">$schema_options</select>
 			Template Part:<select name="template_part">$template_options</select>
 			<span class="cb2-todo">Display Strategy</span>:<select name="display_strategy">$display_strategys</select>
 			<input id='show_overridden_periods' type='checkbox' $show_overridden_periods_checked name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
@@ -204,6 +204,11 @@ HTML
 switch ( $output_type ) {
 	case 'JSON':
 		print( '<pre>' );
+		if ( $query instanceof WP_Query ) {
+			// This is necessary here because loop_start or CB2_PeriodInteractionStrategy::jsonSerialize()
+			// usually does the reorganisation
+			CB2_Query::reorganise_posts_structure( $query );
+		}
 		print( wp_json_encode( $query, JSON_PRETTY_PRINT ) );
 		print( '</pre>' );
 		break;

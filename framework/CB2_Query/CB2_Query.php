@@ -114,6 +114,51 @@ class CB2_Query {
 		return CB2_User::factory( $wp_user->ID, $wp_user->user_login );
 	}
 
+	static function reorganise_posts_structure( &$wp_query ) {
+		// Convert the WP_Query CB post_type results from WP_Post in to CB2_* objects
+		if ( $wp_query instanceof WP_Query && property_exists( $wp_query, 'posts' ) ) {
+			if ( is_array( $wp_query->posts ) && ! property_exists( $wp_query, '_cb2_converted_posts' ) ) {
+				// Create the CB2_PeriodItem objects from the WP_Post results
+				// This will also create all the associated CB2_* Objects like CB2_Week
+				// WP_Posts will be left unchanged
+				CB2_Query::ensure_correct_classes( $wp_query->posts, $wp_query );
+
+				// Indicate that the posts are from a redirected request
+				if ( property_exists( $wp_query, 'cb2_redirected_post_request' ) && $wp_query->cb2_redirected_post_request ) {
+					foreach ( $wp_query->posts as &$post )
+						$post->cb2_redirected_post_request = TRUE;
+				}
+
+				// Check to see which schema has been requested and switch it
+				if ( isset( $wp_query->query['date_query']['compare'] ) ) {
+					if ( $schema = $wp_query->query['date_query']['compare'] ) {
+						$wp_query->posts = CB2_PostNavigator::post_type_all_objects( $schema );
+						if ( WP_DEBUG ) {
+							if ( ! is_array( $wp_query->posts ) )
+								throw new Exception( "CB2_PostNavigator::post_type_all_objects() returned non-array" );
+							if ( count( $wp_query->posts ) ) {
+								$first_post_type = $wp_query->posts[0]->post_type;
+								if ( $first_post_type != $schema )
+									throw new Exception( "[$schema] OO hierarchy requested but first post is of type [$first_post_type]" );
+							}
+						}
+					}
+				}
+
+				// Reset pointers
+				$wp_query->post_count  = count( $wp_query->posts );
+				$wp_query->found_posts = (boolean) $wp_query->post_count;
+				$wp_query->post        = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
+				$wp_query->_cb2_converted_posts = TRUE;
+			}
+		} else {
+			krumo( $wp_query );
+			throw new Exception( "Request to reorganise_posts_structure() on invalid WP_Query object" );
+		}
+
+		return $wp_query;
+	}
+
 	static function ensure_correct_classes( &$posts, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE ) {
 		// TODO: Several embedded WP_Querys would cause a build up of static $all:
 		//   move static <Time class>::$all arrays on to the $instance_container (not used yet)

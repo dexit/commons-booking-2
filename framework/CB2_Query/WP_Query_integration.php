@@ -713,43 +713,9 @@ function cb2_posts_date_order( $post1, $post2 ) {
 }
 
 function cb2_loop_start( &$wp_query ) {
-	return cb2_convert_posts( $wp_query );
+	CB2_Query::reorganise_posts_structure( $wp_query );
 }
 
-function cb2_convert_posts( &$wp_query ) {
-	// Convert the WP_Query CB post_type results from WP_Post in to CB2_* objects
-	if ( $wp_query instanceof WP_Query
-		&& property_exists( $wp_query, 'posts' )
-		&& is_array( $wp_query->posts )
-		&& ! property_exists( $wp_query, '_cb2_converted_posts' )
-	) {
-		// Create the CB2_PeriodItem objects from the WP_Post results
-		// This will also create all the associated CB2_* Objects like CB2_Week
-		// WP_Posts will be left unchanged
-		CB2_Query::ensure_correct_classes( $wp_query->posts, $wp_query );
-
-		// Indicate that the posts are from a redirected request
-		if ( property_exists( $wp_query, 'cb2_redirected_post_request' ) && $wp_query->cb2_redirected_post_request ) {
-			foreach ( $wp_query->posts as &$post )
-				$post->cb2_redirected_post_request = TRUE;
-		}
-
-		// Check to see which schema has been requested and switch it
-		if ( isset( $wp_query->query['date_query']['compare'] ) ) {
-			if ( $schema = $wp_query->query['date_query']['compare'] ) {
-				$wp_query->posts = CB2_PostNavigator::post_type_all_objects( $schema );
-			}
-		}
-
-		// Reset pointers
-		$wp_query->post_count  = count( $wp_query->posts );
-		$wp_query->found_posts = (boolean) $wp_query->post_count;
-		$wp_query->post        = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
-		$wp_query->_cb2_converted_posts = TRUE;
-	}
-
-	return $wp_query;
-}
 
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------

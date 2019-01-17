@@ -190,12 +190,14 @@ function cb2_post_row_actions( $actions, $post ) {
 add_filter( 'post_row_actions', 'cb2_post_row_actions', 10, 2 );
 
 function cb2_admin_views( $views ) {
-	$page       = $_GET['page'];
-	$all_text   = __( 'All' );
-	$trash_text = __( 'Trash' );
+	$page          = $_GET['page'];
+	$all_text      = __( 'All' );
+	$trash_text    = __( 'Trash' );
+	$calendar_text = '<span class="cb2-todo">' . __( 'Calendar' ) . '</span>';
 	$views = array(
-		'all'   => "<a href='admin.php?page=$page&post_status=publish'>$all_text</span></a>",
-		'trash' => "<a href='admin.php?page=$page&post_status=trash'>$trash_text</span></a>",
+		'all'      => "<a href='admin.php?page=$page&post_status=publish'>$all_text</span></a>",
+		'trash'    => "<a href='admin.php?page=$page&post_status=trash'>$trash_text</span></a>",
+		'calendar' => "<a href='admin.php?page=$page&view=calendar'>$calendar_text</span></a>",
 	);
 	return $views;
 }
