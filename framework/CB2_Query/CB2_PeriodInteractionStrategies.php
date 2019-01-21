@@ -323,10 +323,6 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 		parent::__construct( $startdate, $enddate, $view_mode, $query );
 	}
 
-	function factory_from_wp_query( WP_Query $wp_query ) {
-		// TODO: factory_from_wp_query
-	}
-
 	function markup( CB2_PeriodItem &$perioditem ) {
 		$period_status_type = $perioditem->period_entity->period_status_type;
 

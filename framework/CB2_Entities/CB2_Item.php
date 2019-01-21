@@ -20,11 +20,6 @@
 
 class CB2_Item extends CB2_Post implements JsonSerializable
 {
-		// TODO: Extend CB2_Item to integrate with all / new custom post_types
-		// can integrate with the commonsbooking
-		// For example: a separate plugin which creates a room post_type should be then bookable
-		// by presenting a CB2 list of registered post_types and selecting which should be bookable
-		// and eventually a CB2 UI allowing new ones with customizeable supports
 		public static $all = array();
 		public static $static_post_type   = 'item';
 		public static $rewrite   = array( 'slug' => 'item' );
@@ -108,13 +103,13 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 				$view_mode   = CB2_Week::$static_post_type;        // posts data reorganised into CB2_TimeClass hierarchy
 				$selection_mode    = 'range'; // Only 1 range, from => to, can be selected
 				$display_strategy  = 'CB2_SingleItemAvailability'; // posts filtered according to use case
-				// TODO: date navigation for item calendar
-				$start_date  = '';
-				$end_date    = '';
+				// TODO: initial CB2_Item booking calendar pagesize settings
+				$startdate   = '';
+				$enddate     = '';
 
 				$shortcode_atts = array(
-					'start-date'       => $start_date,
-					'end-date'         => $end_date,
+					'start-date'       => $startdate,
+					'end-date'         => $enddate,
 					'view-mode'        => $view_mode,
 					'display-strategy' => $display_strategy,
 					'selection-mode'   => $selection_mode,
@@ -151,7 +146,6 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         }
 
         // Book these availabilities
-        // TODO: should these bookings be combined? (settings)
         $available_perioditems = $values['perioditem-timeframes'];
         $name                  = __('Booking');
         $copy_period_group     = true;      // Default

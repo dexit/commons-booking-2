@@ -113,6 +113,45 @@ class CB2 {
 		return self::get_the_calendar_header( $query, $classes, $type, $before, $after );
 	}
 
+	public static function the_calendar_pager( $query = NULL, $classes = '' ) {
+		echo self::get_the_calendar_pager( $query, $classes );
+	}
+
+	public static function get_the_calendar_pager( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, $classes = '' ) {
+		// Inputs
+		$url              = $_SERVER['REQUEST_URI'];
+		$yesterday        = (new CB2_DateTime())->sub( 2 );
+		$next2month       = (clone $yesterday)->add( 'P2M' );
+		$startdate_string = ( isset( $_GET['startdate'] ) ? $_GET['startdate'] : $yesterday->format(  CB2_Query::$date_format ) );
+		$enddate_string   = ( isset( $_GET['enddate']   ) ? $_GET['enddate']   : $next2month->format( CB2_Query::$date_format ) );
+
+		// Date handling
+		if ( is_null( $startdate ) ) $startdate = new CB2_DateTime( $startdate_string );
+		if ( is_null( $enddate ) )   $enddate   = new CB2_DateTime( $enddate_string );
+		$pagesize       = $startdate->diff( $enddate );
+		$timeless_url   = preg_replace( '/[&\?](start|end)date=[^&]*/', '', $url );
+		if ( strchr( $timeless_url, '?' ) === FALSE ) $timeless_url .= '?';
+
+		$nextpage_start = (clone $enddate);
+		$nextpage_end   = (clone $nextpage_start);
+		$nextpage_end->add( $pagesize );
+		$nextpage_start_string = $nextpage_start->format( CB2_Query::$date_format );
+		$nextpage_end_string   = $nextpage_end->format( CB2_Query::$date_format );
+
+		$prevpage_start = (clone $startdate);
+		$prevpage_end   = (clone $prevpage_start);
+		$prevpage_start->sub( $pagesize );
+		$prevpage_start_string = $prevpage_start->format( CB2_Query::$date_format );
+		$prevpage_end_string   = $prevpage_end->format( CB2_Query::$date_format );
+
+		return "<div class='entry-footer'>
+				<div class='cb2-calendar-pager'>
+					<a href='$timeless_url&startdate=$prevpage_start_string&enddate=$prevpage_end_string'>&lt;&lt; previous page</a>
+					| <a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
+				</div>
+			</div>";
+	}
+
 	public static function the_calendar_header( $query = NULL, $classes = '', $type = 'th', $before = '<thead><tr>', $after = '</tr></thead>' ) {
 		echo self::get_the_calendar_header( $query, $classes, $type, $before, $after );
 	}
@@ -128,7 +167,6 @@ class CB2 {
 
 		switch ( $schema_type ) {
 			case CB2_Week::$static_post_type:
-				// TODO: use wordpress WeekStartsOn
 				$html         .= ( $before );
 				$days_of_week  = CB2_Week::days_of_week();
 				for ( $i = 0; $i < count( $days_of_week ); $i++ ) {

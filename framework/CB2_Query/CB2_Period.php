@@ -22,9 +22,6 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
   static function database_table_name() { return self::$database_table; }
 
   static function database_table_schemas( $prefix ) {
-		// TODO: PHP object property type assignment could work from this knowledge also
-		// however, pseudo fields like period_IDs that represent DRI
-		// with array(ints) would need guidance also
 		$period_item_posts      = "{$prefix}cb2_view_perioditem_posts";
 		$period_item_meta       = "{$prefix}cb2_view_perioditemmeta";
 		$period_group_period    = "{$prefix}cb2_period_group_period";
@@ -368,10 +365,11 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 					&& $this->datetime_part_period_end->format(   'H:i:s' ) == '23:59:59'
 				 );
 
-		// TODO: make fullworkday times configurable
+		$day_start = CB2_DateTime::day_start();
+		$day_end   = CB2_DateTime::day_end();
 		$this->fullworkday = ( $this->datetime_part_period_start && $this->datetime_part_period_end )
-			&& ( 	 $this->datetime_part_period_start->format( 'H:i:s' ) == '00:09:00'
-					&& $this->datetime_part_period_end->format(   'H:i:s' ) == '18:00:00'
+			&& ( 	 $this->datetime_part_period_start->format( 'H:i:s' ) == $day_start->format( 'H:i:s' )
+					&& $this->datetime_part_period_end->format(   'H:i:s' ) == $day_end->format( 'H:i:s' )
 				 );
 
     if ( $ID ) self::$all[$ID] = $this;
@@ -452,7 +450,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		if ( $this->recurrence_sequence ) {
 			$periods  = NULL;
 			switch ( $this->recurrence_type ) {
-				// TODO: only days supported so far
+				// TODO: summary_recurrence_type() only days supported so far
 				case 'D':
 					$periods = CB2_Week::days_of_week();
 					break;

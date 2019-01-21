@@ -151,7 +151,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		if ( $copy_period_group ) {
 			// We do not want to clone the period_group
 			// only the period item *instance*
-			// TODO: contiguous bookings in factory_from_perioditem()
 			$datetime_now = new CB2_DateTime();
 			$period = new CB2_Period(
 				CB2_CREATE_NEW,
@@ -205,7 +204,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		if ( $copy_period_group ) {
 			// We do not want to clone the period_group
 			// only the period item *instance*
-			// TODO: contiguous bookings in factory_from_perioditem()
 			$datetime_now = new CB2_DateTime();
 			$period = new CB2_Period(
 				CB2_CREATE_NEW,
@@ -578,7 +576,6 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 		}
 
 		// ------------------------------------------ Calendar based metabox showing just one week
-		// TODO: calendar opening hours wizard
 		$advanced_url  = CB2_Query::pass_through_query_string( NULL, array(), array(
 			'CB2_PeriodEntity_Location_metabox_0_show',
 			'metabox_wizard_ids',

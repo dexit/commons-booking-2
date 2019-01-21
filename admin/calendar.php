@@ -22,10 +22,6 @@ $show_overridden_periods = isset( $_GET['show_overridden_periods'] );
 
 // --------------------------------------- Query
 $query = NULL;
-// TODO: Here we should instantiate with stated CB2_PeriodInteractionStrategy
-// same as WP_Query
-// this all needs to be rationalised
-// maybe using a factory( $args )?
 $args  = array(
 	'startdate'        => $startdate_string,
 	'enddate'          => $enddate_string,

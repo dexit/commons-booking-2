@@ -269,8 +269,6 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 						}
 
 						// ----------------------------------------------------- save()
-						// TODO: running $fire_wordpress_events will cause CMB2 to save its data also!
-						// TODO: enable wordpress events on update
 						$update                = TRUE;
 						$container             = NULL; // Not used yet
 						$fire_wordpress_events = $consider_empty_post; // We are preventing normal update procedure events
@@ -380,7 +378,7 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				$action    = 'edit';
 				$URL       = admin_url( "admin.php?page=$page&post=$native_ID&post_type=$post_type&action=$action" );
 				// If CB2_DEBUG_SAVE the redirect will be printed, not acted
-				// TODO: this exit() will prevent other save_post actions firing on post create...
+				// NOTE: this exit() will prevent other save_post actions firing on post create...
 				wp_redirect( $URL );
 				exit();
 			}
