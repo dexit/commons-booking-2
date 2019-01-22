@@ -46,6 +46,10 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		);
 	}
 
+	function metabox_calendar_options_object_cb( $field, $perioditem ) {
+		return array();
+	}
+
   static function database_table_name() { return self::$database_table; }
 
   static function database_table_schemas( $prefix ) {
@@ -258,6 +262,10 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     return $styles;
   }
 
+	function get_the_title( $HTML = FALSE, $parent = NULL ) {
+		return $this->name;
+	}
+
   function row_actions( &$actions, $post ) {
 		if ( property_exists( $post, 'system' ) && $post->system ) {
 			array_unshift( $actions, '<b style="color:#000;">System Status Type</b>' );
@@ -404,6 +412,26 @@ class CB2_PeriodStatusType_Available extends CB2_SystemPeriodStatusType {
 			$args = array( $ID, 'available' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
+	}
+
+	function metabox_calendar_options_object_cb( $field, $periodentity ) {
+		// Availability should show a more complex calendar
+		$options = array();
+		if ( $periodentity->item ) {
+			$options[ 'display-strategy' ] = 'CB2_SingleItemAvailability';
+			$options[ 'query' ] = array(
+				'post_status' => array( CB2_Post::$PUBLISH, CB2_Post::$TRASH ),
+				'meta_query'  => array(
+					'entities' => array(
+						'item_ID_clause' => array(
+							'key'   => 'item_ID',
+							'value' => array( $periodentity->item->ID, 0 ),
+						),
+					),
+				),
+			);
+		}
+		return $options;
 	}
 }
 

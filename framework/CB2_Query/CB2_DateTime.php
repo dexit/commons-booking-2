@@ -27,7 +27,6 @@ class CB2_DateTime {
 	}
 
 	static function day_start() {
-		// TODO: link this in to the CB2_Settings system
 		$today = self::today();
 		return $today->setTime( get_option( 'cb2-day-start', 9 ), 0 );
 	}
@@ -96,14 +95,12 @@ class CB2_DateTime {
 	}
 
 	function setDayStart() {
-		// TODO: make configurable
-		$this->datetime->setTime( 8, 0 );
+		$this->datetime->setTime( get_option( 'cb2-day-start', 9 ), 0 );
 		return $this;
 	}
 
 	function setDayEnd() {
-		// TODO: make configurable
-		$this->datetime->setTime( 18, 0 );
+		$this->datetime->setTime( get_option( 'cb2-day-end', 18 ), 0 );
 		return $this;
 	}
 

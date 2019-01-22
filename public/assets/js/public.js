@@ -6,38 +6,17 @@
 
 		$(document).ready(function(){
 			$('.cb2-template-available > .cb2-details').click(function(e){
+				var selection_container = $(this).closest('.cb2-selection-container');
 				var container      = $(this).parent();
 				var checkbox       = $(this).children('.cb2-perioditem-selector');
-				var cssClass       = $(this).attr('class').trim();
+				var cssClass       = container.attr('class').trim();
 				var target         = $(e.target);
 				var clicked_input  = (target.is(checkbox));
 				var is_checked     = checkbox.attr('checked');
 				var selection_mode = 'none';
 				var selections     = $();
-
-				// See if we have a selection mode
-				var selection_container = $(this).closest('.cb2-selection-container');
-				if (selection_container.length) {
-					var selection_container_class = selection_container.attr('class');
-					var selection_mode_matches    = selection_container_class.match(/cb2-selection-mode-([^ ]+)/);
-					selections = selection_container.find('.cb2-selected');
-					if (selection_mode_matches) selection_mode = selection_mode_matches[1];
-				}
-
-				// Selection styles
-				switch (selection_mode) {
-					case 'range':
-						switch (selections.length) {
-							case 0:
-								break;
-							case 1:
-								// TODO: Create a continuous link between the selected items
-								break;
-							default:
-								// TODO: move the selections to change the range
-						}
-						break;
-				}
+				var selectables    = $();
+				var earliest, latest;
 
 				// The default checkbox event will check the checkbox
 				// AFTER this action
@@ -49,6 +28,65 @@
 				} else {
 					if (!clicked_input) checkbox.attr('checked', '1');
 					container.attr( 'class', cssClass + ' cb2-selected' );
+				}
+
+				// See if we have a selection mode
+				if (selection_container.length) {
+					var selection_container_class = selection_container.attr('class');
+					var selection_mode_matches    = selection_container_class.match(/cb2-selection-mode-([^ ]+)/);
+					selections  = selection_container.find('.cb2-selected');
+					selectables = selection_container.find('.cb2-selectable' );
+					earliest    = selections.first();
+					latest      = selections.last();
+					if (selection_mode_matches) selection_mode = selection_mode_matches[1];
+				}
+
+				// Selection styles
+				switch (selection_mode) {
+					case 'range':
+						selectables.removeClass('cb2-range-selected');
+						switch (selections.length) {
+							case 1:
+								break;
+							case 2:
+								// TODO: Should we go full OO on this and create a JS class for each PHP class?
+								var past_earliest = false;
+								selectables.each(function(){
+									var bcontinue = true;
+									if ($(this).is(earliest))
+										past_earliest = true;
+									if ($(this).is(latest))
+										bcontinue     = false;
+									if (past_earliest)
+										$(this).addClass('cb2-range-selected');
+									return bcontinue;
+								});
+								break;
+							default:
+								// TODO: move the selections to change the range
+								// WARN: this does not work because we do not actually want the preceding axis...
+								if (earliest.parents().prevAll().find('.cb2-selectable').is($(this))) {
+									// TODO: New selection < the earliest
+									// move the earliest
+									earliest.removeAttr('checked');
+									earliest.attr( 'class', cssClass.replace(/cb2-selected/, '') );
+								}
+								else if (latest.parents().nextAll().find('.cb2-selectable').is($(this))) {
+									// TODO: New selection > the latest
+									// move the latest
+									latest.removeAttr('checked');
+									latest.attr( 'class', cssClass.replace(/cb2-selected/, '') );
+								}
+								else {
+									// TODO: It is between the 2 selections
+									// cancel the selection
+									earliest.removeAttr('checked');
+									earliest.attr( 'class', cssClass.replace(/cb2-selected/, '') );
+									latest.removeAttr('checked');
+									latest.attr( 'class', cssClass.replace(/cb2-selected/, '') );
+								}
+						}
+						break;
 				}
 
 				// Prevent any container clicks from bubbling

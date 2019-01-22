@@ -60,7 +60,7 @@ class CB2_Public {
 	}
 }
 /*
- * @TODO:
+ * @TODO: 9999 is used for load the plugin as last for resolve some
  *
  * - 9999 is used for load the plugin as last for resolve some
  *   problems when the plugin use API of other plugins, remove

@@ -236,7 +236,7 @@ class CB2_Week extends CB2_TimePostNavigator {
 
   function jsonSerialize() {
     return [
-      //'weekinyear'    => $this->weekinyear,
+      'weekinyear'    => $this->weekinyear,
       'first_day_num' => $this->first_day_num,
       'days'          => &$this->days
     ];

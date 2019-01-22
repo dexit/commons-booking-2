@@ -32,7 +32,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	 */
 	private $wp_query;
 
-	function __construct( DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = NULL, Array $query = NULL ) {
+	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = NULL, Array $query = NULL ) {
 		// Defaults
 		if ( is_null( $startdate ) ) $startdate   = ( isset( $_GET['startdate'] ) ? new CB2_DateTime( $_GET['startdate'] ) : new CB2_DateTime() );
 		if ( is_null( $enddate ) )   $enddate     = ( isset( $_GET['enddate'] )   ? new CB2_DateTime( $_GET['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
@@ -69,16 +69,11 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		$query  = apply_filters( $filter, $query );
 
 		// Retrieve all the posts immediately (like WP_Query)
-		$this->logs  = array();
 		$this->query = $query;
 		$this->query( $this->query );
 
 		// Expose the private WP_Query in WP_DEBUG mode
 		if ( WP_DEBUG ) $this->debug_wp_query = $this->wp_query;
-	}
-
-	function log( $thing ) {
-		array_push( $this->logs, $thing );
 	}
 
 	// -------------------------------------------- query functions
@@ -93,35 +88,18 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		// Process here before any loop_start re-organiastion
 		CB2_Query::ensure_correct_classes( $this->wp_query->posts, $this );
 		$new_posts = array();
-		$removals  = array();
 		foreach ( $this->wp_query->posts as $perioditem ) {
 			if ( WP_DEBUG ) {
 				$period_entity   = $perioditem->period_entity;
 				$Class           = get_class( $perioditem );
 				$PSTClass        = get_class( $period_entity->period_status_type );
 				$datetime_string = $perioditem->datetime_period_item_start->format( 'M-d' );
-				$this->log( "$Class($PSTClass)::$datetime_string" );
 			}
 			$overlap_perioditems = $this->overlap_perioditems( $perioditem );
-			$new_perioditem      = $this->process_perioditem( $perioditem, $overlap_perioditems );
-
-			if ( is_null( $new_perioditem ) ) {
-				array_push( $removals, $perioditem );
-				$this->log( 'removed' );
-			} else {
-				$this->markup( $new_perioditem );
-			}
-			$perioditem = $new_perioditem;
-
-			if ( ! is_null( $perioditem ) )
-				array_push( $new_posts, $perioditem );
+			$this->process_perioditem( $perioditem, $overlap_perioditems );
+			$this->markup( $perioditem );
+			array_push( $new_posts, $perioditem );
 		}
-
-		// Delete stuff afterwards
-		// because it might have an effect on the processing of other periods
-		// during the loop
-		foreach ( $removals as $perioditem )
-			$perioditem->remove();
 
 		// Reset WP_Query
 		$this->wp_query->posts       = $new_posts;
@@ -130,6 +108,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		$this->wp_query->post        = ( $this->wp_query->found_posts ? $this->wp_query->posts[0] : NULL );
 
 		// Some stats for inner_loop and things
+		$this->posts       = &$this->wp_query->posts;
 		$this->post_count  = $this->wp_query->post_count;
 		$this->found_posts = $this->wp_query->found_posts;
 
@@ -143,6 +122,14 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	function &the_post()   {
 		$post = $this->wp_query->the_post();
 		return $post;
+	}
+
+	function get_queried_object_id() {
+		return $this->wp_query->get_queried_object_id();
+	}
+
+	function reset_postdata() {
+		return $this->wp_query->reset_postdata();
 	}
 
 	// -------------------------------------------- period analysis functions
@@ -187,15 +174,14 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 			&&   $this->overlaps_item(    $perioditem1, $perioditem2 );
   }
 
-  function process_perioditem( CB2_PeriodItem $perioditem, Array $overlap_perioditems ) {
+  function process_perioditem( CB2_PeriodItem &$perioditem, Array $overlap_perioditems ) {
 		if ( ! property_exists( $perioditem, '_cb2_processed' ) || ! $perioditem->_cb2_processed ) {
 			$perioditem->priority_original   = $perioditem->period_entity->period_status_type->priority;
 			$perioditem->overlap_perioditems = $overlap_perioditems;
+			// Can be NULL, indicating that this item is always overridden, even if alone
 			$perioditem->priority = $this->dynamic_priority( $perioditem, $overlap_perioditems );
 			$this->set_processed( $perioditem );
-			if ( is_null( $perioditem->priority ) ) $perioditem = NULL; // Delete
 		}
-		return $perioditem;
   }
 
   function markup( CB2_PeriodItem &$perioditem ) {
@@ -205,7 +191,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		$perioditem->_cb2_processed = TRUE;
   }
 
-  function dynamic_priority( CB2_PeriodItem $perioditem, Array $overlap_perioditems ) {
+  function dynamic_priority( CB2_PeriodItem &$perioditem, Array $overlaps ) {
 		// Dictate the new display order
 		// only relevant for partial overlap
 		// for example a morning slot overlapping a full-day open period
@@ -281,6 +267,8 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
   }
 
 	function jsonSerialize() {
+		// Need to manually do this because normally it is triggered by the loop_start action
+		CB2_Query::reorganise_posts_structure( $this->wp_query );
 		return $this->wp_query->posts;
 	}
 }
@@ -291,6 +279,10 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 // --------------------------------------------------------------------
 class CB2_Everything extends CB2_PeriodInteractionStrategy {
 	// Direct WP_Query
+	static function factory_from_query_args( Array $args ) {
+		return new self( $args );
+	}
+
 	function __construct( Array $query = NULL ) {
 		parent::__construct( NULL, NULL, NULL, $query );
 	}
@@ -325,12 +317,19 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 	* for the current item availability
 	*/
 
-	function __construct( DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = 'week', Array $query = array() ) {
-		parent::__construct( $startdate, $enddate, $view_mode, $query );
+	static function factory_from_query_args( Array $args ) {
+		$startdate = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
+		$enddate   = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
+		$view_mode = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
+
+		$startdate = ( $startdate ? new CB2_DateTime( $startdate ) : NULL );
+		$enddate   = ( $enddate   ? new CB2_DateTime( $enddate )   : NULL );
+
+		return new self( $startdate, $enddate, $view_mode, $args );
 	}
 
-	function factory_from_wp_query( WP_Query $wp_query ) {
-		// TODO: factory_from_wp_query
+	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = 'week', Array $query = array() ) {
+		parent::__construct( $startdate, $enddate, $view_mode, $query );
 	}
 
 	function markup( CB2_PeriodItem &$perioditem ) {
@@ -344,7 +343,7 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 		}
 	}
 
-	function dynamic_priority( CB2_PeriodItem $perioditem, Array $overlaps ) {
+	function dynamic_priority( CB2_PeriodItem &$perioditem, Array $overlaps ) {
 		$priority           = parent::dynamic_priority( $perioditem, $overlaps );
 		$period_status_type = $perioditem->period_entity->period_status_type;
 
@@ -358,18 +357,18 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 			// Require THE location pickup / return period
 			$location_cans  = $this->filter_can( $overlaps, CB2_ANY_ACTION, 'CB2_PeriodItem_Location' );
 			$location_cans  = $this->filter_entity( $location_cans, 'location', $location );
-			$perioditem     = $this->intersect( $perioditem, $location_cans );
-			if ( is_null( $perioditem ) ) {
-				$priority = NULL; // Delete it
-				$this->log( 'No location actions available' );
+			$location_ok    = $this->intersect( $perioditem, $location_cans );
+			if ( is_null( $location_ok ) ) {
+				$priority = NULL;
+				$perioditem->log( 'No location actions available' );
 			} else {
-				// Avoid Blocking period-items
+				// Avoid Blocking perioditems
 				$all_cannots    = $this->filter_cannot( $overlaps, CB2_ANY_ACTION );
 				$all_cannots    = $this->filter_higher_priority( $all_cannots, $priority ); // >=
-				$perioditem     = $this->exclude( $perioditem, $all_cannots );
-				if ( is_null( $perioditem ) ) {
-					$priority = NULL; // Delete it
-					$this->log( 'blocked by priority denial' );
+				$overrides_ok   = $this->exclude( $perioditem, $all_cannots );
+				if ( is_null( $overrides_ok ) ) {
+					$priority = NULL;
+					$perioditem->log( 'Blocked by priority denial' );
 				}
 			}
 		}
@@ -385,21 +384,49 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 // --------------------------------------------------------------------
 class CB2_SingleItemAvailability extends CB2_AllItemAvailability {
 	// Standard situation when viewing a single item with the intention to book it
-	function __construct( CB2_Item $item = NULL, DateTime $startdate = NULL, DateTime $enddate = NULL, String $view_mode = 'week', Array $query = array() ) {
+	static function factory_from_query_args( Array $args ) {
+		$item_ID     = ( isset( $args['meta_query']['entities']['item_ID_clause']['value'][0] ) ? $args['meta_query']['entities']['item_ID_clause']['value'][0] : NULL );
+		$startdate   = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
+		$enddate     = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
+		$view_mode   = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
+		$post_status = ( isset( $args['post_status'] ) ? $args['post_status'] : NULL );
+		$show_overridden_periods = ( $post_status == CB2_Post::$TRASH
+			|| ( is_array( $post_status ) && in_array( CB2_Post::$TRASH, $post_status ) ) );
+
+		if ( is_null( $item_ID ) )
+			throw new Exception( "CB2_SingleItemAvailability::factory_from_query_args() requires ['meta_query']['entities']['item_ID_clause']['value'][0]" );
+
+		$item      = CB2_Query::get_post_with_type( CB2_Item::$static_post_type, $item_ID );
+		$startdate = ( $startdate ? new CB2_DateTime( $startdate ) : NULL );
+		$enddate   = ( $enddate   ? new CB2_DateTime( $enddate )   : NULL );
+
+		return new self( $item, $startdate, $enddate, $view_mode, $show_overridden_periods, $args );
+	}
+
+	function __construct( CB2_Item $item = NULL, CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = 'week', Bool $show_overridden_periods = FALSE, Array $query = array() ) {
 		global $post;
 		$this->item = ( $item ? $item : $post );
+		if ( ! $this->item instanceof CB2_Item )
+			throw new Exception( 'global post must be a CB2_Item for the CB2_SingleItemAvailability' );
 
 		if ( ! isset( $query['meta_query'] ) ) $query['meta_query'] = array();
-		if ( ! isset( $query['meta_query']['item_ID_clause'] ) ) $query['meta_query']['item_ID_clause'] = array(
-			'key'     => 'item_ID',
-			'value'   => array( $this->item->ID, 0 ),
-			'compare' => 'IN',
-		);
+		if ( ! isset( $query['meta_query']['entities']['item_ID_clause'] ) )
+			$query['meta_query']['entities']['item_ID_clause'] = array(
+				'key'     => 'item_ID',
+				'value'   => array( $this->item->ID, 0 ),
+				'compare' => 'IN',
+			);
+		if ( $show_overridden_periods ) {
+			$post_status = ( isset( $query['post_status'] ) ? $query['post_status'] : array( CB2_Post::$PUBLISH ) );
+			if ( ! is_array( $post_status ) ) $post_status = array( $post_status );
+			if ( ! in_array( CB2_Post::$TRASH, $post_status ) ) array_push( $post_status, CB2_Post::$TRASH );
+			$query['post_status'] = $post_status;
+		}
 
 		parent::__construct( $startdate, $enddate, $view_mode, $query );
 	}
 
-	function dynamic_priority( CB2_PeriodItem $perioditem, Array $overlaps ) {
+	function dynamic_priority( CB2_PeriodItem &$perioditem, Array $overlaps ) {
 		$priority = parent::dynamic_priority( $perioditem, $overlaps );
 
 		if ( $perioditem instanceof CB2_PeriodItem_Timeframe
@@ -427,7 +454,7 @@ class CB2_SingleItemAvailability extends CB2_AllItemAvailability {
 			$availabilities = $this->filter_entity( $availabilities, 'location', $location );
 			if ( ! count( $availabilities ) ) {
 				$priority = NULL; // Delete it
-				$this->log( 'irrelevant location period item' );
+				$perioditem->log( 'Irrelevant location period item' );
 			}
 		}
 		*/

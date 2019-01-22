@@ -248,8 +248,7 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
   }
 
   function priority() {
-		$priority = $this->period_entity->period_status_type->priority;
-		return (int) $priority;
+		return ( property_exists( $this, 'priority' ) ? $this->priority : $this->period_entity->period_status_type->priority );
   }
 
 	function summary() {
@@ -296,16 +295,16 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
   }
 
   function classes() {
-    $classes = '';
+    $classes  = '';
     if ( $this->period_entity ) $classes .= $this->period_entity->period_status_type->classes();
     $classes .= ' cb2-period-group-type-' . $this->post_type();
-    $classes .= ( $this->top_priority_overlap_period ? ' cb2-perioditem-has-overlap' : ' cb2-perioditem-no-overlap' );
+    $classes .= ( $this->is_top_priority() ? ' cb2-perioditem-no-overlap' : ' cb2-perioditem-has-overlap' );
     if ( $this->blocked ) $classes .= ' cb2-blocked';
     return $classes;
   }
 
   function is_top_priority() {
-  	return !$this->top_priority_overlap_period;
+  	return ! $this->top_priority_overlap_period && ! is_null( $this->priority() );
   }
 
   function styles() {
@@ -349,15 +348,16 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		return ( $this->period_status_type() ? $this->period_status_type()->name : NULL );
 	}
 
-	function get_the_time_period( $format = NULL ) {
+	function get_the_time_period( $format = NULL, $human_readable = TRUE, $separator = '-' ) {
 		if ( is_null( $format ) ) $format = get_option( 'time_format' );
 		$time_period = $this->datetime_period_item_start->format( $format )
-			. ' - '
+			. $separator
 			. $this->datetime_period_item_end->format( $format );
-		if ( $this->period->fullday ) $time_period = 'all day';
+		if ( $human_readable ) {
+			if ( $this->period->fullday ) $time_period = 'all day';
+		}
 		return $time_period;
 	}
-
 
   function get_the_content( $more_link_text = null, $strip_teaser = false ) {
     // Indicators field
@@ -372,10 +372,12 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
   }
 
   function get_the_title( $HTML = FALSE ) {
-		return ( property_exists( $this, 'period_entity' ) && $this->period_entity
-			? $this->period_entity->get_the_title( $HTML )
-			: $this->post_title
-		);
+		$title  = '';
+		if ( $HTML ) $title .= "<span class='cb2-time-period'>";
+		$title .= $this->get_the_time_period();
+		if ( $HTML ) $title .= "</span>";
+		$title .= $this->period_entity->get_the_title( $HTML, $this );
+		return $title;
   }
 
   function jsonSerialize() {

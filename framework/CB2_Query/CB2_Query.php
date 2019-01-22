@@ -114,6 +114,51 @@ class CB2_Query {
 		return CB2_User::factory( $wp_user->ID, $wp_user->user_login );
 	}
 
+	static function reorganise_posts_structure( &$wp_query ) {
+		// Convert the WP_Query CB post_type results from WP_Post in to CB2_* objects
+		if ( $wp_query instanceof WP_Query && property_exists( $wp_query, 'posts' ) ) {
+			if ( is_array( $wp_query->posts ) && ! property_exists( $wp_query, '_cb2_converted_posts' ) ) {
+				// Create the CB2_PeriodItem objects from the WP_Post results
+				// This will also create all the associated CB2_* Objects like CB2_Week
+				// WP_Posts will be left unchanged
+				CB2_Query::ensure_correct_classes( $wp_query->posts, $wp_query );
+
+				// Indicate that the posts are from a redirected request
+				if ( property_exists( $wp_query, 'cb2_redirected_post_request' ) && $wp_query->cb2_redirected_post_request ) {
+					foreach ( $wp_query->posts as &$post )
+						$post->cb2_redirected_post_request = TRUE;
+				}
+
+				// Check to see which schema has been requested and switch it
+				if ( isset( $wp_query->query['date_query']['compare'] ) ) {
+					if ( $schema = $wp_query->query['date_query']['compare'] ) {
+						$wp_query->posts = CB2_PostNavigator::post_type_all_objects( $schema );
+						if ( WP_DEBUG ) {
+							if ( ! is_array( $wp_query->posts ) )
+								throw new Exception( "CB2_PostNavigator::post_type_all_objects() returned non-array" );
+							if ( count( $wp_query->posts ) ) {
+								$first_post_type = $wp_query->posts[0]->post_type;
+								if ( $first_post_type != $schema )
+									throw new Exception( "[$schema] OO hierarchy requested but first post is of type [$first_post_type]" );
+							}
+						}
+					}
+				}
+
+				// Reset pointers
+				$wp_query->post_count  = count( $wp_query->posts );
+				$wp_query->found_posts = (boolean) $wp_query->post_count;
+				$wp_query->post        = ( $wp_query->found_posts ? $wp_query->posts[0] : NULL );
+				$wp_query->_cb2_converted_posts = TRUE;
+			}
+		} else {
+			krumo( $wp_query );
+			throw new Exception( "Request to reorganise_posts_structure() on invalid WP_Query object" );
+		}
+
+		return $wp_query;
+	}
+
 	static function ensure_correct_classes( &$posts, $instance_container = NULL, $prevent_auto_draft_publish_transition = FALSE ) {
 		// TODO: Several embedded WP_Querys would cause a build up of static $all:
 		//   move static <Time class>::$all arrays on to the $instance_container (not used yet)
@@ -126,8 +171,10 @@ class CB2_Query {
 
 		// In place change the records
 		$post_classes = CB2_PostNavigator::post_type_classes();
-		foreach ( $posts as &$post )
-			CB2_Query::ensure_correct_class( $post, $instance_container = NULL, $prevent_auto_draft_publish_transition, $post_classes );
+		if ( is_array( $posts ) ) {
+			foreach ( $posts as &$post )
+				CB2_Query::ensure_correct_class( $post, $instance_container = NULL, $prevent_auto_draft_publish_transition, $post_classes );
+		}
 
 		return $posts;
   }
@@ -811,18 +858,40 @@ class CB2_Query {
 		return preg_replace( '/([a-z0-9])([A-Z])/', '\1_\2', $name );
 	}
 
-	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL ) {
+	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL, $include_empty_values = TRUE ) {
 		$string = NULL;
 		if ( self::array_has_associative( $array ) ) {
 			$string = '';
 			foreach ( $array as $key => $value ) {
-				if ( $string ) $string .= $delimiter;
 				if ( $object ) $value = self::object_value_path( $object, $value );
-				$string .= "$key$associative_delimiter$value";
+				if ( $include_empty_values || ! empty( $value ) ) {
+					if ( $string ) $string .= $delimiter;
+					$string .= "$key$associative_delimiter$value";
+				}
 			}
 		} else $string = implode( $delimiter, $array );
 
 		return $string;
+	}
+
+	static function php_array( $value, $key, $output_key = TRUE ) {
+		static $indent = 1;
+		$indent_string = str_repeat( "\t", $indent );
+
+		print( $indent_string );
+		if ( $output_key ) print( "'$key' => " );
+
+		if ( is_array( $value ) ) {
+			print( "array(\n" );
+			$indent++;
+			array_walk( $value, array( get_class(), __FUNCTION__ ), self::array_has_associative( $value ) );
+			$indent--;
+			print( "$indent_string),\n" );
+		} else if ( is_numeric( $value ) ) {
+			print( "$value,\n" );
+		} else {
+			print( "'$value',\n" );
+		}
 	}
 
 	static function array_sum( Array $array, String $property = NULL ) {

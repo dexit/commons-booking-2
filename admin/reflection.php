@@ -258,14 +258,26 @@ if ( isset( $_GET['section'] ) ) {
 	$assets_dir = plugins_url( CB2_TEXTDOMAIN . '/admin/assets' );
 	print( '<hr/>' );
 	print( '<h2>period diagram</h2>');
-	print( '<p>The periods are purely concerned with time and its repetition. For example: every Monday this year.' );
-	print( 'Periods can be grouped together and can have simple exceptions.' );
-	print( 'The 4 leaf tables: Global, Location, Timeframe and Timeframe_User; relate real world objects, their status_type, state and periods.
-		Each leaf table has a different selection of objects it can relate to depending on the type of thing wishing to be expressed.<br/>
-		For Example: a shop (object), open (status_type), every monday morning (period).<br/>
-		For Example: a bicycle (object) booked (status_type) by Henry (object), in the shop (object), next wednesday (period).' );
-	print( '</p>');
-	print( "<img src='$assets_dir/period diagram.png'/>" );
+	print( <<<HTML
+		<p>The periods are purely concerned with time and its repetition. For example: every Monday this year.
+		Consider it as a new DATETIME type with repetition built in. The Period table has 1 row per definition.
+		Periods can be grouped together in the PeriodGroup table and can have simple exceptions.
+		The view view_perioditems takes the definitions in period and creates 1 row per repetition for each period definition.
+		This view is cached by triggers on the main period table due to the amount of processing power needed to run the calculations.
+		</p>
+
+		<p>Periods support concepts like yearly holidays, daily opening times, regular booking, regular repairs, etc.
+		However we did not want to restrict the type of concept so you will not find tables for these concepts,
+		instead you will find an exstensible period_status_type. This can be set to Holiday for example.</p>
+
+		<p>The 4 leaf tables: Global, Location, Timeframe and Timeframe_User; relate real world objects, their period_status_type, state and periods.
+			Each leaf table has a different selection of objects it can relate to depending on the type of thing wishing to be expressed.<br/>
+			For Example: a shop (object), open (period_status_type), every monday morning (period).<br/>
+			For Example: a bicycle (object) booked (period_status_type) by Henry (object), in the shop (object), next wednesday (period).
+		</p>
+		<img src='$assets_dir/period diagram.png'/>
+HTML
+	);
 
 	print( '<hr/><h2>posts and meta</h2>');
 	print( '<p>All tables are exposed as WordPress posts with post_meta.

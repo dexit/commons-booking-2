@@ -1,4 +1,4 @@
-<td id="post-<?php the_ID(); ?>" <?php CB2::post_class(); ?>>
+<li id="post-<?php the_ID(); ?>" <?php CB2::post_class(); ?>>
 	<header class="entry-header">
 		<?php the_title( '<h3 class="entry-title">', '</h3>' ); ?>
 	</header>
@@ -16,5 +16,5 @@
 			);
 		?>
 	</footer><!-- .entry-footer -->
-</td>
+</li>
 

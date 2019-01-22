@@ -110,16 +110,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
 		$options = array(
 			'template' => 'available',
-			'actions' => array(
-				'make-available' => array(
-					'link_text' => __( 'Make Available' ),
-					'post_type' => CB2_PeriodEntity_Timeframe::$static_post_type,
-					'period_status_type_ID'      => CB2_PeriodStatusType_Available::bigID(),
-				),
-				'set-times' => '<form><div>Example form:<input/></div></form>',
-			),
 		);
-		if ( $post ) $options[ 'query' ] = array(
+		$options[ 'query' ] = array(
 			'meta_query' => array(
 				'period_entity_ID_clause' => array(
 					'key'     => 'period_entity_ID',
@@ -129,6 +121,18 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			),
 		);
 
+		if ( $post ) {
+			CB2_Query::ensure_correct_class( $post );
+			if ( method_exists( $post, 'metabox_calendar_options_object_cb' ) ) {
+				$options = array_merge( $options, $post->metabox_calendar_options_object_cb( $field ) );
+			}
+		}
+
+		return $options;
+	}
+
+	protected function metabox_calendar_options_object_cb( $field ) {
+		$options = $this->period_status_type->metabox_calendar_options_object_cb( $field, $this );
 		return $options;
 	}
 
@@ -151,7 +155,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		if ( $copy_period_group ) {
 			// We do not want to clone the period_group
 			// only the period item *instance*
-			// TODO: contiguous bookings in factory_from_perioditem()
 			$datetime_now = new CB2_DateTime();
 			$period = new CB2_Period(
 				CB2_CREATE_NEW,
@@ -205,7 +208,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		if ( $copy_period_group ) {
 			// We do not want to clone the period_group
 			// only the period item *instance*
-			// TODO: contiguous bookings in factory_from_perioditem()
 			$datetime_now = new CB2_DateTime();
 			$period = new CB2_Period(
 				CB2_CREATE_NEW,
@@ -428,7 +430,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $html;
 	}
 
-	function get_the_title( $HTML = FALSE ) {
+	function get_the_title( $HTML = FALSE, $parent = NULL ) {
 		$title = '';
 		foreach ( $this->posts as $entity ) {
 			$post_type = $entity->post_type;
@@ -437,7 +439,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			if ( $HTML ) $title .= "</span>";
 			$title .= ' ';
 		}
-		$period_status_type_name = $this->period_status_type->name;
+		$period_status_type_name = $this->period_status_type->get_the_title( $HTML, $parent );
 		if ( $HTML ) $title .= "<span class='cb2-periodstatustype-name'>";
 		$title .= $period_status_type_name;
 		if ( $HTML ) $title .= "</span>";
@@ -578,7 +580,6 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 		}
 
 		// ------------------------------------------ Calendar based metabox showing just one week
-		// TODO: calendar opening hours wizard
 		$advanced_url  = CB2_Query::pass_through_query_string( NULL, array(), array(
 			'CB2_PeriodEntity_Location_metabox_0_show',
 			'metabox_wizard_ids',

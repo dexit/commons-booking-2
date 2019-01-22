@@ -63,7 +63,6 @@ function cb2_metaboxes() {
 	$requests_only      = (bool) count( $metabox_wizard_ids );
 
 	foreach ( CB2_PostNavigator::post_type_classes() as $post_type => $Class ) {
-		// TODO: inheritance is running this multiple times for the CB2_PeriodEntity_*
 		if ( CB2_Query::has_own_method( $Class, 'metaboxes' ) ) {
 			foreach ( $Class::metaboxes() as $i => $metabox ) {
 				if ( ! isset( $metabox['id'] ) )           $metabox['id']           = "{$Class}_metabox_{$i}";
@@ -83,7 +82,7 @@ function cb2_metaboxes() {
 					$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
 					$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
 					if ( $query_hide || ( $debug_only && ! WP_DEBUG ) ) {
-						// TODO: inject this CSS properly
+						// TODO: inject this metabox visibility CSS properly
 						print( "<style>#$id {display:none;}</style>" );
 						// This below line affects ALL fields, not the container
 						//$metabox['classes'] = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
@@ -190,12 +189,16 @@ function cb2_post_row_actions( $actions, $post ) {
 add_filter( 'post_row_actions', 'cb2_post_row_actions', 10, 2 );
 
 function cb2_admin_views( $views ) {
-	$page       = $_GET['page'];
-	$all_text   = __( 'All' );
-	$trash_text = __( 'Trash' );
+	$page          = $_GET['page'];
+	$all_text      = __( 'All' );
+	$trash_text    = __( 'Trash' );
+	$calendar_text = '<span class="cb2-todo">' . __( 'Calendar' ) . '</span>';
+	$map_text      = '<span class="cb2-todo">' . __( 'Map' ) . '</span>';
 	$views = array(
-		'all'   => "<a href='admin.php?page=$page&post_status=publish'>$all_text</span></a>",
-		'trash' => "<a href='admin.php?page=$page&post_status=trash'>$trash_text</span></a>",
+		'all'      => "<a href='admin.php?page=$page&post_status=publish'>$all_text</span></a>",
+		'trash'    => "<a href='admin.php?page=$page&post_status=trash'>$trash_text</span></a>",
+		'calendar' => "<a href='admin.php?page=$page&view=calendar'>$calendar_text</span></a>",
+		'map'      => "<a href='admin.php?page=$page&view=map'>$map_text</span></a>",
 	);
 	return $views;
 }
@@ -456,7 +459,7 @@ function cb2_settings_post_new() {
 	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb2-post-edit' );
 	$post_submit_custom = CB2_Query::pass_through_query_string( $post_submit_custom, $add_parameters, $remove_parameters );
 
-	// TODO: inject the CSS properly
+	// TODO: inject the metabox visibility CSS properly
 	$title_show_value = ( isset( $_GET['title_show'] ) ? $_GET['title_show'] : '' );
 	$title_hide       = ( $title_show_value == 'no' || $title_show_value == '0' || $title_show_value == 'hide' );
 	if ( $title_hide ) print( '<style>#titlediv {display:none;}</style>' );
@@ -522,7 +525,7 @@ function cb2_settings_post_edit() {
 	$post_submit_custom = ( isset( $_GET[ 'post_submit_custom' ] ) ? $_GET[ 'post_submit_custom' ] : 'admin.php?page=cb2-post-edit' );
 	$post_submit_custom = CB2_Query::pass_through_query_string( $post_submit_custom, array(), $remove_parameters );
 
-	// TODO: inject the CSS properly
+	// TODO: inject the metabox visibility CSS properly
 	$title_show_value = ( isset( $_GET['title_show'] ) ? $_GET['title_show'] : '' );
 	$title_hide       = ( $title_show_value == 'no' || $title_show_value == '0' || $title_show_value == 'hide' );
 	if ( $title_hide ) print( '<style>#titlediv {display:none;}</style>' );

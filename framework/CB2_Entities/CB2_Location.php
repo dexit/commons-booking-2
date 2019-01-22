@@ -21,6 +21,7 @@
 
 
 class CB2_Location extends CB2_Post implements JsonSerializable {
+  public static $all = array();
 	static $static_post_type  = 'location';
 	public static $rewrite   = array( 'slug' => 'location' );
   public static $post_type_args = array(
@@ -77,6 +78,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
   protected function __construct( $ID ) {
     parent::__construct( $ID );
+		self::$all[$ID] = $this;
 
     // WP_Post values
     $this->post_type = self::$static_post_type;
