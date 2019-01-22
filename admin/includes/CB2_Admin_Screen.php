@@ -36,6 +36,12 @@ class CB2_Admin_Screen
      */
     public $styles;
     /**
+     * Holding the html for return
+     *
+     * @var array
+     */
+    public $html_els = array();
+    /**
      * File to include on this screen
      *
      * @var string
@@ -69,32 +75,10 @@ class CB2_Admin_Screen
 		 * @var array $styles
      */
 		public function __construct( ) {
-			add_action('admin_menu', array($this, 'register_menu'));
 			add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 			add_action('admin_enqueue_scripts', array($this, 'enqueue_styles'));
 			add_action('cmb2_save_options-page_fields', array($this, 'cmb2_submitted'), 10, 4);
 		}
-	/**
-	 * Add javascript
-	 */
-	public function add_menu_item( $menu_args=array() ) {
-
-			$menu_args_defaults = array(
-				'page_title' => __('CB2', 'commons-booking-2'),
-				'menu_title' => 'CB2 menu',
-				'capability' => 'manage_options',
-				'menu_slug' => 'slug',
-				'function' => array( $this, 'the_content' ),
-				'icon_url' => '',
-				'position' => 6,
-				'parent_slug' => '',
-		);
-
-		$this->menu_args = array_replace($menu_args_defaults, $menu_args);
-		$this->slug = $this->menu_args['menu_slug'];
-
-
-	}
 	/**
 	 * Add javascript
 	 */
@@ -113,36 +97,10 @@ class CB2_Admin_Screen
 	}
 
 	public function init() {
-
+;
 
 	}
 
-    /**
-     * Register the menu entry
-     */
-    public function register_menu( ){
-
-			if ( $this->menu_args['parent_slug'] == '' ) { // main level item
-				add_menu_page(
-					$this->menu_args['page_title'],
-					$this->menu_args['menu_title'],
-					$this->menu_args['capability'],
-					$this->menu_args['menu_slug'],
-					$this->menu_args['function'],
-					$this->menu_args['icon_url'],
-					$this->menu_args['position']
-				);
-			} else { // has parent, add submenu page
-				add_submenu_page(
-					$this->menu_args['parent_slug'],
-					$this->menu_args['page_title'],
-					$this->menu_args['menu_title'],
-					$this->menu_args['capability'],
-					$this->menu_args['menu_slug'],
-					$this->menu_args['function']
-				);
-			}
-    }
     /**
      * Add content
      *
@@ -176,16 +134,6 @@ class CB2_Admin_Screen
 			if ( !empty ($file) ) {
 				$this->content[] = $file;
 			}
-		}
-    /**
-     * Add meta box
-     *
-     * @since 2.0.0
-     *
-     * @param array $args
-     */
-    public function add_my_content( $function, $tab=FALSE ) {
-
 		}
     /**
      * Enqueue Scripts
@@ -297,5 +245,68 @@ class CB2_Admin_Screen
 
 			echo $html;
     }
+	/**
+	 * A settings group metabox
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array $metabox_args
+	 *
+	 * @return mixed
+	 */
+    public function add_metabox_settings_group ( $metabox_id, $tab='default' ){
+
+			$metabox_args = CB2_Settings::get_settings_group( $metabox_id );
+			$this->add_metabox( $metabox_args, $tab);
+		}
+	/**
+	 * A settings group metabox
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array $metabox_args
+	 *
+	 * @return mixed
+	 */
+    public function add_metabox ( $metabox_args, $tab='default' ){
+
+			$args = array_merge ($this->metabox_options_defaults, $metabox_args );
+			$metabox_html = sprintf( '
+				<div class="postbox">
+					<div class="inside">
+					<h3>%s</h3>
+					%s
+					%s
+					</div>
+				</div>',
+				$args['title'],
+				$args['description'],
+				cmb2_metabox_form( $args, $args['id'], array ('echo' => FALSE ))
+			);
+			$this->html_els[$tab] .= $metabox_html;
+		}
+/**
+ * render
+ *
+ * @since 2.0.0
+ *
+ * @param array $metabox_args
+ *
+ * @return mixed
+ */
+		public function render() {
+
+			var_dump( $this->html_els );
+
+
+			if (is_array ($this->html_els) ) {
+				foreach ( $this->html_els as $el ) {
+					echo "array";
+					echo $el;
+				}
+
+			}
+
+		}
 }
 

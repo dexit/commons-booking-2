@@ -34,20 +34,20 @@ class CB2_Enqueue_Admin {
 		// Load admin style sheet and JavaScript.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
-		add_action( 'cmb2_init', array( $this, 'admin_screens' ) );
 		// @TODO not working
 		add_filter( 'cmb2_sanitize_toggle', 'cmb2_sanitize_checkbox', 20, 2 );
+
+
+		/*
+		* Admin Screens
+		*/
+		add_action('admin_menu', array( $this, 'slugslug_menu'));
+
 
 		/*
 		* Admin Screens
 		*/
 		$settings_screen = new CB2_Admin_Screen();
-		$settings_screen->add_menu_item(
-				array(
-						'page_title' => __('CB2 Settings', 'commons-booking-2'),
-						'menu_title' => 'CB2 Settings',
-				)
-		);
 		$settings_screen->add_script(
 				array(
 						'cb2_tabs_script',
@@ -87,6 +87,27 @@ class CB2_Enqueue_Admin {
 
 
 	}
+	public function slugslug_menu() {
+		add_menu_page(
+				__('CB2', 'commons-booking-2'),
+				'CB2 menu',
+				'manage_options',
+				'slugslug',
+				array($this, 'slugslug_page'),
+				'',
+				6,
+				''
+		);
+	}
+	public function slugslug_page() {
+		$page_content = new CB2_Admin_Screen();
+		$page_content->add_metabox_settings_group('features', 'default');
+		$page_content->add_metabox_settings_group('maps', 'default');
+		$page_content->render();
+
+	}
+
+
 
 		/**
 	 * Register and enqueue admin-specific style sheet.
