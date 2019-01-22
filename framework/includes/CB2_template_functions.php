@@ -105,11 +105,11 @@ class CB2 {
 		echo get_post_type();
 	}
 
-	public static function the_calendar_footer( $query = NULL, $classes = '', $type = 'td', $before = '<tfoot><tr>', $after = '</tr></tfoot>' ) {
+	public static function the_calendar_footer( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-header">', $after = '</ul>' ) {
 		echo self::get_the_calendar_footer( $query, $classes, $type, $before, $after );
 	}
 
-	public static function get_the_calendar_footer( $query = NULL, $classes = '', $type = 'td', $before = '<tfoot><tr>', $after = '</tr></tfoot>' ) {
+	public static function get_the_calendar_footer( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-header">', $after = '</ul>' ) {
 		return self::get_the_calendar_header( $query, $classes, $type, $before, $after );
 	}
 
@@ -152,11 +152,11 @@ class CB2 {
 			</div>";
 	}
 
-	public static function the_calendar_header( $query = NULL, $classes = '', $type = 'th', $before = '<thead><tr>', $after = '</tr></thead>' ) {
+	public static function the_calendar_header( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-header">', $after = '</ul>' ) {
 		echo self::get_the_calendar_header( $query, $classes, $type, $before, $after );
 	}
 
-	public static function get_the_calendar_header( $query = NULL, $classes = '', $type = 'th', $before = '<thead><tr>', $after = '</tr></thead>' ) {
+	public static function get_the_calendar_header( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-header">', $after = '</ul>' ) {
 		global $wp_query;
 		$html = '';
 		$schema_type = NULL;
@@ -228,13 +228,18 @@ class CB2 {
 		// Indicates if the perioditem is overridden by another overlapping perioditem
 		global $post, $wp_query;
 
-		$top_priority = TRUE;
-		$show_overridden_periods = (
-			isset( $wp_query->query_vars['show_overridden_periods'] ) &&
-			$wp_query->query_vars['show_overridden_periods'] != 'no'
-		);
-		if ( is_object( $post ) && method_exists( $post, 'is_top_priority' ) )
+		$top_priority            = TRUE;
+		$show_overridden_periods = FALSE;
+
+		if ( is_object( $wp_query ) && property_exists( $wp_query, 'query' ) ) {
+			$post_status = ( isset( $wp_query->query['post_status'] ) ? $wp_query->query['post_status'] : array() );
+			if ( ! is_array( $post_status ) ) $post_status = array( $post_status );
+			$show_overridden_periods = in_array( CB2_Post::$TRASH, $post_status );
+		}
+
+		if ( is_object( $post ) && method_exists( $post, 'is_top_priority' ) ) {
 			$top_priority = $post->is_top_priority();
+		}
 
 		return $top_priority || $show_overridden_periods;
 	}

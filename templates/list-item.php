@@ -13,10 +13,10 @@
 ?>
 <?php the_title(); ?>
 <?php the_excerpt(); ?>
-<div class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">calendar</h1></header>
+<li class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">calendar</h1></header>
 	<div class="entry-content">
-		<table class="cb2-subposts"><tbody>
+		<ul class="cb2-subposts">
 			<?php CB2::the_inner_loop(); ?>
-		</tbody></table>
+		</ul>
 	</div>
-</div>
+</li>

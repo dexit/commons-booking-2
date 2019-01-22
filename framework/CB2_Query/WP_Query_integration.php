@@ -754,33 +754,48 @@ function cb2_posts_where_allow_NULL_meta_query( $where ) {
 
 function cb2_pre_get_posts_query_string_extensions() {
 	// Allows meta limits on the main WP_Query built from the query string
-	global $wp_query;
-
-	// $meta_query = $wp_query->query_vars[ 'meta_query' ];
-	// if ( ! $meta_query ) $meta_query = array( 'relation' => 'AND' );
+	if ( WP_DEBUG ) {
+		global $wp_query;
+		if ( ! is_object( $wp_query ) )
+			throw new Exception( '$wp_query is not initialised. Try wp_reset_query() first' );
+	}
 
   if ( isset( $_GET[ 'meta_key' ] ) )   set_query_var( 'meta_key',   $_GET[ 'meta_key' ] );
   if ( isset( $_GET[ 'meta_value' ] ) ) set_query_var( 'meta_value', $_GET[ 'meta_value' ] );
-  if ( isset( $_GET[ 'show_overridden_periods' ] ) ) set_query_var( 'show_overridden_periods', $_GET[ 'show_overridden_periods' ] );
+  if ( isset( $_GET[ 'show_overridden_periods' ] ) && $_GET[ 'show_overridden_periods' ] == 'on' ) {
+		$post_status = get_query_var( 'post_status' );
+		if ( empty( $post_status ) )      $post_status = array( CB2_Post::$PUBLISH );
+		if ( ! is_array( $post_status ) ) $post_status = array( $post_status );
+		if ( ! in_array( CB2_Post::$TRASH, $post_status ) ) array_push( $post_status, CB2_Post::$TRASH );
+		set_query_var( 'post_status', $post_status );
+	}
 
   $meta_query_items = array();
-	if ( isset( $_GET[ 'location_ID' ] ) )             $meta_query_items[ 'location_clause' ]    = array( 'key' => 'location_ID', 'value' => $_GET[ 'location_ID' ] );
-	if ( isset( $_GET[ 'item_ID' ] ) )                 $meta_query_items[ 'item_clause' ]        = array( 'key' => 'item_ID',     'value' => $_GET[ 'item_ID' ] );
-	if ( isset( $_GET[ 'user_ID' ] ) )                 $meta_query_items[ 'user_clause' ]        = array( 'key' => 'user_ID',     'value' => $_GET[ 'user_ID' ] );
-	if ( isset( $_GET[ 'period_status_type_ID' ] ) )   $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_ID',   'value' => $_GET[ 'period_status_type_ID' ] );
-	if ( isset( $_GET[ 'period_entity_ID' ] ) )        $meta_query_items[ 'period_entity_clause' ]      = array( 'key' => 'period_entity_ID',        'value' => $_GET[ 'period_entity_ID' ] );
-	if ( isset( $_GET[ 'period_status_type_name' ] ) ) $meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_name', 'value' => $_GET[ 'period_status_type_name' ] );
+	if ( isset( $_GET[ 'location_ID' ] ) )
+		$meta_query_items[ 'location_ID_clause' ]    = array( 'key' => 'location_ID', 'value' => $_GET[ 'location_ID' ] );
+	if ( isset( $_GET[ 'item_ID' ] ) )
+		$meta_query_items[ 'item_ID_clause' ]        = array( 'key' => 'item_ID',     'value' => $_GET[ 'item_ID' ] );
+	if ( isset( $_GET[ 'user_ID' ] ) )
+		$meta_query_items[ 'user_ID_clause' ]        = array( 'key' => 'user_ID',     'value' => $_GET[ 'user_ID' ] );
+	if ( isset( $_GET[ 'period_status_type_ID' ] ) )
+		$meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_ID',   'value' => $_GET[ 'period_status_type_ID' ] );
+	if ( isset( $_GET[ 'period_entity_ID' ] ) )
+		$meta_query_items[ 'period_entity_clause' ]      = array( 'key' => 'period_entity_ID',        'value' => $_GET[ 'period_entity_ID' ] );
+	if ( isset( $_GET[ 'period_status_type_name' ] ) )
+		$meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_name', 'value' => $_GET[ 'period_status_type_name' ] );
+	if ( isset( $_GET[ 'show_blocked_periods' ] ) )
+		$meta_query_items[ 'blocked_clause' ] = 0; // Prevent it from being set
 
 	if ( $meta_query_items ) {
 		if ( ! isset( $meta_query_items[ 'relation' ] ) ) $meta_query_items[ 'relation' ] = 'AND';
-		$meta_query[ 'items' ]          = $meta_query_items;
+		$meta_query[ 'entities' ] = $meta_query_items;
 		set_query_var( 'meta_query', $meta_query );
 	}
-
 }
 
 function cb2_query_vars( $qvars ) {
 	$qvars[] = 'show_overridden_periods';
+	$qvars[] = 'show_blocked_periods';
 	$qvars[] = 'location_ID';
 	$qvars[] = 'item_ID';
 	$qvars[] = 'period_group_ID';

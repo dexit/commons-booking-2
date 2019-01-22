@@ -237,15 +237,17 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 $wp_query           = new WP_Query(array(
                     'post_type'   => 'periodent-timeframe',
                     'meta_query'  => array(
+											'entities' => array(
                         'item_ID_clause' => array(
                             'key'   => 'item_ID',
                             'value' => $this->ID,
                         ),
-                        'relation' => 'AND',
                         'period_status_type_clause' => array(
                             'key'   => 'period_status_type_id',
                             'value' => CB2_PeriodStatusType_Available::$id,
                         ),
+                        'relation' => 'AND',
+											),
                     ),
                     'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
                     'page'           => $current_page,
@@ -275,15 +277,17 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 $wp_query = new WP_Query(array(
                     'post_type'   => 'periodent-user',
                     'meta_query'  => array(
-                        'item_ID_clause' => array(
+											'entities' => array(
+												'item_ID_clause' => array(
                             'key'   => 'item_ID',
                             'value' => $this->ID,
                         ),
-                        'relation' => 'AND',
                         'period_status_type_clause' => array(
                             'key'   => 'period_status_type_id',
                             'value' => CB2_PeriodStatusType_Booked::$id,
                         ),
+                        'relation' => 'AND',
+											),
                     ),
                     'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
                     'page'           => $current_page,
@@ -328,7 +332,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         $wp_query = new WP_Query(array(
             'post_type'   => 'periodent-user',
             'meta_query'  => array(
-                'item_clause' => array(
+                'item_ID_clause' => array(
                     'key'   => 'item_ID',
                     'value' => $this->ID,
                 ),

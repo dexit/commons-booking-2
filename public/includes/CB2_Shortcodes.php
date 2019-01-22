@@ -62,8 +62,8 @@ class CB2_Shortcodes {
 		$location_ID     = ( isset( $args['location-ID'] )     ? $args['location-ID']     : NULL );
 		$item_ID         = ( isset( $args['item-ID'] )         ? $args['item-ID']         : NULL );
 		$user_ID         = ( isset( $args['user-ID'] )         ? $args['user-ID']         : NULL );
-		$startdate      = ( isset( $args['start-date'] )      ? $args['start-date']      : NULL );
-		$enddate        = ( isset( $args['end-date'] )        ? $args['end-date']        : NULL );
+		$startdate       = ( isset( $args['start-date'] )      ? $args['start-date']      : NULL );
+		$enddate         = ( isset( $args['end-date'] )        ? $args['end-date']        : NULL );
 		$view_mode       = ( isset( $args['view-mode'] )       ? $args['view-mode']       : 'week' );
 		$display_strategy_classname = ( isset( $args['display-strategy'] ) ? $args['display-strategy'] : 'CB2_Everything' );
 		$selection_mode  = ( isset( $args['selection-mode'] )  ? $args['selection-mode']  : 'none' );
@@ -103,13 +103,13 @@ class CB2_Shortcodes {
 		// if ( WP_DEBUG ) krumo( $display_strategy );
 		$the_calendar_pager = CB2::get_the_calendar_pager( $startdate, $enddate );
 		$html .= $the_calendar_pager;
-		$html .= '<table class="cb2-calendar">';
+		$html .= '<div class="cb2-calendar">';
 		$html .= CB2::get_the_calendar_header( $display_strategy );
-		$html .= '<tbody>';
+		$html .= '<ul class="cb2-subposts">';
 		$html .= CB2::get_the_inner_loop( $display_strategy, $context, $template_type, NULL, NULL, $template_args );
-		$html .= '</tbody>';
+		$html .= '</ul>';
 		$html .= CB2::get_the_calendar_footer( $display_strategy );
-		$html .= '</table>';
+		$html .= '</div>';
 		$html .= $the_calendar_pager;
 
 		$html .= '</div>';

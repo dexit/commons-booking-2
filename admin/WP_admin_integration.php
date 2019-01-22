@@ -193,10 +193,12 @@ function cb2_admin_views( $views ) {
 	$all_text      = __( 'All' );
 	$trash_text    = __( 'Trash' );
 	$calendar_text = '<span class="cb2-todo">' . __( 'Calendar' ) . '</span>';
+	$map_text      = '<span class="cb2-todo">' . __( 'Map' ) . '</span>';
 	$views = array(
 		'all'      => "<a href='admin.php?page=$page&post_status=publish'>$all_text</span></a>",
 		'trash'    => "<a href='admin.php?page=$page&post_status=trash'>$trash_text</span></a>",
 		'calendar' => "<a href='admin.php?page=$page&view=calendar'>$calendar_text</span></a>",
+		'map'      => "<a href='admin.php?page=$page&view=map'>$map_text</span></a>",
 	);
 	return $views;
 }

@@ -108,6 +108,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		$this->wp_query->post        = ( $this->wp_query->found_posts ? $this->wp_query->posts[0] : NULL );
 
 		// Some stats for inner_loop and things
+		$this->posts       = &$this->wp_query->posts;
 		$this->post_count  = $this->wp_query->post_count;
 		$this->found_posts = $this->wp_query->found_posts;
 
@@ -121,6 +122,14 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	function &the_post()   {
 		$post = $this->wp_query->the_post();
 		return $post;
+	}
+
+	function get_queried_object_id() {
+		return $this->wp_query->get_queried_object_id();
+	}
+
+	function reset_postdata() {
+		return $this->wp_query->reset_postdata();
 	}
 
 	// -------------------------------------------- period analysis functions
@@ -316,7 +325,7 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 		$startdate = ( $startdate ? new CB2_DateTime( $startdate ) : NULL );
 		$enddate   = ( $enddate   ? new CB2_DateTime( $enddate )   : NULL );
 
-		return new self( $startdate, $enddate, $view_mode );
+		return new self( $startdate, $enddate, $view_mode, $args );
 	}
 
 	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = 'week', Array $query = array() ) {
@@ -376,33 +385,43 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 class CB2_SingleItemAvailability extends CB2_AllItemAvailability {
 	// Standard situation when viewing a single item with the intention to book it
 	static function factory_from_query_args( Array $args ) {
-		$item_ID   = ( isset( $args['meta_query']['items']['item_clause']['value'][0] ) ? $args['meta_query']['items']['item_clause']['value'][0] : NULL );
-		$startdate = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
-		$enddate   = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
-		$view_mode = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
+		$item_ID     = ( isset( $args['meta_query']['entities']['item_ID_clause']['value'][0] ) ? $args['meta_query']['entities']['item_ID_clause']['value'][0] : NULL );
+		$startdate   = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
+		$enddate     = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
+		$view_mode   = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
+		$post_status = ( isset( $args['post_status'] ) ? $args['post_status'] : NULL );
+		$show_overridden_periods = ( $post_status == CB2_Post::$TRASH
+			|| ( is_array( $post_status ) && in_array( CB2_Post::$TRASH, $post_status ) ) );
 
 		if ( is_null( $item_ID ) )
-			throw new Exception( "CB2_SingleItemAvailability::factory_from_query_args() requires ['meta_query']['items']['item_clause']['value'][0]" );
+			throw new Exception( "CB2_SingleItemAvailability::factory_from_query_args() requires ['meta_query']['entities']['item_ID_clause']['value'][0]" );
 
 		$item      = CB2_Query::get_post_with_type( CB2_Item::$static_post_type, $item_ID );
 		$startdate = ( $startdate ? new CB2_DateTime( $startdate ) : NULL );
 		$enddate   = ( $enddate   ? new CB2_DateTime( $enddate )   : NULL );
 
-		return new self( $item, $startdate, $enddate, $view_mode );
+		return new self( $item, $startdate, $enddate, $view_mode, $show_overridden_periods, $args );
 	}
 
-	function __construct( CB2_Item $item = NULL, CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = 'week', Array $query = array() ) {
+	function __construct( CB2_Item $item = NULL, CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = 'week', Bool $show_overridden_periods = FALSE, Array $query = array() ) {
 		global $post;
 		$this->item = ( $item ? $item : $post );
 		if ( ! $this->item instanceof CB2_Item )
 			throw new Exception( 'global post must be a CB2_Item for the CB2_SingleItemAvailability' );
 
 		if ( ! isset( $query['meta_query'] ) ) $query['meta_query'] = array();
-		if ( ! isset( $query['meta_query']['item_ID_clause'] ) ) $query['meta_query']['item_ID_clause'] = array(
-			'key'     => 'item_ID',
-			'value'   => array( $this->item->ID, 0 ),
-			'compare' => 'IN',
-		);
+		if ( ! isset( $query['meta_query']['entities']['item_ID_clause'] ) )
+			$query['meta_query']['entities']['item_ID_clause'] = array(
+				'key'     => 'item_ID',
+				'value'   => array( $this->item->ID, 0 ),
+				'compare' => 'IN',
+			);
+		if ( $show_overridden_periods ) {
+			$post_status = ( isset( $query['post_status'] ) ? $query['post_status'] : array( CB2_Post::$PUBLISH ) );
+			if ( ! is_array( $post_status ) ) $post_status = array( $post_status );
+			if ( ! in_array( CB2_Post::$TRASH, $post_status ) ) array_push( $post_status, CB2_Post::$TRASH );
+			$query['post_status'] = $post_status;
+		}
 
 		parent::__construct( $startdate, $enddate, $view_mode, $query );
 	}

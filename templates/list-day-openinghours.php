@@ -1,10 +1,12 @@
-<td id="post-<?php the_ID(); ?>" <?php CB2::post_class(); ?>>
+<li id="post-<?php the_ID(); ?>" <?php CB2::post_class(); ?>>
 	<header class="entry-header">
 		<?php the_date( 'D', '<h3 class="entry-title">', '</h3>' ); ?>
 	</header>
 
 	<div class="entry-content">
-		<?php CB2::the_inner_loop( NULL, 'list', 'openinghours' ); ?>
+		<ul class="cb2-subposts">
+			<?php CB2::the_inner_loop( NULL, 'list', 'openinghours' ); ?>
+		</ul>
 
 		<!-- Using echo get_the_date() because there is a bug in the_date() -->
 		<div class="cb2-removable-item"><input class="cb2-hidden" name="period_IDs[]" value="<?php echo get_the_date( 'D' ); ?>:08:00-12:00"/><a href="#">08:00 - 12:00</a></div>
@@ -48,5 +50,5 @@
 		</div>
 	</div>
 	<?php CB2::the_context_menu(); ?>
-</td>
+</li>
 

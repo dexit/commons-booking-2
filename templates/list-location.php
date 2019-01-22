@@ -15,5 +15,7 @@
  * @since 2.0.0
  */
 ?>
-<?php the_title(); ?>
+<li>
+	<?php the_title(); ?>
+</li>
 

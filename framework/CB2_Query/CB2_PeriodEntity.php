@@ -110,16 +110,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
 		$options = array(
 			'template' => 'available',
-			'actions' => array(
-				'make-available' => array(
-					'link_text' => __( 'Make Available' ),
-					'post_type' => CB2_PeriodEntity_Timeframe::$static_post_type,
-					'period_status_type_ID'      => CB2_PeriodStatusType_Available::bigID(),
-				),
-				'set-times' => '<form><div>Example form:<input/></div></form>',
-			),
 		);
-		if ( $post ) $options[ 'query' ] = array(
+		$options[ 'query' ] = array(
 			'meta_query' => array(
 				'period_entity_ID_clause' => array(
 					'key'     => 'period_entity_ID',
@@ -129,6 +121,18 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			),
 		);
 
+		if ( $post ) {
+			CB2_Query::ensure_correct_class( $post );
+			if ( method_exists( $post, 'metabox_calendar_options_object_cb' ) ) {
+				$options = array_merge( $options, $post->metabox_calendar_options_object_cb( $field ) );
+			}
+		}
+
+		return $options;
+	}
+
+	protected function metabox_calendar_options_object_cb( $field ) {
+		$options = $this->period_status_type->metabox_calendar_options_object_cb( $field, $this );
 		return $options;
 	}
 
