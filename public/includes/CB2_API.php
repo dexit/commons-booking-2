@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API
  *
@@ -10,75 +11,31 @@
  * @license   GPL 2.0+
  * @link      http://commonsbooking.wielebenwir.de
  */
-class CB2_API {
-
-	public $api_uri = 'cb2-api';
-	public $query_args = array();
-
+class CB2_API
+{
 	/**
 	 * Constructor
 	 *
 	 * @since 2.0.0
 	 */
-	public function __construct() {
-		// add wp hooks
-		add_action( 'parse_request', array ($this, 'do_endpoint' ), 0);
-
+	public function __construct()
+	{
+		add_action('rest_api_init', function () {
+			register_rest_route('commons-booking-2/v1', '/items', array(
+				'methods' => 'GET',
+				'callback' => array($this, 'get_items'),
+			));
+		});
 	}
 	/**
 	 * Do endpoint
 	 *
 	 * @since 2.0.0
 	 */
-	public static function do_endpoint () {
-
-		global $wp;
-    $query_vars = $wp->query_vars;
-
-    // if matches endpoint uri
-    if ($wp->request == $this->api_uri ) {
-
-        $this->process_endpoint( $_REQUEST ); // process request
-        // wp_redirect(home_url()); // maybe redirect home
-				exit;
-
-    }
+	public static function get_items()
+	{
+		$strat = new CB2_AllItemAvailability(NULL, NULL, 'item');
+		return $strat->get_api_data('1.0.0');
 	}
-/**
- * Process endpoint
- *
- * @since 2.0.0
- *
- * @return string $json
- */
-public function process_endpoint( $request ) {
-
-	// @TODO query args -> args
-	$this->query_args = array();
-
-	// get timeframes
-	$data = $this->get_timeframes();
-	// var_dump ( $data );
-	$json = wp_json_encode ($data);
-
-	echo $json; // for now
-
-
-}
-/**
- * Get timeframes via CB2_Timeframes
- *
- * @since 2.0.0
- *
- * @uses CB2_Timeframes
- */
-public function get_timeframes() {
-
-	$timeframes_object = new CB2_Timeframes();
-	$timeframes_object->set_context( 'api' ); // see: CB2_Object:550 -- i would still need to update the query function to your specs.
-
-	$timeframes = $timeframes_object->get( $this->query_args );
-	return $timeframes;
-}
 
 }
