@@ -87,7 +87,9 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
 			$data = ob_get_clean();
 			if ( WP_DEBUG ) {
 				global $post;
-				$data = "<!-- " . get_class( $post ) . ' => ' . basename($template) . " -->" . $data;
+				$Class      = get_class( $post );
+				$file_debug = basename($template);
+				$data = "<!-- $Class => $file_debug -->\n$data";
 			}
 
 			do_action( 'end_operation', 'cb_template_part::' . $file_handle );

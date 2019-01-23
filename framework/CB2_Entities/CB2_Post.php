@@ -18,6 +18,7 @@ class CB2_WordPress_Entity extends CB2_PostNavigator {
 class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   public static $PUBLISH        = 'publish';
   public static $AUTODRAFT      = 'auto-draft';
+  public static $TRASH          = 'trash';
   public static $schema         = 'with-perioditems'; //this-only, with-perioditems
   public static $posts_table    = FALSE;
   public static $postmeta_table = FALSE;
