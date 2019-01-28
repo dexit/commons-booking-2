@@ -349,7 +349,7 @@ class CB2_Day extends CB2_TimePostNavigator {
       'dayofweek'   => $this->dayofweek,
       'today'       => $this->today,
       'title'       => $this->title,
-      'periods'     => &$this->periods
+      'periods'     => &$this->perioditems
     ];
   }
 }

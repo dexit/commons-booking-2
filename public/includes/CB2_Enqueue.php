@@ -28,11 +28,10 @@ class CB2_Enqueue {
 		$shortcodes = new CB2_Shortcodes();
 		add_shortcode( 'cb2_calendar', array( $shortcodes, 'calendar_shortcode' ) ) ;
 		add_shortcode( 'cb2_timeframe', array( $shortcodes, 'timeframe_shortcode' ) ) ;
-
-		/*
+		
 		// create an API end point
+		require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_API.php');
 		$API = new CB2_API;
-		*/
 
 	}
 	/**

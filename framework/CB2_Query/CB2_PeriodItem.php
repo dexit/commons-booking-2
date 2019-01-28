@@ -699,10 +699,18 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
 
   function jsonSerialize() {
     $array = parent::jsonSerialize();
-    //$array[ 'location' ] = &$this->location;
+    //$array[ 'location' ] = &$this->period_entity->location;
     //$array[ 'item' ]     = &$this->item;
     return $array;
-  }
+	}
+	function get_api_data($version){
+		return array(
+      'status' => get_the_title($this),
+      'start' => $this->datetime_period_item_start->format( CB2_Query::$json_date_format ),
+			'end' => $this->datetime_period_item_start->format( CB2_Query::$json_date_format ),
+			'location' => $this->period_entity->location->ID
+		);
+	}
 }
 
 

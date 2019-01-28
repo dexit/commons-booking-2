@@ -21,11 +21,12 @@
 
 
 class CB2_Location extends CB2_Post implements JsonSerializable {
-  public static $all = array();
+	public static $all = array();
 	static $static_post_type  = 'location';
 	public static $rewrite   = array( 'slug' => 'location' );
-  public static $post_type_args = array(
+	public static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-tools',
+		'supports' => array('title','thumbnail','editor','excerpt')
 	);
 
 	static function selector_metabox() {
@@ -208,6 +209,22 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
       array(
         'perioditems' => &$this->perioditems
     ));
+  }
+  function get_api_data($version){
+	$location_data = array(
+		'id' => $this->ID,
+		'name' => get_the_title($this),
+		'url' => get_post_permalink($this)
+	);
+	$location_desc = $this->post_excerpt;
+	if($location_desc != NULL){
+		$location_data['description'] = $location_desc;
+	}
+	// $location_meta = get_post_meta($location);
+	// $location_data['longitude'] = $location_meta['geo_longitude'];
+	// $location_data['latitude'] = $location_meta['geo_latitude'];
+	// $location_data['address'] = $location_meta['geo_address'];
+	return $location_data;
   }
 
 	function row_actions( &$actions, $post ) {

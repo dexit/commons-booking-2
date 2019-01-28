@@ -271,6 +271,48 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		CB2_Query::reorganise_posts_structure( $this->wp_query );
 		return $this->wp_query->posts;
 	}
+	function get_api_data(string $version)
+	{
+		$view_mode = isset( $this->wp_query->query['date_query']['compare'])? $this->wp_query->query['date_query']['compare'] : NULL;
+		if($view_mode != 'item'){
+			throw new Exception("View mode is set to [$view_mode]. Api data can only be created from an AllItemAvailability strategy that is in 'item' view mode.");
+		}
+		CB2_Query::reorganise_posts_structure($this->wp_query);
+		$data = array(
+			'version' => $version,
+			'project' => array(
+				'name' => get_bloginfo( 'name' ),
+				'url' => network_site_url( '/' ),
+				'description' => get_bloginfo( 'description' ),
+				'language' => get_locale()				
+			),
+			'items' => array(),
+			'owners' => array(),
+			'locations' => array()
+		);
+		foreach ($this->wp_query->posts as $item) {
+			$data['items'][] = $item->get_api_data($version);
+			// get location data from items (this can not be done by the items themselves as we store the locations in a top-level array within the data structure)
+			if ($item->perioditems != null) {
+				foreach ($item->perioditems as $period_inst) {
+					$location = $period_inst->period_entity->location;
+					if (!array_key_exists($location->ID, $data['locations'])) {
+						$data['locations'][$location->ID] = $location->get_api_data($version);
+					}
+				}
+			}
+			// get owner data (this is done here for the same reason as for the location data)
+			$owner_id = $item->post_author;
+			if (!array_key_exists($owner_id, $data['owners'])) {
+				$owner_data = array(
+					'name' => get_the_author_meta('user_nicename', $owner_id),
+					'url' => get_author_posts_url($owner_id)
+				);
+				$data['owners'][$owner_id] = $owner_data;
+			}
+		}
+		return $data;
+	}
 }
 
 
