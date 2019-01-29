@@ -163,7 +163,7 @@ class CB2_Settings
      * @since 2.0.0
      *
      * @param array $group The settings group
-     * @param array $setting  The setting name
+     * @param array $setting The setting name
      *
      * @return bool
      */
@@ -316,4 +316,4 @@ class CB2_Settings
 
 
 }
-add_action('cmb2_admin_init', array('CB2_Settings', 'get_instance')); // Settings rely on cmb2, so call it after that is initiatilised
+add_action('admin_init', array('CB2_Settings', 'get_instance'));

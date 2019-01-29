@@ -34,21 +34,18 @@ class CB2_Enqueue_Admin {
 		// Load general admin style sheet and JavaScript.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+		add_filter('cmb2_sanitize_toggle', 'sanitize_checkbox', 20, 2);
 
 		/*
 		* Admin Screens
 		*/
 		add_action('admin_menu', array( $this, 'plugin_settings_page_menu')); // Settings menu
 
-		add_action('cmb2_save_options-page_fields', array($this, 'plugin_settings_page_saved'), 10, 4);
-
-
-
 	}
 	public function plugin_settings_page_menu() {
 
-		add_menu_page(
-				__('CB2', 'commons-booking-2'),
+		add_options_page(
+				__('CB2 Settings', 'commons-booking-2'),
 				'CB2 Settings',
 				'manage_options',
 				'cb2_settings',
@@ -60,7 +57,7 @@ class CB2_Enqueue_Admin {
 	}
 	public function plugin_settings_page() {
 
-		$plugin_settings_page = new CB2_Admin_Tabs('settings'); // page contents
+		$plugin_settings_page = new CB2_Admin_Tabs('cb2_settings'); // page contents
 
 		$plugin_settings_page->add_tab(
 				'mytab',
@@ -76,8 +73,8 @@ class CB2_Enqueue_Admin {
 		$plugin_settings_page->render_content();
 	}
 	public function plugin_settings_page_saved() {
-		new WP_Admin_Notice('hello', 'error');
 		echo ("<h1>hello</h1>");
+
 	}
 
 		/**
@@ -131,6 +128,10 @@ class CB2_Enqueue_Admin {
 				), $links
 		);
 	}
+
+
+
+
 }
 $cb_enqueue_admin = new CB2_Enqueue_Admin();
 $cb_enqueue_admin->initialize();

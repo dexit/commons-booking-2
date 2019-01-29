@@ -33,6 +33,7 @@ $cb2_settings_groups =
                     'id' => CB2_Settings::$settings_prefix . 'features',
                     'description' => 'Enable or disable plugin features site-wide. You can configure each feature´s settings after save.',
                     'fields' => array(
+
                         array(
                             'name' => __('Enable Maps', 'commons-booking-2'),
                             'description' => __('Enable maps and geocoding of adresses.', 'commons-booking-2'),
@@ -41,19 +42,20 @@ $cb2_settings_groups =
                             'default' => cmb2_set_checkbox_default_for_new_post(false)
                             ),
                         array(
-                                'name' => __('Enable Codes', 'commons-booking-2'),
-                                'description' => __('Enable codes for the booking process.', 'commons-booking-2'),
-                                'id' => 'enable-codes',
-                                'type' => 'checkbox',
-                                'default' => cmb2_set_checkbox_default_for_new_post(false),
-                                ),
+														'name' => __('Enable Codes', 'commons-booking-2'),
+														'description' => __('Enable codes for the booking process.', 'commons-booking-2'),
+														'id' => 'enable-codes',
+														'type' => 'checkbox',
+														'default' => cmb2_set_checkbox_default_for_new_post(false),
+														),
                         array(
-                                'name' => __('Enable Holidays', 'commons-booking-2'),
-                                'description' => __('Show holidays on the calendar, automatically close locations.', 'commons-booking-2'),
-                                'id' => 'enable-holidays',
-                                'type' => 'checkbox',
-                                'default' => cmb2_set_checkbox_default_for_new_post(false),
-                                ),
+														'name' => __('Enable Holidays', 'commons-booking-2'),
+														'description' => __('Show holidays on the calendar, automatically close locations.', 'commons-booking-2'),
+														'id' => 'enable-holidays',
+														'type' => 'checkbox',
+														'default' => cmb2_set_checkbox_default_for_new_post(false),
+														),
+
         )
                     ),
                 /* features end */

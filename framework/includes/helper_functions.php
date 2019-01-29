@@ -309,6 +309,20 @@ function cmb2_set_checkbox_default_for_new_post( $default ) {
 	return isset( $_GET['page'] ) ? '' : ( $default ? (string) $default : '' );
 }
 /**
+ * Fixed checkbox issue with default is true.
+ *
+ * @param  mixed $override_value Sanitization/Validation override value to return.
+ * @param  mixed $value          The value to be saved to this field.
+ * @return mixed
+ */
+function sanitize_checkbox($override_value, $value)
+{
+    // Return 0 instead of false if null value given. This hack for
+    // checkbox or checkbox-like can be setting true as default value.
+    return is_null($value) ? 0 : $value;
+}
+
+/**
  * Format checkbox value as bool
  *
  * @param string $value
