@@ -31,83 +31,54 @@ class CB2_Enqueue_Admin {
 
 		$plugin_basename = plugin_basename( plugin_dir_path( realpath( dirname( __FILE__ ) ) ) . CB2_TEXTDOMAIN . '.php' );
 
-		// Load admin style sheet and JavaScript.
+		// Load general admin style sheet and JavaScript.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
-		// @TODO not working
-		add_filter( 'cmb2_sanitize_toggle', 'cmb2_sanitize_checkbox', 20, 2 );
-
 
 		/*
 		* Admin Screens
 		*/
-		add_action('admin_menu', array( $this, 'slugslug_menu'));
+		add_action('admin_menu', array( $this, 'plugin_settings_page_menu')); // Settings menu
 
+		add_action('cmb2_save_options-page_fields', array($this, 'plugin_settings_page_saved'), 10, 4);
 
-		/*
-		* Admin Screens
-		*/
-		$settings_screen = new CB2_Admin_Screen();
-		$settings_screen->add_script(
-				array(
-						'cb2_tabs_script',
-						plugins_url('admin/assets/js/admin_tabs.js', CB2_PLUGIN_ABSOLUTE),
-						array('jquery', 'jquery-ui-tabs'),
-				)
-		);
-		$settings_screen->add_style(array(
-				'cb2_tabs_style',
-				plugins_url('admin/assets/css/admin_tabs.css', CB2_PLUGIN_ABSOLUTE),
-		)
-		);
-		$settings_screen->add_tabbed_content(
-				CB2_PLUGIN_ROOT . 'admin/views/settings_welcome.php', 'cb2',
-				__('Welcome', 'commons-booking-2'), true
-		);
-		$settings_screen->add_tabbed_content(
-				CB2_PLUGIN_ROOT . 'admin/views/settings_general.php', 'general',
-				__('General', 'commons-booking-2'), true
-		);
-		$settings_screen->add_tabbed_content(
-				CB2_PLUGIN_ROOT . 'admin/views/settings_maps.php', 'maps',
-				__('Maps', 'commons-booking-2'), CB2_Settings::is_enabled('features', 'enable-maps')
-		);
-		$settings_screen->add_tabbed_content(
-				CB2_PLUGIN_ROOT . 'admin/views/settings_codes.php', 'codes',
-				__('Codes', 'commons-booking-2'), CB2_Settings::is_enabled('features', 'enable-codes')
-		);
-		$settings_screen->add_tabbed_content(
-				CB2_PLUGIN_ROOT . 'admin/views/settings_holidays.php', 'holidays',
-				__('Codes', 'commons-booking-2'), CB2_Settings::is_enabled('features', 'enable-holidays')
-		);
-		$settings_screen->add_tabbed_content(
-				CB2_PLUGIN_ROOT . 'admin/views/settings_strings.php', 'strings',
-				__('Strings', 'commons-booking-2'), true
-		);
 
 
 	}
-	public function slugslug_menu() {
+	public function plugin_settings_page_menu() {
+
 		add_menu_page(
 				__('CB2', 'commons-booking-2'),
-				'CB2 menu',
+				'CB2 Settings',
 				'manage_options',
-				'slugslug',
-				array($this, 'slugslug_page'),
+				'cb2_settings',
+				array($this, 'plugin_settings_page'),
 				'',
 				6,
 				''
 		);
 	}
-	public function slugslug_page() {
-		$page_content = new CB2_Admin_Screen();
-		$page_content->add_metabox_settings_group('features', 'default');
-		$page_content->add_metabox_settings_group('maps', 'default');
-		$page_content->render();
+	public function plugin_settings_page() {
 
+		$plugin_settings_page = new CB2_Admin_Tabs('settings'); // page contents
+
+		$plugin_settings_page->add_tab(
+				'mytab',
+				'my Tab',
+				CB2_Settings::render_settings_group( array('features') )
+		);
+		$plugin_settings_page->add_tab(
+				'maps',
+				'Maps',
+				CB2_Settings::render_settings_group( array('maps') ),
+				CB2_Settings::is_enabled('features', 'enable-maps')
+		);
+		$plugin_settings_page->render_content();
 	}
-
-
+	public function plugin_settings_page_saved() {
+		new WP_Admin_Notice('hello', 'error');
+		echo ("<h1>hello</h1>");
+	}
 
 		/**
 	 * Register and enqueue admin-specific style sheet.

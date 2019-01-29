@@ -203,6 +203,71 @@ class CB2_Settings
     {
         return self::$settings_prefix;
 		}
+
+
+	/**
+	 * A settings group metabox
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array $metabox_args
+	 *
+	 * @return mixed
+	 */
+    public static function render_settings_group ( $settings_group_ids = array() ){
+
+			$metabox_html = '';
+			$group_ids = (array) $settings_group_ids;
+
+			foreach ( $group_ids as $group_id ) {
+
+				$metabox_args = CB2_Settings::get_settings_group( $group_id );
+				$args = array_merge(self::$metabox_defaults, $metabox_args);
+
+				$metabox_html .= sprintf('
+								<div class="postbox">
+									<div class="inside">
+									<h3>%s</h3>
+									%s
+									%s
+									</div>
+								</div>',
+						$args['title'],
+						$args['description'],
+						cmb2_metabox_form($args, $args['id'], array('echo' => false))
+				);
+			}
+
+			return $metabox_html;
+
+		}
+	/**
+	 * A settings group metabox
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array $metabox_args
+	 *
+	 * @return mixed
+	 */
+    public function add_metabox ( $metabox_args, $tab='default' ){
+
+			$args = array_merge (self::$metabox_options_defaults, $metabox_args );
+			$metabox_html = sprintf( '
+				<div class="postbox">
+					<div class="inside">
+					<h3>%s</h3>
+					%s
+					%s
+					</div>
+				</div>',
+				$args['title'],
+				$args['description'],
+				cmb2_metabox_form( $args, $args['id'], array ('echo' => FALSE ))
+			);
+			return $metabox_html;
+		}
+
     /**
      * Render the timeframe options in edit.php
      *

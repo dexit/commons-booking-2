@@ -9,14 +9,8 @@
  * @link      http://commonsbooking.wielebenwir.de
  */
 
-class CB2_Admin_Screen
+class CB2_Admin_Tabs
 {
-    /**
-     * Admin screen slug
-     *
-     * @var array
-     */
-    public $slug;
     /**
      * Admin screen tabs
      *
@@ -24,35 +18,17 @@ class CB2_Admin_Screen
      */
     public $tabs;
     /**
-     * Scripts for this screen
-     *
-     * @var array
-     */
-    public $scripts;
-    /**
-     * Styles for this screen
-     *
-     * @var array
-     */
-    public $styles;
-    /**
-     * Holding the html for return
-     *
-     * @var array
-     */
-    public $html_els = array();
-    /**
-     * File to include on this screen
-     *
-     * @var string
-     */
-    public $file = '';
-    /**
      * menu
      *
      * @var array
      */
-    public $menu_args = array();
+		public $menu_args = array();
+    /**
+     * Admin screen tabs
+     *
+     * @var array
+     */
+    public $page_slug;
     /**
      * Show on
      *
@@ -64,140 +40,84 @@ class CB2_Admin_Screen
         'value' => array('commons-booking-2'),
       ),
 		'show_names' => true,
-		'title' => '',
-		'description' => ''
+		'title' => 'test',
+		'description' => 'desc'
     );
     /**
      * Initialize the Admin screen
 		 *
-		 * @var array $menu_args
-		 * @var array $scripts
-		 * @var array $styles
      */
-		public function __construct( ) {
-			add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
-			add_action('admin_enqueue_scripts', array($this, 'enqueue_styles'));
-			add_action('cmb2_save_options-page_fields', array($this, 'cmb2_submitted'), 10, 4);
+		public function __construct( $page_slug ) {
+
+			$this->page_slug = $page_slug;
+			$this->enqueue_styles();
+			$this->enqueue_scripts();
+
+
+
+			// add_action('cmb2_save_options-page_fields', array($this, 'cmb2_submitted'), 10, 4);
 		}
 	/**
-	 * Add javascript
+	 * Add tab
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $tab_id
+	 * @param string $tab_title
+	 * @param string $content
+	 * @param bool optional $show conditionally render the tab
+	 *
 	 */
-	public function add_script( $script=array() ) {
+  	public function add_tab( $tab_id='', $tab_title='', $content, $show=TRUE ) {
 
-		$this->scripts[] = $script;
-
-	}
-	/**
-	 * Add css style
-	 */
-	public function add_style( $style ) {
-
-		$this->styles[] = $style;
-
-	}
-
-	public function init() {
-;
-
-	}
-
-    /**
-     * Add content
-     *
-     * @since 2.0.0
-     *
-     * @param string $file to include
-     * @param string optional $tab_id
-     * @param string optional $tab_title
-     * @param bool optional $show
-		 *
-     */
-    public function add_tabbed_content( $file, $tab_id='', $tab_title='', $show=TRUE ) {
-
-			if ( !empty ( $file ) && $show == TRUE ) {
+			if ( $show == TRUE ) {
 				$this->tabs[$tab_id] = array(
 						'id' => $tab_id,
 						'title' =>  $tab_title,
 						'show' =>  $show,
-						'file' => $file
+						'content' => $content
 					);
 				}
-		}
-    /**
-     * Add contents
-     *
-     * @since 2.0.0
-     *
-     * @param array $args
-     */
-    public function add_content( $file ) {
-			if ( !empty ($file) ) {
-				$this->content[] = $file;
 			}
-		}
     /**
      * Enqueue Scripts
-		 *
-     * @param array $scripts name of script
      */
     public function enqueue_scripts( ){
 
-			if ( ! empty ($this->scripts )) {
-				foreach ($this->scripts as $script ) {
-					wp_enqueue_script (...$script);
-				}
-			}
+			wp_enqueue_script (
+				'cb2_tabs_script',
+				plugins_url('admin/assets/js/admin_tabs.js', CB2_PLUGIN_ABSOLUTE),
+				array('jquery', 'jquery-ui-tabs')
+				);
 		}
     /**
      * Enqueue Styles
-		 *
-     * @param array $scripts name of script
      */
     public function enqueue_styles( ){
-
-			if (!empty($this->styles)) {
-					foreach ($this->styles as $style) {
-							wp_enqueue_style(...$style);
-					}
-			}
-
+				wp_enqueue_style(
+					'cb2_tabs_style',
+					plugins_url('admin/assets/css/admin_tabs.css', CB2_PLUGIN_ABSOLUTE)
+				);
 		}
     /**
      * Get content
      *
      * @return mixed $content
      */
-    public function the_content() {
+    public function render_content() {
 
 			print ('<div class="wrap">');
-			print ( 'enable maps' . CB2_Settings::is_enabled('features', 'enable-maps') );
-			printf ('<h1 class="wp-heading">%s</h1>', esc_html(get_admin_page_title()));
 
-			// non-tabbed content
-			// if (!empty($this->content)) {
-			// 		foreach ($this->content as $file) {
-			// 				cb2_debug_maybe_print_path($file);
-			// 				include $file;
-			// 		}
-			// }
-			// tabbed content
 			if (!empty( $this->tabs )) {
-				echo $this->render_admin_tabs();
+				echo $this->get_tabs();
 				foreach ($this->tabs as $tab) {
 					printf ('<div id="tabs-%s" class="wrap">', $tab['id']);
-    			cb2_debug_maybe_print_path($tab['file']);
-					include $tab['file'];
+					printf( $tab['content']);
 					print('</div>');
 				}
-
 			}
 			print ('</div>');
-			print('enable maps' . CB2_Settings::is_enabled('features', 'enable-maps'));
 
-		}
-
-		public function cmb2_submitted() {
-			new WP_Admin_Notice('Settings saved', 'updated');
 		}
 
     /**
@@ -207,7 +127,7 @@ class CB2_Admin_Screen
      *
      * @return mixed $html
      */
-    public function render_admin_tabs()
+    public function get_tabs()
     {
 			$html = '<div id="tabs" class="settings-tab">
 						<ul>';
@@ -216,7 +136,7 @@ class CB2_Admin_Screen
 					$html .= '<li><a href="#tabs-' . $slug . '">' . $value['title'] . '</a></li>';
 			}
 			$html .= '</ul>';
-			return apply_filters( 'cb2' . $this->slug . 'tabs', $html);
+			return apply_filters( 'cb2' . $this->page_slug . 'tabs', $html);
     }
 	/**
 	 * Render a settings group
