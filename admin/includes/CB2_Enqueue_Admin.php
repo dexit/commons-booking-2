@@ -25,7 +25,7 @@ class CB2_Enqueue_Admin {
 	 * Initialize the class
 	 */
 	public function initialize() {
-		if ( !apply_filters( 'commons_booking_cb_enqueue_admin_initialize', true ) ) {
+		if ( !apply_filters( 'cb2_enqueue_admin_instance', true ) ) {
 			return;
 		}
 
@@ -34,12 +34,19 @@ class CB2_Enqueue_Admin {
 		// Load general admin style sheet and JavaScript.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
-		add_filter('cmb2_sanitize_toggle', 'sanitize_checkbox', 20, 2);
+		// setting default value for checkbox (https: //github.com/CMB2/CMB2/wiki/Tips-&-Tricks#setting-a-default-value-for-a-checkbox)
+		add_filter('cmb2_sanitize_toggle', 'cmb2_sanitize_checkbox', 20, 2);
+
+
+
+
 
 		/*
 		* Admin Screens
 		*/
 		add_action('admin_menu', array( $this, 'plugin_settings_page_menu')); // Settings menu
+add_action('cmb2_save_options-page_fields', array($this, 'test_submitted'), 10, 4);
+
 
 	}
 	public function plugin_settings_page_menu() {
@@ -57,16 +64,16 @@ class CB2_Enqueue_Admin {
 	}
 	public function plugin_settings_page() {
 
-		$plugin_settings_page = new CB2_Admin_Tabs('cb2_settings'); // page contents
+		$plugin_settings_page = new CB2_Admin_Tabs('cb2_settings');
 
 		$plugin_settings_page->add_tab(
-				'mytab',
-				'my Tab',
-				CB2_Settings::render_settings_group( array('features') )
+				'cb2',
+				'CB2',
+				$this->plugin_settings_page_welcome()
 		);
 		$plugin_settings_page->add_tab(
 				'maps',
-				'Maps',
+				__('Maps', 'commons-booking-2'),
 				CB2_Settings::render_settings_group( array('maps') ),
 				CB2_Settings::is_enabled('features', 'enable-maps')
 		);
@@ -74,7 +81,10 @@ class CB2_Enqueue_Admin {
 	}
 	public function plugin_settings_page_saved() {
 		echo ("<h1>hello</h1>");
+	}
 
+	public function plugin_settings_page_welcome() {
+		return '<h1>welcome to cb2</h1>' . CB2_Settings::render_settings_group( array('features') );
 	}
 
 		/**

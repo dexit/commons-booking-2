@@ -18,12 +18,6 @@ class CB2_Admin_Tabs
      */
     public $tabs;
     /**
-     * menu
-     *
-     * @var array
-     */
-		public $menu_args = array();
-    /**
      * Admin screen tabs
      *
      * @var array
@@ -53,9 +47,6 @@ class CB2_Admin_Tabs
 			$this->enqueue_styles();
 			$this->enqueue_scripts();
 
-
-
-			// add_action('cmb2_save_options-page_fields', array($this, 'cmb2_submitted'), 10, 4);
 		}
 	/**
 	 * Add tab
@@ -111,7 +102,7 @@ class CB2_Admin_Tabs
 			if (!empty( $this->tabs )) {
 				echo $this->get_tabs();
 				foreach ($this->tabs as $tab) {
-					printf ('<div id="tabs-%s" class="wrap">', $tab['id']);
+					printf ('<div id="tabs-%s" class="wrap" aria-hidden="true">', $tab['id']);
 					printf( $tab['content']);
 					print('</div>');
 				}
