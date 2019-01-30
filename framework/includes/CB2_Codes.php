@@ -89,10 +89,10 @@ class CB2_Codes
     public static function get_random_code( )
     {
 
-        $count = count($this->codes_array);
+        $count = count(self::codes_array);
         $random = rand(0, $count - 1);
 
-        return esc_attr(trim($this->codes_array[ $random ]));
+        return esc_attr(trim(self::codes_array[ $random ]));
 
     }
     /**

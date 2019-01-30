@@ -12,12 +12,58 @@
  * This file contains helper functions
  */
 /**
- * Get a List of all wordpress pages for use in dropdown selects.
+ * Return an array of all wordpress pages
+ *
+ * For use in meta box forms dropdown selects.
  *
  * @return Array of wordpress pages as [pagedID][title]
  */
 
-function cb_get_pages_dropdown() {
+ /**
+ *  Current template file name/path
+ *
+ * @return string  wordpress user roles as [rolename][rolename]
+ */
+function cb2_debug_maybe_print_path( $file_path ) {
+	if ( cb2_is_debug() ) {
+		echo ( '<pre>' . $file_path . '</pre>' );
+	}
+}
+/**
+ * Fixed checkbox issue with default is true.
+ *
+ * @param  mixed $override_value Sanitization/Validation override value to return.
+ * @param  mixed $value          The value to be saved to this field.
+ * @return mixed
+ */
+function cmb2_sanitize_checkbox($override_value, $value)
+{
+    // Return 0 instead of false if null value given. This hack for
+    // checkbox or checkbox-like can be setting true as default value.
+    return is_null($value) ? 0 : $value;
+}
+
+
+/**
+ *  Display debug info.
+ *
+ * @TODO currently equals to WP_DEBUG, which may not be wanted.
+ * Add another condition.
+ *
+ * @return bool  wordpress user roles as [rolename][rolename]
+ */
+function cb2_is_debug()
+{
+    if (WP_DEBUG) {
+			return true;
+    } else {
+			return false;
+		}
+}
+
+
+
+function cb2_form_get_pages() {
   // dropdown for page select
   $pages = get_pages();
   $dropdown = array();
@@ -27,6 +73,35 @@ function cb_get_pages_dropdown() {
   }
   return $dropdown;
 }
+/**
+ * Return an array of all wordpress user roles
+ *
+ * For use in meta box forms.
+ *
+ * @param bool $names_only return only the field names
+ *
+ * @return Array  wordpress user roles as [rolename][rolename]
+ */
+function cb2_form_get_user_roles( $keys_only=false )
+{
+	// make sure wp user is available
+	if (! function_exists('get_editable_roles')) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+	}
+	// dropdown for page select
+	$wp_roles = get_editable_roles();
+	$user_roles_formatted = array();
+
+	foreach ($wp_roles as $role_name => $role_info) {
+		if ( $keys_only ) {
+			$user_roles_formatted[] = $role_name;
+		} else {
+			$user_roles_formatted[$role_name] = $role_info['name'];
+		}
+	}
+	return $user_roles_formatted;
+}
+
 /**
  * Get a List of slot templates for use in dropdown selects.
  * @TODO Hardcoded for now
@@ -237,6 +312,7 @@ function cmb2_set_checkbox_default_for_new_post( $default ) {
 
 	return isset( $_GET['page'] ) ? '' : ( $default ? (string) $default : '' );
 }
+
 /**
  * Format checkbox value as bool
  *
@@ -244,7 +320,7 @@ function cmb2_set_checkbox_default_for_new_post( $default ) {
  * @return bool  Returns true or '', the blank default
  *
  */
-function cb_checkbox_bool( $value ) {
+function cb2_checkbox_bool( $value ) {
 
 	if ( isset ( $value ) && $value  == 'on' ) {
 		return true;

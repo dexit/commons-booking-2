@@ -9,7 +9,7 @@
 	<exclude-pattern>*test*</exclude-pattern>
 	<exclude-pattern>index.php</exclude-pattern>
 	<exclude-pattern>CMB2</exclude-pattern>
-	<exclude-pattern>/composer</exclude-pattern>
+	<exclude-pattern>/composer/*</exclude-pattern>
 
 	<!-- Include some specific sniffs -->
 	<rule ref="Generic.CodeAnalysis.EmptyStatement"/>
