@@ -85,10 +85,7 @@ class CB2_Admin_Tabs
      * Enqueue Styles
      */
     public function enqueue_styles( ){
-				wp_enqueue_style(
-					'cb2_tabs_style',
-					plugins_url('admin/assets/css/admin_tabs.css', CB2_PLUGIN_ABSOLUTE)
-				);
+			// admin tabs css is now in admin.css
 		}
     /**
      * Get content

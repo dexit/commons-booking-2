@@ -1,0 +1,349 @@
+/*
+ * General admin css @TODO: split into _forms, etc.
+ *
+ * @package   CommonsBooking2
+ * @author 		Annesley Newholm <annesley_newholm@yahoo.it>
+ * @license   GPL-2.0+
+ * @since 0.2
+ * @link      http://www.wielebenwir.de
+ * @copyright 2015 wielebenwir
+ */
+
+/* ---------------------- admin screen */
+.admin_page_cb2-post-edit #preview-action,
+.admin_page_cb2-post-edit .misc-pub-visibility,
+.admin_page_cb2-post-edit #minor-publishing-actions,
+
+.admin_page_cb2-post-new #preview-action,
+.admin_page_cb2-post-new .misc-pub-visibility,
+.admin_page_cb2-post-new #minor-publishing-actions,
+
+#posts-filter .search-box,
+.cmb-type-multicheck-inline>.cmb-td>p,
+.cmb-type-multicheck>.cmb-td>p {
+	/* Select all */
+	display: none;
+}
+
+/* ---------------------- admin screen */
+
+/* ---------------------- admin */
+h1 a,
+h2 a,
+h3 a {
+	font-size: 12px;
+	font-weight: normal;
+}
+
+.cb2-bald {
+	text-decoration: none;
+}
+
+.cb2-actions form,
+.cb2-actions form>div {
+	display: inline;
+}
+
+body #wpcontent .cmb2-wrap>.cmb-field-list>.cmb-row.cb2-cmb2-compact {
+	padding: 0px;
+	margin: 0px;
+}
+
+.cb2-database-table {
+	border-collapse: collapse;
+	background-color: #fff;
+	border: 1px solid #d7d7d7;
+	box-shadow: 1px 1px 5px #aaa;
+	margin: 3px 5px;
+}
+
+.cb2-unmanaged {
+	border: 2px dotted #aaa;
+	opacity: 0.7;
+}
+
+.cb2-database-views li,
+.cb2-database-views {
+	display: inline;
+	margin-right: 5px;
+	font-weight: bold;
+}
+
+.cb2-database-table th {
+	border: 1px solid #d7d7d7;
+	padding: 4px 4px;
+}
+
+.cb2-database-table td {
+	border: 1px solid #d7d7d7;
+	padding: 0px 4px;
+}
+
+.cb2-database-prefix {
+	font-weight: normal;
+	color: #555;
+}
+
+body .cmb2-id-recurrence-sequence li,
+body .cb2-calendar-grey .cb2-calendar>.entry-content>.cb2-subposts>li {
+	text-align: center;
+	border: 1px solid #c7c7c7;
+	background-color: #e7e7e7;
+	padding: 10px 5px;
+	min-width: 80px;
+}
+
+body .cmb2-id-datetime-from .cmb2-timepicker,
+body .cmb2-id-datetime-to .cmb2-timepicker {
+	display: none;
+}
+
+body .cmb2-id-recurrence-sequence input[type=checkbox],
+body .cb2-calendar-grey input[type=checkbox] {
+	display: block;
+	margin: 0px auto 3px auto;
+}
+
+body .cmb-type-group .cmb-th+.cmb-td,
+body .cmb2-postbox .cmb-th+.cmb-td {
+	/* TODO: this is probably not  good idea allow paragraph to wrap around fields better */
+	float: none;
+	width: auto;
+}
+
+.cb2-depth-0 {
+	list-style: none;
+}
+
+.cb2-depth-1 {
+	list-style: disc;
+}
+
+.cb2-classname {
+	font-style: italic;
+	background-color: #f7f7f7;
+	padding: 0px 4px;
+}
+
+li.cb2-classname {
+	list-style: none;
+	margin-left: -4px;
+}
+
+.cb2-WP_DEBUG-small {
+	color: #555;
+	font-size: 10px;
+}
+
+.cb2-WP_DEBUG-small:before {
+	content: '•';
+
+	display: inline-block;
+	margin: 0px 2px 0 0px;
+	padding: 0px 2px;
+	min-width: 7px;
+	border-radius: 11px;
+	background-color: #500;
+	color: #fff;
+	font-size: 6px;
+	line-height: 10px;
+	text-align: center;
+}
+
+.cb2-WP_DEBUG {
+	color: #555;
+}
+
+.cb2-WP_DEBUG:before {
+	content: 'WP_DEBUG: ';
+
+	display: inline-block;
+	margin: 1px 3px 0 2px;
+	padding: 2px 5px;
+	min-width: 7px;
+	border-radius: 11px;
+	background-color: #500;
+	color: #fff;
+	font-size: 9px;
+	text-align: center;
+}
+
+.cb2-advanced-menu-item {
+	font-style: italic;
+}
+
+.cb2-invalid {
+	color: #888;
+}
+
+.cb2-invalidity {
+	color: #d44;
+	font-weight: bold;
+}
+
+.cb2-menu-invisible {
+	margin-bottom: -2em;
+}
+
+body .cb2-advanced-menu-item.cb2-first {
+	display: block;
+	border-top: 1px dotted #d7d7d7;
+	padding-top: 6px;
+}
+
+body .cb2-description {
+	margin: 0px 8px;
+	color: #888;
+}
+
+.cb2-calendar-krumo-show {
+	cursor: pointer;
+}
+
+.cb2-column-pagination {
+	float: right;
+}
+
+.cb2-column-actions {
+	float: left;
+}
+
+body.wp-admin .cb2-disabled,
+body.wp-admin .cb2-disabled span {
+	text-decoration: none;
+	color: #888;
+	font-weight: normal;
+}
+
+.cb2-todo:before {
+	content: 'TODO: ';
+
+	display: inline-block;
+	margin: 1px 3px 0 2px;
+	padding: 2px 5px;
+	min-width: 7px;
+	border-radius: 11px;
+	background-color: #8aaa1f;
+	color: #fff;
+	font-size: 9px;
+	text-align: center;
+}
+
+a.cb2-selected {
+	text-decoration: none;
+	color: #555;
+	font-weight: bold;
+}
+
+ul.cb2-admin-column-ul {
+	margin: 0px;
+}
+
+body input.cb2-tick-only {
+	border: none;
+	background: Transparent;
+	box-shadow: none;
+	cursor: default;
+}
+
+body input.cb2-tick-only:not([checked]):after {
+	content: '✘';
+	color: #ff5555;
+	position: relative;
+	top: 7px;
+}
+
+.cb2-colour-block {
+	height: 20px;
+	width: 80px;
+}
+
+.cb2-usage-count-warning {
+	font-size: 80%;
+
+	display: inline-block;
+	margin: 1px 0 0 2px;
+	padding: 0 5px;
+	min-width: 7px;
+	height: 17px;
+	border-radius: 11px;
+	background-color: #ca4a1f;
+	color: #fff;
+	font-size: 9px;
+	line-height: 17px;
+	text-align: center;
+}
+
+.cb2-usage-count-ok {
+	font-size: 80%;
+
+	display: inline-block;
+	margin: 1px 0 0 2px;
+	padding: 0 5px;
+	min-width: 7px;
+	height: 17px;
+	border-radius: 11px;
+	background-color: #00b9eb;
+	color: #000;
+	font-size: 9px;
+	line-height: 17px;
+	text-align: center;
+}
+
+.cb2-usage-count-info {
+	font-size: 80%;
+
+	display: inline-block;
+	margin: 1px 0 0 2px;
+	padding: 0 5px;
+	min-width: 7px;
+	height: 17px;
+	border-radius: 11px;
+	/* background-color: #444; */
+	color: #aaa;
+	font-size: 9px;
+	line-height: 17px;
+	text-align: center;
+
+	box-shadow: 0px 0px 1px #aaa;
+}
+
+.ui-widget {
+	background-color: #fff;
+	padding: 4px;
+	border: 1px solid #ddd;
+	box-shadow: 3px 3px #ddd;
+}
+
+
+.cb2-help {
+	color: #773333;
+	font-family: sans;
+	font-size: 11px;
+}
+
+.cb2-submit {}
+
+.cb2-calendar h2 {
+	font-size: 16px;
+	margin-bottom: 0px;
+	margin-top: 4px;
+}
+
+.cb2-calendar h2 a {
+	font-size: 11px;
+	text-decoration: none;
+}
+
+#cb2-calendar-actions {
+	float: right;
+}
+
+/* availability */
+.cb2-template-available {
+	cursor: pointer;
+}
+
+.cb2-template-available h4 {
+	display: inline;
+}
