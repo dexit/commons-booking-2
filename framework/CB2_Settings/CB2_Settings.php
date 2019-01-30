@@ -14,9 +14,7 @@
  * @link      http://commonsbooking.wielebenwir.de
  */
 
-class CB2_Settings
-{
-
+class CB2_Settings {
     /**
      * Instance of this class.
      *
@@ -177,21 +175,6 @@ class CB2_Settings
 				return FALSE;
 			}
 		}
-
-    /**
-     * Enable Settings to be overwritten in timeframe admin.
-     *
-     * @since 2.0.0
-     *
-     * @return void
-     */
-
-    public static function cb2_enable_timeframe_option($group_id)
-    {
-
-        array_push( self::$timeframe_options, $group_id );
-
-    }
     /**
      * Get settings slug, prefix for storing/retrieving options from the wp_options table
      *
@@ -203,10 +186,8 @@ class CB2_Settings
     {
         return self::$settings_prefix;
 		}
-
-
 	/**
-	 * A settings group metabox
+	 * A settings group metaboxes
 	 *
 	 * @since 2.0.0
 	 *
@@ -222,7 +203,7 @@ class CB2_Settings
 			foreach ( $group_ids as $group_id ) {
 
 				$metabox_args = CB2_Settings::get_settings_group( $group_id );
-				$args = array_merge(self::$metabox_defaults, $metabox_args);
+				$args = array_merge( self::$metabox_defaults, $metabox_args);
 
 				$metabox_html .= sprintf('
 								<div class="postbox">
@@ -237,9 +218,7 @@ class CB2_Settings
 						cmb2_metabox_form($args, $args['id'], array('echo' => false))
 				);
 			}
-
 			return $metabox_html;
-
 		}
 	/**
 	 * A settings group metabox

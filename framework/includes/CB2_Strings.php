@@ -92,7 +92,6 @@ class CB2_Strings {
 	 * Can be replaced by user defined string via plugin settings->strings
 	 * Support for placeholders
 	 *
-	 *
 	 * @since 2.0.0
 	 *
 	 * @param string 	$category The string category

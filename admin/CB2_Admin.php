@@ -32,7 +32,6 @@ class CB2_Admin {
 		/*
 		* Enqueue
 		*/
-
 		require_once(CB2_PLUGIN_ROOT . 'admin/includes/lib/wp-admin-notice/WP_Admin_Notice.php');
 		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Admin_Tabs.php' );
 		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Enqueue_Admin.php' );

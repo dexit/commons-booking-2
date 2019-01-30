@@ -73,7 +73,8 @@ array(
 				'name' => __('Allow booking for', 'commons-booking-2'),
 				'id' => 'user-roles',
 				'type' => 'multicheck',
-				'options' => cb2_form_get_user_roles()
+				'options' => cb2_form_get_user_roles(),
+				'default' => cb2_form_get_user_roles(true)
 			),
 			array(
 				'name' => __('Approval needed', 'commons-booking-2'),
@@ -88,8 +89,8 @@ array(
 	/* booking options start */
 	'booking_options' => array(
 		'title' => 'Usage restrictions',
-		'id' => CB2_Settings::$settings_prefix . 'booking-options',
-		'description' => 'this is the description',
+		'id' => CB2_Settings::$settings_prefix . 'booking_options',
+		'description' => '@todo',
 		'fields' => array(
 			array(
 				'name' => __('Minimum usage time', 'commons-booking-2'),
@@ -119,7 +120,7 @@ array(
 	'maps' => array(
 		'title' => 'Maps',
 		'id' => CB2_Settings::$settings_prefix . 'maps',
-		'description' => 'this is the description',
+		'description' => '@todo',
 		'fields' => array(
 			array(
 				'name' => __('API Key', 'commons-booking-2'),

@@ -37,23 +37,21 @@ class CB2_Enqueue_Admin {
 		// setting default value for checkbox (https: //github.com/CMB2/CMB2/wiki/Tips-&-Tricks#setting-a-default-value-for-a-checkbox)
 		add_filter('cmb2_sanitize_toggle', 'cmb2_sanitize_checkbox', 20, 2);
 
-
-
-
-
 		/*
 		* Admin Screens
 		*/
 		add_action('admin_menu', array( $this, 'plugin_settings_page_menu')); // Settings menu
-add_action('cmb2_save_options-page_fields', array($this, 'test_submitted'), 10, 4);
-
 
 	}
+	/**
+	 * Settings menu
+	 *
+	 */
 	public function plugin_settings_page_menu() {
 
 		add_options_page(
-				__('CB2 Settings', 'commons-booking-2'),
-				'CB2 Settings',
+				'CommonsBooking 2',
+				'CommonsBooking 2',
 				'manage_options',
 				'cb2_settings',
 				array($this, 'plugin_settings_page'),
@@ -62,6 +60,9 @@ add_action('cmb2_save_options-page_fields', array($this, 'test_submitted'), 10, 
 				''
 		);
 	}
+	/**
+	 * Settings page contents
+	 */
 	public function plugin_settings_page() {
 
 		$plugin_settings_page = new CB2_Admin_Tabs('cb2_settings');
@@ -72,21 +73,71 @@ add_action('cmb2_save_options-page_fields', array($this, 'test_submitted'), 10, 
 				$this->plugin_settings_page_welcome()
 		);
 		$plugin_settings_page->add_tab(
+				'General',
+				__('General', 'commons-booking-2'),
+				CB2_Settings::render_settings_group(array('pages')),
+				TRUE
+		);
+		$plugin_settings_page->add_tab(
+				'booking-options',
+				__('Bookings', 'commons-booking-2'),
+				CB2_Settings::render_settings_group( array('permissions', 'booking_options') ),
+				TRUE
+		);
+		$plugin_settings_page->add_tab(
+				'strings',
+				__('E-Mails', 'commons-booking-2'),
+				'@todo',
+				true
+		);
+		$plugin_settings_page->add_tab(
 				'maps',
 				__('Maps', 'commons-booking-2'),
-				CB2_Settings::render_settings_group( array('maps') ),
-				CB2_Settings::is_enabled('features', 'enable-maps')
+				CB2_Settings::render_settings_group(array('maps')),
+				CB2_Settings::is_enabled('features', 'enable-maps'),
+				TRUE
 		);
+		$plugin_settings_page->add_tab(
+				'holidays',
+				__('Holidays', 'commons-booking-2'),
+				'@todo',
+				CB2_Settings::is_enabled('features', 'enable-holidays')
+		);
+		$plugin_settings_page->add_tab(
+				'codes',
+				__('Codes', 'commons-booking-2'),
+				'@todo',
+				CB2_Settings::is_enabled('features', 'enable-codes')
+		);
+		$plugin_settings_page->add_tab(
+				'strings',
+				__('Strings', 'commons-booking-2'),
+				'@todo',
+				TRUE
+		);
+		$plugin_settings_page->add_tab(
+				'strings',
+				__('Advanced', 'commons-booking-2'),
+				'@todo',
+				TRUE
+		);
+
+
+
 		$plugin_settings_page->render_content();
 	}
-	public function plugin_settings_page_saved() {
-		echo ("<h1>hello</h1>");
-	}
-
+/**
+ * Settings page contents: tab welcome
+ */
 	public function plugin_settings_page_welcome() {
 		return '<h1>welcome to cb2</h1>' . CB2_Settings::render_settings_group( array('features') );
 	}
-
+/**
+ * Settings page contents: tab welcome
+ */
+	public function plugin_settings_page_bookings() {
+		return CB2_Settings::render_settings_group( array('booking-options', 'permissions') );
+	}
 		/**
 	 * Register and enqueue admin-specific style sheet.
 	 *

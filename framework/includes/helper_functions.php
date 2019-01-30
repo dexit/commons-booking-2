@@ -78,24 +78,28 @@ function cb2_form_get_pages() {
  *
  * For use in meta box forms.
  *
+ * @param bool $names_only return only the field names
+ *
  * @return Array  wordpress user roles as [rolename][rolename]
  */
-
-function cb2_form_get_user_roles()
+function cb2_form_get_user_roles( $keys_only=false )
 {
 	// make sure wp user is available
 	if (! function_exists('get_editable_roles')) {
 			require_once ABSPATH . 'wp-admin/includes/user.php';
 	}
 	// dropdown for page select
-	$roles = get_editable_roles();
-	$return = array();
+	$wp_roles = get_editable_roles();
+	$user_roles_formatted = array();
 
-
-	foreach ($roles as $role_name => $role_info) {
-		$return[$role_name] = $role_info['name'];
+	foreach ($wp_roles as $role_name => $role_info) {
+		if ( $keys_only ) {
+			$user_roles_formatted[] = $role_name;
+		} else {
+			$user_roles_formatted[$role_name] = $role_info['name'];
+		}
 	}
-	return $return;
+	return $user_roles_formatted;
 }
 
 /**
