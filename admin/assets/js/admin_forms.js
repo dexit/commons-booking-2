@@ -1,3 +1,10 @@
+/*
+ * Admin Forms scripts
+ *
+ * @package   CommonsBooking2
+ * @author    Annesley Newholm <annesley_newholm@yahoo.it>
+ * @copyright 2018 wielebenwir e.V.
+ */
 (function($) {
   'use strict';
   $(document).ready(function(){
@@ -31,7 +38,7 @@
 
 			sQuery  = aQuery.join('&');
 			sQuery += '&';
-			sQuery += jInputs.serialize()
+			sQuery += jInputs.serialize();
 			sQuery += '&redirect=' + escape(sRedirect);
 
 			document.location = document.location.pathname + '?' + sQuery;

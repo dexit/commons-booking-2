@@ -1,5 +1,5 @@
 /*
- * This stylesheet is used to style the public-facing components of the plugin
+ * Admin styles
  * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
  * @license   GPL-2.0+
@@ -8,25 +8,17 @@
  * @copyright 2015 wielebenwir
  */
 
- .cb-form-danger {
-	 color: red;
- }
+/* Variables: colors, widths, padding */
+@import "partials/_variables";
 
-#cb_admin_metabox { // container
-	.form-field-header { // header
-		font-weight: bold;
-	}
-	#timeframe_form_meta_box {
-		ul.opening_hours_list {
-			li ul, li ul li {
-				display: inline;
-				padding: 5px;
-			}
-		}
+/* Mixins */
+@import "partials/_mixins";
 
-	}
-}
+/* Misc @TODO: move to partials */
+@import "partials/_misc";
 
-.row-alternate {
-	background-color: #F1F1F1;
-}
+/* Calendar styles */
+@import "partials/_calendar";
+
+/* Admin Tabs */
+@import "partials/_tabs";
