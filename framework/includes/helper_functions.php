@@ -102,55 +102,17 @@ function cb2_form_get_user_roles( $keys_only=false )
 	return $user_roles_formatted;
 }
 /**
- * Replace cb2 template tags
+ * Determines if a post, identified by the specified ID, exist
+ * within the WordPress database.
  *
- * @TODO: get the actual data
- * {{cb2_tag}}
  *
- * @param string $template the string template
- * @param object $post
- *
- * @return string
+ * @param    int    $id    The ID of the post to check
+ * @return   bool          True if the post exists; otherwise, false.
  */
-
-function cb2_replace_template_tag($template, $post = null)
+function cb2_post_exists($id)
 {
-
-    // @TODO get actual data from post
-
-    preg_match_all('/{{(\w+)}}/', $template, $matches);
-
-    $replaces = array();
-    $full_matches = array();
-
-    foreach ($matches[1] as $key => $result) {
-
-        $replace = '';
-        $full_match = $matches[0][$key];
-
-        // replacements dict
-        switch ($result) {
-            case 'cb2_item':
-                $replace = 'MY ITEM NAME';
-                break;
-            case 'cb2_location':
-                $replace = 'MY LOCATION NAME';
-                break;
-
-            default:
-                $replace = $full_match;
-                break;
-        }
-
-        $replaces[] = $replace;
-        $full_matches[] = $full_match;
-    }
-    $result = str_replace($full_matches, $replaces, $template);
-
-    return apply_filters('cb2_placeholder_replace', $result, 10, 3);
+    return is_string(get_post_status($id));
 }
-
-
 
 /**
  * Get a List of slot templates for use in dropdown selects.
