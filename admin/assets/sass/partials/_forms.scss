@@ -8,3 +8,29 @@
  * @link      http://www.wielebenwir.de
  * @copyright 2015 wielebenwir
  */
+
+ /* settings */
+ .settings_page_cb2_settings {
+
+	.settings-tab {
+		background-color: transparent;
+		border: 0;
+		box-shadow: 0px 0px #ddd;
+	}
+
+	dl.cb2_template_tags {
+		padding: 10px;
+		display: block;
+		dt{
+			font-weight: bold;
+			margin: 5px;
+				}
+					dd {
+						font-weight: normal;
+						display: inline-block;
+						padding: 3px;
+						margin: 0;
+					}
+	}
+
+ }

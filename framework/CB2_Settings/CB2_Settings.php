@@ -123,7 +123,7 @@ class CB2_Settings {
     {
 
         $option_group_name = self::$settings_prefix . $option_group;
-        $option_array = get_option($option_group_name);
+				$option_array = get_option($option_group_name);
 
         if (is_array($option_array) && $option && array_key_exists($option, $option_array)) { // we want a specific setting on the page and key exists
             return $option_array[$option];

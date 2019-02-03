@@ -25,7 +25,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 		public static $rewrite   = array( 'slug' => 'item' );
 		public static $post_type_args = array(
             'menu_icon' => 'dashicons-video-alt',
-            'supports' => array('title','thumbnail','editor','excerpt')
+            'supports' => array('title','thumbnail','editor','excerpt', 'custom-fields')
 		);
 
     public static function selector_metabox()

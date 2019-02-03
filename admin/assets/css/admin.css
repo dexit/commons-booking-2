@@ -735,6 +735,42 @@ body input.cb2-tick-only:not([checked]):after {
 
 /* Admin Tabs */
 /*
+ * Admin screen forms
+ *
+ * @package   CommonsBooking2
+ * @author Florian Egermann <florian@wielebenwir.de>
+ * @license   GPL-2.0+
+ * @since 0.2
+ * @link      http://www.wielebenwir.de
+ * @copyright 2015 wielebenwir
+ */
+/* settings */
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\0000315}}
+.settings_page_cb2_settings .settings-tab {
+  background-color: transparent;
+  border: 0;
+  box-shadow: 0px 0px #ddd;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\0000321}}
+.settings_page_cb2_settings dl.cb2_template_tags {
+  padding: 10px;
+  display: block;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\0000324}}
+.settings_page_cb2_settings dl.cb2_template_tags dt {
+  font-weight: bold;
+  margin: 5px;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\0000328}}
+.settings_page_cb2_settings dl.cb2_template_tags dd {
+  font-weight: normal;
+  display: inline-block;
+  padding: 3px;
+  margin: 0;
+}
+
+/* Admin Tabs */
+/*
  * General admin css
  *
  * @package   CommonsBooking2

@@ -85,10 +85,10 @@ class CB2_Enqueue_Admin {
 				TRUE
 		);
 		$plugin_settings_page->add_tab(
-				'strings',
-				__('E-Mails', 'commons-booking-2'),
-				'@todo',
-				true
+				'templates',
+				__('Templates', 'commons-booking-2'),
+				$this->plugin_settings_page_templates(),
+				TRUE
 		);
 		$plugin_settings_page->add_tab(
 				'maps',
@@ -116,13 +116,11 @@ class CB2_Enqueue_Admin {
 				TRUE
 		);
 		$plugin_settings_page->add_tab(
-				'strings',
+				'advanced',
 				__('Advanced', 'commons-booking-2'),
-				'@todo',
+				CB2_Settings::render_settings_group(array('extra_meta_fields')),
 				TRUE
 		);
-
-
 
 		$plugin_settings_page->render_content();
 	}
@@ -133,10 +131,13 @@ class CB2_Enqueue_Admin {
 		return '<h1>welcome to cb2</h1>' . CB2_Settings::render_settings_group( array('features') );
 	}
 /**
- * Settings page contents: tab welcome
+ * Settings page contents: tab templates
  */
-	public function plugin_settings_page_bookings() {
-		return CB2_Settings::render_settings_group( array('booking-options', 'permissions') );
+	public function plugin_settings_page_templates() {
+		$tt = new CB2_Template_Tags();
+		$template_list = $tt->list_template_tags();
+
+		return $template_list . CB2_Settings::render_settings_group( array('email_templates', 'extra_meta_fields') );
 	}
 		/**
 	 * Register and enqueue admin-specific style sheet.

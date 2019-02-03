@@ -10,16 +10,9 @@ array(
 		'description' => 'Set up the plugin pages.',
 		'fields' => array(
 			array(
-				'name' => __('Booking Finalize', 'commons-booking-2'),
-				'desc' => __('Shows booking details, asks for user confirmation', 'commons-booking-2'),
-				'id' => 'page-booking-finalize',
-				'type' => 'select',
-				'options' => cb2_form_get_pages()
-			),
-			array(
-				'name' => __('Booking confirmation', 'commons-booking-2'),
-				'desc' => __('Displays successful booking message, booking details and codes (if enabled).', 'commons-booking-2'),
-				'id' => 'page-booking-confirmed',
+				'name' => __('Booking', 'commons-booking-2'),
+				'desc' => __('Shows a booking detail, user bookings list or booking confirmation ', 'commons-booking-2'),
+				'id' => 'page-booking',
 				'type' => 'select',
 				'options' => cb2_form_get_pages()
 				)
@@ -130,5 +123,94 @@ array(
 				'default' => '',
 			)
 		)
-	)
+	),
+	/* maps end */
+	/* extra_meta_fields start */
+	'extra_meta_fields' => array(
+		'title' => 'Extra meta fields',
+		'id' => CB2_Settings::$settings_prefix . 'extra_meta_fields',
+		'description' => 'If you set up additional meta fields for item, location, user or booking (for example: use another plugin to add registration fields).<br> Enter the field names here to make them available for use as template tags: {{mytemplatetag}}.',
+		'fields' => array(
+			array(
+				'name' => __('Item meta fields', 'commons-booking-2'),
+				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
+				'id' => 'item',
+				'type' => 'text',
+				'default' => '',
+			),
+			array(
+				'name' => __('Location meta fields', 'commons-booking-2'),
+				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
+				'id' => 'location',
+				'type' => 'text',
+				'default' => '',
+			),
+			array(
+				'name' => __('Booking meta fields', 'commons-booking-2'),
+				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
+				'id' => 'booking',
+				'type' => 'text',
+				'default' => '',
+			),
+			array(
+				'name' => __('User meta fields', 'commons-booking-2'),
+				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
+				'id' => 'user',
+				'type' => 'text',
+				'default' => '',
+			),
+		)
+	),
+	/* extra_meta_fields end */
+	/* email templates start */
+	'email_templates' => array(
+		'title' => __('Email templates', 'commons-booking-2'),
+		'id' => CB2_Settings::$settings_prefix . 'email_templates',
+		'description' => 'Email templates. You can use html & {{template_tags}}',
+		'fields' => array(
+			array(
+				'name' => __('Booking pending email subject', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'mail_booking_pending_subject',
+				'type' => 'text',
+				'default' => '',
+			),
+			array(
+				'name' => __('Booking pending email body', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'mail_booking_pending_body',
+				'type' => 'textarea',
+				'default' => '',
+			),
+			array(
+				'name' => __('Booking approved email subject', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'mail_booking_approved_subject',
+				'type' => 'text',
+				'default' => '',
+			),
+			array(
+				'name' => __('Booking approved email body', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'mail_booking_approved_body',
+				'type' => 'textarea',
+				'default' => '',
+			),
+			array(
+				'name' => __('Booking canceled email subject', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'mail_booking_canceled_subject',
+				'type' => 'text',
+				'default' => '',
+			),
+			array(
+				'name' => __('Booking canceled email body', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'mail_booking_canceled_body',
+				'type' => 'textarea',
+				'default' => '',
+			),
+		)
+	),
+	/* email templates end */
 );
