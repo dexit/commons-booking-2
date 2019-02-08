@@ -167,6 +167,8 @@ function cb_get_slot_templates_dropdown() {
 	}
   return $dropdown;
 }
+
+
 /**
  * Get array of post types @TODO: Apply filters to let users only add their own post types
  *

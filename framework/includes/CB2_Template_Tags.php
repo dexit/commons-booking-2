@@ -201,7 +201,7 @@ class CB2_Template_Tags {
 			'name' => get_the_title( $this->item_id ),
 			'categories' => 'cat'
 		);
-		$extra_meta_tags =  $this->extra_template_tags['item'];
+		$extra_meta_tags =  (array) $this->extra_template_tags['item'];
 		$this->replace_array['item'] = array_merge ( $system_tags, $extra_meta_tags );
 
 	}
@@ -214,7 +214,7 @@ class CB2_Template_Tags {
 			'name' => get_the_title( $this->location_id ),
 			'address' => get_post_meta( $this->location_id, 'geo_address', TRUE )
 		);
-		$extra_meta_tags = $this->extra_template_tags['location'];
+		$extra_meta_tags = (array) $this->extra_template_tags['location'];
 		$this->replace_array['location'] = array_merge($system_tags, $extra_meta_tags);
 
 	}

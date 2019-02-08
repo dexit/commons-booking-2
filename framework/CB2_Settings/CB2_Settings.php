@@ -56,18 +56,14 @@ class CB2_Settings {
      *
      * @var string
      */
-    static $settings_prefix = 'cb2_settings_';
+    static $settings_prefix = 'cb2_settings';
     /**
      * Metabox (setting groups) defaults
      *
      * @var array
      */
-    static $metabox_defaults = array (
-			'show_on' => array(
-        'key' => 'options-page',
-        'value' => array('commons-booking-2'), /* plugin name */
-      ),
-			'show_names' => true,
+    public static $metabox_defaults = array (
+
 		);
     /**
      * Return an instance of this class.
@@ -104,7 +100,6 @@ class CB2_Settings {
     public static function initialize()
     {
     	require_once(CB2_PLUGIN_ROOT . 'framework/CB2_Settings/includes/settings_groups.php');
-
 			self::$plugin_settings_groups = $cb2_settings_groups;
 
 		}
@@ -115,14 +110,13 @@ class CB2_Settings {
      *
      * @param string $option_group
      * @param string $option      (optional)
-     * @param string $checkbox    (optional, @TODO)
      *
      * @return string/array
      */
-    public static function get($option_group, $option = false, $checkbox = false)
+    public static function get($option_group, $option = false)
     {
 
-        $option_group_name = self::$settings_prefix . $option_group;
+        $option_group_name = self::$settings_prefix . '_' . $option_group;
 				$option_array = get_option($option_group_name);
 
         if (is_array($option_array) && $option && array_key_exists($option, $option_array)) { // we want a specific setting on the page and key exists
@@ -156,6 +150,29 @@ class CB2_Settings {
 			}
 		}
     /**
+     * Get settings group fields
+     *
+     * @since 2.0.0
+		 *
+		 * @param string $group_name
+     *
+     * @return array $group
+     */
+
+    public static function get_settings_group_fields( $group_name, $include_descr = FALSE )
+    {
+			$settings = CB2_Settings::$plugin_settings_groups;
+
+			if (array_key_exists($group_name, $settings)) {
+					return $settings[$group_name]['fields'];
+			}		else {
+				return false;
+			}
+		}
+		public static function format_for_options_page( $settings_group ) {
+
+		}
+    /**
      * Check if a specific feature/setting checkbox is enabled
      *
      * @since 2.0.0
@@ -165,7 +182,7 @@ class CB2_Settings {
      *
      * @return bool
      */
-		public static function is_enabled( $group, $setting ) {
+		public static function is_enabled( $setting ) {
 
 			$setting = self::get( $group, $setting );
 
@@ -291,8 +308,11 @@ class CB2_Settings {
             return $fields;
 
         }
-    }
+		}
+		public function test() {
+			echo "hello";
+		}
 
 
 }
-add_action('admin_init', array('CB2_Settings', 'get_instance'));
+add_action('plugins_loaded', array('CB2_Settings', 'get_instance'));

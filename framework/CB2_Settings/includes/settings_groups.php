@@ -6,7 +6,7 @@ array(
 	/* pages start */
 	'pages' => array(
 		'title' => 'Plugin pages',
-		'id' => CB2_Settings::$settings_prefix . 'pages',
+		'id' => CB2_Settings::$settings_prefix . '_pages',
 		'description' => 'Set up the plugin pages.',
 		'fields' => array(
 			array(
@@ -22,7 +22,7 @@ array(
 	/* features start */
 	'features' => array(
 		'title' => 'Plugin features',
-		'id' => CB2_Settings::$settings_prefix . 'features',
+		'id' => CB2_Settings::$settings_prefix . '_features',
 		'description' => 'Enable or disable plugin features site-wide. You can configure each feature´s settings after save.',
 		'fields' => array(
 			array(
@@ -37,7 +37,7 @@ array(
 				'description' => __('Enable maps and geocoding of adresses.', 'commons-booking-2'),
 				'id' => 'enable-maps',
 				'type' => 'checkbox',
-				'default' => cmb2_set_checkbox_default_for_new_post(false)
+				'default' => cmb2_set_checkbox_default_for_new_post(false),
 			),
 			array(
 				'name' => __('Enable Codes', 'commons-booking-2'),
@@ -59,7 +59,7 @@ array(
 	/* permissions start */
 	'permissions' => array(
 		'title' => 'Permissions',
-		'id' => CB2_Settings::$settings_prefix . 'permissions',
+		'id' => CB2_Settings::$settings_prefix . '_permissions',
 		'description' => 'this is the description',
 		'fields' => array(
 			array(
@@ -82,7 +82,7 @@ array(
 	/* booking options start */
 	'booking_options' => array(
 		'title' => 'Usage restrictions',
-		'id' => CB2_Settings::$settings_prefix . 'booking_options',
+		'id' => CB2_Settings::$settings_prefix . '_booking_options',
 		'description' => '@todo',
 		'fields' => array(
 			array(
@@ -112,7 +112,7 @@ array(
 	/* maps start */
 	'maps' => array(
 		'title' => 'Maps',
-		'id' => CB2_Settings::$settings_prefix . 'maps',
+		'id' => CB2_Settings::$settings_prefix . '_maps',
 		'description' => '@todo',
 		'fields' => array(
 			array(
@@ -125,10 +125,17 @@ array(
 		)
 	),
 	/* maps end */
+	/* test start */
+	'test' => array(
+		'title' => 'test',
+		'id' => 'test',
+		'fields' => array(),
+	),
+	/* test end */
 	/* extra_meta_fields start */
 	'extra_meta_fields' => array(
 		'title' => 'Extra meta fields',
-		'id' => CB2_Settings::$settings_prefix . 'extra_meta_fields',
+		'id' => CB2_Settings::$settings_prefix . '_extra_meta_fields',
 		'description' => 'If you set up additional meta fields for item, location, user or booking (for example: use another plugin to add registration fields).<br> Enter the field names here to make them available for use as template tags: {{mytemplatetag}}.',
 		'fields' => array(
 			array(
@@ -165,7 +172,7 @@ array(
 	/* email templates start */
 	'email_templates' => array(
 		'title' => __('Email templates', 'commons-booking-2'),
-		'id' => CB2_Settings::$settings_prefix . 'email_templates',
+		'id' => CB2_Settings::$settings_prefix . '_email_templates',
 		'description' => 'Email templates. You can use html & {{template_tags}}',
 		'fields' => array(
 			array(
