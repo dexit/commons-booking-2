@@ -149,6 +149,64 @@ class CB2_Settings {
 				return false;
 			}
 		}
+	/**
+	 *  Create the box array from a settings group and add to $boxes
+	 *
+	 * This is typical CMB2, but note two crucial extra items:
+	 *
+	 * - the ['show_on'] property is configured
+	 * - a call to object_type method
+	 *
+	 * @param string $settings_group_id ID of the settings group
+	 * @param array  $args cmb2 metabox args
+	 *
+	 */
+	public static function prepare_settings_metabox( $settings_group_id, $args, $prefix='' ) {
+
+		$group = self::get_settings_group( $settings_group_id );
+		$group_metabox = array_replace( $args, $group);
+
+		if (! empty ($prefix) ) { // replace ids with prefixed ids
+
+			$group_metabox['id'] = $prefix. $group_metabox['id'];
+				foreach ( $group_metabox['fields'] as $field_group_key => $field_group ) {
+					foreach ( $field_group as $key => $value ) {
+						if ( $key == 'id' ) {
+							$group_metabox['fields'][$field_group_key][$key] = $prefix . $value;
+						}
+				}
+		}
+	}
+
+		$group_metabox = self::prepend_description_as_row( $group_metabox );
+
+		$cmb = new_cmb2_box( $group_metabox );
+		return $cmb;
+	}
+
+
+
+	/**
+	 * If array contains a description, create a new row contaning this text
+	 *
+	 * @param array $metabox_array
+	 * @return array $metabox_array with the description added as row
+	 */
+	public static function prepend_description_as_row( $metabox_array ) {
+
+		if (array_key_exists('description', $metabox_array)) { // attach settings group description as new "title" field row
+
+			$dummy_field = array(
+					'id' => $metabox_array['id'] . '_description',
+					'desc' => $metabox_array['description'],
+					'type' => 'title',
+			);
+
+			array_unshift($metabox_array['fields'], $dummy_field);
+		}
+		return $metabox_array;
+	}
+
     /**
      * Get settings group fields
      *

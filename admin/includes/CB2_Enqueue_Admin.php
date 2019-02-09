@@ -36,8 +36,23 @@ class CB2_Enqueue_Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
 		// setting default value for checkbox (https: //github.com/CMB2/CMB2/wiki/Tips-&-Tricks#setting-a-default-value-for-a-checkbox)
-			// add_filter('cmb2_sanitize_toggle', 'cmb2_sanitize_checkbox', 20, 2);
+		add_filter('cmb2_sanitize_toggle', 'cmb2_sanitize_checkbox', 20, 2);
+
+		add_action('cmb2_admin_init', array($this, 'add_metabox_to_pages'));
+
+
 	}
+	public function add_metabox_to_pages() {
+
+		$args = array(
+    	'object_types' => array('item')
+		);
+
+		$box = CB2_Settings::prepare_settings_metabox('features', $args, 'cb2_settings_');
+
+	}
+
+
 		/**
 	 * Register and enqueue admin-specific style sheet.
 	 *

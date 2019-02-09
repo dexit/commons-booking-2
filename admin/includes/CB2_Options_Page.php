@@ -79,70 +79,32 @@ public function create_meta_boxes() {
 	 *
 	 *
 	 */
-	public function do_boxes(  )
-	{
-		$this->prepare_settings_metabox('features');
-		$this->prepare_settings_metabox('pages');
-		$this->prepare_settings_metabox('maps');
-		$this->prepare_settings_metabox('permissions');
-		$this->prepare_settings_metabox('booking_options');
-		$this->prepare_settings_metabox('email_templates');
-		$this->prepare_settings_metabox('extra_meta_fields');
+	public function do_boxes( ){
 
-		return apply_filters( 'cb2_settings_boxes', $this->boxes );
-	}
-	/**
-	 *  Create the box array from a settings group and add to $boxes
-	 *
-	 * This is typical CMB2, but note two crucial extra items:
-	 *
-	 * - the ['show_on'] property is configured
-	 * - a call to object_type method
-	 *
-	 * @uses CB2_Settings
-	 */
-	public function prepare_settings_metabox( $settings_group_id, $context='options-page', $args=array() ) {
-
-		// we will be adding this to all boxes
-		$defaults = array(
-				'show_on' => array(
-    		'key' => 'options-page',
-    		'value' => array( CB2_Settings::$settings_prefix ),
-				),
+		$args = array(
+			'show_on' => array(
+					'key' => 'options-page',
+					'value' => array( CB2_Settings::$settings_prefix ),
+			),
 			'display_cb' => false,
 			'admin_menu_hook' => false,
 			'closed' => false,
 		);
 
-		$group = CB2_Settings::get_settings_group( $settings_group_id );
-		$group_metabox = array_replace( $defaults, $group);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('features', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('pages', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('maps', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('permissions', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('booking_options', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('email_templates', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('extra_meta_fields', $args);
 
-		$group_metabox = $this->prepend_description_as_row( $group_metabox );
-
-		$cmb = new_cmb2_box( $group_metabox );
-		$cmb->object_type('options-page'); // critical, see wiki for why
-		$this->boxes[] = $cmb;
-	}
-	/**
-	 * If array contains a description, create a new row contaning this text
-	 *
-	 * @param array $metabox_array
-	 * @return array $metabox_array with the description added as row
-	 */
-	public function prepend_description_as_row( $metabox_array ) {
-
-		if (array_key_exists('description', $metabox_array)) { // attach settings group description as new "title" field row
-
-			$dummy_field = array(
-					'id' => $metabox_array['id'] . '_description',
-					'desc' => $metabox_array['description'],
-					'type' => 'title',
-			);
-
-			array_unshift($metabox_array['fields'], $dummy_field);
+		foreach ( $boxes as $box ) { // set the object type is necessary for options pages only
+			$box->object_type( 'options-page' );
 		}
-		return $metabox_array;
+		return apply_filters( 'cb2_settings_boxes', $boxes );
 	}
+
 
 	/**
 	 * Add tabs
