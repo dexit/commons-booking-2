@@ -69,10 +69,10 @@ public function create_meta_boxes() {
  *
  * @return string
  */
-function intro_text()
-{
-    return '<p>Welcome to cb2</p>';
-}
+	function intro_text()
+	{
+			return '<p>Welcome to cb2</p>';
+	}
 
 	/**
 	 * Add boxes
@@ -81,15 +81,15 @@ function intro_text()
 	 */
 	public function do_boxes(  )
 	{
-		$this->box_from_settings_group('features');
-		$this->box_from_settings_group('pages');
-		$this->box_from_settings_group('maps');
-		$this->box_from_settings_group('permissions');
-		$this->box_from_settings_group('booking_options');
-		$this->box_from_settings_group('email_templates');
-		$this->box_from_settings_group('extra_meta_fields');
+		$this->prepare_settings_metabox('features');
+		$this->prepare_settings_metabox('pages');
+		$this->prepare_settings_metabox('maps');
+		$this->prepare_settings_metabox('permissions');
+		$this->prepare_settings_metabox('booking_options');
+		$this->prepare_settings_metabox('email_templates');
+		$this->prepare_settings_metabox('extra_meta_fields');
 
-		return apply_filters( 'cb2_plugin_settings_boxes', $this->boxes );
+		return apply_filters( 'cb2_settings_boxes', $this->boxes );
 	}
 	/**
 	 *  Create the box array from a settings group and add to $boxes
@@ -98,40 +98,50 @@ function intro_text()
 	 *
 	 * - the ['show_on'] property is configured
 	 * - a call to object_type method
+	 *
+	 * @uses CB2_Settings
 	 */
-	public function box_from_settings_group( $settings_group ) {
+	public function prepare_settings_metabox( $settings_group_id, $context='options-page', $args=array() ) {
 
 		// we will be adding this to all boxes
-		$show_on = array(
-				'key' => 'options-page',
-				'value' => array( $this->options_key ),
-		);
 		$defaults = array(
-				'show_on' => $show_on, // critical, see wiki for why
-				'display_cb' => false,
-				'admin_menu_hook' => false,
-				'closed' => false,
+				'show_on' => array(
+    		'key' => 'options-page',
+    		'value' => array( CB2_Settings::$settings_prefix ),
+				),
+			'display_cb' => false,
+			'admin_menu_hook' => false,
+			'closed' => false,
 		);
 
-		$group = CB2_Settings::get_settings_group( $settings_group );
+		$group = CB2_Settings::get_settings_group( $settings_group_id );
 		$group_metabox = array_replace( $defaults, $group);
 
-		if ( array_key_exists( 'description', $group_metabox) ) {
+		$group_metabox = $this->prepend_description_as_row( $group_metabox );
 
-			$dummy_field = 	array(
-				'id'   => $group_metabox['id'] . '_description',
-				'desc' => $group_metabox['description'],
-				'type' => 'title',
-			);
-
-			array_unshift( $group_metabox['fields'], $dummy_field );
-
-	}
-
-		$cmb = new_cmb2_box($group_metabox);
+		$cmb = new_cmb2_box( $group_metabox );
 		$cmb->object_type('options-page'); // critical, see wiki for why
 		$this->boxes[] = $cmb;
+	}
+	/**
+	 * If array contains a description, create a new row contaning this text
+	 *
+	 * @param array $metabox_array
+	 * @return array $metabox_array with the description added as row
+	 */
+	public function prepend_description_as_row( $metabox_array ) {
 
+		if (array_key_exists('description', $metabox_array)) { // attach settings group description as new "title" field row
+
+			$dummy_field = array(
+					'id' => $metabox_array['id'] . '_description',
+					'desc' => $metabox_array['description'],
+					'type' => 'title',
+			);
+
+			array_unshift($metabox_array['fields'], $dummy_field);
+		}
+		return $metabox_array;
 	}
 
 	/**
@@ -189,7 +199,7 @@ function intro_text()
 						),
 				);
 			}
-			return apply_filters( 'cb2_plugin_settings_tabs', $this->tabs );
+			return apply_filters( 'cb2_settings_tabs', $this->tabs );
 		}
 	}
 

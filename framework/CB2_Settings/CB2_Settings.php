@@ -159,7 +159,7 @@ class CB2_Settings {
      * @return array $group
      */
 
-    public static function get_settings_group_fields( $group_name, $include_descr = FALSE )
+    public static function get_settings_group_fields( $group_name )
     {
 			$settings = CB2_Settings::$plugin_settings_groups;
 

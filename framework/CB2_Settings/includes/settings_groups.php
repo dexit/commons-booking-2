@@ -60,22 +60,16 @@ array(
 	'permissions' => array(
 		'title' => 'Permissions',
 		'id' => CB2_Settings::$settings_prefix . '_permissions',
-		'description' => 'this is the description',
+		'description' => '@TODO: de-selecting all +save  fails',
 		'fields' => array(
 			array(
 				'name' => __('Allow booking for', 'commons-booking-2'),
 				'id' => 'user-roles',
 				'type' => 'multicheck',
 				'options' => cb2_form_get_user_roles(),
-				'default' => cb2_form_get_user_roles(true)
+				'default' => cb2_form_get_user_roles(true),
+				'select_all_button' => true
 			),
-			array(
-				'name' => __('Approval needed', 'commons-booking-2'),
-				'desc' => __('Bookings need to be approved by an admin', 'commons-booking-2'),
-				'id' => 'approval-needed',
-				'type' => 'checkbox',
-				'default' => cmb2_set_checkbox_default_for_new_post(false)
-			)
 		)
 	),
 	/* permissions end */
