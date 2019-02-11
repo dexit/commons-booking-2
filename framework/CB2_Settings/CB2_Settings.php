@@ -38,7 +38,7 @@ class CB2_Settings {
      *
      * @var array
      */
-    static $plugin_settings_groups;
+    static $plugin_settings_metaboxes;
     /**
      * Admin menu tabs
      *
@@ -99,34 +99,45 @@ class CB2_Settings {
      */
     public static function initialize()
     {
-    	require_once(CB2_PLUGIN_ROOT . 'framework/CB2_Settings/includes/settings_groups.php');
-			self::$plugin_settings_groups = $cb2_settings_groups;
+    	require_once(CB2_PLUGIN_ROOT . 'framework/CB2_Settings/includes/settings_metaboxes.php');
+			self::$plugin_settings_metaboxes = $cb2_settings_metaboxes;
 
 		}
     /**
      * Get a setting from the WP options table
+		 *
+		 * Support for overwrite: if you supply a post_id, the plugin setting will be overwritten
+		 * if the same setting exists for the post.
+		 *
+		 * Usage:
+		 * $settings_global = CB2_Settings::get( 'bookingoptions_min-usage' );
+		 * $settings_item = CB2_Settings::get( 'bookingoptions_min-usage', 73);
      *
-     * @since 2.0.0
+     * @param string $option_id
+     * @param string $post_id (optional)
      *
-     * @param string $option_group
-     * @param string $option      (optional)
-     *
-     * @return string/array
+     * @return string/array $options
      */
-    public static function get($option_group, $option = false)
-    {
+    public static function get( $option_id, $post_id = false ) {
 
-        $option_group_name = self::$settings_prefix . '_' . $option_group;
-				$option_array = get_option($option_group_name);
+			$option_array = get_option( self::$settings_prefix ); // the unserialised plugin settings array
 
-        if (is_array($option_array) && $option && array_key_exists($option, $option_array)) { // we want a specific setting on the page and key exists
-            return $option_array[$option];
-        } elseif (!$option && is_array($option_array)) {
-            return $option_array;
-        } else {
-            // @TODO rework message system, so it does not block usage.
-            // CB2_Object::throw_error( __FILE__, $options_page . ' is not a valid setting');
-        }
+			// first, check if the settings is overwritten in post meta
+			if ( isset ( $post_id ) && cb2_post_exists ( $post_id ) ) { // post exists
+
+				$meta_key = '_' . self::$settings_prefix . '_' . $option_id; // the name
+				$post_type = get_post_type ( $post_id );
+
+				if ( in_array( $meta_key, get_post_custom_keys( $post_id) )) { // check if set in post meta
+					return get_post_meta( $post_id, $meta_key , true);
+				}
+
+			} // otherwise return global plugin settings
+			elseif (array_key_exists($option_id, $option_array)) { // key exists in settings table
+    		return $option_array[$option_id];
+			} else {
+				return false;
+			}
     }
 
     /**
@@ -141,7 +152,7 @@ class CB2_Settings {
 
     public static function get_settings_group( $group_name )
     {
-			$settings = CB2_Settings::$plugin_settings_groups;
+			$settings = CB2_Settings::$plugin_settings_metaboxes;
 
 			if (array_key_exists($group_name, $settings)) {
 					return $settings[$group_name];
@@ -150,37 +161,46 @@ class CB2_Settings {
 			}
 		}
 	/**
-	 *  Create the box array from a settings group and add to $boxes
+	 *  Set cb2_options to defaults
 	 *
-	 * This is typical CMB2, but note two crucial extra items:
+	 * @TODO
 	 *
-	 * - the ['show_on'] property is configured
-	 * - a call to object_type method
+	 */
+	public function set_default_options() {
+
+	}
+
+	/**
+	 *  Create the box array from a settings group, format ids and create cmb2 boxes
+	 *
+	 * @usage
 	 *
 	 * @param string $settings_group_id ID of the settings group
 	 * @param array  $args cmb2 metabox args
+	 * @param bool $options_page format for use on options page
 	 *
 	 */
-	public static function prepare_settings_metabox( $settings_group_id, $args, $prefix='' ) {
+	public static function prepare_settings_metabox( $settings_group_id, $args, $options_page=TRUE ) {
 
 		$group = self::get_settings_group( $settings_group_id );
 		$group_metabox = array_replace( $args, $group);
 
-		if (! empty ($prefix) ) { // replace ids with prefixed ids
-
-			$group_metabox['id'] = $prefix. $group_metabox['id'];
-				foreach ( $group_metabox['fields'] as $field_group_key => $field_group ) {
-					foreach ( $field_group as $key => $value ) {
-						if ( $key == 'id' ) {
-							$group_metabox['fields'][$field_group_key][$key] = $prefix . $value;
-						}
-				}
+		// if options page: metabox ids must be prefixed e.g. cb2_settings_bookingoptions
+		if( $options_page ) {
+				$group_metabox['id'] = self::$settings_prefix . '_'. $group_metabox['id'];
+		}	else { // field ids must be prefixed anywhere else: e.g. _cb2-settings_booking-options_max-slots
+			foreach ($group_metabox['fields'] as $field_group_key => $field_group) {
+					foreach ($field_group as $key => $value) {
+							if ($key == 'id') {
+									$group_metabox['fields'][$field_group_key][$key] = '_' .self::$settings_prefix . '_' . $value;
+							}
+					}
+			}
 		}
-	}
-
-		$group_metabox = self::prepend_description_as_row( $group_metabox );
-
-		$cmb = new_cmb2_box( $group_metabox );
+		// Add additional rows
+		$group_metabox = self::prepend_description_as_row( $group_metabox ); // add description
+		$group_metabox = self::append_reset_button_row( $group_metabox ); // add reset button
+		$cmb = new_cmb2_box( $group_metabox ); // create box
 		return $cmb;
 	}
 
@@ -194,16 +214,35 @@ class CB2_Settings {
 	 */
 	public static function prepend_description_as_row( $metabox_array ) {
 
-		if (array_key_exists('description', $metabox_array)) { // attach settings group description as new "title" field row
+		if (array_key_exists('desc', $metabox_array)) { // attach settings group description as new "title" field row
 
-			$dummy_field = array(
-					'id' => $metabox_array['id'] . '_description',
-					'desc' => $metabox_array['description'],
+			$desc_field = array(
+					'id' => $metabox_array['id'] . '_desc',
+					'desc' => $metabox_array['desc'],
 					'type' => 'title',
-			);
+					'classes' => 'cb2_form_desc',
 
-			array_unshift($metabox_array['fields'], $dummy_field);
+			);
+			array_unshift($metabox_array['fields'], $desc_field);
 		}
+		return $metabox_array;
+	}
+	/**
+	 * Adds a reset button
+	 *
+	 * @param array $metabox_array
+	 * @return array $metabox_array with the reset added as row
+	 */
+	public static function append_reset_button_row( $metabox_array ) {
+
+		$reset_field = array(
+				'id' => $metabox_array['id'] . '_reset',
+				'desc' => __('<b>Reset<b> to plugin defaults @TODO', 'commons-booking-2'),
+				'type' => 'title',
+				'classes' => 'cb2_form_reset',
+		);
+		$metabox_array['fields'][] = $reset_field;
+
 		return $metabox_array;
 	}
 
@@ -214,21 +253,18 @@ class CB2_Settings {
 		 *
 		 * @param string $group_name
      *
-     * @return array $group
+     * @return array $fields
      */
 
     public static function get_settings_group_fields( $group_name )
     {
-			$settings = CB2_Settings::$plugin_settings_groups;
+			$settings = CB2_Settings::$plugin_settings_metaboxes;
 
 			if (array_key_exists($group_name, $settings)) {
 					return $settings[$group_name]['fields'];
 			}		else {
 				return false;
 			}
-		}
-		public static function format_for_options_page( $settings_group ) {
-
 		}
     /**
      * Check if a specific feature/setting checkbox is enabled
@@ -242,7 +278,7 @@ class CB2_Settings {
      */
 		public static function is_enabled( $setting ) {
 
-			$setting = self::get( $group, $setting );
+			$setting = self::get( $setting );
 
 			if ( ! empty ( $setting ) && $setting == 'on' ) {
         return TRUE;
@@ -261,116 +297,5 @@ class CB2_Settings {
     {
         return self::$settings_prefix;
 		}
-	/**
-	 * A settings group metaboxes
-	 *
-	 * @since 2.0.0
-	 *
-	 * @param array $metabox_args
-	 *
-	 * @return mixed
-	 */
-    public static function render_settings_group ( $settings_group_ids = array() ){
-
-			$metabox_html = '';
-			$group_ids = (array) $settings_group_ids;
-
-			foreach ( $group_ids as $group_id ) {
-
-				$metabox_args = CB2_Settings::get_settings_group( $group_id );
-				$args = array_merge( self::$metabox_defaults, $metabox_args);
-
-				$metabox_html .= sprintf('
-								<div class="postbox">
-									<div class="inside">
-									<h3>%s</h3>
-									%s
-									%s
-									</div>
-								</div>',
-						$args['title'],
-						$args['description'],
-						cmb2_metabox_form($args, $args['id'], array('echo' => false))
-				);
-			}
-			return $metabox_html;
-		}
-	/**
-	 * A settings group metabox
-	 *
-	 * @since 2.0.0
-	 *
-	 * @param array $metabox_args
-	 *
-	 * @return mixed
-	 */
-    public function add_metabox ( $metabox_args, $tab='default' ){
-
-			$args = array_merge (self::$metabox_options_defaults, $metabox_args );
-			$metabox_html = sprintf( '
-				<div class="postbox">
-					<div class="inside">
-					<h3>%s</h3>
-					%s
-					%s
-					</div>
-				</div>',
-				$args['title'],
-				$args['description'],
-				cmb2_metabox_form( $args, $args['id'], array ('echo' => FALSE ))
-			);
-			return $metabox_html;
-		}
-
-    /**
-     * Render the timeframe options in edit.php
-     *
-     * @since 2.0.0
-     *
-     * @return array
-     */
-
-    public static function do_availability_options_metaboxes()
-    {
-        foreach (self::$timeframe_options as $option) {
-            // Add setting groups
-            CB2_Settings::do_settings_group($option);
-        }
-		}
-    /**
-     * Return field names and values as key/value pair
-     * The options that are available as timeframe options
-     *
-     * @since 2.0.0
-     *
-     * @return array
-     */
-
-    public static function get_timeframe_option_group_fields()
-    {
-
-        $fields = array();
-
-        if (!empty(self::$timeframe_options) && is_array(self::$timeframe_options)) {
-
-            foreach (self::$timeframe_options as $option) {
-
-                $group = self::get_settings_group_fields($option);
-
-                foreach ($group as $group_fields) {
-                    $field = $group_fields['id'];
-                    $val = self::get($option, $field);
-                    $fields[$field] = $val;
-                }
-            }
-            return $fields;
-
-        }
-		}
-		public function test() {
-			echo "hello";
-		}
-
-
 }
 add_action('plugins_loaded', array('CB2_Settings', 'get_instance'));

@@ -95,9 +95,9 @@ public function create_meta_boxes() {
 		$boxes[] = CB2_Settings::prepare_settings_metabox('pages', $args);
 		$boxes[] = CB2_Settings::prepare_settings_metabox('maps', $args);
 		$boxes[] = CB2_Settings::prepare_settings_metabox('permissions', $args);
-		$boxes[] = CB2_Settings::prepare_settings_metabox('booking_options', $args);
-		$boxes[] = CB2_Settings::prepare_settings_metabox('email_templates', $args);
-		$boxes[] = CB2_Settings::prepare_settings_metabox('extra_meta_fields', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('bookingoptions', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('emailtemplates', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('extrametafields', $args);
 
 		foreach ( $boxes as $box ) { // set the object type is necessary for options pages only
 			$box->object_type( 'options-page' );
@@ -123,7 +123,7 @@ public function create_meta_boxes() {
 
 					'desc' => '',
 					'boxes' => array(
-							$this->options_key .'_features',
+						CB2_Settings::$settings_prefix .'_features',
 					),
 			);
 			$this->tabs[] = array(
@@ -131,8 +131,8 @@ public function create_meta_boxes() {
 					'title' => __( 'Bookings', 'commons-booking-2' ),
 					'desc' => '',
 					'boxes' => array(
-							$this->options_key .'_booking_options',
-							$this->options_key .'_permissions',
+					CB2_Settings::$settings_prefix .'_permissions',
+					CB2_Settings::$settings_prefix .'_bookingoptions',
 					),
 			);
 			$this->tabs[] = array(
@@ -140,7 +140,7 @@ public function create_meta_boxes() {
 					'title' => __( 'General', 'commons-booking-2' ),
 					'desc' => '',
 					'boxes' => array(
-							$this->options_key .'_pages',
+						CB2_Settings::$settings_prefix .'_pages',
 					),
 			);
 			$this->tabs[] = array(
@@ -148,7 +148,7 @@ public function create_meta_boxes() {
 					'title' => __('Templates', 'commons-booking-2' ),
 					'desc' => '',
 					'boxes' => array(
-							$this->options_key .'_email_templates',
+						CB2_Settings::$settings_prefix .'_email_templates',
 					),
 			);
 			if ( ! CB2_Settings::is_enabled( 'features', 'maps' ) ) {
@@ -157,7 +157,7 @@ public function create_meta_boxes() {
 						'title' => __( 'Maps', 'commons-booking-2'),
 						'desc' => '',
 						'boxes' => array(
-								$this->options_key .'_maps',
+							CB2_Settings::$settings_prefix .'_maps',
 						),
 				);
 			}
