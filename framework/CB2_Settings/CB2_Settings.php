@@ -298,4 +298,4 @@ class CB2_Settings {
         return self::$settings_prefix;
 		}
 }
-add_action('plugins_loaded', array('CB2_Settings', 'get_instance'));
+add_action('cmb2_admin_init', array('CB2_Settings', 'get_instance'));

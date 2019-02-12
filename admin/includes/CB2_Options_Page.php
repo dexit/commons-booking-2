@@ -32,7 +32,8 @@ Class CB2_Options_Page {
 		add_filter('cmb2metatabs_before_form', array($this, 'intro_text'));
 
 		// add_action('cmb2_save_options-page_fields', array( $this, 'reply') , 10, 2);
-		add_action( 'cmb2_admin_init', array( $this, 'check_settings_valid'));
+		// add_action( 'admin_init', array( $this, 'check_settings_valid'));
+
 
 
 	}
@@ -45,7 +46,8 @@ Class CB2_Options_Page {
 
 		// feature maps is enabled and api key NOT set
 		if ( CB2_Settings::is_enabled( 'features_enable-maps' ) && empty ( CB2_Settings::get( 'maps_api-key' ) ) ) {
-			new WP_Admin_Notice(__( '<strong>Notice</strong>: You need to provide a valid api key for geocoding to work.', 'commons-booking-2') , 'error');
+			add_settings_error('cb2_settings-notices', '', __('Hello.', 'cmb2'), 'updated');
+			// new WP_Admin_Notice(__( '<strong>Notice</strong>: You need to provide a valid api key for geocoding to work.', 'commons-booking-2') , 'error');
 	}
 
 }
