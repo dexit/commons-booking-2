@@ -127,38 +127,38 @@ public function create_meta_boxes() {
 					),
 			);
 			$this->tabs[] = array(
-					'id' => 'bookings',
-					'title' => __( 'Bookings', 'commons-booking-2' ),
-					'desc' => '',
-					'boxes' => array(
-					CB2_Settings::$settings_prefix .'_permissions',
-					CB2_Settings::$settings_prefix .'_bookingoptions',
-					),
+				'id' => 'general',
+				'title' => __('General', 'commons-booking-2'),
+				'desc' => '',
+				'boxes' => array(
+						CB2_Settings::$settings_prefix . '_pages',
+				),
 			);
 			$this->tabs[] = array(
-					'id' => 'general',
-					'title' => __( 'General', 'commons-booking-2' ),
-					'desc' => '',
-					'boxes' => array(
-						CB2_Settings::$settings_prefix .'_pages',
-					),
+				'id' => 'bookings',
+				'title' => __( 'Bookings', 'commons-booking-2' ),
+				'desc' => '',
+				'boxes' => array(
+				CB2_Settings::$settings_prefix .'_permissions',
+				CB2_Settings::$settings_prefix .'_bookingoptions',
+				),
 			);
 			$this->tabs[] = array(
-					'id' => 'templates',
-					'title' => __('Templates', 'commons-booking-2' ),
-					'desc' => '',
-					'boxes' => array(
-						CB2_Settings::$settings_prefix .'_email_templates',
-					),
+				'id' => 'templates',
+				'title' => __('Templates', 'commons-booking-2' ),
+				'desc' => '',
+				'boxes' => array(
+					CB2_Settings::$settings_prefix .'_emailtemplates',
+				),
 			);
-			if ( ! CB2_Settings::is_enabled( 'features', 'maps' ) ) {
+			if ( CB2_Settings::is_enabled( 'features_enable-maps' ) ) {
 				$this->tabs[] = array(
-						'id' => 'maps',
-						'title' => __( 'Maps', 'commons-booking-2'),
-						'desc' => '',
-						'boxes' => array(
-							CB2_Settings::$settings_prefix .'_maps',
-						),
+					'id' => 'maps',
+					'title' => __( 'Maps', 'commons-booking-2'),
+					'desc' => '',
+					'boxes' => array(
+						CB2_Settings::$settings_prefix .'_maps',
+					),
 				);
 			}
 			return apply_filters( 'cb2_settings_tabs', $this->tabs );
