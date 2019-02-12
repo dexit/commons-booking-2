@@ -28,13 +28,25 @@ Class CB2_Options_Page {
 
 		// add action to hook option page creation to
 		add_action('cmb2_admin_init', array( $this, 'create_meta_boxes') );
-		// use CMO filter to add an intro at the top of the options page
+		// use filter to add an intro at the top of the options page
 		add_filter('cmb2metatabs_before_form', array($this, 'intro_text'));
 
-		add_action('cmb2_save_options-page_fields', array( $this, 'reply') , 10, 2);
+		// add_action('cmb2_save_options-page_fields', array( $this, 'reply') , 10, 2);
+		add_action( 'cmb2_admin_init', array( $this, 'check_settings_valid'));
+
 
 	}
-public function reply( $id, $args ) {
+	/**
+	 * Check for validity of settings
+	 *
+	 * @TODO fires too late, admin notice is only shown after refresh.
+	 */
+	public function check_settings_valid( ) {
+
+		// feature maps is enabled and api key NOT set
+		if ( CB2_Settings::is_enabled( 'features_enable-maps' ) && empty ( CB2_Settings::get( 'maps_api-key' ) ) ) {
+			new WP_Admin_Notice(__( '<strong>Notice</strong>: You need to provide a valid api key for geocoding to work.', 'commons-booking-2') , 'error');
+	}
 
 }
 /**
