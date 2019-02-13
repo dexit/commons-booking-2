@@ -65,62 +65,7 @@ class CB2_Enqueue_Admin {
 	 */
 	public function plugin_settings_page() {
 
-		$plugin_settings_page = new CB2_Admin_Tabs('cb2_settings');
-
-		$plugin_settings_page->add_tab(
-				'cb2',
-				'CB2',
-				$this->plugin_settings_page_welcome()
-		);
-		$plugin_settings_page->add_tab(
-				'General',
-				__('General', 'commons-booking-2'),
-				CB2_Settings::render_settings_group(array('pages')),
-				TRUE
-		);
-		$plugin_settings_page->add_tab(
-				'booking-options',
-				__('Bookings', 'commons-booking-2'),
-				CB2_Settings::render_settings_group( array('permissions', 'booking_options') ),
-				TRUE
-		);
-		$plugin_settings_page->add_tab(
-				'strings',
-				__('E-Mails', 'commons-booking-2'),
-				'@todo',
-				true
-		);
-		$plugin_settings_page->add_tab(
-				'maps',
-				__('Maps', 'commons-booking-2'),
-				CB2_Settings::render_settings_group(array('maps')),
-				CB2_Settings::is_enabled('features', 'enable-maps'),
-				TRUE
-		);
-		$plugin_settings_page->add_tab(
-				'holidays',
-				__('Holidays', 'commons-booking-2'),
-				'@todo',
-				CB2_Settings::is_enabled('features', 'enable-holidays')
-		);
-		$plugin_settings_page->add_tab(
-				'codes',
-				__('Codes', 'commons-booking-2'),
-				'@todo',
-				CB2_Settings::is_enabled('features', 'enable-codes')
-		);
-		$plugin_settings_page->add_tab(
-				'strings',
-				__('Strings', 'commons-booking-2'),
-				'@todo',
-				TRUE
-		);
-		$plugin_settings_page->add_tab(
-				'strings',
-				__('Advanced', 'commons-booking-2'),
-				'@todo',
-				TRUE
-		);
+		$box = CB2_Settings::prepare_settings_metabox('bookingoptions', $args, FALSE );
 
 
 
