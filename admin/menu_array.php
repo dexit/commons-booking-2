@@ -30,8 +30,8 @@ $menu_interface = array(
 		'menu_visible'  => FALSE,
 		'page_title'    => 'Item availibility %(for)% %location_ID%',
 		'menu_title'    => 'Item Availibility',
-		'wp_query_args' => 'post_type=periodent-timeframe&post_title=Availability %(for)% %item_ID%&period_status_type_ID=' . CB2_PeriodStatusType_Available::bigID(),
-		'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Available::$id,
+		'wp_query_args' => 'post_type=periodent-timeframe&post_title=Availability %(for)% %item_ID%&period_status_type_ID=' . CB2_PeriodStatusType_PickupReturn::bigID(),
+		'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_PickupReturn::$id,
 	),
 	'cb2-locations'     => array(
 		'page_title'     => 'Locations',
@@ -53,11 +53,6 @@ $menu_interface = array(
 		'count'         => "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`",
 		'count_class'   => 'ok',
 	),
-	'cb2-calendar' => array(
-		'page_title'    => 'Calendar',
-		'menu_visible'  => FALSE,
-		'function'      => 'cb2_calendar',
-	),
 
 	// Advanced
 	'cb2-admin' => array(
@@ -70,6 +65,11 @@ $menu_interface = array(
 		'page_title'    => 'Reflection',
 		'function'      => 'cb2_reflection',
 		'first'         => TRUE,
+		'advanced'      => TRUE,
+	),
+	'cb2-gui-setup' => array(
+		'page_title'    => 'GUI setup',
+		'function'      => 'cb2_gui_setup',
 		'advanced'      => TRUE,
 	),
 	'cb2-periods' => array(
@@ -136,6 +136,11 @@ $menu_interface = array(
 	'cb2-post-edit' => array(
 		'page_title'    => 'Edit Post',
 		'function'      => 'cb2_settings_post_edit',
+		'advanced'      => TRUE,
+	),
+	'cb2-load-template' => array(
+		'page_title'    => 'Load Template',
+		'function'      => 'cb2_settings_load_template',
 		'advanced'      => TRUE,
 	),
 );

@@ -8,6 +8,6 @@
 			}
 		?>
 
-		<?php CB2::the_inner_loop( NULL, 'list', 'openinghours' ); ?>
+		<?php CB2::the_inner_loop( $template_args, NULL, 'list', 'openinghours' ); ?>
 	</ul>
 </li>

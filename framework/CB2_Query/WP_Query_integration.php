@@ -152,7 +152,7 @@ function cb2_init_do_action() {
 				if ( method_exists( $Class, $method ) ) {
 					if ( WP_DEBUG ) {
 						print( "<div class='cb2-WP_DEBUG'>Static $Class::do_action_[$action]()</div>" );
-						krumo( $args );
+						//krumo( $args );
 					}
 					$Class::$method( $user, $args );
 				} else throw new Exception( "Static $method does not exist on $Class" );
@@ -283,6 +283,26 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 	return $consider_empty_post;
 }
 
+/* NOT Curently used because a database redirect achieves it instead
+// TODO: however, would be good to prevent it also with this
+function cb2_cmb2_can_save( $can_save, $cmb ) {
+	// CMB2 can, but does not need to save its metadata
+	// as the hooked CB2 save() process does this
+	$can_save  = TRUE;
+	$box_types = $cmb->box_types();
+	foreach ( $box_types as $post_type ) {
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+			if ( CB2_DEBUG_SAVE )
+				print( "<div class='cb2-WP_DEBUG-small'>CMB2_hookup->save() prevented for [$Class]</div>" );
+			$can_save = FALSE;
+			break;
+		}
+	}
+	return $can_save;
+}
+add_filter( 'cmb2_can_save', 'cb2_cmb2_can_save', 10, 2 );
+*/
+
 function cb2_cmb2_save_post_fields_debug( $object_id, $cmb_id, $updated, $cmb2 ) {
 	if ( CB2_DEBUG_SAVE ) {
 		print( "<div class='cb2-WP_DEBUG-small'>CMB2::save_post_fields($object_id)</div>" );
@@ -353,6 +373,13 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				krumo($post);
 				$properties = (array) $post;
 
+				// Further requests can come from the native tables now
+				// e.g. when loading an associated PeriodStatusType
+				// in the factory_from_properties() below
+				$auto_draft_publish_transition = FALSE;
+				if ( CB2_DEBUG_SAVE && ! $auto_draft_publish_transition )
+					print( "<div class='cb2-WP_DEBUG-small'>auto_draft_publish_transition <span class='cb2-warning'>FALSE</span></div>" );
+
 				// ----------------------------------------------------- save() => pre_post_create() recursive
 				// Important: $post->ID is the ID from wp_posts
 				// 0 ID this causes save() => create()
@@ -383,9 +410,6 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				exit();
 			}
 		}
-
-		// Further requests can come from the native tables now
-		$auto_draft_publish_transition = FALSE;
 	}
 
 	return $native_ID;
@@ -404,8 +428,10 @@ function cb2_post_class_check( $classes, $class, $ID ) {
 
 			if ( $post_type ) {
 				if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
-					if ( CB2_Database::postmeta_table( $Class ) )
-						CB2_Query::debug_print_backtrace( "Please do not use post_class() in CB2 templates with [$post_type] because it cannot be cached. Use CB2::post_class() instead." );
+					if ( $post_meta_stub = CB2_Database::postmeta_table( $Class ) ) {
+						if ( $post_meta_stub != 'postmeta' )
+							CB2_Query::debug_print_backtrace( "Please do not use post_class() in CB2 templates with [$post_type] because it cannot be cached. Use CB2::post_class() instead." );
+					}
 				}
 			}
 		}
@@ -477,15 +503,15 @@ function cb2_the_posts_cache_meta( $posts, $wp_query ) {
 		}
 
 		if ( $meta_type ) {
+			$object_count = count( $object_ids );
 			if ( CB2_DEBUG_SAVE ) {
 				// krumo( $posts );
-				$object_count     = count( $object_ids );
 				print( "<div class='cb2-WP_DEBUG-small'>cb2_the_posts_cache_meta([$object_count] $meta_type)</div>" );
 			}
 			if ( ! update_meta_cache( $meta_type, $object_ids ) ) {
 				global $wpdb;
 				krumo($wpdb);
-				throw new Exception( 'Failed to update_meta_cache()' );
+				CB2_Query::debug_print_backtrace( "Failed to update_meta_cache([$object_count] $meta_type)" );
 			}
 		}
 	}
@@ -671,7 +697,14 @@ function cb2_pre_get_posts_redirect_wpdb( &$wp_query ) {
 }
 
 function cb2_post_results_unredirect_wpdb( $posts, $wp_query ) {
-	CB2_Query::unredirect_wpdb();
+	// If the wp_query is for a managed post_type
+	// then redirect the wpdb prefix
+	if ( isset( $wp_query->query['post_type'] ) ) {
+		$post_type = $wp_query->query['post_type'];
+		if ( is_array( $post_type ) )
+			$post_type = ( count( $post_type ) ? array_values( $post_type )[0] : NULL );
+		CB2_Query::unredirect_wpdb();
+	}
 	return $posts;
 }
 
@@ -719,6 +752,66 @@ function cb2_loop_start( &$wp_query ) {
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
 // Framework changes and fixes
+function cb2_pre_post_link( $permalink, $post_used, $leavename, $sample = NULL ) {
+	// get_permalink($post) => get_post_permalink($post->ID) => get_post($ID)
+	// if this $post->ID has been previously cached
+	// by CB2 activity then it will return the cached post
+	// and the wrong link displayed.
+	// The global $post however, may be correct, if it has the same ID
+	// so we use that one
+	global $post;
+
+	if ( $post && $post->ID == $post_used->ID && $post->post_type != $post_used->post_type ) {
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post->post_type ) ) {
+			throw new Exception( 'get_permalink(ID) got the wrong post_type from the get_instance() call. (Fix disabled)' );
+			/*
+			wp_cache_set( $post->ID, $post, 'posts' );
+			$permalink = get_permalink( $post, $leavename );
+			if ( WP_DEBUG )
+				print( "<div class='cb2-WP_DEBUG-small'>get_permalink(ID) just changed the post_type [$post_used->post_type] => [$post->post_type]</div>" );
+			*/
+		}
+	}
+
+	return $permalink;
+}
+add_filter( 'pre_post_link',  'cb2_pre_post_link', 10, 3 );
+add_filter( 'post_type_link', 'cb2_pre_post_link', 10, 4 );
+
+function cb2_map_meta_cap( $caps, $cap, $user_id, $args ) {
+	// map_meta_cap($post->ID) => get_post($ID)
+	// if this $post->ID has been previously cached
+	// by CB2 activity then it will return the cached post
+	// and the wrong link displayed.
+	// The global $post however, may be correct, if it has the same ID
+	// so we use that one
+	global $post;
+
+	if ( count( $caps ) == 1 && $caps[0] == 'do_not_allow' && $post ) {
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post->post_type ) ) {
+			switch ( $cap ) {
+				case 'edit_post':
+				case 'delete_post':
+					$post_id = $args[0];
+					krumo($post);
+					throw new Exception( "map_meta_cap($post_id != $post->ID, $cap) denied" );
+					/*wp_cache_set( $post->ID, $post, 'posts' );
+					if ( $post_id == $post->ID ) {
+						$caps = array( 'edit_published_posts' );
+					}
+					*/
+					break;
+				default:
+					if ( WP_DEBUG )
+						print("<div class='cb2-WP_DEBUG'>$cap not allowed on $Class</div>");
+			}
+		}
+	}
+
+	return $caps;
+}
+add_filter( 'map_meta_cap', 'cb2_map_meta_cap', 10, 4 );
+
 function cb2_query_debug( $query ) {
 	global $wp;
 	if ( CB2_DEBUG_SAVE && FALSE )

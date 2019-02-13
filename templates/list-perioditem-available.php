@@ -1,4 +1,6 @@
-<?php if ( CB2::is_top_priority() ) { ?>
+<?php
+	// Range selection on the front end
+	if ( CB2::is_top_priority() ) { ?>
 	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( 'cb2-template-available cb2-selectable' ); ?>>
 		<div class="cb2-details">
 			<?php if ( CB2::can_select() ) { ?>

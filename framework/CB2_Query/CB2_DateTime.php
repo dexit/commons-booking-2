@@ -14,6 +14,10 @@ class CB2_DateTime {
 		return self::now()->clearTime();
 	}
 
+	static function yesterday() {
+		return self::today()->sub( 'P1D' );
+	}
+
 	static function next_week_start() {
 		$today       = self::today();
 		$day_of_week = CB2_Day::dayofweek_adjusted( $today );
@@ -21,29 +25,29 @@ class CB2_DateTime {
 	}
 
 	static function next_week_end() {
-		$today       = self::today();
+		$today       = self::today()->endTime();
 		$day_of_week = CB2_Day::dayofweek_adjusted( $today );
 		return $today->add( 7 - $day_of_week + 6 );
 	}
 
 	static function day_start() {
 		$today = self::today();
-		return $today->setTime( get_option( 'cb2-day-start', 9 ), 0 );
+		return $today->setTime( get_option( CB2_TEXTDOMAIN . '-day-start', 9 ), 0 );
 	}
 
 	static function day_end() {
 		$today = self::today();
-		return $today->setTime( get_option( 'cb2-day-end', 18 ), 0 );
+		return $today->setTime( get_option( CB2_TEXTDOMAIN . '-day-end', 18 ), 0 );
 	}
 
 	static function lunch_start() {
 		$today = self::today();
-		return $today->setTime( get_option( 'cb2-lunch-start', 12 ), 0 );
+		return $today->setTime( get_option( CB2_TEXTDOMAIN . '-lunch-start', 12 ), 0 );
 	}
 
 	static function lunch_end() {
 		$today = self::today();
-		return $today->setTime( get_option( 'cb2-lunch-end', 13 ), 0 );
+		return $today->setTime( get_option( CB2_TEXTDOMAIN . '-lunch-end', 13 ), 0 );
 	}
 
 	function __construct( $datetime = NULL, String $parse_error = NULL ) {
@@ -67,13 +71,23 @@ class CB2_DateTime {
 
 		if ( ! ( $this->datetime instanceof DateTime ) )
 			throw new Exception( $parse_error ? $parse_error : "Failed to parse DateTime [$datetime]" );
+
+		if ( WP_DEBUG ) $this->debug_datetime = $this->datetime->format( 'c' );
 	}
 
 	function __clone() {
 		$this->datetime = clone $this->datetime;
 	}
 
+	function clone() {
+		return clone $this;
+	}
+
 	// -------------------------------------------- Serialisation
+  public function __toString() {
+		return $this->format( 'c' );
+  }
+
 	function format( String $format ) {
 		return $this->datetime->format( $format );
 	}
@@ -81,6 +95,11 @@ class CB2_DateTime {
 	// -------------------------------------------- Time Navigation
 	function clearTime() {
 		$this->setTime( 0, 0 );
+		return $this;
+	}
+
+	function endTime() {
+		$this->setTime( 23, 59, 59 );
 		return $this;
 	}
 
@@ -95,12 +114,12 @@ class CB2_DateTime {
 	}
 
 	function setDayStart() {
-		$this->datetime->setTime( get_option( 'cb2-day-start', 9 ), 0 );
+		$this->datetime->setTime( get_option( CB2_TEXTDOMAIN . '-day-start', 9 ), 0 );
 		return $this;
 	}
 
 	function setDayEnd() {
-		$this->datetime->setTime( get_option( 'cb2-day-end', 18 ), 0 );
+		$this->datetime->setTime( get_option( CB2_TEXTDOMAIN . '-day-end', 18 ), 0 );
 		return $this;
 	}
 

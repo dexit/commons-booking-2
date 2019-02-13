@@ -85,7 +85,7 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
 			ob_start();
 			$return_template = require( $template );
 			$data = ob_get_clean();
-			if ( WP_DEBUG ) {
+			if ( WP_DEBUG && ! $_POST ) {
 				global $post;
 				$Class      = get_class( $post );
 				$file_debug = basename($template);
@@ -95,6 +95,7 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
 			do_action( 'end_operation', 'cb_template_part::' . $file_handle );
 
 			if ( $cache_args ) {
+				// TODO: this $template cache is not namespaced
 				wp_cache_set( $template, $data, serialize( $cache_args ), 3600 );
 			}
 			if ( $return === true )

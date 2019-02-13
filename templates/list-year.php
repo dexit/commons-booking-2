@@ -8,6 +8,6 @@
 			}
 		?>
 
-		<?php CB2::the_inner_loop(); ?>
+		<?php CB2::the_inner_loop( $template_args ); ?>
 	</ul>
 </li>

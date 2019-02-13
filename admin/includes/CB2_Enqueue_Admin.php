@@ -58,6 +58,8 @@ class CB2_Enqueue_Admin {
 			wp_enqueue_style( CB2_TEXTDOMAIN . '-settings-styles', plugins_url( 'admin/assets/css/settings.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
 		}
 		wp_enqueue_style( CB2_TEXTDOMAIN . '-admin-styles', plugins_url( 'admin/assets/css/admin.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
+		// TODO: put this locally
+		wp_enqueue_style( 'jquery-ui-cupertino', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/themes/cupertino/jquery-ui.css' );
 	}
 		/**
 	 * Register and enqueue admin-specific JavaScript.
@@ -76,6 +78,7 @@ class CB2_Enqueue_Admin {
 			wp_enqueue_script( CB2_TEXTDOMAIN . '-settings-script', plugins_url( 'admin/assets/js/settings.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery', 'jquery-ui-tabs' ), CB2_VERSION );
 		}
 		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-script', plugins_url( 'admin/assets/js/admin.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
+		wp_enqueue_script( 'jquery-ui-tabs' );
 	}
 	/**
 	 * Register the plugin settings menu.
