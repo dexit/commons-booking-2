@@ -106,7 +106,7 @@ class CB2_Shortcodes {
 		$html .= '<div class="cb2-calendar">';
 		$html .= CB2::get_the_calendar_header( $display_strategy );
 		$html .= '<ul class="cb2-subposts">';
-		$html .= CB2::get_the_inner_loop( $display_strategy, $context, $template_type, NULL, NULL, $template_args );
+		$html .= CB2::get_the_inner_loop( $template_args, $display_strategy, $context, $template_type );
 		$html .= '</ul>';
 		$html .= CB2::get_the_calendar_footer( $display_strategy );
 		$html .= '</div>';

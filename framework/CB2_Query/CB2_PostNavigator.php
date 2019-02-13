@@ -1,4 +1,6 @@
 <?php
+define( 'CB2_NOT_REQUIRED', FALSE );
+
 abstract class CB2_PostNavigator extends stdClass {
   public static $database_table = 'cb2_post_types';
   public static $description    = 'CB2_MAX_DAYS is set to 10000 which is 10 years.';
@@ -100,6 +102,7 @@ abstract class CB2_PostNavigator extends stdClass {
 
     // WP_Post default values
     if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB2_Post::$PUBLISH;
+    if ( ! property_exists( $this, 'post_type' ) )     $this->post_type     = $this->post_type();
     if ( ! property_exists( $this, 'post_password' ) ) $this->post_password = '';
     if ( ! property_exists( $this, 'post_author' ) )   $this->post_author   = 1;
     if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( CB2_Query::$datetime_format );
@@ -150,12 +153,14 @@ abstract class CB2_PostNavigator extends stdClass {
 
   static function post_type_all_objects( $post_type, $values_only = TRUE ) {
 		$all = NULL;
+
 		if ( $Class = self::post_type_Class( $post_type ) ) {
 			if ( property_exists( $Class, 'all' ) ) {
 				if ( $values_only ) $all = array_values( $Class::$all );
 				else $all = $Class::$all;
 			} else throw new Exception( "[$Class/$post_type] has no global \$all collection" );
 		} else throw new Exception( "[$post_type] has no associated Class for \$all operation" );
+
 		return $all;
   }
 
@@ -181,9 +186,10 @@ abstract class CB2_PostNavigator extends stdClass {
 
   protected static function class_from_ID_property_name( $ID_property_name, &$property_name = FALSE, &$is_plural = NULL, $Class = FALSE ) {
 		// TODO: factory_subclass() for polymorphic pointers like period_entity_ID
-		$is_ID         = ( substr( $ID_property_name, -3 ) == '_ID' || substr( $ID_property_name, -4 ) == '_IDs' );
+		$ID_property_name = preg_replace( '/^cb2_/', '', $ID_property_name );
+		$is_ID            = ( substr( $ID_property_name, -3 ) == '_ID' || substr( $ID_property_name, -4 ) == '_IDs' );
 		// If the caller was just asking about the property then only return FALSE
-		$no_excpeption = ( $property_name === FALSE );
+		$no_excpeption    = ( $property_name === FALSE );
 
 		if ( $is_ID ) {
 			$is_plural     = CB2_Query::is_plural( $ID_property_name, $base_name );
@@ -205,12 +211,15 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $Class;
   }
 
-  protected static function get_or_create_new( &$properties, $force_properties, $ID_property_name, &$instance_container = NULL, $Class = FALSE ) {
+  protected static function get_or_create_new( Array &$properties, $force_properties, $ID_property_name, &$instance_container = NULL, $Class = FALSE, $required = TRUE ) {
 		// "get":    the database record(s) exist already and we have their ID
 		// "create": create a placeholder object that will be saved to the database later, ID = 0
 		// If $ID_property_name is plural, an array will be returned
-		$TargetClass = self::class_from_ID_property_name( $ID_property_name, $object_property_name, $plural, $Class );
-		$from_IDs    = FALSE;
+		$TargetClass       = self::class_from_ID_property_name( $ID_property_name, $object_property_name, $plural, $Class );
+		$from_IDs          = FALSE;
+		$auto_draft        = ( isset( $properties['post_status'] ) && $properties['post_status'] == CB2_Post::$AUTODRAFT );
+		$property_ID_value = NULL;
+		$object            = NULL;
 
 		if ( WP_DEBUG ) {
 			if ( ! $TargetClass )
@@ -226,54 +235,65 @@ abstract class CB2_PostNavigator extends stdClass {
 			$from_IDs          = TRUE;
 		} else if ( isset( $properties[ $object_property_name ] ) ) {
 			$property_ID_value = $properties[ $object_property_name ];
-		} else {
+		} else if ( $auto_draft ) {
+			// Special case, CB2_Query::ensure_correct_class() has been called
+			// on an auto-draft post with no metadata anywhere
+			// thus none of its properties are available yet
+			$property_ID_value = ( $plural ? array() : CB2_CREATE_NEW );
+		} else if ( $required ) {
 			krumo( $properties );
-			throw new Exception( "{$TargetClass}::[$ID_property_name] or [$object_property_name] required" );
+			throw new Exception( "{$TargetClass}::[$ID_property_name] or [$object_property_name] required. Not an auto-draft post." );
 		}
 
-		if ( $plural ) {
-			// -------------------------------------------------------- Plural
-			$object = array();
-			$ID_property_name_singular = substr( $ID_property_name, 0, -1 );
+		if ( ! is_null( $property_ID_value ) ) {
+			if ( $plural ) {
+				// -------------------------------------------------------- Plural
+				$object = array();
+				$ID_property_name_singular = substr( $ID_property_name, 0, -1 );
 
-			// Cumulative: if the object property is already set, then add to it
-			if ( $from_IDs && isset( $properties[ $object_property_name ] ) ) {
-				$object = $properties[ $object_property_name ];
-				if ( ! is_array( $object ) ) {
-					krumo( $object );
-					throw new Exception( "existing $TargetClass::$object_property_name needs to be an array" );
+				// Cumulative: if the object property is already set, then add to it
+				if ( $from_IDs && isset( $properties[ $object_property_name ] ) ) {
+					$object = $properties[ $object_property_name ];
+					if ( ! is_array( $object ) ) {
+						krumo( $object );
+						throw new Exception( "existing $TargetClass::$object_property_name needs to be an array" );
+					}
 				}
-			}
 
-			if ( ! is_array( $property_ID_value ) ) {
-				krumo( $property_ID_value );
-				throw new Exception( "$ID_property_name needs to be an array" );
-			}
-			foreach ( $property_ID_value as $array_ID_value ) {
-				$subobject = self::get_or_create_new_internal(
-					$ID_property_name_singular,
-					$array_ID_value,
+				// 8,45,7 => array( 8,45,7 )
+				if ( $from_IDs && is_string( $property_ID_value ) && preg_match( '/^[0-9,]*$/', $property_ID_value ) )
+					$property_ID_value = ( $property_ID_value ? explode( ',', $property_ID_value ) : array() );
+
+				if ( ! is_array( $property_ID_value ) ) {
+					krumo( $property_ID_value );
+					throw new Exception( "$ID_property_name needs to be an array" );
+				}
+				foreach ( $property_ID_value as $array_ID_value ) {
+					$subobject = self::get_or_create_new_internal(
+						$ID_property_name_singular,
+						$array_ID_value,
+						$TargetClass,
+						$properties,
+						$force_properties,
+						$instance_container
+					);
+					array_push( $object, $subobject );
+				}
+			} else {
+				// -------------------------------------------------------- Singular
+				$object = self::get_or_create_new_internal(
+					$ID_property_name,
+					$property_ID_value,
 					$TargetClass,
 					$properties,
 					$force_properties,
 					$instance_container
 				);
-				array_push( $object, $subobject );
 			}
-		} else {
-			// -------------------------------------------------------- Singular
-			$object = self::get_or_create_new_internal(
-				$ID_property_name,
-				$property_ID_value,
-				$TargetClass,
-				$properties,
-				$force_properties,
-				$instance_container
-			);
-		}
 
-		// Maybe plural = (array)
-		$properties[ $object_property_name ] = $object;
+			// Maybe plural = (array)
+			$properties[ $object_property_name ] = $object;
+		}
 
 		// Maybe array
 		return $object;
@@ -337,15 +357,17 @@ abstract class CB2_PostNavigator extends stdClass {
 
 	function set_saveable( Bool $saveable ) {
 		// If set to FALSE, the save() process will ignore this object
+		$Class = get_class( $this );
 		if ( CB2_DEBUG_SAVE ) {
-			$Class = get_class( $this );
-			if ( ! $saveable ) print( "<div class='cb2-WP_DEBUG-small'>{$Class}[$this->ID] set not saveable</div>" );
+			$ignored = ( $this->ID == CB2_CREATE_NEW && ! $saveable ? ' (will be ignored because CB2_CREATE_NEW)' : '' );
+			if ( ! $saveable )
+				print( "<div class='cb2-WP_DEBUG-small'>{$Class}[$this->ID] set not saveable$ignored</div>" );
 		}
 		$this->saveable = $saveable;
 	}
 
 	function is_saveable() {
-		return $this->saveable;
+		return $this->saveable || $this->ID == CB2_CREATE_NEW;
 	}
 
 	static function copy_all_wp_post_properties( Array $properties, stdClass $object, Bool $overwrite = TRUE ) {
@@ -457,9 +479,12 @@ abstract class CB2_PostNavigator extends stdClass {
     $post = $this->next_post();
     // Some abstract post have equal IDs
     // e.g. CB2_Week->ID 1 == CB2_Day->ID 1
-    // thus, we need to reset which one we are talking about constantly
-    // the_title() => get_post() calls
-    // will call get_instance(ID) and return our current post by pre-setting the cache
+    // thus, we need to (re)set which one we are talking about constantly
+    //   the_title() => get_post($ID) => get_instance($ID)
+    // and return our current post by pre-setting the cache
+    //
+    // At the end of the loop
+    // this will have left the cache pointing to the looped IDs
 		wp_cache_set( $post->ID, $post, 'posts' );
     $this->setup_postdata( $post );
     return $post;
@@ -584,9 +609,9 @@ abstract class CB2_PostNavigator extends stdClass {
     return true;
 	}
 
-  function templates( $context = 'list', $type = NULL ) {
-		$templates     = array();
+  function templates_considered( $context = 'list', $type = NULL, &$templates = NULL ) {
 		$post_type     = $this->post_type;
+		if ( is_null( $templates ) ) $templates = array();
 
 		// Gather possible combinations for this post_type
 		// with sub-types
@@ -601,7 +626,14 @@ abstract class CB2_PostNavigator extends stdClass {
 			else $post_sub_type = CB2_Query::substring_before( $post_sub_type );
 		} while ( $post_sub_type );
 
-		// Sanitize
+		return $templates;
+  }
+
+  function templates( $context = 'list', $type = NULL, $throw_if_not_found = TRUE, &$templates = NULL ) {
+		$post_type = $this->post_type;
+		$templates = $this->templates_considered( $context, $type, $templates );
+
+		// file_exists() sanitize against the templates directory
 		$templates_valid   = array();
 		$cb2_template_path = CB2::template_path();
 		foreach ( $templates as $template ) {
@@ -610,7 +642,7 @@ abstract class CB2_PostNavigator extends stdClass {
 				array_push( $templates_valid, $template );
 		}
 
-		if ( ! count( $templates_valid) ) {
+		if ( ! count( $templates_valid ) && $throw_if_not_found ) {
 			$templates_tried = implode( ',', $templates );
 			throw new Exception( "No valid templates found for [$post_type] in [$cb2_template_path].\nTried: $templates_tried" );
 		}
@@ -619,13 +651,15 @@ abstract class CB2_PostNavigator extends stdClass {
 	}
 
   // ------------------------------------------------- Output
-	function move_column_to_end( &$columns, $column ) {
-		if ( isset( $columns[$column] ) ) {
-			$title = $columns[$column];
-			unset( $columns[$column] );
-			$columns[$column] = $title;
-		}
-	}
+  function enabled_columns() {
+		$enabled_columns = array();
+		$Class           = get_class( $this );
+		if ( $current_columns = get_option( CB2_TEXTDOMAIN . "-$Class-enabled-columns" ) )
+			$enabled_columns = $current_columns;
+		else if ( property_exists( $Class, 'default_enabled_columns' ) )
+			$enabled_columns = $Class::$default_enabled_columns;
+		return $enabled_columns;
+  }
 
   function the_json_content( $options = NULL ) {
     print( $this->get_the_json_content( $options ) );
@@ -644,29 +678,61 @@ abstract class CB2_PostNavigator extends stdClass {
     echo $content;
   }
 
-  function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
-		// TODO: This does not work
-		$link = NULL;
-		$post = $this;
-		$context = 'display';
+  protected function cache_set_previous( $previous ) {
+		if ( $previous )
+			wp_cache_set( $previous->ID, $previous, 'posts' );
+  }
+
+  protected function cache_set() {
+		$previous = wp_cache_get( $this->ID, 'posts' );
+		wp_cache_set( $this->ID, $this, 'posts' );
+		return $previous;
+  }
+
+  function get_the_edit_post_url( $context = 'display' ) {
+		$url  = NULL;
 
 		// Taken from WordPress link-template.php get_edit_post_link()
-		if ( 'revision' === $post->post_type )
+		if ( 'revision' === $this->post_type )
 			$action = '';
 		elseif ( 'display' == $context )
 			$action = '&amp;action=edit';
 		else
 			$action = '&action=edit';
 
-		$post_type_object = get_post_type_object( $post->post_type );
+		$post_type_object = get_post_type_object( $this->post_type );
 		if ( !$post_type_object )
 			return;
 
-		if ( !current_user_can( 'edit_post', $post->ID ) )
+		if ( ! $this->current_user_can( 'edit_post' ) )
 			return;
 
 		if ( $post_type_object->_edit_link ) {
-			$url   = admin_url( sprintf( $post_type_object->_edit_link . $action, $post->ID ) );
+			$url   = admin_url( sprintf( $post_type_object->_edit_link . $action, $this->ID ) );
+		}
+
+		return $url;
+  }
+
+  function current_user_can( $cap ) {
+		// Caches may have been flushed
+		// current_user_can() will attempt a get_post(ID)
+		// and this might not be in the current loop, i.e. $post->sub_object->try_something()
+		// and the DB is not redirected for this call get_post() SQL
+		// so we enable get_instance(ID) to work
+		$previous = $this->cache_set();
+		$can = current_user_can( $cap, $this->ID );
+		$this->cache_set_previous( $previous );
+		return $can;
+  }
+
+  function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
+		// TODO: get_the_edit_post_link() does not work
+		$link = NULL;
+		$post = $this;
+		$context = 'display';
+
+		if ( $url = $this::get_the_edit_post_url() ) {
 			$class = esc_attr( $class );
 			$url   = esc_url( $url );
 			if ( is_null( $text ) ) $text = __( 'Edit This' );
@@ -738,8 +804,9 @@ abstract class CB2_PostNavigator extends stdClass {
 		$id         = NULL;
 		$post_types = self::get_post_type_setup();
 
-		if ( ! is_numeric( $ID ) ) throw new Exception( "Numeric ID required for id_from_ID_with_post_type($ID/$post_type)" );
-		if ( ! $post_type )        throw new Exception( "Post type required for id_from_ID_with_post_type($ID)" );
+		if ( ! is_numeric( $ID ) )   throw new Exception( "Numeric ID required for id_from_ID_with_post_type($ID/$post_type)" );
+		if ( ! $post_type )          throw new Exception( "Post type required for id_from_ID_with_post_type($ID)" );
+		if ( $ID == CB2_CREATE_NEW ) throw new Exception( "id_from_ID_with_post_type(CB2_CREATE_NEW) not allowed" );
 
 		if ( isset( $post_types[$post_type] ) ) {
 			$details = $post_types[$post_type];

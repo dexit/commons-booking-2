@@ -4,7 +4,8 @@ error_reporting( 0 );
 // if ( WP_DEBUG ) include( 'krumo/class.krumo.php' );
 error_reporting( E_ALL );
 if ( ! function_exists( 'krumo' ) ) {
-	function krumo( ...$params ) {
+	function krumo( $p0 = NULL, $p1 = NULL, $p2 = NULL, $p3 = NULL, $p4 = NULL, $p5 = NULL ) {
+		// Variable ...$params requires PHP 5.6
 		if ( WP_DEBUG ) print( 'CB2_Query.php:8 (WP_DEBUG is TRUE) says install krumo for debug output here.' );
 	}
 }
@@ -13,7 +14,7 @@ if ( ! function_exists( 'xdebug_print_function_stack' ) ) {
 		if ( WP_DEBUG ) var_dump( debug_backtrace() );
 	}
 }
-define( 'CB2_DEBUG_SAVE',      WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
+define( 'CB2_DEBUG_SAVE', WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
 
 // Native posts
 define( 'CB2_ID_SHARING',    TRUE );
@@ -25,6 +26,7 @@ define( 'CB2_UPDATE', TRUE );
 define( 'CB2_GET_METADATA_ASSIGN', '_get_metadata_assign' );
 define( 'CB2_ALLOW_CREATE_NEW', TRUE ); // Allows CB2_CREATE_NEW to be passed as a numeric ID
 define( 'CB2_ADMIN_COLUMN_POSTS_PER_PAGE', 4 );
+define( 'CB2_AJAX_POPUPS', TRUE );
 
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
@@ -65,16 +67,18 @@ class CB2_Query {
 		if ( ! $Class )
 			throw new Exception( "[$post_type] not managed" );
 
+		$posts_table = CB2_Database::posts_table( $Class );
+		if ( ! $posts_table )
+			throw new Exception( "[$post_type] is pseudo" );
+
 		// Redirect
 		$old_wpdb_posts = $wpdb->posts;
-		if ( $posts_table = CB2_Database::posts_table( $Class ) ) {
-			$wpdb->posts = "$wpdb->prefix$posts_table";
-			$redirected_post_request = TRUE;
-		} else {
-			$wpdb->posts = "{$wpdb->prefix}posts";
-		}
+		$wpdb->posts    = "$wpdb->prefix$posts_table";
+		$redirected_post_request = TRUE;
+
 		if ( CB2_DEBUG_SAVE && TRUE
 			&& ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE )
+			&& ! ( property_exists( $Class, 'posts_table' ) && $Class::$posts_table == 'posts' )
 			&& $wpdb->posts == "{$wpdb->prefix}posts"
 		) {
 			throw new Exception( "[$Class] get_post_with_type() using wp_posts table" );
@@ -196,7 +200,7 @@ class CB2_Query {
 			// Do not re-create it if it already is!
 			if ( ! is_a( $post, $Class ) ) {
 				if ( method_exists( $Class, 'factory_from_properties' ) ) {
-					if ( $post->ID > 0 ) CB2_Query::get_metadata_assign( $post );
+					if ( $post->ID > 0 ) self::get_metadata_assign( $post );
 					$properties = (array) $post;
 
 					$old_auto_draft_publish_transition = $auto_draft_publish_transition;
@@ -209,7 +213,8 @@ class CB2_Query {
 					if ( ! property_exists( $post, 'ID' ) )
 						throw new Exception( "[$Class::factory_from_properties()] return has no ID property (0 would be valid)" );
 
-					// Only cache set this if it is a fake native post
+					// Only cache set this if it is a fake native post, e.g.
+					//   CB2_PeriodStatusType
 					// pure pseudo classes like CB2_Week are not accessed with get_post()
 					// thus caching is not relevant
 					$wp_cache = ( property_exists( $post, 'ID' ) && ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table ) );
@@ -267,6 +272,13 @@ class CB2_Query {
 		$redirected = FALSE;
 		$meta_type  = 'post';
 
+		// We always register the redirect call
+		// so that it matches the undirect call
+		if ( property_exists( $wpdb, 'old_wpdb_posts' ) ) array_unshift( $wpdb->old_wpdb_posts, $wpdb->posts );
+		else $wpdb->old_wpdb_posts = array( $wpdb->posts );
+		if ( property_exists( $wpdb, 'old_wpdb_postmeta' ) ) array_unshift( $wpdb->old_wpdb_postmeta, $wpdb->postmeta );
+		else $wpdb->old_wpdb_postmeta = array( $wpdb->postmeta );
+
 		// If $auto_draft_publish_transition is happening
 		// Then the primary $wpdb->postmeta table will be set to wp_postmeta
 		// This happens when the post is still in the normal WP tables
@@ -276,35 +288,31 @@ class CB2_Query {
 				if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
 					// perioditem-global => perioditem
 					$post_type_stub = CB2_Query::substring_before( $post_type );
+					$posts_table    = "{$wpdb->prefix}cb2_view_{$post_type_stub}_posts";
 					if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
-						$post_type_stub = $Class::$posts_table;
-					// cb2_view_periodoccurence_posts
-					$posts_table          = "{$wpdb->prefix}cb2_view_{$post_type_stub}_posts";
-					if ( property_exists( $wpdb, 'old_wpdb_posts' ) ) array_push( $wpdb->old_wpdb_posts, $wpdb->posts );
-					else $wpdb->old_wpdb_posts = array( $wpdb->posts );
-					$wpdb->posts          = $posts_table;
-					$redirected           = TRUE;
-					if ( WP_DEBUG && FALSE ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] =&gt; [$posts_table]</span>" );
+						$posts_table = $wpdb->prefix . $Class::$posts_table;
+					$wpdb->posts    = $posts_table;
+					$redirected     = TRUE;
+					if ( WP_DEBUG && FALSE ) print( "<span class='cb2-WP_DEBUG-small'>redirect [$Class::$post_type] =&gt; [$posts_table]</span>" );
 				}
 
 				if ( $meta_redirect ) {
 					if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
 						// perioditem-global => perioditem
-						$meta_type = CB2_Query::substring_before( $post_type );
-						if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) )
-							$meta_type = $Class::$postmeta_table;
-						// cb2_view_periodoccurencemeta
-						$postmeta_table        = "{$wpdb->prefix}cb2_view_{$meta_type}meta";
-						$post_type_meta        = "{$meta_type}meta";
+						$meta_type      = CB2_Query::substring_before( $post_type );
+						$postmeta_table = "{$wpdb->prefix}cb2_view_{$meta_type}meta";
+						if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) ) {
+							$postmeta_table = $wpdb->prefix . $Class::$postmeta_table;
+							if ( $Class::$postmeta_table == 'postmeta' ) $meta_type = 'post';
+						}
+						$post_type_meta = "{$meta_type}meta";
 						$wpdb->$post_type_meta = $postmeta_table;
 						// Note that requests using a redirected postmeta
 						// cannot be cached by the WP_Query system
 						// the meta-type will be post and thus conflict
 						// and, in fact, we have turned auto-caching off
 						// However, we need the redirect for the primary query meta-query JOINS
-						if ( property_exists( $wpdb, 'old_wpdb_postmeta' ) ) array_push( $wpdb->old_wpdb_postmeta, $wpdb->postmeta );
-						else $wpdb->old_wpdb_postmeta = array( $wpdb->postmeta );
-						$wpdb->postmeta          = $postmeta_table;
+						$wpdb->postmeta        = $postmeta_table;
 						if ( WP_DEBUG && FALSE ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] =&gt; [$postmeta_table]</span>" );
 					}
 				} else if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>[$Class::$post_type] no meta redirect</span>" );
@@ -319,17 +327,34 @@ class CB2_Query {
 
 		if ( property_exists( $wpdb, 'old_wpdb_posts' ) && count( $wpdb->old_wpdb_posts ) )    {
 			$wpdb->posts = array_shift( $wpdb->old_wpdb_posts );
-		} else $wpdb->posts = "{$wpdb->prefix}posts";
+			$count       = count( $wpdb->old_wpdb_posts );
+			if ( WP_DEBUG && FALSE ) print( "<span class='cb2-WP_DEBUG-small'>undirect [$wpdb->posts] [$count] &lt;=</span>" );
+		} else {
+			if ( WP_DEBUG ) throw new Exception( "undirect \$wpdb->posts without redirect record. Overwrite [$wpdb->posts]" );
+			$wpdb->posts = "{$wpdb->prefix}posts";
+		}
 
 		if ( property_exists( $wpdb, 'old_wpdb_postmeta' ) && count( $wpdb->old_wpdb_postmeta )  )    {
 			$wpdb->postmeta = array_shift( $wpdb->old_wpdb_postmeta );
-		} else $wpdb->postmeta = "{$wpdb->prefix}postmeta";
+		} else {
+			if ( WP_DEBUG ) throw new Exception( "undirect \$wpdb->posts without redirect record. Overwrite [$wpdb->posts]" );
+			$wpdb->postmeta = "{$wpdb->prefix}postmeta";
+		}
+	}
+
+	static function metabox_nosave_indicator( $id, $nosave = TRUE ) {
+		return array(
+			'name'    => __( 'No Saves', 'commons-booking-2' ),
+			'id'      => "{$id}_save",
+			'type'    => 'hidden',
+			'default' => ! $nosave,
+		);
 	}
 
 	static function get_metadata_assign( &$post ) {
 		// Switch base tables to our views
 		// Load all associated metadata and assign to the post object
-		global $wpdb;
+		global $wpdb; // WP_DEBUG only
 
 		if ( ! is_object( $post ) )
 			throw new Exception( 'get_metadata_assign() post object required' );
@@ -340,6 +365,8 @@ class CB2_Query {
 
 		$ID              = $post->ID;
 		$post_type       = $post->post_type;
+		$Class           = CB2_PostNavigator::post_type_Class( $post_type );
+		$metadata        = NULL;
 
 		if ( ! property_exists( $post, CB2_GET_METADATA_ASSIGN ) || ! $post->{CB2_GET_METADATA_ASSIGN} ) {
 			// get_metadata( $meta_type, ... )
@@ -348,25 +375,30 @@ class CB2_Query {
 			//   $meta_type  = post_type stub, e.g. perioditem
 			// get_metadata() will use standard WP caches
 			self::redirect_wpdb_for_post_type( $post_type, TRUE, $meta_type );
+			if ( WP_DEBUG ) $debug_postmeta = $wpdb->postmeta;
 			$metadata = get_metadata( $meta_type, $ID ); // e.g. perioditem, 40004004
 			self::unredirect_wpdb();
 
 			// Convert to objects
-			foreach ( $metadata as $meta_key => &$meta_value_array ) {
-				if ( ! self::is_system_metadata( $meta_key ) ) {
-					if ( WP_DEBUG ) {
-						if ( ! is_array( $meta_value_array ) )
-							throw new Exception( "[$post_type/$meta_key] is not an array" );
-						/* Not sure why some values are multiple at the moment
-						if ( count( $meta_value_array ) > 1 ) {
-							krumo( $meta_value_array );
-							throw new Exception( "[$post_type/$meta_key] yielded a multi-value array" );
+			// Do not convert data from the normal system as errors can happen
+			// for example: WP_Post maintains post_date as a string
+			if ( CB2_Database::postmeta_table( $Class ) ) {
+				foreach ( $metadata as $meta_key => &$meta_value_array ) {
+					if ( ! self::is_system_metadata( $meta_key ) ) {
+						if ( WP_DEBUG ) {
+							if ( ! is_array( $meta_value_array ) )
+								throw new Exception( "[$post_type/$meta_key] is not an array" );
+							/* Not sure why some values are multiple at the moment
+							if ( count( $meta_value_array ) > 1 ) {
+								krumo( $meta_value_array );
+								throw new Exception( "[$post_type/$meta_key] yielded a multi-value array" );
+							}
+							*/
 						}
-						*/
+						$meta_value      = self::to_object( $meta_key, $meta_value_array[0] );
+						$post->$meta_key = $meta_value;
+						//if ( ! is_object( $meta_value ) ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key = $meta_value $meta_value_array[0]</div>" );
 					}
-					$meta_value      = CB2_Query::to_object( $meta_key, $meta_value_array[0] );
-					$post->$meta_key = $meta_value;
-					//if ( ! is_object( $meta_value ) ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key = $meta_value $meta_value_array[0]</div>" );
 				}
 			}
 
@@ -375,21 +407,27 @@ class CB2_Query {
 
 			if ( WP_DEBUG ) {
 				// Check that some meta data is returned
+				global $auto_draft_publish_transition;
+				$details      = "[$ID/$post_type/$post->post_status/$meta_type/$auto_draft_publish_transition]";
 				$has_metadata = FALSE;
 				foreach ( $metadata as $meta_key => $meta_value_array ) {
 					if ( ! self::is_system_metadata( $meta_key ) ) $has_metadata = TRUE;
 				}
-				if ( ! $has_metadata && $meta_type != 'post' ) {
-					krumo( $wpdb );
-					throw new Exception( "[$post_type/$meta_type] [$ID] returned no metadata" );
+				if ( ! $has_metadata
+					&& ! property_exists( $Class, 'no_metadata' )
+					&& $meta_type != 'post'
+					&& $post->post_status != CB2_Post::$AUTODRAFT
+				) {
+					krumo( $post );
+					throw new Exception( "$details returned no metadata. \$wpdb->postmeta was [$debug_postmeta] " );
 				}
 
 				if ( CB2_DEBUG_SAVE && FALSE )
-					krumo( $ID, $post_type, $post->post_status, $meta_type, $metadata );
+					krumo( $details, $metadata );
 			}
 		}
 
-		//return $post; // Passed by reference, so no need to check result
+		return $metadata; // Post Passed by reference, so no need to check result
   }
 
   // -------------------------------------------------------------------- Class, Function and parameter utilities
@@ -578,16 +616,23 @@ class CB2_Query {
 
 			if ( WP_DEBUG && FALSE ) {
 				print( "<i>assign_all_parameters($class_name)->$name</i>: <b>" );
-				if      ( $value instanceof DateTime ) print( $value->format( CB2_Database::$database_datetime_format ) );
-				else if ( is_object( $value ) ) krumo( $value );
-				else if ( is_array(  $value ) ) krumo( $value );
+				if      ( is_null( $value ) ) print( 'NULL' );
+				else if ( empty( $value ) )   print( 'EMPTY' );
+				else if ( $value instanceof DateTime )     print( $value->format( CB2_Database::$database_datetime_format ) );
+				else if ( $value instanceof CB2_DateTime ) print( $value->format( CB2_Database::$database_datetime_format ) );
+				else if ( is_object( $value ) ) print( get_class( $value ) );
+				else if ( is_array(  $value ) ) print( 'Array()' );
 				else print( $value );
-				$new_value = self::to_object( $name, $value );
+				print( '&nbsp;' );
+				$new_value = self::to_object( $name, $value, TRUE, TRUE );
 				if ( $new_value !== $value ) {
 					print( ' =&gt; ' );
-					if      ( $new_value instanceof DateTime ) print( 'new CB2_DateTime(' . $new_value->format( CB2_Database::$database_datetime_format ) . ')' );
-					else if ( is_object( $new_value ) ) krumo( $new_value );
-					else if ( is_array(  $new_value ) ) krumo( $new_value );
+					if      ( is_null( $new_value ) ) print( 'NULL' );
+					else if ( empty( $new_value ) )   print( 'EMPTY' );
+					else if ( $new_value instanceof DateTime )     print( $new_value->format( CB2_Database::$database_datetime_format ) );
+					else if ( $new_value instanceof CB2_DateTime ) print( $new_value->format( CB2_Database::$database_datetime_format ) );
+					else if ( is_object( $new_value ) ) print( get_class( $new_value ) );
+					else if ( is_array(  $new_value ) ) print( 'Array()' );
 					else print( $new_value );
 				}
 				print( '</b><br/>' );
@@ -639,7 +684,7 @@ class CB2_Query {
 		return $fields;
 	}
 
-	static function to_object( String $name, $value, Bool $convert_dates = TRUE ) {
+	static function to_object( String $name, $value, Bool $convert_dates = TRUE, $debug = FALSE ) {
 		// Assigning attributes of PHP Objects
 		//   string => object
 		// based on the property name
@@ -669,7 +714,8 @@ class CB2_Query {
 		$columns      = CB2_Database::columns();
 		$cmb2_fields  = self::cmb2_fields();
 
-		$debug        = WP_DEBUG && FALSE;
+		//$debug        = WP_DEBUG;
+		$name         = preg_replace( '/^cb2_/', '', $name );
 		$is_IDs       = self::is_IDs( $name, $object_name, $is_plural ); // TRUE for _ID and _IDs
 
 		// UnSerialize multiple meta-values and serialized arrays
@@ -724,8 +770,9 @@ class CB2_Query {
 			// -------------------------------------------------- Database field
 			// ID, period_id, post_status, ...
 			$column = $columns[$name];
-			if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>[$name/$object_name] is a column</div>" );
-			switch ( $column->Type ) {
+			$type   = $column->Type;
+			if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>[$name/$object_name] is a [$type] column</div>" );
+			switch ( $type ) {
 				case CB2_INT:
 				case CB2_TINYINT:
 				case CB2_BIGINT:
@@ -750,6 +797,9 @@ class CB2_Query {
 					if ( $column->Size == 1 ) $value = self::ensure_boolean( $name, $value );
 					else $value = self::ensure_int( $name, $value );
 					break;
+				default:
+					krumo( $column );
+					throw new Exception( "Unsupported column type for [$name]" );
 			}
 		} else if ( isset( $cmb2_fields[$name] ) ) {
 			// -------------------------------------------------- CMB2 pseudo meta data
@@ -764,6 +814,11 @@ class CB2_Query {
 
 		if ( self::check_for_serialisation( $value ) )
 			throw new Exception( "[$value] looks like serialised. This happens because we get_metadata() with SINGLE when WordPress serialises arrays in the meta_value field" );
+
+		if ( WP_DEBUG && FALSE && $name == 'entity_datetime_to' ) {
+			$Class = ( is_null( $value ) ? 'NULL' : get_class( $value ) );
+			print( "<div class='cb2-WP_DEBUG-small' style='color:red;font-weight:bold;'>$name =&gt; $Class</div>" );
+		}
 
 		return $value;
 	}
@@ -858,7 +913,7 @@ class CB2_Query {
 		return preg_replace( '/([a-z0-9])([A-Z])/', '\1_\2', $name );
 	}
 
-	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL, $include_empty_values = TRUE ) {
+	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL, $include_empty_values = TRUE, $urlencode = FALSE ) {
 		$string = NULL;
 		if ( self::array_has_associative( $array ) ) {
 			$string = '';
@@ -866,6 +921,7 @@ class CB2_Query {
 				if ( $object ) $value = self::object_value_path( $object, $value );
 				if ( $include_empty_values || ! empty( $value ) ) {
 					if ( $string ) $string .= $delimiter;
+					if ( $urlencode ) $value = urlencode( $value );
 					$string .= "$key$associative_delimiter$value";
 				}
 			}
@@ -922,6 +978,14 @@ class CB2_Query {
 
 	static function array_has_associative( Array $array ) {
 		return array_keys( $array ) !== range( 0, count( $array ) - 1 );
+	}
+
+	static function array_first_to_last( &$columns, $column ) {
+		if ( isset( $columns[$column] ) ) {
+			$title = $columns[$column];
+			unset( $columns[$column] );
+			$columns[$column] = $title;
+		}
 	}
 
 	static function debug_print_backtrace( String $message = NULL ) {

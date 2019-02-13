@@ -1,5 +1,13 @@
 <?php
 class CB2 {
+	public static function templates( $context = 'list', $type = NULL, $throw_if_not_found = TRUE, &$templates_considered = NULL ) {
+		global $post;
+		return ( $post && method_exists( $post, 'templates' )
+			? $post->templates( $context, $type, $throw_if_not_found, $templates_considered )
+			: array()
+		);
+	}
+
 	public static function has_inner_posts( $post_type = NULL, $post_navigator = NULL ) {
 		global $post;
 		$has_posts = FALSE;
@@ -31,43 +39,69 @@ class CB2 {
 		return ! self::is_published();
 	}
 
-	public static function the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $template_args = NULL ) {
-		echo self::get_the_inner_loop( $post_navigator, $context, $template_type, $before, $after, $template_args );
+	public static function get_the_date() {
+		return new CB2_DateTime( get_the_date() );
 	}
 
-	public static function get_the_inner_loop( $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $template_args = NULL ) {
+	public static function the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
+		echo self::get_the_inner_loop( $template_args, $post_navigator, $context, $template_type, $before, $after );
+	}
+
+	public static function get_the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
 		global $post;
-		$html = '';
-		$outer_post = $post;
+		$html       = '';
 
 		if ( $context == 'single' )
-			throw new Exception( "the_inner_loop() should never be called with context [$context]" );
+			throw new Exception( "the_inner_loop() should never be called with context [$context] because, by its very nature it is for listing stuffs" );
 
 		if ( ! $post_navigator ) $post_navigator = $post;
 		if ( $post_navigator instanceof CB2_PostNavigator || $post_navigator instanceof WP_Query ) {
+			$outer_post  = $post;
+			// CB2_Query::reorganise_posts_structure() to check that posts exist
+			// otherwise have_posts() will FALSE
 			if ( $post_navigator instanceof WP_Query ) CB2_Query::reorganise_posts_structure( $post_navigator );
 			if ( $post_navigator->have_posts() ) {
+				// the_post() will trigger loop_start
+				//   CB2_Query::reorganise_posts_structure() which will not do anything
+				// because the wp_query is marked as re-organised already
+				$i = 0;
 				while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
-					$html .= $before;
-					CB2_Query::redirect_wpdb_for_post_type( $post->post_type() );
-					$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', $template_args, TRUE );
+					$even_class = ( $i % 2 ? 'cb2-row-odd' : 'cb2-row-even' );
+					$template_args[ 'even_class' ] = $even_class;
+					$post_type  = $post->post_type();
+					$html      .= $before;
+					CB2_Query::redirect_wpdb_for_post_type( $post_type );
+					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', $template_args, TRUE );
+					$html      .= $li;
+					// Some period-items are suppressed but have debug output
+					if ( trim( preg_replace( '/<!--.*-->/', '', $li ) ) ) $i++;
 					CB2_Query::unredirect_wpdb();
-					$html .= $after;
+					$html      .= $after;
 				endwhile;
-				// NOTE: We have manually set the global $wp_query->post
-				// when looping on WP_List_Tables because
-				// WP_List_Tables does not use a normal post loop§
-				//
-				// https://codex.wordpress.org/Class_Reference/WP_Query
-				// wp_reset_postdata() => global $wp_query->reset_postdata();
-				//   global $post = global $wp_query->post;
-				//   $this->setup_postdata( global $wp_query->post );
-				wp_reset_postdata();
 			}
+
+			// NOTE: We have manually set the global $wp_query->post
+			// when looping on WP_List_Tables because
+			// WP_List_Tables does not use a normal post loop :/
+			//
+			// https://codex.wordpress.org/Class_Reference/WP_Query
+			// wp_reset_postdata() => global $wp_query->reset_postdata();
+			//   global $post = global $wp_query->post;
+			//   $this->setup_postdata( global $wp_query->post );
+			wp_reset_postdata();
+			$post = $outer_post;
+			// We also wp_cache_set() each ID
+			// which means that whoever called the loop may now traverse
+			// to another cached post which is then wrong
+			wp_cache_flush();
+			// In templates we are still using the outer_post
+			// with get_post(ID) calls so let us keep that
+			if ( $post ) wp_cache_set( $post->ID, $post, 'posts' );
+			if ( WP_DEBUG && FALSE )
+				$html .= ( "<div class='cb2-WP_DEBUG-small'>the_inner_loop() cache managing [$post->ID / $post->post_type]</div>" );
 		} else {
 			throw new Exception( 'the_inner_loop() only available for CB2_PostNavigator or WP_Query' );
 		}
-		$post = $outer_post;
 
 		return $html;
 	}
@@ -113,17 +147,17 @@ class CB2 {
 		return self::get_the_calendar_header( $query, $classes, $type, $before, $after );
 	}
 
-	public static function the_calendar_pager( $query = NULL, $classes = '' ) {
-		echo self::get_the_calendar_pager( $query, $classes );
+	public static function the_calendar_pager( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, $classes = '' ) {
+		echo self::get_the_calendar_pager( $startdate, $enddate, $classes );
 	}
 
 	public static function get_the_calendar_pager( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, $classes = '' ) {
 		// Inputs
 		$url              = $_SERVER['REQUEST_URI'];
-		$yesterday        = (new CB2_DateTime())->sub( 2 );
-		$next2month       = (clone $yesterday)->add( 'P2M' );
-		$startdate_string = ( isset( $_GET['startdate'] ) ? $_GET['startdate'] : $yesterday->format(  CB2_Query::$date_format ) );
-		$enddate_string   = ( isset( $_GET['enddate']   ) ? $_GET['enddate']   : $next2month->format( CB2_Query::$date_format ) );
+		$today            = CB2_DateTime::today();
+		$next2month       = $today->clone()->add( 'P2M' )->endTime();
+		$startdate_string = ( isset( $_GET['startdate'] ) ? $_GET['startdate'] : $today->format(  CB2_Query::$datetime_format ) );
+		$enddate_string   = ( isset( $_GET['enddate']   ) ? $_GET['enddate']   : $next2month->format( CB2_Query::$datetime_format ) );
 
 		// Date handling
 		if ( is_null( $startdate ) ) $startdate = new CB2_DateTime( $startdate_string );
@@ -132,17 +166,15 @@ class CB2 {
 		$timeless_url   = preg_replace( '/[&\?](start|end)date=[^&]*/', '', $url );
 		if ( strchr( $timeless_url, '?' ) === FALSE ) $timeless_url .= '?';
 
-		$nextpage_start = (clone $enddate);
-		$nextpage_end   = (clone $nextpage_start);
-		$nextpage_end->add( $pagesize );
-		$nextpage_start_string = $nextpage_start->format( CB2_Query::$date_format );
-		$nextpage_end_string   = $nextpage_end->format( CB2_Query::$date_format );
+		$nextpage_start = $enddate->clone()->add( 1 )->clearTime();
+		$nextpage_end   = $nextpage_start->clone()->add( $pagesize );
+		$nextpage_start_string = $nextpage_start->format( CB2_Query::$datetime_format );
+		$nextpage_end_string   = $nextpage_end->format(   CB2_Query::$datetime_format );
 
-		$prevpage_start = (clone $startdate);
-		$prevpage_end   = (clone $prevpage_start);
-		$prevpage_start->sub( $pagesize );
-		$prevpage_start_string = $prevpage_start->format( CB2_Query::$date_format );
-		$prevpage_end_string   = $prevpage_end->format( CB2_Query::$date_format );
+		$prevpage_end   = $startdate->clone()->sub(1)->endTime();
+		$prevpage_start = $prevpage_end->clone()->sub( $pagesize );
+		$prevpage_start_string = $prevpage_start->format( CB2_Query::$datetime_format );
+		$prevpage_end_string   = $prevpage_end->format(   CB2_Query::$datetime_format );
 
 		return "<div class='entry-footer'>
 				<div class='cb2-calendar-pager'>
@@ -283,14 +315,106 @@ class CB2 {
 		}
 	}
 
-	public static function the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
+	public static function the_edit_post_url( $post = NULL, $context = 'display' ) {
+		// Returns URL
+		echo self::get_the_edit_post_url( $post, $context );
+	}
+
+	public static function get_the_edit_post_url( $this_post = NULL, $context = 'display' ) {
+		// Returns URL
 		global $post;
-		if ( is_object( $post ) && method_exists( $post, 'get_the_edit_post_link' ) ) {
-			echo $post->get_the_edit_post_link( $text, $before, $after, $id, $class );
+		if ( is_null( $this_post ) ) $this_post = $post;
+
+		$url = NULL;
+		if ( is_object( $this_post ) && method_exists( $this_post, 'get_the_edit_post_url' ) ) {
+			$url = $this_post->get_the_edit_post_url( $context );
 		} else {
+			// Copied from link-template.php
+			if ( 'revision' === $this_post->post_type )
+				$action = '';
+			elseif ( 'display' == $context )
+				$action = '&amp;action=edit';
+			else
+				$action = '&action=edit';
+
+			$post_type_object = get_post_type_object( $this_post->post_type );
+			if ( ! $post_type_object )
+				return;
+
+			if ( ! current_user_can( 'edit_post', $this_post->ID ) )
+				return;
+
+			if ( $post_type_object->_edit_link )
+				$url = admin_url( sprintf( $post_type_object->_edit_link . $action, $this_post->ID ) );
+		}
+
+		return $url;
+	}
+
+	public static function edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
+		// Returns HTML!
+		echo self::get_the_edit_post_link( $text, $before, $after, $id, $class );
+	}
+
+	public static function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
+		// Returns HTML!
+		// The WordPress function returns a URL
+		// but cannot be controlled in terms of its get_post();
+		global $post;
+
+		$link = NULL;
+		if ( is_object( $post ) && method_exists( $post, 'get_the_edit_post_link' ) ) {
+			$link = $post->get_the_edit_post_link( $text, $before, $after, $id, $class );
+		} else {
+			ob_start();
 			edit_post_link( $text, $before, $after, $id, $class );
+			$link = ob_get_clean();
+		}
+
+		return $link;
+	}
+
+	static function the_nexts( Array $nexts = NULL, $selected = NULL ) {
+		print( self::get_the_tabs( $nexts, 'nexts', $selected ) );
+	}
+
+	static function the_tabs( Array $tabs = NULL, $selected = NULL ) {
+		print( self::get_the_tabs( $tabs, 'tabs', $selected ) );
+	}
+
+	static function get_the_tabs( Array $tabs = NULL, String $class = 'tabs', $selected = NULL ) {
+		// TODO: make this configurable based on the 'tab' option in the metaboxes
+		// in order of appearance
+		// We cannot use jQuery tabs here
+		// because the #tab divs are nto children of the ul controller in this file
+		global $post;
+
+		CB2_Query::ensure_correct_class( $post );
+
+		if ( is_null( $tabs ) && method_exists( $post, 'tabs' ) ) {
+			$tabs = $post->tabs();
+		}
+
+		if ( count( $tabs ) ) {
+			print ( "<ul class='cb2-$class'>" );
+			$tab_keys = array_keys( $tabs );
+			$last_tab = end( $tab_keys );
+			foreach ( $tabs as $id => $title ) {
+				$class = ( $last_tab == $id ? 'cb2-last' : '' );
+				if ( $selected == $id ) $class .= ' cb2-selected';
+				switch ( $id ) {
+					case 'postdivrich':
+						if ( post_type_supports( $post->post_type, 'editor' ) )
+							print ( "<li class='$class'><a href='#$id'><span>" . __( $title ) .    '</span></a></li>' );
+						break;
+					default:
+						print ( "<li class='$class'><a href='#$id'><span>" . __( $title ) .    '</span></a></li>' );
+				}
+			}
+			print ( "</ul><!-- end cb2-tabs -->\n\n" );
 		}
 	}
+
 
 	public static function post_class( $class = NULL, $post_id = null ) {
 		// Copied from post-template.php
@@ -391,6 +515,222 @@ class CB2 {
 	public static function get_the_logs() {
 		global $post;
 		return ( is_object( $post ) && method_exists( $post, 'get_the_logs' ) ? $post->get_the_logs() : '' );
+	}
+
+	public static function the_ajax_edit_screen( $the_post = NULL, $context = 'normal', $form_action = 'editpost' ) {
+		global $post;
+		$outer_post   = $post;
+		$use_the_post = ( ! is_null( $the_post ) && $the_post != $post );
+		if ( $use_the_post ) {
+			$post = $the_post;
+			setup_postdata( $post );
+		}
+
+		$ID        = $post->ID;
+		$post_type = $post->post_type;
+		$action    = CB2_Query::pass_through_query_string( NULL, array(
+			'ID'          => $post->ID,
+			'action'      => 'save',
+			'form_action' => 'editpost',
+			'post_type'   => $post_type,
+		) );
+
+		self::the_hidden_form( $post_type, array(), $post, $form_action );
+		self::the_meta_boxes( NULL, $context );
+		print( '</div>' ); // /the_hidden_form
+
+		if ( $use_the_post ) {
+			$post = $outer_post;
+			setup_postdata( $post );
+		}
+	}
+
+	public static function the_custom_meta_box( String $id, String $name, $value = NULL, String $type = 'text', String $placeholder = '' ) {
+		$placeholder_text = __( $placeholder );
+		$name_text        = __( $name );
+		$value_esc        = esc_attr( $value );
+		print( "<div class='cmb2-wrap form-table postbox'>
+			<div class='cmb-row cmb-type-$type cmb2-id-$id' data-fieldtype='$type'>
+				<div class='cmb-th'>
+					<label for='cb2-$id'>$name_text</label>
+				</div>
+				<div class='cmb-td'>
+					<input type='$type' class='cmb2-$type' name='$id' value='$value_esc' id='cb2-$id' placeholder='$placeholder_text' />
+				</div>
+			</div>
+		</div><br/>" );
+	}
+
+	public static function the_hidden_form( String $post_type = '', Array $classes = array(), $post = NULL, String $form_action = 'editpost', String $post_url = NULL ) {
+		$user_ID          = get_current_user_id();
+		$post_ID          = ( $post ? $post->ID : CB2_CREATE_NEW );
+		$nonce_action     = 'update-post_' . $post_ID;
+		$active_post_lock = '';
+		$referer          = wp_get_referer();
+		$post_author      = ( $post ? $post->post_author : NULL );
+		$post_status      = ( $post ? $post->post_status : NULL );
+		$form_extra       = ( $post ? "<input type='hidden' id='post_ID' name='post_ID' value='" . esc_attr($post_ID) . "' />" : '' );
+		if ( $post )
+			array_push( $classes, 'cb2-with-template-post' );
+		if ( is_null( $post_url ) )
+			$post_url = CB2_Query::pass_through_query_string( NULL, array(
+				'action'    => $form_action,
+				'ID'        => $post_ID,
+				'post_type' => $post_type,
+				'context'   => 'save',
+			) );
+
+		// Form start
+		$classes_string = implode( ' ', $classes );
+		print( "<div id='cb2-ajax-edit-form' action='$post_url' class='cb2-ajax-edit-form $classes_string'>" );
+
+		if ( WP_DEBUG )
+			print( "<div class='cb2-WP_DEBUG-small'>global post [$post_type/$post_ID]</div>" );
+
+		// TODO: move CB2 ID => post_ID ?
+		print( "<input type='hidden' id='ID' name='ID' value='" . esc_attr($post_ID) . "' />" );
+
+		// ------------------------------- Copied from edit-form-advanced.php
+		?>
+		<?php wp_nonce_field($nonce_action); ?>
+		<input type="hidden" id="user-id" name="user_ID" value="<?php echo (int) $user_ID ?>" />
+		<input type="hidden" id="hiddenaction" name="action" value="<?php echo esc_attr( $form_action ) ?>" />
+		<input type="hidden" id="originalaction" name="originalaction" value="<?php echo esc_attr( $form_action ) ?>" />
+		<input type="hidden" id="post_author" name="post_author" value="<?php echo esc_attr( $post_author ); ?>" />
+		<input type="hidden" id="post_type" name="post_type" value="<?php echo esc_attr( $post_type ) ?>" />
+		<input type="hidden" id="original_post_status" name="original_post_status" value="<?php echo esc_attr( $post_status ) ?>" />
+		<input type="hidden" id="referredby" name="referredby" value="<?php echo $referer ? esc_url( $referer ) : ''; ?>" />
+		<?php if ( ! empty( $active_post_lock ) ) { ?>
+		<input type="hidden" id="active_post_lock" value="<?php echo esc_attr( implode( ':', $active_post_lock ) ); ?>" />
+		<?php
+		}
+		if ( 'draft' != get_post_status( $post ) )
+			wp_original_referer_field(true, 'previous');
+
+		echo $form_extra;
+
+		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+		// ------------------------------- /end edit-form-advanced.php
+	}
+
+	public static function the_meta_boxes( $the_post = NULL, $context = 'normal' ) {
+		global $wp_meta_boxes;
+		global $post;
+		$outer_post   = $post;
+		$use_the_post = ( ! is_null( $the_post ) && $the_post != $post );
+		if ( $use_the_post ) {
+			$post = $the_post;
+			setup_postdata( $post );
+		}
+
+		// Populate the $wp_meta_boxes array
+		$post_type = $post->post_type;
+		if ( is_null( $wp_meta_boxes ) ) {
+			do_action( 'add_meta_boxes', $post_type,  $post );
+			do_action( "add_meta_boxes_$post_type", $post );
+			if ( WP_DEBUG && is_null( $wp_meta_boxes ) )
+				throw new Exception( "Failed to load meta boxes for [$post_type]" );
+		}
+
+		// If the post is a CB2_CREATE_NEW
+		// then the meta-box will get_metadata(), fail, and present the defaults instead
+		// cache it under post 1 as the get_metadata() will abs(ID)
+		$old_metadata = NULL;
+		if ( $post->ID == CB2_CREATE_NEW) {
+			$metadata = array();
+			foreach ( (array) $post as $name => $value )
+				if ( ! is_array( $value ) )
+					$metadata[$name] = array( (string) $value );
+			$old_metadata = wp_cache_get( 1, 'post_meta' );
+			wp_cache_set( 1, $metadata, 'post_meta' );
+		}
+
+		// Output the metaboxes
+		// do_meta_boxes()
+		//   => CMB2_hookup->metabox_callback( $post, $box )
+		//   => new CMB2_Field(...)
+		//     => CMB2_Field->get_data()
+		//     => CMB2_Field->data_args()
+		//     => CMB2->current_object_type() returns post only
+		// so we need to redirect the DB for:
+		//   	=> get_metadata(... 'post')
+		if ( $post ) CB2_Query::redirect_wpdb_for_post_type( $post_type );
+		do_meta_boxes( WP_Screen::get( $post_type ), $context, $post );
+		if ( $post ) CB2_Query::unredirect_wpdb();
+
+		if ( $old_metadata )
+			wp_cache_set( 1, $old_metadata, 'post_meta' );
+
+		if ( $use_the_post ) {
+			$post = $outer_post;
+			setup_postdata( $post );
+		}
+	}
+
+	public static function the_meta_box( $box_name, $the_post = NULL, $throw_if_not_found = TRUE ) {
+		global $wp_meta_boxes;
+		global $post;
+		$outer_post   = $post;
+		$use_the_post = ( ! is_null( $the_post ) && $the_post != $post );
+		if ( $use_the_post ) {
+			$post = $the_post;
+			setup_postdata( $post );
+		}
+
+		// Populate the $wp_meta_boxes array
+		if ( is_null( $wp_meta_boxes ) ) {
+			do_action( 'add_meta_boxes', $post->post_type,  $post );
+			do_action( "add_meta_boxes_{$post->post_type}", $post );
+		}
+
+		// Find it
+		// TODO: can we, should we, speed this up?
+		$box  = NULL;
+		$page = NULL;
+		foreach ( $wp_meta_boxes as $page => $contexts ) {
+			foreach ( $contexts as $context => $priorities ) {
+				foreach ( $priorities as $priority => $boxes ) {
+					if ( isset( $boxes[ $box_name ] ) ) {
+						$box = $boxes[ $box_name ];
+						break;
+					}
+				}
+				if ( $box ) break;
+			}
+			if ( $box ) break;
+		}
+
+		// Output the metaboxes
+		// do_meta_boxes()
+		//   => CMB2_hookup->metabox_callback( $post, $box )
+		//   => new CMB2_Field(...)
+		//     => CMB2_Field->get_data()
+		//     => CMB2_Field->data_args()
+		//     => CMB2->current_object_type() returns post only
+		// so we need to redirect the DB for:
+		//   	=> get_metadata(... 'post')
+		if ( $box ) {
+			if ( $post ) CB2_Query::redirect_wpdb_for_post_type( $post->post_type );
+			$object = $post;
+			// Taken from do_meta_boxes():
+			echo '<div id="' . $box['id'] . '" class="postbox ' . postbox_classes($box['id'], $page ) . '" ' . '>' . "\n";
+			echo "<h2 class='hndle'><span>{$box['title']}</span></h2>\n";
+			echo '<div class="inside">' . "\n";
+			call_user_func( $box['callback'], $object, $box ); // CMB2_hookup::metabox_callback
+			echo "</div>\n";
+			echo "</div>\n";
+			// /end do_meta_boxes()
+			if ( $post ) CB2_Query::unredirect_wpdb();
+		} else if ( $throw_if_not_found ) {
+			krumo( $wp_meta_boxes );
+			throw new Exception( "Box [$box_name] not found" );
+		}
+
+		if ( $use_the_post ) {
+			$post = $outer_post;
+			setup_postdata( $post );
+		}
 	}
 
 	public static function the_title( $HTML = TRUE ) {

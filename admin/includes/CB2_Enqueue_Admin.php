@@ -91,9 +91,7 @@ class CB2_Enqueue_Admin {
 	 * @return mixed Return early if no settings page is registered.
 	 */
 	public function enqueue_admin_styles() {
-
 		wp_enqueue_style( CB2_TEXTDOMAIN . '-admin-styles', plugins_url( 'admin/assets/css/admin.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
-
 	}
 		/**
 	 * Register and enqueue admin-specific JavaScript.
@@ -103,15 +101,17 @@ class CB2_Enqueue_Admin {
 	 * @return mixed Return early if no settings page is registered.
 	 */
 	public function enqueue_admin_scripts() {
+		/*
 		if ( !isset( $this->admin_view_page ) ) {
 			return;
 		}
 
+
 		$screen = get_current_screen();
 		if ( $this->admin_view_page === $screen->id ) {
-		/* @TODO: retire */
-		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-forms-script', plugins_url( 'admin/assets/js/admin_forms.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 		}
+		*/
+		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-forms-script', plugins_url( 'admin/assets/js/admin_forms.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 	}
 	/**
 	 * Add settings action link to the plugins page.

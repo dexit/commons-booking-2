@@ -16,7 +16,7 @@
 <li class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">calendar</h1></header>
 	<div class="entry-content">
 		<ul class="cb2-subposts">
-			<?php CB2::the_inner_loop(); ?>
+			<?php CB2::the_inner_loop( $template_args ); ?>
 		</ul>
 	</div>
 </li>

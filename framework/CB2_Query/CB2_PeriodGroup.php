@@ -9,7 +9,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
   );
   public $periods  = array();
 
-  static function selector_metabox( $multiple = FALSE ) {
+  static function selector_metabox( Bool $multiple = FALSE, String $context = 'normal', Array $classes = array() ) {
 		$period_group_options = CB2_Forms::period_group_options( TRUE );
 		$period_groups_count  = count( $period_group_options ) - 1;
 		$plural  = ( $multiple ? 's' : '' );
@@ -23,9 +23,9 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			'title'      => __( $title, 'commons-booking-2' ) .
 												" <span class='cb2-usage-count-ok'>$period_groups_count</span>",
 			'show_names' => FALSE,
-			'context'    => 'side',
+			'context'    => $context,
+			'classes'    => $classes,
 			'closed'     => TRUE,
-			'debug-only' => TRUE, // TODO: actually this is needed when saving the Period otherwise it will loose its preiod_group
 			'fields'     => array(
 				array(
 					'name'    => __( $title, 'commons-booking-2' ),
@@ -34,6 +34,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 					'default' => $default,
 					'options' => $period_group_options,
 				),
+				CB2_Query::metabox_nosave_indicator( $name ),
 			),
 		);
 	}
@@ -71,7 +72,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 
   static function database_views( $prefix ) {
 		return array(
-			'cb2_view_periodgroup_posts' => "select (`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pg`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_group_id` AS `period_group_id`,(select group_concat((`{$prefix}cb2_period_group_period`.`period_id` + `pt2`.`ID_base`) separator ',') from (`{$prefix}cb2_period_group_period` join `{$prefix}cb2_post_types` `pt2` on((`pt2`.`post_type_id` = 1))) where (`{$prefix}cb2_period_group_period`.`period_group_id` = `p`.`period_group_id`) group by `{$prefix}cb2_period_group_period`.`period_group_id`) AS `period_IDs` from (`{$prefix}cb2_period_groups` `p` join `{$prefix}cb2_post_types` `pt_pg` on((`pt_pg`.`post_type_id` = 2)))",
+			'cb2_view_periodgroup_posts' => "select (`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pg`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_group_id` AS `period_group_id`,ifnull((select group_concat((`{$prefix}cb2_period_group_period`.`period_id` + `pt2`.`ID_base`) separator ',') from (`{$prefix}cb2_period_group_period` join `{$prefix}cb2_post_types` `pt2` on((`pt2`.`post_type_id` = 1))) where (`{$prefix}cb2_period_group_period`.`period_group_id` = `p`.`period_group_id`) group by `{$prefix}cb2_period_group_period`.`period_group_id`),'') AS `period_IDs` from (`{$prefix}cb2_period_groups` `p` join `{$prefix}cb2_post_types` `pt_pg` on((`pt_pg`.`post_type_id` = 2)))",
 			'cb2_view_periodgroupmeta'   => "select ((`po`.`period_group_id` * 10) + `pt`.`ID_base`) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodgroup_id`,'period_IDs' AS `meta_key`,`po`.`period_IDs` AS `meta_value` from (`{$prefix}cb2_view_periodgroup_posts` `po` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup'))) union all select (((`po`.`period_group_id` * 10) + `pt`.`ID_base`) + 1) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodgroup_id`,'period_group_id' AS `meta_key`,`po`.`period_group_id` AS `meta_value` from (`{$prefix}cb2_view_periodgroup_posts` `po` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup')))",
 		);
 	}
@@ -80,15 +81,21 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 
 	static function metaboxes() {
 		$metaboxes = array();
-		array_push( $metaboxes, CB2_Period::selector_metabox( TRUE, TRUE ) ); // Multiple, context primary
+		array_push( $metaboxes, CB2_Period::selector_metabox( TRUE ) ); // Multiple
 		return $metaboxes;
 	}
 
   static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			( isset( $properties['period_group_ID'] ) ? $properties['period_group_ID'] : $properties['ID'] ),
-			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
-			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_IDs', $instance_container )
+			( isset( $properties['post_title'] )
+				? $properties['post_title']
+				: ( isset( $properties['name'] ) ? $properties['name'] : '' )
+			),
+			( isset( $properties['period_IDs'] ) // Empty groups are allowed
+				? CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_IDs', $instance_container )
+				: array()
+			)
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -197,7 +204,6 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 	function manage_columns( $columns ) {
 		$columns['periods']  = 'Periods <a href="admin.php?page=cb2-periods">view all</a>';
 		$columns['entities'] = 'Entities';
-		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
 
@@ -217,6 +223,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			case 'entities':
 				$wp_query_page_name = "paged-column-$column";
 				$current_page       = ( isset( $_GET[$wp_query_page_name] ) ? $_GET[$wp_query_page_name] : 1 );
+
 				$wp_query           = new WP_Query( array(
 					'post_type'   => array( 'periodent-global', 'periodent-location', 'periodent-timeframe', 'periodent-user' ),
 					'meta_query'  => array(
@@ -231,7 +238,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 
 				if ( $wp_query->have_posts() ) {
 					print( '<ul class="cb2-admin-column-ul">' );
-					CB2::the_inner_loop( $wp_query, 'admin', 'summary' );
+					CB2::the_inner_loop( NULL, $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {
 					print( '<div>' . __( 'No Entities' ) . '</div>' );
@@ -248,23 +255,27 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 	}
 
 	function summary_periods() {
-		$html = ( '<ul class="cb2-period-list">' );
 		$count = count( $this->periods );
 
-		foreach ( $this->periods as $period ) {
-			$edit_link   = $period->get_the_edit_post_link( 'edit' );
+		if ( $count ) {
+			$html = ( '<ul class="cb2-period-list">' );
+			foreach ( $this->periods as $period ) {
+				$edit_link   = $period->get_the_edit_post_link( 'edit' );
 
-			$detach_link = '';
-			if ( $count > 1 ) {
-				$detach_text = 'detach';
-				$detach_url  = "?page=cb2-period-groups&period_ID=$period->ID&period_group_IDs=$this->ID&do_action=CB2_PeriodGroup::detach";
-				$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";
+				$detach_link = '';
+				if ( $count > 1 ) {
+					$detach_text = 'detach';
+					$detach_url  = "?page=cb2-period-groups&period_ID=$period->ID&period_group_IDs=$this->ID&do_action=CB2_PeriodGroup::detach";
+					$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";
+				}
+
+				$summary     = $period->summary();
+				$html       .= "<li>$summary $edit_link $detach_link</li>";
 			}
-
-			$summary     = $period->summary();
-			$html       .= "<li>$summary $edit_link $detach_link</li>";
+			$html .= '</ul>';
+		} else {
+			$html = '<div>' . __( 'No Periods' ) . '</div>';
 		}
-		$html .= '</ul>';
 
 		return $html;
 	}

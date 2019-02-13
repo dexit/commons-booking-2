@@ -57,19 +57,29 @@ function cb2_admin_pages() {
 }
 
 function cb2_metaboxes() {
-	$hidden_class      = 'hidden';
+	$metaboxes          = array();
+	$hidden_class       = 'cb2-hidden';
 	$metabox_wizard_ids = ( isset( $_GET['metabox_wizard_ids'] ) ? $_GET['metabox_wizard_ids'] : '' );
 	$metabox_wizard_ids = ( $metabox_wizard_ids ? explode( ',', $metabox_wizard_ids ) : array() );
 	$requests_only      = (bool) count( $metabox_wizard_ids );
 
 	foreach ( CB2_PostNavigator::post_type_classes() as $post_type => $Class ) {
 		if ( CB2_Query::has_own_method( $Class, 'metaboxes' ) ) {
+			$metaboxes[$Class] = array();
 			foreach ( $Class::metaboxes() as $i => $metabox ) {
-				if ( ! isset( $metabox['id'] ) )           $metabox['id']           = "{$Class}_metabox_{$i}";
+				$title = ( isset( $metabox['title'] ) ? $metabox['title'] : "metabox_$i" );
+				if ( ! isset( $metabox['id'] ) ) {
+					$id            = preg_replace( '/ <.*/', '', strtolower( $title ) );
+					$id            = preg_replace( '/[^a-z0-9]/', '_', $id );
+					$metabox['id'] = "{$Class}_{$id}";
+				}
 				if ( ! isset( $metabox['object_types'] ) ) $metabox['object_types'] = array( $post_type );
 				if ( ! isset( $metabox['priority'] ) )     $metabox['priority']     = 'low'; // Under the standard boxes
+				$metabox[$Class] = $Class;
 
 				$id               = $metabox['id'];
+				$object_types     = $metabox['object_types'];
+				$metabox_classes  = ( isset( $metabox[ 'classes' ] ) ? ( is_array( $metabox[ 'classes' ] ) ? $metabox[ 'classes' ] : explode( ',', $metabox[ 'classes' ] ) ) : array() );
 				$debug_only_value = ( isset( $metabox['debug-only'] ) ? $metabox['debug-only'] : FALSE );
 				$debug_only       = ( $debug_only_value == TRUE || $debug_only_value == 'yes' || $debug_only_value == '1' );
 				$on_request       = ( isset( $metabox['on_request'] ) ? $metabox['on_request'] : FALSE );
@@ -81,15 +91,11 @@ function cb2_metaboxes() {
 					$query_name = "{$id}_show";
 					$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
 					$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
-					if ( $query_hide || ( $debug_only && ! WP_DEBUG ) ) {
-						// TODO: inject this metabox visibility CSS properly
-						print( "<style>#$id {display:none;}</style>" );
-						// This below line affects ALL fields, not the container
-						//$metabox['classes'] = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
-					}
+					if ( $query_hide || ( $debug_only && ! WP_DEBUG ) )
+						array_push( $metabox_classes, $hidden_class );
 
 					if ( $debug_only )
-						$metabox['title'] = '<span class="cb2-WP_DEBUG">' . ( isset( $metabox['title'] ) ? $metabox['title'] : '' ) . '</span>';
+						$metabox['title'] = "<span class='cb2-WP_DEBUG'>$title</span>";
 
 					foreach ( $metabox['fields'] as &$field ) {
 						$field_id = $field['id'];
@@ -125,15 +131,29 @@ function cb2_metaboxes() {
 					}
 
 					new_cmb2_box( $metabox );
+					$metaboxes[$Class][$id] = $metabox;
+
+					// Unfortunate LI wrapper post_class control
+					foreach ( $metabox_classes as $metabox_class ) {
+						foreach ( $object_types as $object_type ) {
+							$hook = 'cb2_postbox_classes_' . str_replace( '-', '_', preg_replace( '/^[^-]*-/', '', $metabox_class ) );
+							if ( function_exists( $hook ) )
+								add_filter( "postbox_classes_{$object_type}_{$id}", $hook );
+							else
+								throw new Exception( "$hook does not exist when linking classes" );
+						}
+					}
 				} // on_request
 			}
 		}
 	}
+
+	return $metaboxes;
 }
 add_action( 'cmb2_admin_init', 'cb2_metaboxes', 1 );
 
 function cb2_post_row_actions( $actions, $post ) {
-	global $wpdb;
+	global $wpdb, $post;
 
 	$post_type  = $post->post_type;
 	$post_title = htmlspecialchars( $post->post_title );
@@ -270,7 +290,19 @@ function cb2_manage_columns( $columns ) {
 	if ( $post ) {
 		$cb2_post = CB2_Query::ensure_correct_class( $post );
 		if ( method_exists( $cb2_post, 'manage_columns' ) ) {
-			$columns = $cb2_post->manage_columns( $columns );
+			$all_columns     = array_merge( $columns, $cb2_post->manage_columns( $columns ) );
+			$enabled_columns = $cb2_post->enabled_columns();
+			if ( count( $enabled_columns ) ) {
+				// Maintain the order of columns in $enabled_columns
+				$columns = array();
+				foreach ( $enabled_columns as $name )
+					$columns[ $name ] = $all_columns[ $name ];
+			} else {
+				// Use all the declared and passed columns
+				// with the date last
+				$columns = $all_columns;
+				CB2_Query::array_first_to_last( $columns, 'date' );
+			}
 		}
 	}
 	return $columns;
@@ -286,7 +318,8 @@ function cb2_admin_init_menus() {
 	$notifications_string = ''; //( $bookings_count ? " ($bookings_count)" : '' );
 	add_menu_page( 'CB2', "CommonsBooking$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_dashboard_page', 'dashicons-admin-post' );
 	add_submenu_page( CB2_MENU_SLUG, 'Dashboard', 'Dashboard', 'manage_options', CB2_MENU_SLUG, 'cb2_dashboard_page' );
-	add_options_page( 'CommonsBooking', 'CommonsBooking', 'manage_options', 'cb2-options', 'cb2_options_page' );
+	if ( WP_DEBUG )
+		add_options_page( 'CommonsBooking', 'CommonsBooking WP_DEBUG', 'manage_options', 'cb2-options', 'cb2_options_page' );
 
 	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
 		$parent_slug  = ( isset( $details['parent_slug'] )  ? $details['parent_slug']  : CB2_MENU_SLUG );
@@ -323,12 +356,108 @@ function cb2_admin_init_menus() {
 }
 add_action( 'admin_menu', 'cb2_admin_init_menus' );
 
+// ---------------------------------------------------------- Tabs Infrastructure
+/*
+ * WordPress 4.9 edit-form-advanced.php structure with do_action()s:
+ * non-page post_type only. Check for 'page' == $post_type in code for options
+
+// initial meta-box registration calls (no structure)
+do_action( 'dbx_post_advanced', $post );
+do_action( 'add_meta_boxes', $post_type, $post );
+do_action( "add_meta_boxes_{$post_type}", $post );
+
+do_action( 'do_meta_boxes', $post_type, 'normal', $post );
+do_action( 'do_meta_boxes', $post_type, 'advanced', $post );
+do_action( 'do_meta_boxes', $post_type, 'side', $post );
+
+<div class="wrap">
+	<h1 class="wp-heading-inline">...</h1>
+	<form name="post" action="..." method="post" id="post"...>
+		do_action( 'post_edit_form_tag', $post );
+		do_action( 'edit_form_top', $post ); ?>
+		<div id="poststuff">
+			<div id="post-body" class="metabox-holder columns-...">
+				<div id="post-body-content">
+					<div id="titlediv">
+						<div id="titlewrap">...</div>
+							do_action( 'edit_form_before_permalink', $post );
+						<div class="inside"></div>
+					</div><!-- /titlediv -->
+					do_action( 'edit_form_after_title', $post );
+					<div id="postdivrich" ...>
+						wp_editor(...)
+					</div>
+					do_action( 'edit_form_after_editor', $post );
+				</div><!-- /post-body-content -->
+				<div id="postbox-container-1" class="postbox-container">
+					do_action( 'submitpost_box', $post );
+					do_meta_boxes($post_type, 'side', $post);
+				</div>
+				<div id="postbox-container-2" class="postbox-container">
+					do_meta_boxes(null, 'normal', $post);
+					do_action( 'edit_form_advanced', $post );
+					do_meta_boxes(null, 'advanced', $post);
+				</div>
+				do_action( 'dbx_post_sidebar', $post );
+			</div><!-- /post-body -->
+		</div><!-- /poststuff -->
+	</form>
+</div><!-- /wrap -->
+*/
+function cb2_edit_form_after_title_tab_switcher( $post ) {
+	CB2::the_tabs();
+}
+add_action( 'edit_form_after_title', 'cb2_edit_form_after_title_tab_switcher' );
+
+function cb2_postbox_classes_object_summary_bar( $classes ) {
+	array_push( $classes, 'cb2-object-summary-bar' );
+	return $classes;
+}
+//add_filter() is carried out in metabox registration
+
+function cb2_postbox_classes_hidden( $classes ) {
+	array_push( $classes, 'cb2-hidden' );
+	return $classes;
+}
+//add_filter() is carried out in metabox registration
+
+function cb2_edit_form_advanced_tab_extra( $post ) {
+	CB2_Query::ensure_correct_class( $post );
+	$post_type = $post->post_type;
+
+	if ( method_exists( $post, 'tabs' ) ) {
+		if ( $tabs = $post->tabs() ) {
+			foreach ( $tabs as $id => $title ) {
+				switch ( $id ) {
+					case 'postbox-container-1':
+					case 'postbox-container-2':
+						// Already done and filled with metaboxes side and normal
+						break;
+					case 'advanced':
+						// Carry out the advanced container at the end as
+						// it will be filled with metaboxes advanced by edit-form-advanced.php
+						// after this hook
+						break;
+					default:
+						print( '</div>' );
+						print( "<div id='$id' class='postbox-container'>" );
+						do_meta_boxes( $post_type, $id, $post );
+				}
+			}
+
+			if ( isset( $tabs['advanced'] ) ) {
+				print( '</div>' );
+				print( "<div id='advanced' class='postbox-container'>" );
+				// edit-form-advanced.php will now place advanced metaboxes after this action
+			}
+		}
+	}
+}
+add_action( 'edit_form_advanced', 'cb2_edit_form_advanced_tab_extra' );
+
 // ---------------------------------------------------------- Pages
 function cb2_dashboard_page() {
-	// main CB2 options page
-	global $wpdb;
-
-	print( '<h1 class="cb2-todo">Commons Booking 2 Dashboard <a href="options-general.php?page=cb2-options">settings</a></h1>' );
+	require_once( 'dashboard.php' );
 }
 
 function cb2_options_page() {
@@ -347,12 +476,12 @@ function cb2_admin_page() {
 
 }
 
-function cb2_calendar() {
-	require_once( 'calendar.php' );
-}
-
 function cb2_reflection() {
 	require_once( 'reflection.php' );
+}
+
+function cb2_gui_setup() {
+	require_once( 'GUI.php' );
 }
 
 function cb2_settings_list_page() {
@@ -413,8 +542,14 @@ function cb2_settings_list_page() {
 			}
 			$typenow = $post_type;
 
-			// This is a COPY of the normal wp-admin file
+			// Globally redirect so that get_post() calls work
+			// in map_meta_cap() and get_permalink() calls
+			// as columns may wp_cache_flush()
+			CB2_Query::redirect_wpdb_for_post_type( $post_type );
+			if ( CB2_DEBUG_SAVE )
+				print( "<div class='cb2-WP_DEBUG-small'>permanent page level wp_posts redirect for [<b>$post_type</b>] to handle get_post()</div>" );
 
+			// This is a COPY of the normal wp-admin file
 			$screen = WP_Screen::get( $typenow );
 			set_current_screen( $screen );
 			require_once( dirname( __FILE__ ) . '/wp-admin/edit.php' );
@@ -422,6 +557,27 @@ function cb2_settings_list_page() {
 	} else throw new Exception( 'CB2 admin page does not understand its location. A querystring ?page= parameter is needed' );
 
 	return TRUE;
+}
+
+function cb2_settings_load_template() {
+	global $post;
+
+	$ID            = $_GET['ID'];
+	$post_type     = ( isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post' );
+	$action        = ( isset( $_GET['action'] )    ? $_GET['action']    : 'edit' );
+	$context       = ( isset( $_GET['context'] )   ? $_GET['context']   : 'popup' );
+	$post          = CB2_Query::get_post_with_type( $post_type, $ID );
+
+	$templates     = CB2::templates( $context, $action, FALSE, $templates_considered );
+	$template_args = array();
+
+	print( "<div class='cb2-$context cb2-$context-$action cb2-$context-$action-$post_type'>" );
+	if ( WP_DEBUG ) {
+		print( "<div class='cb2-WP_DEBUG'>$ID/$post_type/$context-$action</div>" );
+		print( "<!-- Templates considered (in priority order): \n  " . implode( ", \n  ", $templates_considered ) . "\n -->" );
+	}
+	cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args );
+	print( '</div>' );
 }
 
 function cb2_settings_post_new() {

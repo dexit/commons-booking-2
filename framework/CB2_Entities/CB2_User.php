@@ -15,24 +15,70 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
 {
     public static $all    = array();
     public static $schema = 'with-perioditems'; //this-only, with-perioditems
-    public static $posts_table    = false;
-    public static $postmeta_table = false;
-    public static $database_table = false;
+    public static $posts_table    = FALSE;
+    public static $postmeta_table = FALSE;
+    public static $database_table = FALSE;
     public static $static_post_type = 'user'; // Pseudo, but required
 
-    public static function selector_metabox()
+  static function database_table_schemas( $prefix ) {
+		// NOT MANAGED by CB2 $database_table = FALSE and 'managed' => FALSE
+		// This wp_users table will not be created by CB2
+		// it is here only for field definition understanding
+		// the views in this case produce these wp_posts fields
+		// and the system needs to unerstand their type
+		// See:
+		//   CB2_Query::to_object() which uses this conversion knowledge
+		// when setting values on objects from string properties
+		// WordPress wp_posts 4.x == 5.x
+		$id_field = 'ID';
+		$date_comment = 'Will remain a string when set with CB2_Query::to_object()';
+
+		return array(
+			array(
+				'name'    => 'users',
+				'managed' => FALSE, // Not created or removed. Here for data conversion only. Columns used by *_post views.
+				'columns' => array(
+					// TYPE, (SIZE), CB2_UNSIGNED, NOT NULL, CB2_AUTO_INCREMENT, DEFAULT, COMMENT
+					$id_field       => array( CB2_BIGINT,  (20),  CB2_UNSIGNED, CB2_NOT_NULL, CB2_AUTO_INCREMENT ),
+					'user_login'    => array( CB2_VARCHAR, (60),  NULL, CB2_NOT_NULL, NULL, '' ),
+					'user_pass'     => array( CB2_VARCHAR, (255), NULL, CB2_NOT_NULL, NULL, '' ),
+					'user_nicename' => array( CB2_VARCHAR, (50),  NULL, CB2_NOT_NULL, NULL, '' ),
+					'user_email'    => array( CB2_VARCHAR, (100), NULL, CB2_NOT_NULL, NULL, '' ),
+					'user_url'      => array( CB2_VARCHAR, (100), NULL, CB2_NOT_NULL, NULL, '' ),
+					'user_registered' => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, NULL, '0000-00-00 00:00:00' ),
+					'user_activation_key' => array( CB2_VARCHAR, (255), NULL, CB2_NOT_NULL, NULL, '' ),
+					'user_status'   => array( CB2_INT,     (11),  NULL, CB2_NOT_NULL, NULL, '0' ),
+					'display_name'  => array( CB2_VARCHAR, (250), NULL, CB2_NOT_NULL, NULL, '' ),
+					'spam'          => array( CB2_TINYINT, (2),   NULL, CB2_NOT_NULL, NULL, '0' ),
+					'deleted'       => array( CB2_TINYINT, (2),   NULL, CB2_NOT_NULL, NULL, '0' ),
+				),
+				'primary key'  => array( $id_field ),
+				'unique keys'  => array(
+					'user_login',
+					'user_nicename',
+					'user_email',
+				),
+			),
+		);
+  }
+
+  public static function selector_metabox( String $context = 'normal', Array $classes = array(), $none = TRUE )
     {
         return array(
             'title' => __('User', 'commons-booking-2'),
-            'show_names' => false,
+            'show_names' => FALSE,
+						'context'    => $context,
+						'classes'    => $classes,
             'fields' => array(
                 array(
                     'name'    => __('User', 'commons-booking-2'),
-                    'id'      => 'user_ID',
+                    // Namespaced so it does not conflict with WordPress user_ID in forms
+                    'id'      => 'cb2_user_ID',
                     'type'    => 'select',
-                    'default' => (isset($_GET['user_ID']) ? $_GET['user_ID'] : null),
-                    'options' => CB2_Forms::user_options(),
+                    'default' => (isset($_GET['cb2_user_ID']) ? $_GET['cb2_user_ID'] : null),
+                    'options' => CB2_Forms::user_options( $none ),
                 ),
+                CB2_Query::metabox_nosave_indicator( 'cb2_user_ID' ),
             ),
         );
     }
@@ -59,17 +105,12 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
 
     protected function __construct($ID, $user_login = null)
     {
-        $this->perioditems    = array();
+				CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
-        if (! is_numeric($ID)) {
-            throw new Exception("[$ID] is not numeric for [" . get_class($this) . ']');
-        }
-
-        // WP_Post values
-        $this->ID         = (int) $ID;
-        $this->user_login = $user_login;
-        $this->post_title = $user_login;
-        $this->post_type  = self::$static_post_type;
+        // other values
+				$this->perioditems  = array();
+        $this->post_title   = $user_login;
+        $this->post_type    = self::$static_post_type;
 
         parent::__construct($this->perioditems);
 

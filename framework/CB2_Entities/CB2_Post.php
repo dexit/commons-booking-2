@@ -20,14 +20,16 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   public static $AUTODRAFT      = 'auto-draft';
   public static $TRASH          = 'trash';
   public static $schema         = 'with-perioditems'; //this-only, with-perioditems
-  public static $posts_table    = FALSE;
-  public static $postmeta_table = FALSE;
+  public static $posts_table    = 'posts';    // not a pseudo class
+  public static $postmeta_table = 'postmeta'; // not a pseudo class
   public static $database_table = FALSE;
+  public static $no_metadata    = TRUE;       // Disable the metadata check
 	public static $description    = 'CB2_Post details the wp_posts table for column description. It is not managed.<br/>CB2_Query::copy_all_wp_post_properties() uses this table config via CB2_Query::to_object(no date conversion).<br/>So DATETIMEs like post_date will remain strings in this case.';
 	public static $supports = array(
 		'title',
 		'editor',
 		'thumbnail',
+		'custom-fields',
 	);
 	static $POST_PROPERTIES = array(
 		'ID' => FALSE,
@@ -138,12 +140,9 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   function id( $why = '' ) {return $this->ID;}
 
   protected function __construct( $ID ) {
-    $this->perioditems = array();
+		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
-    if ( ! is_numeric( $ID ) ) throw new Exception( "[$ID] is not numeric for [" . get_class( $this ) . ']' );
-
-    // WP_Post values
-    $this->ID = (int) $ID;
+		$this->perioditems = array();
 
     parent::__construct( $this->perioditems );
   }

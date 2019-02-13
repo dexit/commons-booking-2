@@ -267,6 +267,17 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			$this->$name = $value;
 		}
 
+		// we redirect the DB because actions fire
+		// and external plugins ask questions
+		//   e.g. CMB2
+		// that use:
+		//   current_user_can()
+		//   get_post(ID)
+		//   etc.
+		// which cmb2_can_save has additionally prevented
+		wp_cache_delete( $this->ID, 'posts' );
+		CB2_Query::redirect_wpdb_for_post_type( $this->post_type() );
+
 		// ----------------------------------------- Outer-object
 		// Change Database data
 		if ( $this->ID == CB2_CREATE_NEW ) {
@@ -292,6 +303,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		}
 
 		$this->post_post_update();
+		CB2_Query::unredirect_wpdb();
 
 		return $this->ID;
 	}
@@ -313,14 +325,14 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 
 		$class_database_table = CB2_Database::database_table( $Class );
 		if ( ! $class_database_table )
-			throw new Exception( "$Class does not support update() because it has no database_table" );
+			throw new Exception( "$Class does not support update_row() because it has no database_table" );
 
 		$full_table = "$wpdb->prefix$class_database_table";
 		$id_field   = CB2_Database::id_field( $Class );
 		$id         = $this->id();
 		$where      = array( $id_field => $id );
 		if ( CB2_DEBUG_SAVE )
-			print( "<div class='cb2-WP_DEBUG-small'>$Class::update($id_field=$id)</div>" );
+			print( "<div class='cb2-WP_DEBUG-small'>$Class::update_row($id_field=$id)</div>" );
 		$result   = $wpdb->update(
 			$full_table,
 			$update_data,
@@ -366,6 +378,14 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event save_post_{$post->post_type}</div>" );
 			do_action( "save_post_{$post->post_type}", $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event save_post</div>" );
+			// This action will trigger the redundant CMB2 save process
+			// using a hook on $this CMB2_hookup :/
+			//   CMB2_hookup->save_post()
+			//   add_action( 'save_post', array( $this, 'save_post' ), 10, 2 );
+			// which uses:
+			//   CMB2_hookup->can_save()
+			//   current_user_can() => get_post(ID)
+			// action cmb2_can_save is hooked to return FALSE for CB2 objects
 			do_action( 'save_post', $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event wp_insert_post</div>" );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
@@ -381,22 +401,22 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		$Class                = get_class( $this );
 		$class_database_table = CB2_Database::database_table( $Class );
 		if ( ! $class_database_table )
-			throw new Exception( "$Class does not support create() because it has no database_table" );
+			throw new Exception( "$Class does not support create_row() because it has no database_table" );
 
 		$full_table = "$wpdb->prefix$class_database_table";
 
 		// Support completely empty inserts (just an auto-increment)
-		if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class::create()</div>" );
+		if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class::create_row()</div>" );
 		if ( count( $insert_data ) )
 			$result = $wpdb->insert( $full_table, $insert_data, $formats );
 		else
 			$result = $wpdb->query( "INSERT into `$full_table` values()" );
 
 		if ( $result === 0 ) {
-			krumo( $result, $full_table, $where );
+			krumo( $result, $full_table, $insert_data );
 			throw new Exception( "Failed to Create $Class row" );
 		} else if ( is_wp_error( $result ) || $result === FALSE ) {
-			krumo( $result, $full_table, $where );
+			krumo( $result, $full_table, $insert_data );
 			throw new Exception( "Create $Class Error: $wpdb->last_error" );
 		}
 
@@ -419,6 +439,14 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event save_post_{$post->post_type}</div>" );
 			do_action( "save_post_{$post->post_type}", $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event save_post</div>" );
+			// This action will trigger the redundant CMB2 save process
+			// using a hook on $this CMB2_hookup :/
+			//   CMB2_hookup->save_post()
+			//   add_action( 'save_post', array( $this, 'save_post' ), 10, 2 );
+			// which uses:
+			//   CMB2_hookup->can_save()
+			//   current_user_can() => get_post(ID)
+			// action cmb2_can_save is hooked to return FALSE for CB2 objects
 			do_action( 'save_post', $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event wp_insert_post</div>" );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );

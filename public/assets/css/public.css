@@ -224,7 +224,6 @@
 
 @media -sass-debug-info{filename{font-family:file\:\/\/C\:\/xampp\/htdocs\/cb_02_framework\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_base\.scss}line{font-family:\00003114}}
 .cb2-location-name {
-  display: block;
   color: #3356A4;
   font-weight: bold;
 }
@@ -456,7 +455,7 @@ a.cb2-button.warning:hover, .tooltipster-box li a.warning:hover, input#wp-submit
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/C\:\/xampp\/htdocs\/cb_02_framework\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000375}}
 .cb2-calendar .type-day {
-  width: 14.285%;
+  width: 14.25%;
   vertical-align: top;
   border-right: 1px solid #F6F6F6;
   border-top: 1px solid #F6F6F6;
@@ -670,7 +669,7 @@ a.cb2-button.warning:hover, .tooltipster-box li a.warning:hover, input#wp-submit
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/C\:\/xampp\/htdocs\/cb_02_framework\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003242}}
 .cb2-calendar li.cb2-date:first-of-type.weekday_2 {
-  margin-left: 14.28571%;
+  margin-left: 14.2%;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/C\:\/xampp\/htdocs\/cb_02_framework\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003243}}
 .cb2-calendar li.cb2-date:first-of-type.weekday_3 {
@@ -936,7 +935,7 @@ body .cb2-low-debug {
 .cb2-error {
 	color:red;
 }
-.cb2-calendar .cb2-selected {
+.cb2-calendar .cb2-subposts .cb2-selected {
 	border:1px solid #d7d7d7;
 	background-color:#f7f7f7;
 	font-weight:bold;

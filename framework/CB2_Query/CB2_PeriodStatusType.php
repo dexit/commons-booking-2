@@ -16,13 +16,13 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		'menu_icon' => 'dashicons-admin-settings',
 		'label'     => 'Period Status Types',
   );
-	static function selector_metabox() {
+	static function selector_metabox( String $context = 'normal', Array $classes = array() ) {
 		return array(
 			'title'      => __( 'Period Status Type', 'commons-booking-2' ),
 			'show_names' => FALSE,
-			'context'    => 'side',
+			'context'    => $context,
+			'classes'    => $classes,
 			'closed'     => TRUE,
-			'debug-only' => TRUE,
 			'fields'     => array(
 				array(
 					'name'    => __( 'PeriodStatusType', 'commons-booking-2' ),
@@ -36,18 +36,9 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 					'id' => 'exceptions',
 					'type' => 'title',
 				),
-				array(
-					'name'    => __( 'No Saves', 'commons-booking-2' ),
-					'id'      => 'period_status_type_ID_save',
-					'type'    => 'hidden',
-					'default' => FALSE,
-				),
+				CB2_Query::metabox_nosave_indicator( 'period_status_type_ID' ),
 			),
 		);
-	}
-
-	function metabox_calendar_options_object_cb( $field, $perioditem ) {
-		return array();
 	}
 
   static function database_table_name() { return self::$database_table; }
@@ -106,12 +97,12 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 
 	static function database_data() {
 		return array(
-			array( '1', 'available', '', '7', '#', '100', '2', '1' ),
-			array( '2', 'booked', NULL, '0', '#dd3333', '50', '6', '1' ),
-			array( '3', 'closed', 'rrr', '2', '#f7f7f7', '50', '3', '1' ),
-			array( '4', 'open', '', '7', '#456', '100', '1', '1' ),
-			array( '5', 'repair', NULL, '0', '#999', '100', '4', '1' ),
-			array( '6', 'holiday', ' ', '2', '#a7a7a7', '100', '5', '1' ),
+			array( '1', 'pickup/return', NULL, '7', '#55ff55', '100', '2', '1' ),
+			array( '2', 'booked',        NULL, '0', '#dd3333', '50',  '6', '1' ),
+			array( '3', 'closed',        NULL, '2', '#f7f7f7', '50',  '3', '1' ),
+			array( '4', 'open',          NULL, '7', '#456456', '100', '1', '1' ),
+			array( '5', 'repair',        NULL, '0', '#999999', '100', '4', '1' ),
+			array( '6', 'holiday',       NULL, '2', '#a7a7a7', '100', '5', '1' ),
 		);
 	}
 
@@ -228,26 +219,32 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     $system    = NULL
   ) {
     // Design Patterns: Factory Singleton with Multiton
+    $object = NULL;
     if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) )
 			$object = self::$all[$ID];
     else {
       $Class = 'CB2_UserPeriodStatusType';
-      $id    = CB2_PostNavigator::id_from_ID_with_post_type( $ID, CB2_PeriodStatusType::$static_post_type );
-      // Hardcoded system status types
-      switch ( $id ) {
-        case CB2_PeriodStatusType_Available::$id: $Class = 'CB2_PeriodStatusType_Available'; break;
-        case CB2_PeriodStatusType_Booked::$id:    $Class = 'CB2_PeriodStatusType_Booked';    break;
-        case CB2_PeriodStatusType_Closed::$id:    $Class = 'CB2_PeriodStatusType_Closed';    break;
-        case CB2_PeriodStatusType_Open::$id:      $Class = 'CB2_PeriodStatusType_Open';      break;
-        case CB2_PeriodStatusType_Repair::$id:    $Class = 'CB2_PeriodStatusType_Repair';    break;
-        case CB2_PeriodStatusType_Holiday::$id:   $Class = 'CB2_PeriodStatusType_Holiday';   break;
-      }
-
+      if ( $ID != CB2_CREATE_NEW ) {
+				$id = CB2_PostNavigator::id_from_ID_with_post_type( $ID, CB2_PeriodStatusType::$static_post_type );
+				// Hardcoded system status types
+				switch ( $id ) {
+					case CB2_PeriodStatusType_PickupReturn::$id: $Class = 'CB2_PeriodStatusType_PickupReturn'; break;
+					case CB2_PeriodStatusType_Booked::$id:    $Class = 'CB2_PeriodStatusType_Booked';    break;
+					case CB2_PeriodStatusType_Closed::$id:    $Class = 'CB2_PeriodStatusType_Closed';    break;
+					case CB2_PeriodStatusType_Open::$id:      $Class = 'CB2_PeriodStatusType_Open';      break;
+					case CB2_PeriodStatusType_Repair::$id:    $Class = 'CB2_PeriodStatusType_Repair';    break;
+					case CB2_PeriodStatusType_Holiday::$id:   $Class = 'CB2_PeriodStatusType_Holiday';   break;
+				}
+			}
 			$reflection = new ReflectionClass( $Class );
 			$object     = $reflection->newInstanceArgs( func_get_args() );
     }
 
     return $object;
+  }
+
+  function metabox_calendar_options_object_cb( $field, $periodentity ) {
+		return array();
   }
 
   function can( $actions ) {
@@ -281,7 +278,6 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		$columns['priority'] = 'Priority';
 		$columns['colour']   = 'Colour';
 		$columns['opacity']  = 'Opacity';
-		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
 
@@ -401,7 +397,7 @@ class CB2_SystemPeriodStatusType extends CB2_PeriodStatusType {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
-class CB2_PeriodStatusType_Available extends CB2_SystemPeriodStatusType {
+class CB2_PeriodStatusType_PickupReturn extends CB2_SystemPeriodStatusType {
 	static $id = 1;
 	static function bigID() {return CB2_PostNavigator::ID_from_id_post_type( self::$id, CB2_PeriodStatusType::$static_post_type );}
 
@@ -474,6 +470,27 @@ class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 			$args = array( $ID, 'open' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
+	}
+
+	function metabox_calendar_options_object_cb( $field, $periodentity ) {
+		$options = array(
+			'query' => array(
+				'meta_query' => array(
+					// When we are showing opening times, we only show them and holidays
+					'period_status_type_clause' => array(
+						'key'   => 'period_status_type_ID',
+						'value' => array( $this->ID(), CB2_PeriodStatusType_Holiday::bigID() ),
+					),
+				),
+				// Let's show next week only
+				'date_query' => array(
+					'after'  => (string) CB2_DateTime::next_week_start(),
+					'before' => (string) CB2_DateTime::next_week_end(),
+					'compare' => CB2_Week::$static_post_type,
+				),
+			),
+		);
+		return $options;
 	}
 }
 

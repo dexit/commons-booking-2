@@ -623,6 +623,12 @@ class CB2_Database {
 				$data_value_array = $data[$column_name];
 			}
 
+			// Namespaced value with same name
+			// e.g. cb2_user_ID => user_ID
+			if ( isset( $data["cb2_$column_name"] ) ) {
+				$data_value_array = $data["cb2_$column_name"];
+			}
+
 			// Standard mappings
 			if ( is_null( $data_value_array ) ) {
 				switch ( $column_name ) {
@@ -733,8 +739,10 @@ class CB2_Database {
 				// TODO: PostGRES does support INTERVAL type, but it needs to be checked
 				//
 				// Multiple value dates ignored
-				if ( count( $data_value_array ) > 1 )
+				if ( count( $data_value_array ) > 1 ) {
+					krumo($data_value_array);
 					throw new Exception( "Multiple datetime input is not understood currently for [$column_name]" );
+				}
 				foreach ( $data_value_array as &$value ) {
 					if ( is_object( $value ) && method_exists( $value, '__toDateTimeFor' ) ) {
 						// PHP only supports __toString() magic method
@@ -823,6 +831,7 @@ class CB2_Database {
 
 					if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) ) {
 						$postmeta_table  = $Class::$postmeta_table;
+						if ( $Class::$postmeta_table == 'postmeta' ) $meta_type = 'post';
 					} else {
 						$postmeta_table  = "cb2_view_{$meta_table_stub}";
 					}

@@ -167,6 +167,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB2_Database::$NULL_indicator ),
 						'options' => array(
 							CB2_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
+							'H' => '<span class="cb2-todo">' . __( 'Hourly', 'commons-booking-2' ) . '</span>',
 							'D' => __( 'Daily', 'commons-booking-2' ),
 							'W' => __( 'Weekly', 'commons-booking-2' ),
 							'M' => __( 'Monthly', 'commons-booking-2' ),
@@ -264,7 +265,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $new;
 	}
 
-  static function selector_metabox( $multiple = FALSE, $context_normal = FALSE ) {
+  static function selector_metabox( $multiple = FALSE, String $context = 'normal', Array $classes = array() ) {
 		$period_options       = CB2_Forms::period_options( TRUE );
 		$periods_count        = count( $period_options ) - 1;
 		$plural  = ( $multiple ? 's' : '' );
@@ -274,7 +275,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		$default = ( isset( $_GET[$name] ) ? $_GET[$name] : CB2_CREATE_NEW );
 		if ( $multiple ) $default = explode( ',', $default );
 
-		$context = ( $context_normal ? 'normal' : 'side' );
+		$context_normal = ( $context == 'normal' );
 		$closed  = ! $context_normal;
 
 		return array(
@@ -283,7 +284,6 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			'show_names' => FALSE,
 			'context'    => $context,
 			'closed'     => $closed,
-			'debug-only' => TRUE,
 			'fields'     => array(
 				array(
 					'name'    => __( $title, 'commons-booking-2' ),
@@ -292,6 +292,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 					'default' => $default,
 					'options' => $period_options,
 				),
+				CB2_Query::metabox_nosave_indicator( $name ),
 			),
 		);
 	}
@@ -307,10 +308,13 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 
 		$object = self::factory(
 			( isset( $properties['period_ID'] )  ? $properties['period_ID']            : $properties['ID']   ),
-			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			( isset( $properties['post_title'] )
+				? $properties['post_title']
+				: ( isset( $properties['name'] ) ? $properties['name'] : '' )
+			),
 			$properties['datetime_part_period_start'],
 			$properties['datetime_part_period_end'],
-			$properties['datetime_from'],
+			( isset( $properties['datetime_from'] )        ? $properties['datetime_from']        : CB2_DateTime::yesterday() ),
 			( isset( $properties['datetime_to'] )          ? $properties['datetime_to']          : NULL ),
 			( isset( $properties['recurrence_type'] )      ? $properties['recurrence_type']      : NULL ),
 			( isset( $properties['recurrence_frequency'] ) ? $properties['recurrence_frequency'] : NULL ),
@@ -523,7 +527,6 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
   function manage_columns( $columns ) {
 		$columns['summary'] = 'Summary';
 		$columns['periodgroups'] = 'Period Groups <a href="admin.php?page=cb2-period-groups">view all</a>';
-		$this->move_column_to_end( $columns, 'date' );
 		return $columns;
 	}
 

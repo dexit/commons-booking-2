@@ -116,11 +116,13 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	}
 
 	function have_posts() {
+		CB2_Query::reorganise_posts_structure( $this->wp_query );
 		return $this->wp_query->have_posts();
 	}
 
 	function &the_post()   {
 		$post = $this->wp_query->the_post();
+		$this->in_the_loop = $this->wp_query->in_the_loop;
 		return $post;
 	}
 
@@ -130,6 +132,14 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 
 	function reset_postdata() {
 		return $this->wp_query->reset_postdata();
+	}
+
+	function is_post_type_archive( $post_types = '' ) {
+		return FALSE;
+	}
+
+	function is_singular() {
+		return FALSE;
 	}
 
 	// -------------------------------------------- period analysis functions

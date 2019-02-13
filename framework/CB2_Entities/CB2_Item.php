@@ -28,19 +28,22 @@ class CB2_Item extends CB2_Post implements JsonSerializable
             'supports' => array('title','thumbnail','editor','excerpt')
 		);
 
-    public static function selector_metabox()
+    public static function selector_metabox( String $context = 'normal', Array $classes = array(), $none = TRUE )
     {
         return array(
-            'title' => __('Item', 'commons-booking-2'),
+            'title'      => __('Item', 'commons-booking-2'),
+						'context'    => $context,
+						'classes'    => $classes,
             'show_names' => false,
-            'fields' => array(
+            'fields'     => array(
                 array(
                     'name'    => __('Item', 'commons-booking-2'),
                     'id'      => 'item_ID',
                     'type'    => 'select',
                     'default' => (isset($_GET['item_ID']) ? $_GET['item_ID'] : null),
-                    'options' => CB2_Forms::item_options(),
+                    'options' => CB2_Forms::item_options( $none ),
                 ),
+								CB2_Query::metabox_nosave_indicator( 'item_ID' ),
             ),
         );
 		}
@@ -221,9 +224,8 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 
     public function manage_columns($columns)
     {
-        $columns['availability'] = 'Availability <a href="admin.php?page=cb2-timeframes">view all</a>';
+        $columns['availability'] = 'Pickup/Return <a href="admin.php?page=cb2-timeframes">view all</a>';
         $columns['bookings']     = 'Bookings <a href="admin.php?page=cb2-bookings">view all</a>';
-        $this->move_column_to_end($columns, 'date');
         return $columns;
     }
 
@@ -245,7 +247,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                         ),
                         'period_status_type_clause' => array(
                             'key'   => 'period_status_type_id',
-                            'value' => CB2_PeriodStatusType_Available::$id,
+                            'value' => CB2_PeriodStatusType_PickupReturn::$id,
                         ),
                         'relation' => 'AND',
 											),
@@ -256,7 +258,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 
                 if ($wp_query->have_posts()) {
                     print('<ul class="cb2-admin-column-ul">');
-                    CB2::the_inner_loop($wp_query, 'admin', 'summary');
+                    CB2::the_inner_loop( NULL, $wp_query, 'admin', 'summary');
                     print('</ul>');
                 } else {
                     print('<div>' . __('No Item Availability') . '</div>');
@@ -264,7 +266,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 print("<div class='cb2-column-actions'>");
                 $page         = 'cb2-post-new';
                 $add_new_text = ('add new item availability');
-                $post_title   = __('Availability of') . " $this->post_title";
+                $post_title   = __('Pickup/Return for') . " $this->post_title";
                 $add_link     = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
                 if ($has_locations) {
                     print("<a href='$add_link'>$add_new_text</a>");
@@ -296,7 +298,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 
                 if ($wp_query->have_posts()) {
                     print('<ul class="cb2-admin-column-ul">');
-                    CB2::the_inner_loop($wp_query, 'admin', 'summary');
+                    CB2::the_inner_loop( NULL, $wp_query, 'admin', 'summary');
                     print('</ul>');
                 } else {
                     print('<div>' . __('No Bookings') . '</div>');
@@ -309,7 +311,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 if ( $has_locations ) {
                     $add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
                     print(" <a href='$add_link'>$add_new_booking_text</a>");
-                    $page       = 'cb2-calendar';
+                    $page       = 'cb2_menu';
                     $view_booking_text = __('view in calendar');
                     $view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
                     print(" | <a href='$view_link'>$view_booking_text</a>");

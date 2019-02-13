@@ -5,7 +5,7 @@
 
 	<div class="entry-content">
 		<ul class="cb2-subposts">
-			<?php CB2::the_inner_loop( NULL, 'list', 'openinghours' ); ?>
+			<?php CB2::the_inner_loop( $template_args, NULL, 'list', 'openinghours' ); ?>
 		</ul>
 
 		<!-- Using echo get_the_date() because there is a bug in the_date() -->
@@ -13,11 +13,11 @@
 		<div class="cb2-removable-item"><input class="cb2-hidden" name="period_IDs[]" value="<?php echo get_the_date( 'D' ); ?>:13:00-18:00"/><a href="#">13:00 - 18:00</a></div>
 
 		<?php
-			$add_times_text  = '<span class="cb2-todo">' . __( 'Add Slot' ) . '</span>';
-			$add_times_title = __( 'Add time period' );
+			$add_times_text  = '<span class="cb2-todo">' . __( 'Add Hours' ) . '</span>';
+			$add_times_title = __( 'Add Opening Hours' );
 		?>
 		<a class="thickbox" name="<?php echo $add_times_title ?>" href="?inlineId=day_popup_<?php the_ID(); ?>&amp;title=<?php echo $add_times_title ?>&amp;width=400&amp;height=500&amp;#TB_inline">
-			<button class="cb2-perioditem-selector"><?php echo $add_times_text; ?></button>
+			<?php echo $add_times_text; ?>
 		</a>
 	</div><!-- .entry-content -->
 

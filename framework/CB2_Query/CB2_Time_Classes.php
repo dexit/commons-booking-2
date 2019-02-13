@@ -283,6 +283,15 @@ class CB2_Day extends CB2_TimePostNavigator {
     parent::__construct( $this->perioditems );
   }
 
+  static function &factory_from_properties( Array $properties ) {
+		if ( ! isset( $properties[ 'date' ] ) )
+			throw new Exception( "date required when CB2_Day::factory_from_properties()" );
+
+		$title_format = ( isset( $properties[ 'title_format' ] ) ? $properties[ 'title_format' ] : NULL );
+		$date         = new CB2_DateTime( $properties[ 'date' ] );
+		return self::factory( $date, $title_format );
+  }
+
   static function &factory( CB2_DateTime $date, String $title_format = NULL ) {
     // Design Patterns: Factory Singleton with Multiton
     $key = $date->format( 'Y-z' ); // year-dayofyear: 2019-364
@@ -337,6 +346,15 @@ class CB2_Day extends CB2_TimePostNavigator {
   function add_perioditem( $perioditem ) {
     array_push( $this->perioditems, $perioditem );
     return $perioditem;
+  }
+
+  function tabs() {
+		return array(
+			"cb2-tab-status"  => 'Type of Thing',
+			"cb2-tab-objects" => 'Real Stuff',
+			"cb2-tab-periodgroup" => 'Period Group',
+			"cb2-tab-period"  => 'Time period',
+		);
   }
 
   function jsonSerialize() {

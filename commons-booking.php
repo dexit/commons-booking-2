@@ -75,6 +75,17 @@ function cb2_load_plugin_textdomain()
 }
 add_action('plugins_loaded', 'cb2_load_plugin_textdomain', 1);
 
+function cb2_body_class_WP_DEBUG( $classes ) {
+	if ( WP_DEBUG ) {
+		// admin_body_class sends a string, body_class sends an array!
+		if ( is_string( $classes ) ) $classes .= ' cb2-WP_DEBUG-on';
+		else if ( is_array( $classes ) ) array_push( $classes, 'cb2-WP_DEBUG-on' );
+	}
+	return $classes;
+}
+add_filter( 'body_class',       'cb2_body_class_WP_DEBUG' );
+add_filter( 'admin_body_class', 'cb2_body_class_WP_DEBUG' );
+
 // TODO: remove this debug checking code
 if ( WP_DEBUG ) {
 	function cb2_save_post_periodent_user_booked_example( $post_id, $post ) {

@@ -53,7 +53,7 @@ class CB2_Forms {
 				if ( WP_DEBUG ) $name .= " ($id)";
 				$options[$id] = htmlspecialchars( $name );
 			}
-			wp_cache_set( $cache_name, $options );
+			wp_cache_set( $cache_name, $options ); // Cache the CB2_Forms select options
 		}
 		return $options;
   }
