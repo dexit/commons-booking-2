@@ -318,7 +318,8 @@ function cb2_admin_init_menus() {
 	$notifications_string = ''; //( $bookings_count ? " ($bookings_count)" : '' );
 	add_menu_page( 'CB2', "CommonsBooking$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_dashboard_page', 'dashicons-admin-post' );
 	add_submenu_page( CB2_MENU_SLUG, 'Dashboard', 'Dashboard', 'manage_options', CB2_MENU_SLUG, 'cb2_dashboard_page' );
-	add_options_page( 'CommonsBooking', 'CommonsBooking', 'manage_options', 'cb2-options', 'cb2_options_page' );
+	if ( WP_DEBUG )
+		add_options_page( 'CommonsBooking', 'CommonsBooking WP_DEBUG', 'manage_options', 'cb2-options', 'cb2_options_page' );
 
 	foreach ( cb2_admin_pages() as $menu_slug => $details ) {
 		$parent_slug  = ( isset( $details['parent_slug'] )  ? $details['parent_slug']  : CB2_MENU_SLUG );
