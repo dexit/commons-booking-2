@@ -531,7 +531,6 @@ class CB2 {
 		$action    = CB2_Query::pass_through_query_string( NULL, array(
 			'ID'          => $post->ID,
 			'action'      => 'save',
-			'form_action' => 'editpost',
 			'post_type'   => $post_type,
 		) );
 
@@ -580,6 +579,11 @@ class CB2 {
 				'context'   => 'save',
 			) );
 
+		// Texts
+		$cancel_text   = __( 'Cancel' );
+		$save_text     = __( 'Save' );
+		$advanced_text = __( 'advanced' );
+
 		// Form start
 		$classes_string = implode( ' ', $classes );
 		print( "<div id='cb2-ajax-edit-form' action='$post_url' class='cb2-ajax-edit-form $classes_string'>" );
@@ -612,6 +616,24 @@ class CB2 {
 		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
 		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 		// ------------------------------- /end edit-form-advanced.php
+
+		// ----------------------------- buttons
+		print( "<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
+		if ( WP_DEBUG )
+			print( "<div class='dashicons-before dashicons-admin-tools cb2-advanced'><a href='#'>$advanced_text</a></div>" );
+	}
+
+	static public function the_form_bottom( Array $extra_buttons = array() ) {
+		$cancel_text   = __( 'Cancel' );
+		$save_text     = __( 'Save' );
+		print( "<div class='cb2-actions'>
+			<a class='cb2-popup-form-cancel' onclick='tb_remove();' href='#'>$cancel_text</a>
+			<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
+		foreach ( $extra_buttons as $id => $value ) {
+			print( "<button class='cb2-popup-form-$id'>$value</button>" );
+		}
+		print( '</div>
+			</div>' );
 	}
 
 	public static function the_meta_boxes( $the_post = NULL, $context = 'normal' ) {

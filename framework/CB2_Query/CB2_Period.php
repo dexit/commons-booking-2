@@ -158,7 +158,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 				'add_button'    => __( 'Add Another Entry', 'commons-booking-2' ),
 				'remove_button' => __( 'Remove Entry', 'commons-booking-2' ),
 				//'show_on_cb' => array( 'CB2', 'is_published' ),
-				'closed'     => ! isset( $_GET['recurrence_type'] ),
+				//'closed'     => ! isset( $_GET['recurrence_type'] ),
 				'fields' => array(
 					array(
 						'name' => __( 'Type', 'commons-booking-2' ),
@@ -312,8 +312,8 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name'] : '' )
 			),
-			$properties['datetime_part_period_start'],
-			$properties['datetime_part_period_end'],
+			( isset( $properties['datetime_part_period_start'] ) ? $properties['datetime_part_period_start'] : CB2_DateTime::day_start()->format() ),
+			( isset( $properties['datetime_part_period_end'] )   ? $properties['datetime_part_period_end']   : CB2_DateTime::day_end()->format() ),
 			( isset( $properties['datetime_from'] )        ? $properties['datetime_from']        : CB2_DateTime::yesterday() ),
 			( isset( $properties['datetime_to'] )          ? $properties['datetime_to']          : NULL ),
 			( isset( $properties['recurrence_type'] )      ? $properties['recurrence_type']      : NULL ),

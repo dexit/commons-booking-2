@@ -20,21 +20,16 @@ if ( $template_post && ! $template_post instanceof CB2_PeriodEntity )
 
 // Texts
 $name          = '';
-$cancel_text   = __( 'Cancel' );
-$save_text     = __( 'Save' );
 $next_text     = __( 'Next' ) . ' &gt;&gt;';
 $name_text     = 'Name';
 $name_placeholder_text = 'New period entity';
 $advanced_text = __( 'advanced' );
 
 // <div form...
-CB2::the_hidden_form();
+CB2::the_hidden_form( $post->post_type(), array(), $post, 'add' );
+print( "<button class='cb2-popup-form-next cb2-save-visible-ajax-form'>$next_text</button>" );
 
 // ------------------------------------ Tab nav
-print( "<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
-print( "<button class='cb2-popup-form-next cb2-save-visible-ajax-form'>$next_text</button>" );
-if ( WP_DEBUG )
-	print( "<div class='dashicons-before dashicons-admin-tools cb2-advanced'><a href='#'>$advanced_text</a></div>" );
 CB2::the_nexts( NULL, ( $template_post ? 'cb2-tab-period' : NULL ) );
 
 // ------------------------------------ Period Status Type
@@ -74,8 +69,4 @@ CB2::the_meta_boxes( $new_period );
 print( '</div>' );
 
 // ------------------------------------ Bottom actions
-print( "<div class='cb2-actions'>
-	<a class='cb2-popup-form-cancel' onclick='tb_remove();' href='#'>$cancel_text</a>
-	<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>
-</div>" );
-print( '</div>' );
+CB2::the_form_bottom();

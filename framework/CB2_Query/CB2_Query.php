@@ -1,8 +1,5 @@
 <?php
 // -------------------------------------------- WP_DEBUG setup
-error_reporting( 0 );
-// if ( WP_DEBUG ) include( 'krumo/class.krumo.php' );
-error_reporting( E_ALL );
 if ( ! function_exists( 'krumo' ) ) {
 	function krumo( $p0 = NULL, $p1 = NULL, $p2 = NULL, $p3 = NULL, $p4 = NULL, $p5 = NULL ) {
 		// Variable ...$params requires PHP 5.6

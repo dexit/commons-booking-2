@@ -871,6 +871,9 @@ body .cb2-calendar .cb2-out-of-period-entity-scope * {
 	float:right;
 	margin-left:6px;
 }
+.cb2-popup .cb2-popup-form-delete {
+	color:red;
+}
 .cb2-popup .cb2-advanced {
 	float:right;
 	color:#aaa;

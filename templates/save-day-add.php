@@ -7,9 +7,9 @@ if ( ! $post instanceof CB2_Day )
 $ID               = $post->ID;
 $post_type        = $post->post_type;
 $properties       = $_POST;
-$period_entity    = CB2_PeriodEntity::factory_from_properties( $properties );
+//$period_entity    = CB2_PeriodEntity::factory_from_properties( $properties );
 
-$period_entity->save();
+//$period_entity->save();
 
 // XML response
 print( "<!--\n" );

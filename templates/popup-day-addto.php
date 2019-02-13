@@ -16,18 +16,10 @@ if ( ! $target_post instanceof CB2_PeriodEntity )
 	throw new Exception( "addto can only add to CB2_PeriodEntity. [$Class_target] sent through." );
 $period_group  = $target_post->period_group;
 
-// Texts
-$cancel_text   = __( 'Cancel' );
-$save_text     = __( 'Save' );
-$advanced_text = __( 'advanced' );
-
 // <div form...
-CB2::the_hidden_form( $period_group->post_type(), array(), $period_group, 'addtopost' );
+CB2::the_hidden_form( $period_group->post_type(), array(), $period_group, 'addto' );
 
 // ------------------------------------ Tab nav
-print( "<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
-if ( WP_DEBUG )
-	print( "<div class='dashicons-before dashicons-admin-tools cb2-advanced'><a href='#'>$advanced_text</a></div>" );
 CB2::the_tabs( array(
 		"cb2-tab-periodgroup" => 'Period Group',
 		"cb2-tab-periods"     => 'Periods',
@@ -60,8 +52,4 @@ CB2::the_meta_boxes( $new_period );
 print( '</div>' );
 
 // ------------------------------------ Bottom actions
-print( "<div class='cb2-actions'>
-	<a class='cb2-popup-form-cancel' onclick='tb_remove();' href='#'>$cancel_text</a>
-	<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>
-</div>" );
-print( '</div>' );
+CB2::the_form_bottom();

@@ -476,10 +476,16 @@ class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 		$options = array(
 			'query' => array(
 				'meta_query' => array(
-					// When we are showing opening times, we only show them and holidays
+					// When we are showing opening times,
+					// we only show them and holidays
 					'period_status_type_clause' => array(
 						'key'   => 'period_status_type_ID',
 						'value' => array( $this->ID(), CB2_PeriodStatusType_Holiday::bigID() ),
+					),
+					// For the given location
+					'location_clause' => array(
+						'key'   => 'location_ID',
+						'value' => array( $periodentity->location->ID() ),
 					),
 				),
 				// Let's show next week only

@@ -366,6 +366,14 @@ abstract class CB2_PostNavigator extends stdClass {
 		$this->saveable = $saveable;
 	}
 
+	function is_auto_draft() {
+		return property_exists( $this, 'post_status' ) && $this->post_status == CB2_Post::$AUTODRAFT;
+	}
+
+	function is_a_post() {
+		return property_exists( $this, 'post_type' );
+	}
+
 	function is_saveable() {
 		return $this->saveable || $this->ID == CB2_CREATE_NEW;
 	}
