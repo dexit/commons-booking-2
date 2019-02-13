@@ -28,7 +28,6 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		'menu_icon' => 'dashicons-admin-tools',
 		'supports' => array('title','thumbnail','editor','excerpt')
 	);
-
 	static function selector_metabox() {
 		return array(
 			'title' => __( 'Location', 'commons-booking-2' ),
@@ -53,6 +52,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				'context'    => 'normal',
 				'priority' 	 => 'high',
 				'show_names' => TRUE,
+				'id' 				 => 'location_geo',
 				'fields'     => array(
 					array(
 						'id' => 'geo_address',
@@ -69,10 +69,16 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 						'name' => __('Longitude', 'commons-booking-2'),
 						'type' => 'text',
 					),
+					array(
+						'id' => 'map_preview',
+						'name' => 'Preview',
+						'type' => 'leaflet'
+					)
 				),
 			),
 		);
-		return apply_filters('cb2_location_metaboxes', $metaboxes);
+		// return apply_filters('cb2_location_metaboxes', $metaboxes);
+		return $metaboxes;
 	}
 
   function post_type() {return self::$static_post_type;}
@@ -82,8 +88,9 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		self::$all[$ID] = $this;
 
     // WP_Post values
-    $this->post_type = self::$static_post_type;
-  }
+		$this->post_type = self::$static_post_type;
+
+	}
 
   static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(

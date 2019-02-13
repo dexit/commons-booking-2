@@ -35,6 +35,7 @@ class CB2_Admin {
 		require_once(CB2_PLUGIN_ROOT . 'admin/includes/lib/wp-admin-notice/WP_Admin_Notice.php');
 		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Enqueue_Admin.php' );
 		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Options_Page.php' );
+		require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Geocoding.php' );
 
 		/*
 		* Extra functions
