@@ -165,37 +165,6 @@ class CB2_Enqueue_Admin {
 		/* @TODO: retire */
 		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-forms-script', plugins_url( 'admin/assets/js/admin_forms.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 		}
-<<<<<<< HEAD
-		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-script', plugins_url( 'admin/assets/js/admin.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
-		wp_enqueue_script( 'jquery-ui-tabs' );
-	}
-	/**
-	 * Register the plugin settings menu.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @return void
-	 */
-	public function add_plugin_settings_menu() {
-
-		/** Settings menu
-		 *  @TODO: Temporarily a main menu item,
-		 *  possible conflict with WP_Admin_Integration?
-		 */
-		// $this->admin_view_page = add_submenu_page( CB2_MENU_SLUG, __( 'Settings', CB2_TEXTDOMAIN ), __( 'Settings', CB2_TEXTDOMAIN ), 'manage_options', 'cb_settings_page', array( $this, 'display_plugin_admin_page' ) );
-		$this->admin_view_page = add_menu_page( __('CommonsBooking 2 Settings', 'commons-booking'), __('Settings', 'commons-booking'), 'manage_options', 'cb_settings_page', array($this, 'display_plugin_admin_page'));
-	}
-	/**
-	 * Render the settings page for this plugin.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @return void
-	 */
-	public function display_plugin_admin_page() {
-		include_once( CB2_PLUGIN_ROOT . 'admin/views/settings.php' );
-=======
->>>>>>> dd1fa8c63a7977cf91fdcff8507337e88e918055
 	}
 	/**
 	 * Add settings action link to the plugins page.
