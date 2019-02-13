@@ -38,7 +38,7 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
 		'post_date_gmt' => FALSE,
 		'post_content' => TRUE,
 		'post_title' => TRUE,
-		'post_excerpt' => FALSE,
+		'post_excerpt' => TRUE,
 		'post_status' => FALSE,
 		'comment_status' => FALSE,
 		'ping_status' => FALSE,

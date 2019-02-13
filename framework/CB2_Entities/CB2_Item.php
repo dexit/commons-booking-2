@@ -24,7 +24,8 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 		public static $static_post_type   = 'item';
 		public static $rewrite   = array( 'slug' => 'item' );
 		public static $post_type_args = array(
-			'menu_icon' => 'dashicons-video-alt',
+            'menu_icon' => 'dashicons-video-alt',
+            'supports' => array('title','thumbnail','editor','excerpt')
 		);
 
     public static function selector_metabox( String $context = 'normal', Array $classes = array(), $none = TRUE )
@@ -354,5 +355,24 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         $action .= '</a></span>';
 
         $actions[ 'manage_repairs' ] = $action;
+    }
+    function get_api_data(string $version){
+        $data = array(
+            'id' => $this->ID,
+            'name' => get_the_title($this),
+            'url' => get_post_permalink($this),
+            'owner_id' => get_the_author_meta('ID', $this->post_author),
+            'availability' => array()
+        );
+        $excerpt = $this->post_excerpt;
+        if($excerpt != NULL){
+            $data['description'] = $excerpt;
+        }
+        if($this->perioditems != null){
+            foreach($this->perioditems as $period_inst){
+                $data['availability'][] = $period_inst->get_api_data($version);
+            }
+        }
+        return $data;
     }
 }

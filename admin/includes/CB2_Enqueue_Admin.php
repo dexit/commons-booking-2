@@ -25,23 +25,119 @@ class CB2_Enqueue_Admin {
 	 * Initialize the class
 	 */
 	public function initialize() {
-		if ( !apply_filters( 'commons_booking_cb_enqueue_admin_initialize', true ) ) {
+		if ( !apply_filters( 'cb2_enqueue_admin_instance', true ) ) {
 			return;
 		}
 
 		$plugin_basename = plugin_basename( plugin_dir_path( realpath( dirname( __FILE__ ) ) ) . CB2_TEXTDOMAIN . '.php' );
 
-		// Add the manage menu & options page entry
-		add_action( 'admin_menu', array( $this, 'add_plugin_settings_menu') );
-		// Add an action link pointing to the options page.
-		add_filter( 'plugin_action_links_' . $plugin_basename, array( $this, 'add_action_links' ) );
-		// Load admin style sheet and JavaScript.
+		// Load general admin style sheet and JavaScript.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
-		// @TODO not working
-		add_filter( 'cmb2_sanitize_toggle', array( $this, 'cmb2_sanitize_checkbox' ), 20, 2 );
-	}
+		// setting default value for checkbox (https: //github.com/CMB2/CMB2/wiki/Tips-&-Tricks#setting-a-default-value-for-a-checkbox)
+		add_filter('cmb2_sanitize_toggle', 'cmb2_sanitize_checkbox', 20, 2);
 
+		/*
+		* Admin Screens
+		*/
+		add_action('admin_menu', array( $this, 'plugin_settings_page_menu')); // Settings menu
+
+	}
+	/**
+	 * Settings menu
+	 *
+	 */
+	public function plugin_settings_page_menu() {
+
+		add_options_page(
+				'CommonsBooking 2',
+				'CommonsBooking 2',
+				'manage_options',
+				'cb2_settings',
+				array($this, 'plugin_settings_page'),
+				'',
+				6,
+				''
+		);
+	}
+	/**
+	 * Settings page contents
+	 */
+	public function plugin_settings_page() {
+
+		$plugin_settings_page = new CB2_Admin_Tabs('cb2_settings');
+
+		$plugin_settings_page->add_tab(
+				'cb2',
+				'CB2',
+				$this->plugin_settings_page_welcome()
+		);
+		$plugin_settings_page->add_tab(
+				'General',
+				__('General', 'commons-booking-2'),
+				CB2_Settings::render_settings_group(array('pages')),
+				TRUE
+		);
+		$plugin_settings_page->add_tab(
+				'booking-options',
+				__('Bookings', 'commons-booking-2'),
+				CB2_Settings::render_settings_group( array('permissions', 'booking_options') ),
+				TRUE
+		);
+		$plugin_settings_page->add_tab(
+				'strings',
+				__('E-Mails', 'commons-booking-2'),
+				'@todo',
+				true
+		);
+		$plugin_settings_page->add_tab(
+				'maps',
+				__('Maps', 'commons-booking-2'),
+				CB2_Settings::render_settings_group(array('maps')),
+				CB2_Settings::is_enabled('features', 'enable-maps'),
+				TRUE
+		);
+		$plugin_settings_page->add_tab(
+				'holidays',
+				__('Holidays', 'commons-booking-2'),
+				'@todo',
+				CB2_Settings::is_enabled('features', 'enable-holidays')
+		);
+		$plugin_settings_page->add_tab(
+				'codes',
+				__('Codes', 'commons-booking-2'),
+				'@todo',
+				CB2_Settings::is_enabled('features', 'enable-codes')
+		);
+		$plugin_settings_page->add_tab(
+				'strings',
+				__('Strings', 'commons-booking-2'),
+				'@todo',
+				TRUE
+		);
+		$plugin_settings_page->add_tab(
+				'strings',
+				__('Advanced', 'commons-booking-2'),
+				'@todo',
+				TRUE
+		);
+
+
+
+		$plugin_settings_page->render_content();
+	}
+/**
+ * Settings page contents: tab welcome
+ */
+	public function plugin_settings_page_welcome() {
+		return '<h1>welcome to cb2</h1>' . CB2_Settings::render_settings_group( array('features') );
+	}
+/**
+ * Settings page contents: tab welcome
+ */
+	public function plugin_settings_page_bookings() {
+		return CB2_Settings::render_settings_group( array('booking-options', 'permissions') );
+	}
 		/**
 	 * Register and enqueue admin-specific style sheet.
 	 *
@@ -50,16 +146,7 @@ class CB2_Enqueue_Admin {
 	 * @return mixed Return early if no settings page is registered.
 	 */
 	public function enqueue_admin_styles() {
-		if ( !isset( $this->admin_view_page ) ) {
-			return;
-		}
-		$screen = get_current_screen();
-		if ( $this->admin_view_page === $screen->id || strpos( $_SERVER[ 'REQUEST_URI' ], 'index.php' ) || strpos( $_SERVER[ 'REQUEST_URI' ], get_bloginfo( 'wpurl' ) . '/wp-admin/' ) ) {
-			wp_enqueue_style( CB2_TEXTDOMAIN . '-settings-styles', plugins_url( 'admin/assets/css/settings.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
-		}
 		wp_enqueue_style( CB2_TEXTDOMAIN . '-admin-styles', plugins_url( 'admin/assets/css/admin.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
-		// TODO: put this locally
-		wp_enqueue_style( 'jquery-ui-cupertino', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/themes/cupertino/jquery-ui.css' );
 	}
 		/**
 	 * Register and enqueue admin-specific JavaScript.
@@ -75,8 +162,10 @@ class CB2_Enqueue_Admin {
 
 		$screen = get_current_screen();
 		if ( $this->admin_view_page === $screen->id ) {
-			wp_enqueue_script( CB2_TEXTDOMAIN . '-settings-script', plugins_url( 'admin/assets/js/settings.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery', 'jquery-ui-tabs' ), CB2_VERSION );
+		/* @TODO: retire */
+		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-forms-script', plugins_url( 'admin/assets/js/admin_forms.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 		}
+<<<<<<< HEAD
 		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-script', plugins_url( 'admin/assets/js/admin.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
 		wp_enqueue_script( 'jquery-ui-tabs' );
 	}
@@ -105,6 +194,8 @@ class CB2_Enqueue_Admin {
 	 */
 	public function display_plugin_admin_page() {
 		include_once( CB2_PLUGIN_ROOT . 'admin/views/settings.php' );
+=======
+>>>>>>> dd1fa8c63a7977cf91fdcff8507337e88e918055
 	}
 	/**
 	 * Add settings action link to the plugins page.
@@ -122,18 +213,10 @@ class CB2_Enqueue_Admin {
 				), $links
 		);
 	}
-/**
- * Fixed checkbox issue with default is true.
- *
- * @param  mixed $override_value Sanitization/Validation override value to return.
- * @param  mixed $value          The value to be saved to this field.
- * @return mixed
- */
-function cmb2_sanitize_checkbox( $override_value, $value ) {
-    // Return 0 instead of false if null value given. This hack for
-		// checkbox or checkbox-like can be setting true as default value.
-    return is_null( $value ) ? 0 : $value;
-	}
+
+
+
+
 }
 $cb_enqueue_admin = new CB2_Enqueue_Admin();
 $cb_enqueue_admin->initialize();

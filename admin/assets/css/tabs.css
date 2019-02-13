@@ -1,0 +1,60 @@
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\000034}}
+.ui-state-default {
+  display: inline;
+  border-color: #cccccc;
+  border-width: 1px;
+  border-style: solid;
+  border-bottom-width: 0px;
+  padding: 12px 0px;
+  background: none repeat scroll 0% 0% #e4e4e4;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\0000314}}
+.ui-tabs-nav {
+  padding-bottom: 9px;
+  padding-left: 10px;
+  border-bottom: 1px solid #cccccc;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\0000320}}
+.ui-tabs-anchor {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 24px;
+  color: #7f7f7f;
+  padding: 10px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\0000329}}
+.ui-tabs-anchor:hover, .ui-state-active a {
+  color: black;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\0000333}}
+.ui-tabs-active, .ui-tabs-active:hover, .ui-tabs-active:active {
+  color: black;
+  background: #efefef !important;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\0000338}}
+.settings-tab {
+  float: left;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\0000343}}
+.right-column-settings-page {
+  max-width: 270px;
+  float: right;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\0000349}}
+.metabox-holder .postbox {
+  max-width: 100%;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/tabs\.scss}line{font-family:\0000352}}
+.metabox-holder .postbox h3 {
+  padding-left: 10px;
+}
+
+/*# sourceMappingURL=tabs.css.map */

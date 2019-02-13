@@ -112,7 +112,7 @@ class CB2_Extras_Admin {
 		$notices_array = array();
 
 		// check if pretty permalinks are enabled
-		if ( ! get_option('permalink_structure') ) {  $notices_array[] = __( '"Pretty" Permalinks need to be enabled for Commons Booking to work.', 'commons-booking');
+		if ( ! get_option('permalink_structure') ) {  $notices_array[] = __( '"Pretty" Permalinks need to be enabled for Commons Booking to work.', 'commons-booking-2');
 		}
 
 		if ( $notices_array ) {

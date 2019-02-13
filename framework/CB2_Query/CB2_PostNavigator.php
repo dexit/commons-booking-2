@@ -743,7 +743,7 @@ abstract class CB2_PostNavigator extends stdClass {
   }
 
   function get_the_excerpt() {
-		return '';
+		return $this->excerpt;
   }
 
 	function get_the_after_content() {
@@ -760,6 +760,7 @@ abstract class CB2_PostNavigator extends stdClass {
   function classes() {
 		return '';
   }
+
 
 	// --------------------------------------- input interpretation
 	// Used by do_action_*()

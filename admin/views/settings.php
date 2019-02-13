@@ -14,13 +14,11 @@
 <div class="wrap">
     <h2><?php echo esc_html( get_admin_page_title() ); ?></h2>
 
-		<?php echo CB2_Strings::get('general', 'test-variable', 'i am replacing this' ); ?>
-
     <div id="tabs" class="settings-tab">
 		<ul>
 			<?php
 			/* Display the settings tabs */
-			echo CB2_Settings::do_admin_tabs()
+			echo CB2_Settings::render_admin_tabs()
 			?>
 			<li><a href="#tabs-importexport">
 				<?php
@@ -30,7 +28,7 @@
 		</ul>
 		<?php
 			/* Display the settings tabs contents */
-			CB2_Settings::do_admin_settings();
+			CB2_Settings::render_plugin_settings_screen();
 			/* Display the import/export tab contents */
 			require_once( plugin_dir_path( __FILE__ ) . 'settings_importexport.php' );
 		?>
