@@ -39,3 +39,4 @@ vendor
 /composer/
 *.code-workspace
 .vscode
+admin/includes/CB2_Flori.php
