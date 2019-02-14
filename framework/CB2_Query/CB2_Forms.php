@@ -1,15 +1,15 @@
 <?php
 class CB2_Forms {
   static function location_options( Bool $none = FALSE ) {
-    return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'location' AND post_status = 'publish'", ( $none ? '-- select --' : FALSE ), NULL );
+    return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'location' AND post_status = 'publish'", ( $none ? '-- select --' : FALSE ), CB2_Database::$NULL_indicator );
   }
 
   static function item_options( Bool $none = FALSE ) {
-    return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'item' AND post_status = 'publish'", ( $none ? '-- select --' : FALSE ), NULL );
+    return self::get_options( 'posts', NULL, 'ID', 'post_title', "post_type = 'item' AND post_status = 'publish'", ( $none ? '-- select --' : FALSE ), CB2_Database::$NULL_indicator );
   }
 
   static function user_options( Bool $none = FALSE ) {
-    return self::get_options( 'users', NULL, 'ID', 'user_login', '1=1', ( $none ? '-- select --' : FALSE ), NULL );
+    return self::get_options( 'users', NULL, 'ID', 'user_login', '1=1', ( $none ? '-- select --' : FALSE ), CB2_Database::$NULL_indicator );
   }
 
   static function period_status_type_options( $none = FALSE, Int $none_id = CB2_CREATE_NEW ) {

@@ -2,18 +2,18 @@
 class CB2 {
 	public static function templates( String $context = 'list', String $type = NULL, Bool $throw_if_not_found = TRUE, &$templates_considered = NULL ) {
 		global $post;
-
 		$templates = array();
-		if ( $post && method_exists( $post, 'templates' ) ) {
+
+		if ( $post && method_exists( $post, 'templates' ) )
 			$templates = $post->templates( $context, $type, $throw_if_not_found, $templates_considered );
-		} else {
-			if ( $post && property_exists( $post, 'post_type' ) ) {
-				if ( $type ) array_push( $templates, "$context-$post->post_type-$type" );
-				array_push( $templates, "$context-$post->post_type" );
-			}
-			if ( $type ) array_push( $templates, "$context-$type" );
-			array_push( $templates, $context );
+
+		// Standard templates
+		if ( $post && property_exists( $post, 'post_type' ) ) {
+			if ( $type ) array_push( $templates, "$context-$post->post_type-$type" );
+			array_push( $templates, "$context-$post->post_type" );
 		}
+		if ( $type ) array_push( $templates, "$context-$type" );
+		array_push( $templates, $context );
 
 		return $templates;
 	}

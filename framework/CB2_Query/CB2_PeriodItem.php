@@ -240,7 +240,7 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		return array(
 			"cb2-tab-instance"   => 'Instance',
 			"cb2-tab-definition" => 'Definition',
-			"cb2-tab-advanced"   => 'Advanced',
+			//"cb2-tab-advanced"   => 'Advanced',
 		);
 	}
 

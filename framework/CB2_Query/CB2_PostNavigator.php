@@ -103,6 +103,7 @@ abstract class CB2_PostNavigator extends stdClass {
     // WP_Post default values
     if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB2_Post::$PUBLISH;
     if ( ! property_exists( $this, 'post_type' ) )     $this->post_type     = $this->post_type();
+    if ( ! property_exists( $this, 'post_name' ) )     $this->post_name     = '';
     if ( ! property_exists( $this, 'post_password' ) ) $this->post_password = '';
     if ( ! property_exists( $this, 'post_author' ) )   $this->post_author   = 1;
     if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( CB2_Query::$datetime_format );
@@ -245,7 +246,7 @@ abstract class CB2_PostNavigator extends stdClass {
 			throw new Exception( "{$TargetClass}::[$ID_property_name] or [$object_property_name] required. Not an auto-draft post." );
 		}
 
-		if ( ! is_null( $property_ID_value ) ) {
+		if ( ! is_null( $property_ID_value ) && $property_ID_value !== CB2_Database::$NULL_indicator ) {
 			if ( $plural ) {
 				// -------------------------------------------------------- Plural
 				$object = array();

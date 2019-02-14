@@ -325,7 +325,8 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			( isset( $properties['recurrence_type'] )      ? $properties['recurrence_type']      : NULL ),
 			( isset( $properties['recurrence_frequency'] ) ? $properties['recurrence_frequency'] : NULL ),
 			( isset( $properties['recurrence_sequence'] )  ? $properties['recurrence_sequence']  : NULL ),
-			$period_group_IDs
+			$period_group_IDs,
+			$force_properties
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -343,10 +344,11 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		$recurrence_type,
 		$recurrence_frequency,
 		$recurrence_sequence,
-		$period_group_IDs = array()
+		$period_group_IDs = array(),
+		$force_properties = FALSE
   ) {
     // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) && ! $force_properties ) {
 			$object = self::$all[$ID];
     } else {
 			$reflection = new ReflectionClass( __class__ );
@@ -598,32 +600,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $reference_count;
 	}
 
-	function post_post_update() {
-		global $wpdb;
-
-		if ( CB2_DEBUG_SAVE ) {
-			$Class = get_class( $this );
-			print( "<div class='cb2-WP_DEBUG'>$Class::post_post_update($this->ID) dependencies</div>" );
-		}
-
-		// Remove previous relations
-		$table = "{$wpdb->prefix}cb2_period_group_period";
-		$wpdb->delete( $table, array(
-			'period_id' => $this->id()
-		) );
-
-		// Link the Period to the PeriodGroup(s)
-		// will throw Exceptions if IDs cannot be found
-		foreach ( $this->period_group_IDs as $period_group_ID ) {
-			$period_group_id = CB2_PostNavigator::id_from_ID_with_post_type( $period_group_ID, CB2_PeriodGroup::$static_post_type );
-			$wpdb->insert( $table, array(
-				'period_group_id' => $period_group_id,
-				'period_id'       => $this->id(),
-			) );
-		}
-  }
-
-  function jsonSerialize() {
+	function jsonSerialize() {
 		return $this;
 	}
 }
