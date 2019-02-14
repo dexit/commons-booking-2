@@ -47,7 +47,7 @@ class CB2_Forms {
 					{$wpdb->prefix}cb2_post_types pt
 					where ($condition) and pt.post_type = '$post_type'";
 			}
-			$db_options = $wpdb->get_results( $sql, OBJECT_K );
+			$db_options = ( CB2_Database::query_ok( $sql ) ? $wpdb->get_results( $sql, OBJECT_K ) : array() );
 			foreach ( $db_options as $id => &$db_option ) {
 				$name = $db_option->name;
 				if ( WP_DEBUG ) $name .= " ($id)";

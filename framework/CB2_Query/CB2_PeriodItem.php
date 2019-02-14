@@ -164,36 +164,38 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		return $this->blocked;
   }
 
-  function block() {
+  function block( $block = TRUE ) {
 		global $wpdb;
 
-		$full_table = "{$wpdb->prefix}cb2_perioditem_settings";
-		$blocked = $wpdb->get_var( $wpdb->prepare(
-			"SELECT blocked FROM $full_table where period_id = %d and recurrence_index = %d",
-			$this->period->id(),
-			$this->recurrence_index
-		) );
+		if ( $block ) {
+			$full_table = "{$wpdb->prefix}cb2_perioditem_settings";
+			$blocked = $wpdb->get_var( $wpdb->prepare(
+				"SELECT blocked FROM $full_table where period_id = %d and recurrence_index = %d",
+				$this->period->id(),
+				$this->recurrence_index
+			) );
 
-		krumo($blocked);
-
-		if ( is_null( $blocked ) ) $wpdb->insert(
-				$full_table,
-				array(
-					'period_id'        => $this->period->id(),
-					'recurrence_index' => $this->recurrence_index,
-					'blocked'          => 1,
-				)
-			);
-		else if ( $blocked == 0 ) $wpdb->update(
-				$full_table,
-				array(
-					'blocked'          => 1,
-				),
-				array(
-					'period_id'        => $this->period->id(),
-					'recurrence_index' => $this->recurrence_index,
-				)
-			);
+			if ( is_null( $blocked ) ) $wpdb->insert(
+					$full_table,
+					array(
+						'period_id'        => $this->period->id(),
+						'recurrence_index' => $this->recurrence_index,
+						'blocked'          => 1,
+					)
+				);
+			else if ( $blocked == 0 ) $wpdb->update(
+					$full_table,
+					array(
+						'blocked'          => 1,
+					),
+					array(
+						'period_id'        => $this->period->id(),
+						'recurrence_index' => $this->recurrence_index,
+					)
+				);
+		} else {
+			$this->unblock();
+		}
   }
 
   function unblock() {

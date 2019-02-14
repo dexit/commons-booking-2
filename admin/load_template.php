@@ -53,6 +53,8 @@ if ( WP_DEBUG ) {
 if ( $_POST ) {
 	// Indicates that a save is being requested
 	// TODO: split this out to a save_worker.php
+	// and use a different form action in CB2::the_hidden_form()
+	// and move the save*.php files to a workers/ directory
 	try {
 		cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args );
 	} catch ( Exception $ex ) {

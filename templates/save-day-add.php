@@ -4,8 +4,6 @@ global $post;
 if ( ! $post instanceof CB2_Day )
 	throw new Exception( 'CB2_Day required for add' );
 
-$ID               = $post->ID;
-$post_type        = $post->post_type;
 $properties       = $_POST;
 $properties['ID'] = CB2_CREATE_NEW;
 $period_entity    = CB2_PeriodEntity::factory_from_properties( $properties );

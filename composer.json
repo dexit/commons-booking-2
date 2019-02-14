@@ -9,7 +9,6 @@
 		"azuyalabs\/yasumi": "~1.8.0",
 		"flegfleg\/cmb2-field-icon": "master",
 		"flegfleg\/cmb2-field-paragraph": "master",
-		"flegfleg\/cmb2-field-calendar": "master",
 		"opencage\/geocode": "~2.0",
 		"webdevstudios\/cmb2": "~2.3",
 		"origgami\/cmb2-grid": "dev-master",
@@ -46,10 +45,6 @@
 			"type": "git",
 			"url": "https:\/\/github.com\/flegfleg\/cmb2-field-paragraph"
 		},
-		{
-			"type": "git",
-			"url": "https:\/\/github.com\/flegfleg\/cmb2-field-calendar"
-		}
 	],
 	"config": {
 		"vendor-dir": "composer\/"
@@ -76,7 +71,6 @@
 				"rubengc\/cmb2-tabs",
 				"flegfleg\/cmb2-field-icon",
 				"flegfleg\/cmb2-field-paragraph",
-				"flegfleg\/cmb2-field-calendar",
 				"drmonty\/leaflet"
 			],
 			".\/admin\/includes\/lib\/{$name}": [

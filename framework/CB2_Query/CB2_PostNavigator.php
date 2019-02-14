@@ -797,8 +797,11 @@ abstract class CB2_PostNavigator extends stdClass {
 		global $wpdb;
 		static $post_types = NULL;
 
-		if ( is_null( $post_types ) )
-			$post_types = $wpdb->get_results( "SELECT post_type, ID_multiplier, ID_base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC", OBJECT_K );
+		if ( is_null( $post_types ) ) {
+			$sql = "SELECT post_type, ID_multiplier, ID_base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC";
+			if ( CB2_Database::query_ok( $sql ) )
+				$post_types = $wpdb->get_results( $sql, OBJECT_K );
+		}
 
 		return $post_types;
 	}

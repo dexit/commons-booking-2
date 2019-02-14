@@ -856,4 +856,30 @@ class CB2_Database {
 
 		return $id_field;
 	}
+
+	// ------------------------------------- Database reflection
+	// generally only for WP_DEBUG
+	// TODO: not portable. build this from the installation knowledge
+  static function tables() {
+		global $wpdb;
+		$tables = $wpdb->get_col( "show tables", 0 );
+		foreach ( $tables as &$table )
+			$table = preg_replace( "/^$wpdb->prefix/", '', $table );
+		return $tables;
+  }
+
+  static function has_table( String $table ) {
+		return in_array( $table, self::tables() );
+  }
+
+  static function query_ok( String $sql ) {
+		$ok = TRUE;
+		if ( WP_DEBUG && preg_match( '/\sfrom\s+$wpdb->prefix([a-z0-9_]+)/i', $sql, $matches ) ) {
+			$table = $matches[1];
+			$table = preg_replace( "/^$wpdb->prefix/", '', $table );
+			$ok    = self::has_table( $table );
+			if ( ! $ok ) throw new Exception( "[$table] does not exist" );
+		}
+		return $ok;
+  }
 }
