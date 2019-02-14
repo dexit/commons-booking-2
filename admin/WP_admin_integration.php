@@ -27,20 +27,25 @@ add_filter( 'cmb2_group_wrap_attributes', 'cb2_cmb2_group_wrap_attributes', 10, 
 // echo CB2_Settings::do_availability_options_metaboxes();
 
 
-function cb2_wp_redirect( $location, $status ) {
+function cb2_wp_redirect( $location, $status, $javascript = FALSE ) {
+	$is_cb2_page = ( isset( $_GET['page'] ) && preg_match( '/^cb2-.*/', $_GET['page'] ) );
+
 	if ( CB2_DEBUG_SAVE ) {
 		print( '<hr/><h2>CB2_DEBUG_SAVE wp_redirect() caught</h2>' );
 		krumo( $_POST );
 		print( "<b>wp_redirect</b>( <a href='$location'>$location</a>, <b>$status</b> )" );
 		$location = FALSE; // Prevent actual redirect
-	} else if ( WP_DEBUG ) {
+	} else if ( WP_DEBUG || $javascript || $is_cb2_page ) {
 		// We will have had debug information already
 		// and a header after output error
 		// so we need to JS redirect instead
 		$esc_location = str_replace( "'", "\\\'", $location );
-		print( "Using JavaScript redirect because WP_DEBUG has already output debug info..." );
+		if ( WP_DEBUG )
+			print( "<div class='cb2-WP_DEBUG'>Using JavaScript redirect to [<b>$location</b>] because WP_DEBUG has already output debug info...</div>" );
 		print( "<script>document.location='$esc_location';</script>" );
+		print( "<style>body{opacity:0.2;}<style>" );
 	}
+
 	return $location;
 }
 add_filter( 'wp_redirect', 'cb2_wp_redirect', 10, 2 );

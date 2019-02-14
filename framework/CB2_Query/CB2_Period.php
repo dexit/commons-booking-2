@@ -119,6 +119,19 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			$day_options[pow(2, $i)] = __( $days_of_week[$i] );
 		}
 
+		// Recurrence Type options
+		$recurrence_types = array(
+			CB2_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
+		);
+		if ( WP_DEBUG )
+			$recurrence_types['H'] = '<span class="cb2-todo">' . __( 'Hourly', 'commons-booking-2' ) . '</span>';
+		$recurrence_types = array_merge( $recurrence_types, array(
+			'D' => __( 'Daily', 'commons-booking-2' ),
+			'W' => __( 'Weekly', 'commons-booking-2' ),
+			'M' => __( 'Monthly', 'commons-booking-2' ),
+			'Y' => __( 'Yearly', 'commons-booking-2' ),
+		) );
+
 		// ------------------------------------------ Full advanced interface for period definition
 		array_push( $metaboxes,
 			array(
@@ -165,14 +178,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'id' => 'recurrence_type',
 						'type' => 'radio_inline',
 						'default' => ( isset( $_GET['recurrence_type'] ) ? $_GET['recurrence_type'] : CB2_Database::$NULL_indicator ),
-						'options' => array(
-							CB2_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
-							'H' => '<span class="cb2-todo">' . __( 'Hourly', 'commons-booking-2' ) . '</span>',
-							'D' => __( 'Daily', 'commons-booking-2' ),
-							'W' => __( 'Weekly', 'commons-booking-2' ),
-							'M' => __( 'Monthly', 'commons-booking-2' ),
-							'Y' => __( 'Yearly', 'commons-booking-2' ),
-						),
+						'options' => $recurrence_types,
 					),
 					array(
 						'name' => __( 'Daily Sequence', 'commons-booking-2' ),

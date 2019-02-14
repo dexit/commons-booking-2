@@ -10,13 +10,17 @@ require_once( '../framework/CB2_framework.php' );  // meta boxes support
 
 auth_redirect();
 
-// Inputs
-$ID            = ( isset( $_GET['post_type'] ) ? $_GET['ID']        : NULL );
-$post_type     = ( isset( $_GET['post_type'] ) ? $_GET['post_type'] : NULL );
-$action        = ( isset( $_GET['action'] )    ? $_GET['action']    : 'edit' );
-$context       = ( isset( $_GET['context'] )   ? $_GET['context']   : 'popup' );
+// ------------------------------------------- Inputs
+$ID              = ( isset( $_GET['ID'] )        ? $_GET['ID']        : NULL );
+$post_type       = ( isset( $_GET['post_type'] ) ? $_GET['post_type'] : NULL );
+$action          = ( isset( $_GET['action'] )    ? $_GET['action']    : 'edit' );
+$context         = ( isset( $_GET['context'] )   ? $_GET['context']   : 'popup' );
+$context_post_ID = ( isset( $_GET['context_post_ID'] ) ? $_GET['context_post_ID'] : NULL );
+$template_args   = $_GET;
 
-// Main post
+// ------------------------------------------- Main post
+// works without a post
+// works with pseudo posts like CB2_Day
 $post = NULL;
 if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 	if ( CB2_Database::posts_table( $Class ) )
@@ -25,20 +29,25 @@ if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 		$post = $Class::factory_from_properties( $_REQUEST ); // e.g. CB2_Day(date)
 	else
 		throw new Exception( "Cannot instantiate / get [$Class]" );
-} else {
-	throw new Exception( "Post Class required with [$post_type] ID for load_template.php" );
 }
-$templates       = CB2::templates( $context, $action, FALSE, $templates_considered );
-$template_args   = $_GET;
+$templates = CB2::templates( $context, $action, FALSE, $templates_considered );
 
+// ------------------------------------------- extra template_args
 // The outer post displaying a calendar with days in it
-if ( isset( $_GET[ 'context_post_ID' ] ) ) {
+if ( $context_post_ID )
 	$template_args[ 'context_post' ] = CB2_Query::get_post_with_type( $_GET[ 'context_post_type' ], $_GET[ 'context_post_ID' ] );
-}
 
+// ------------------------------------------- DEBUG
 if ( WP_DEBUG ) {
 	print( "<!-- $ID/$post_type/$context-$action -->\n" );
-	print( "<!-- Templates considered (in priority order): \n  " . implode( ", \n  ", $templates_considered ) . "\n -->" );
+	print( "<!-- Templates considered (in priority order): \n  " . implode( ", \n  ", $templates_considered ) . "\n -->\n" );
+	print( "<!--\n" );
+	foreach( $_POST as $name => $value ) {
+		if      ( is_string( $value ) ) print( "  $name => $value\n" );
+		else if ( is_array(  $value ) ) print( "  $name => Array(...)\n" );
+		else print( "  $name => ...\n" );
+	}
+	print( "\n-->\n" );
 }
 
 if ( $_POST ) {

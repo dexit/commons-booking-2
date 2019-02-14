@@ -7,4 +7,4 @@ if ( ! $post instanceof CB2_PeriodItem )
 $ID            = $post->ID;
 $post_type     = $post->post_type;
 
-print( "[$ID/$post_type] Ok :)" );
+print( "<result>Ok</result>" );

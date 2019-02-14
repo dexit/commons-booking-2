@@ -7,17 +7,8 @@ if ( ! $post instanceof CB2_Day )
 $ID               = $post->ID;
 $post_type        = $post->post_type;
 $properties       = $_POST;
-//$period_entity    = CB2_PeriodEntity::factory_from_properties( $properties );
+$properties['ID'] = CB2_CREATE_NEW;
+$period_entity    = CB2_PeriodEntity::factory_from_properties( $properties );
+$period_entity->save();
 
-//$period_entity->save();
-
-// XML response
-print( "<!--\n" );
-print( "  [$ID/$post_type]\n" );
-foreach( $_POST as $name => $value ) {
-	if      ( is_string( $value ) ) print( "  $name => $value\n" );
-	else if ( is_array(  $value ) ) print( "  $name => Array(...)\n" );
-	else print( "  $name => ...\n" );
-}
-print( "\n-->\n" );
 print( "<result>Ok</result>" );
