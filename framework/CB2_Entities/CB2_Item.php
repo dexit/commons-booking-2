@@ -60,9 +60,10 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         return self::$static_post_type;
     }
 
-    protected function __construct($ID)
+    public function __construct($ID)
     {
-        parent::__construct($ID);
+				CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
+				parent::__construct($ID);
 				self::$all[$ID] = $this;
 
         // WP_Post values
@@ -87,9 +88,10 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         $key    = $ID;
 
         if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) {
-						$object = self::$all[$ID];
+					$object = self::$all[$ID];
 				} else {
-						$object = new self($ID);
+					$reflection = new ReflectionClass( __class__ );
+					$object     = $reflection->newInstanceArgs( func_get_args() );
 				}
 
         return $object;

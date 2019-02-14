@@ -48,7 +48,8 @@ require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_ActDeact.php');
 register_activation_hook(CB2_PLUGIN_ROOT . '/commons-booking.php', array( 'CB2_ActDeact', 'activate' ));
 register_deactivation_hook(CB2_PLUGIN_ROOT . '/commons-booking.php', array( 'CB2_ActDeact', 'deactivate' ));
 
-
+/* Load dependent plugins */
+require_once(CB2_PLUGIN_ROOT . 'plugins/geo-hcard-map/geo-hcard-map.php');
 
 /* Load admin */
 require_once(CB2_PLUGIN_ROOT . 'admin/WP_admin_integration.php');

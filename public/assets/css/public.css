@@ -42,7 +42,6 @@
  * @link      http://www.wielebenwir.de
  * @copyright 2015 wielebenwir
  */
-@import url(partials/_map-leaflet.css);
 @media -sass-debug-info{filename{font-family:file\:\/\/C\:\/xampp\/htdocs\/cb_02_framework\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_base\.scss}line{font-family:\0000311}}
 .padding, .cb2-box, .cb2-floating-shadow, #cb2-bookingbar .cb2-inner, #cb2-booking-process-popup, .cb2-timeframe {
   padding: 1em;

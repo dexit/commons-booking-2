@@ -7,14 +7,6 @@ class CB2 {
 		if ( $post && method_exists( $post, 'templates' ) )
 			$templates = $post->templates( $context, $type, $throw_if_not_found, $templates_considered );
 
-		// Standard templates
-		if ( $post && property_exists( $post, 'post_type' ) ) {
-			if ( $type ) array_push( $templates, "$context-$post->post_type-$type" );
-			array_push( $templates, "$context-$post->post_type" );
-		}
-		if ( $type ) array_push( $templates, "$context-$type" );
-		array_push( $templates, $context );
-
 		return $templates;
 	}
 
@@ -53,6 +45,21 @@ class CB2 {
 		return new CB2_DateTime( get_the_date() );
 	}
 
+	public static function has_geo() {
+		global $post;
+		return ( $post && property_exists( $post, 'geo_latitude' ) && property_exists( $post, 'geo_longitude' ) );
+	}
+
+	public static function the_geo_latitude() {
+		global $post;
+		print( $post && property_exists( $post, 'geo_latitude' ) ? $post->geo_latitude : NULL );
+	}
+
+	public static function the_geo_longitude() {
+		global $post;
+		print( $post && property_exists( $post, 'geo_longitude' ) ? $post->geo_longitude : NULL );
+	}
+
 	public static function the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
 		echo self::get_the_inner_loop( $template_args, $post_navigator, $context, $template_type, $before, $after );
 	}
@@ -81,7 +88,8 @@ class CB2 {
 					$post_type  = $post->post_type();
 					$html      .= $before;
 					CB2_Query::redirect_wpdb_for_post_type( $post_type );
-					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $post->templates( $context, $template_type ), '', $template_args, TRUE );
+					$templates  = self::templates( $context, $template_type );
+					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE );
 					$html      .= $li;
 					// Some period-items are suppressed but have debug output
 					if ( trim( preg_replace( '/<!--.*-->/', '', $li ) ) ) $i++;

@@ -635,6 +635,8 @@ abstract class CB2_PostNavigator extends stdClass {
 			else $post_sub_type = CB2_Query::substring_before( $post_sub_type );
 		} while ( $post_sub_type );
 
+		array_push( $templates, $context );
+
 		return $templates;
   }
 
@@ -649,11 +651,6 @@ abstract class CB2_PostNavigator extends stdClass {
 			$template_path = "$cb2_template_path/$template.php";
 			if ( file_exists( $template_path ) )
 				array_push( $templates_valid, $template );
-		}
-
-		if ( ! count( $templates_valid ) && $throw_if_not_found ) {
-			$templates_tried = implode( ',', $templates );
-			throw new Exception( "No valid templates found for [$post_type] in [$cb2_template_path].\nTried: $templates_tried" );
 		}
 
 		return $templates_valid;

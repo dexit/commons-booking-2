@@ -392,9 +392,11 @@ class CB2_Query {
 							}
 							*/
 						}
-						$meta_value      = self::to_object( $meta_key, $meta_value_array[0] );
+						$meta_value = $meta_value_array;
+						if ( ! property_exists( $Class, 'no_metadata' ) || ! $Class::$no_metadata )
+							$meta_value = self::to_object( $meta_key, $meta_value_array[0] );
 						$post->$meta_key = $meta_value;
-						//if ( ! is_object( $meta_value ) ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key = $meta_value $meta_value_array[0]</div>" );
+						if ( WP_DEBUG && FALSE ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key</div>" );
 					}
 				}
 			}
@@ -505,12 +507,13 @@ class CB2_Query {
 			if ( self::check_for_serialisation( $object, 'a' ) ) {
 				$object = unserialize( $object );
 			} else if ( is_string( $object ) ) {
-				if ( empty( $object ) )
+				if ( empty( $object ) ) {
 					$object = array();
-				else if ( preg_match( '/^[0-9, ]+$/', $object ) )
+				} else if ( preg_match( '/^[0-9, ]+$/', $object ) ) {
 					$object = explode( ',', $object );
-				else
-					throw new Exception( "[$name] array not understood" );
+				} else {
+					$object = explode( ',', $object );
+				}
 			}
 		}
 
@@ -586,13 +589,13 @@ class CB2_Query {
 		return $array;
 	}
 
-	static function assign_all_parameters( $object, Array $parameter_values, String $class_name = NULL, String $method = '__construct' ) {
+	static function assign_all_parameters( $object, Array $parameter_values, String $Class = NULL, String $method = '__construct' ) {
 		// Take all function parameters
 		// And make them properties of the class
 		// Typical usage:
 		//   CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
-		if ( ! $class_name ) $class_name = get_class( $object );
-		$reflection            = new ReflectionMethod( $class_name, $method ); // PHP 5, PHP 7
+		if ( ! $Class ) $Class = get_class( $object );
+		$reflection            = new ReflectionMethod( $Class, $method ); // PHP 5, PHP 7
 		$parameters            = $reflection->getParameters();
 
 		// Match raw values to given parameters OR defaults
@@ -612,7 +615,7 @@ class CB2_Query {
 			$value = $parameter->value;
 
 			if ( WP_DEBUG && FALSE ) {
-				print( "<i>assign_all_parameters($class_name)->$name</i>: <b>" );
+				print( "<i>assign_all_parameters($Class)->$name</i>: <b>" );
 				if      ( is_null( $value ) ) print( 'NULL' );
 				else if ( empty( $value ) )   print( 'EMPTY' );
 				else if ( $value instanceof DateTime )     print( $value->format( CB2_Database::$database_datetime_format ) );
@@ -621,7 +624,9 @@ class CB2_Query {
 				else if ( is_array(  $value ) ) print( 'Array()' );
 				else print( $value );
 				print( '&nbsp;' );
-				$new_value = self::to_object( $name, $value, TRUE, TRUE );
+				$new_value = $value;
+				if ( ! property_exists( $Class, 'no_metadata' ) || ! $Class::$no_metadata )
+					$new_value = self::to_object( $name, $value, TRUE, TRUE );
 				if ( $new_value !== $value ) {
 					print( ' =&gt; ' );
 					if      ( is_null( $new_value ) ) print( 'NULL' );
@@ -636,7 +641,9 @@ class CB2_Query {
 			}
 
 			// May throw Exceptions
-			$new_value = self::to_object( $name, $value );
+			$new_value = $value;
+			if ( ! property_exists( $Class, 'no_metadata' ) || ! $Class::$no_metadata )
+				$new_value = self::to_object( $name, $value );
 			$object->$name = $new_value;
 
 		}

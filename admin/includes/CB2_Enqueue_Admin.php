@@ -147,6 +147,7 @@ class CB2_Enqueue_Admin {
 	 */
 	public function enqueue_admin_styles() {
 		wp_enqueue_style( CB2_TEXTDOMAIN . '-admin-styles', plugins_url( 'admin/assets/css/admin.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
+		geo_hcard_map_load_styles();
 	}
 		/**
 	 * Register and enqueue admin-specific JavaScript.
@@ -167,6 +168,7 @@ class CB2_Enqueue_Admin {
 		}
 		*/
 		wp_enqueue_script( CB2_TEXTDOMAIN . '-admin-forms-script', plugins_url( 'admin/assets/js/admin_forms.js', CB2_PLUGIN_ABSOLUTE ), array( 'jquery' ), CB2_VERSION );
+		geo_hcard_map_load_scripts();
 	}
 	/**
 	 * Add settings action link to the plugins page.

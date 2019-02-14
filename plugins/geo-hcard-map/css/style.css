@@ -1,0 +1,10 @@
+#geo-hcard-map {
+  min-height:100px;
+  min-width:100px;
+}
+.vcard .adr .geo .latitude,
+.vcard .adr .geo .longitude,
+.vcard .adr .geo .icon,
+.vcard .adr .geo .icon-shadow {
+  display:none;
+}

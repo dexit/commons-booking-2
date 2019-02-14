@@ -238,7 +238,13 @@ switch ( $output_type ) {
 		break;
 
 	case 'Map':
-		print( '<div class="cb2-help">Map rendering not complete</div>' );
+		if ( $schema_type != CB2_Location::$static_post_type )
+			print( "<div class='cb2-warning'>location schema hierarchy advised for Map. [$schema_type] sent</div>" );
+		$template_args = array();
+		print( '<ul>' );
+		CB2::the_inner_loop( $template_args, $wp_query, 'hcard' );
+		print( '</ul>' );
+		print( geo_hcard_map_shortcode_handler( NULL ) );
 		break;
 
 	case 'Calendar':

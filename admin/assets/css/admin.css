@@ -958,6 +958,14 @@ body #post-body-content {
 	cursor:pointer;
 }
 
+/* Maps */
+#geo-hcard-map {
+	border:1px double #666;
+	padding:2px;
+	width:90%;
+	height:400px;
+}
+
 /* Individual metaboxes */
 .cmb2-postbox,
 #submitdiv {

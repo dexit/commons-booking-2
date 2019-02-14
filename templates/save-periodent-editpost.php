@@ -15,7 +15,10 @@ $post->block( $block );
 $period_ID        = $post->period->ID;
 print( "<!-- saving CB2_Period[ID: $period_ID] -->\n" );
 $properties['ID'] = $period_ID;
-$period           = CB2_Period::factory_from_properties( $properties, $instance_container, TRUE );
-$period->save( TRUE );
+// Here we force_properties because
+// the period has already been loaded and cached with the old values
+// and we want to re-create
+$period           = CB2_Period::factory_from_properties( $properties, $instance_container, TRUE ); // force_properties
+$period->save( TRUE ); // Update mode
 
 print( "<result>Ok</result>" );
