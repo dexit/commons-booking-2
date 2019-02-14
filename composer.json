@@ -48,6 +48,10 @@
 		{
 			"type": "git",
 			"url": "https:\/\/github.com\/flegfleg\/cmb2-field-paragraph"
+		},
+		{
+			"type": "git",
+			"url": "https:\/\/github.com\/flegfleg\/cmb2-metatabs-options"
 		}
 	],
 	"config": {
@@ -75,7 +79,8 @@
 				"rubengc\/cmb2-tabs",
 				"flegfleg\/cmb2-field-icon",
 				"flegfleg\/cmb2-field-paragraph",
-				"drmonty\/leaflet"
+				"drmonty\/leaflet",
+				"flegfleg\/cmb2-metatabs-options"
 			],
 			".\/plugins\/{$name}": [
 				"wpackagist-plugin\/geo-hcard-map"

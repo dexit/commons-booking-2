@@ -16,6 +16,7 @@
  */
 require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Metaboxes.php' );
 require_once( CB2_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php' ); /* TODO */
+require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-metatabs-options/code/cmb2_metatabs_options.php');
 
 
 /**
