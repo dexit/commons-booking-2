@@ -80,7 +80,8 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
   function post_type() {return self::$static_post_type;}
 
-  protected function __construct( $ID ) {
+  public function __construct( $ID, $geo_address = NULL, $geo_latitude = NULL, $geo_longitude = NULL ) {
+		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
     parent::__construct( $ID );
 		self::$all[$ID] = $this;
 
@@ -90,7 +91,10 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
   static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['location_ID'] ) ? $properties['location_ID'] : $properties['ID'] )
+			( isset( $properties['location_ID'] )     ? $properties['location_ID'] : $properties['ID'] ),
+			( isset( $properties['geo_address'] )     ? $properties['geo_address'][0]     : NULL ),
+			( isset( $properties['geo_latitude'] )    ? $properties['geo_latitude'][0]    : NULL ),
+			( isset( $properties['geo_longitude'] )   ? $properties['geo_longitude'][0]   : NULL )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -98,13 +102,17 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		return $object;
   }
 
-  static function factory( Int $ID ) {
+  static function factory( Int $ID, $geo_address = NULL, $geo_latitude = NULL, $geo_longitude = NULL ) {
     // Design Patterns: Factory Singleton with Multiton
     $object = NULL;
     $key    = $ID;
 
-    if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) $object = self::$all[$key];
-		else $object = new self( $ID );
+    if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) {
+			$object = self::$all[$key];
+		} else {
+			$reflection = new ReflectionClass( __class__ );
+			$object     = $reflection->newInstanceArgs( func_get_args() );
+		}
 
     return $object;
   }

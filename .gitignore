@@ -36,6 +36,7 @@ vendor
 /admin/includes/lib/
 /framework/includes/lib/
 /includes/lib/
+/plugins/
 /composer/
 *.code-workspace
 .vscode

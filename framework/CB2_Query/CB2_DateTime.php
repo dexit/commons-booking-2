@@ -88,7 +88,7 @@ class CB2_DateTime {
 		return $this->format( 'c' );
   }
 
-	function format( String $format ) {
+	function format( String $format = 'c' ) {
 		return $this->datetime->format( $format );
 	}
 

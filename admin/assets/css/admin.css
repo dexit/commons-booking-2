@@ -910,6 +910,9 @@ body .cb2-calendar .cb2-out-of-period-entity-scope * {
 	float:right;
 	margin-left:6px;
 }
+.cb2-popup .cb2-popup-form-delete {
+	color:red;
+}
 .cb2-popup .cb2-advanced {
 	float:right;
 	color:#aaa;
@@ -992,6 +995,14 @@ body #post-body-content {
 	box-shadow:none;
 	color:#0073aa;
 	cursor:pointer;
+}
+
+/* Maps */
+#geo-hcard-map {
+	border:1px double #666;
+	padding:2px;
+	width:90%;
+	height:400px;
 }
 
 /* Individual metaboxes */

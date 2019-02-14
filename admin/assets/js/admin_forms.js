@@ -1,5 +1,6 @@
 function cb2_process(){
 	var $ = jQuery;
+	var WP_DEBUG = $('body.cb2-WP_DEBUG-on').length;
 
 	$('.cb2-javascript-form input[type=button]').click(function(){
 		var sExisting;
@@ -187,9 +188,11 @@ function cb2_process(){
 			success: function(){
 				$(self).removeAttr('disabled');
 				$(self).parents('.cb2-popup, body').removeClass('cb2-saving');
-				// TODO: callback based refresh => calendar ajax refresh
-				document.location = document.location;
-				$(self).parents('.cb2-popup, body').addClass('cb2-refreshing');
+				if (!WP_DEBUG) {
+					// TODO: callback based refresh => calendar ajax refresh
+					document.location = document.location;
+					$(self).parents('.cb2-popup, body').addClass('cb2-refreshing');
+				}
 			},
 			error: function() {
 				$(self).addClass('cb2-ajax-failed');

@@ -11,8 +11,13 @@ class CB2_TimePostNavigator extends CB2_PostNavigator implements JsonSerializabl
 	static function max_days() {
 		global $wpdb;
 		static $max_days = NULL;
-		if ( is_null( $max_days ) )
-			$max_days = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}cb2_view_sequence_date" );
+		if ( is_null( $max_days ) ) {
+			$sql = "SELECT count(*) from {$wpdb->prefix}cb2_view_sequence_date";
+			if ( CB2_Database::query_ok( $sql ) )
+				$max_days = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}cb2_view_sequence_date" );
+			else
+				$max_days = 0;
+		}
 		return $max_days;
 	}
 

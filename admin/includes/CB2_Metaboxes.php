@@ -24,10 +24,9 @@ class CB2_Metaboxes {
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-grid/Cmb2GridPluginLoad.php' );
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-tabs/cmb2-tabs.php' );
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-field-icon/cmb2-field-icon.php' );
-		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-field-calendar/cmb2-field-calendar.php' );
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-field-paragraph/cmb2-field-paragraph.php' );
-		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-metatabs-options/code/cmb2_metatabs_options.php' );
-
+		// Custom local
+		require_once( CB2_PLUGIN_ROOT . 'framework/includes/cmb2-field-calendar/cmb2-field-calendar.php' );
 
 		/* @TODO: add metaboxes for items & locations */
 		// add_action( 'cmb2_init', array( $this, 'cmb_demo_metaboxes' ) );

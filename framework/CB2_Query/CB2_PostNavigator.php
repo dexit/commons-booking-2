@@ -103,6 +103,7 @@ abstract class CB2_PostNavigator extends stdClass {
     // WP_Post default values
     if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB2_Post::$PUBLISH;
     if ( ! property_exists( $this, 'post_type' ) )     $this->post_type     = $this->post_type();
+    if ( ! property_exists( $this, 'post_name' ) )     $this->post_name     = '';
     if ( ! property_exists( $this, 'post_password' ) ) $this->post_password = '';
     if ( ! property_exists( $this, 'post_author' ) )   $this->post_author   = 1;
     if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( CB2_Query::$datetime_format );
@@ -245,7 +246,7 @@ abstract class CB2_PostNavigator extends stdClass {
 			throw new Exception( "{$TargetClass}::[$ID_property_name] or [$object_property_name] required. Not an auto-draft post." );
 		}
 
-		if ( ! is_null( $property_ID_value ) ) {
+		if ( ! is_null( $property_ID_value ) && $property_ID_value !== CB2_Database::$NULL_indicator ) {
 			if ( $plural ) {
 				// -------------------------------------------------------- Plural
 				$object = array();
@@ -364,6 +365,14 @@ abstract class CB2_PostNavigator extends stdClass {
 				print( "<div class='cb2-WP_DEBUG-small'>{$Class}[$this->ID] set not saveable$ignored</div>" );
 		}
 		$this->saveable = $saveable;
+	}
+
+	function is_auto_draft() {
+		return property_exists( $this, 'post_status' ) && $this->post_status == CB2_Post::$AUTODRAFT;
+	}
+
+	function is_a_post() {
+		return property_exists( $this, 'post_type' );
 	}
 
 	function is_saveable() {
@@ -626,6 +635,8 @@ abstract class CB2_PostNavigator extends stdClass {
 			else $post_sub_type = CB2_Query::substring_before( $post_sub_type );
 		} while ( $post_sub_type );
 
+		array_push( $templates, $context );
+
 		return $templates;
   }
 
@@ -640,11 +651,6 @@ abstract class CB2_PostNavigator extends stdClass {
 			$template_path = "$cb2_template_path/$template.php";
 			if ( file_exists( $template_path ) )
 				array_push( $templates_valid, $template );
-		}
-
-		if ( ! count( $templates_valid ) && $throw_if_not_found ) {
-			$templates_tried = implode( ',', $templates );
-			throw new Exception( "No valid templates found for [$post_type] in [$cb2_template_path].\nTried: $templates_tried" );
 		}
 
 		return $templates_valid;
@@ -789,8 +795,11 @@ abstract class CB2_PostNavigator extends stdClass {
 		global $wpdb;
 		static $post_types = NULL;
 
-		if ( is_null( $post_types ) )
-			$post_types = $wpdb->get_results( "SELECT post_type, ID_multiplier, ID_base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC", OBJECT_K );
+		if ( is_null( $post_types ) ) {
+			$sql = "SELECT post_type, ID_multiplier, ID_base FROM {$wpdb->prefix}cb2_post_types ORDER BY ID_base DESC";
+			if ( CB2_Database::query_ok( $sql ) )
+				$post_types = $wpdb->get_results( $sql, OBJECT_K );
+		}
 
 		return $post_types;
 	}

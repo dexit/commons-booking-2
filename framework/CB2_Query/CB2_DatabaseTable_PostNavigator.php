@@ -15,10 +15,12 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 					if ( ! is_numeric( $this->ID ) )
 						throw new Exception( "$Class has non-numeric ID [$this->ID]" );
 
-					$id    = $this->id();
-					$count = $wpdb->get_var( "select count(*) from $full_table where $id_field=$id" );
-					if ( ! $count )
-						throw new Exception( "$Class::__construct($id_field=[$id]) does not exist in DB!" );
+					if ( $this->is_a_post() && ! $this->is_auto_draft() ) {
+						$id    = $this->id();
+						$count = $wpdb->get_var( "select count(*) from $full_table where $id_field=$id" );
+						if ( ! $count )
+							throw new Exception( "$Class::__construct($id_field=[$id]) does not exist in DB!" );
+					}
 				}
 			}
 		}

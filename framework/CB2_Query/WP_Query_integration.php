@@ -370,7 +370,6 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				if ( CB2_DEBUG_SAVE )
 					print( "<div class='cb2-WP_DEBUG-small'>include wp_post meta-data</div>" );
 				CB2_Query::get_metadata_assign( $post );
-				krumo($post);
 				$properties = (array) $post;
 
 				// Further requests can come from the native tables now
@@ -406,7 +405,7 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				$URL       = admin_url( "admin.php?page=$page&post=$native_ID&post_type=$post_type&action=$action" );
 				// If CB2_DEBUG_SAVE the redirect will be printed, not acted
 				// NOTE: this exit() will prevent other save_post actions firing on post create...
-				wp_redirect( $URL );
+				cb2_wp_redirect( $URL, 200, TRUE ); // Force JavaScript redirect
 				exit();
 			}
 		}
@@ -603,7 +602,7 @@ function cb2_update_post_meta( $meta_id, $ID, $meta_key, $meta_value ) {
 function cb2_admin_enqueue_scripts() {
 	// TODO: re-enable CB2_Admin_Enqueue for public/assets/css/public.css
 	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-public', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
-	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-cmb2',   plugins_url( 'admin/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+	wp_enqueue_style(  CB2_TEXTDOMAIN . '-plugin-styles-cmb2',   plugins_url( 'framework/includes/lib/cmb2/css/cmb2.min.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
 
 	add_thickbox();
 }

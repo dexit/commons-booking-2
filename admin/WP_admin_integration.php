@@ -27,20 +27,25 @@ add_filter( 'cmb2_group_wrap_attributes', 'cb2_cmb2_group_wrap_attributes', 10, 
 // echo CB2_Settings::do_availability_options_metaboxes();
 
 
-function cb2_wp_redirect( $location, $status ) {
+function cb2_wp_redirect( $location, $status, $javascript = FALSE ) {
+	$is_cb2_page = ( isset( $_GET['page'] ) && preg_match( '/^cb2-.*/', $_GET['page'] ) );
+
 	if ( CB2_DEBUG_SAVE ) {
 		print( '<hr/><h2>CB2_DEBUG_SAVE wp_redirect() caught</h2>' );
 		krumo( $_POST );
 		print( "<b>wp_redirect</b>( <a href='$location'>$location</a>, <b>$status</b> )" );
 		$location = FALSE; // Prevent actual redirect
-	} else if ( WP_DEBUG ) {
+	} else if ( WP_DEBUG || $javascript || $is_cb2_page ) {
 		// We will have had debug information already
 		// and a header after output error
 		// so we need to JS redirect instead
 		$esc_location = str_replace( "'", "\\\'", $location );
-		print( "Using JavaScript redirect because WP_DEBUG has already output debug info..." );
+		if ( WP_DEBUG )
+			print( "<div class='cb2-WP_DEBUG'>Using JavaScript redirect to [<b>$location</b>] because WP_DEBUG has already output debug info...</div>" );
 		print( "<script>document.location='$esc_location';</script>" );
+		print( "<style>body{opacity:0.2;}<style>" );
 	}
+
 	return $location;
 }
 add_filter( 'wp_redirect', 'cb2_wp_redirect', 10, 2 );
@@ -313,7 +318,8 @@ function cb2_admin_init_menus() {
 	global $wpdb;
 
 	$capability_default   = 'manage_options';
-	$bookings_count       = $wpdb->get_var( "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`" );
+	$sql                  = "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`";
+	$bookings_count       = ( CB2_Database::query_ok( $sql ) ? $wpdb->get_var( $sql ) : '!' );
 	// notifications_string cancelled because too long with "CommonsBooking" title
 	$notifications_string = ''; //( $bookings_count ? " ($bookings_count)" : '' );
 	add_menu_page( 'CB2', "CommonsBooking$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_dashboard_page', 'dashicons-admin-post' );
@@ -333,7 +339,8 @@ function cb2_admin_init_menus() {
 
 		// Menu adornments
 		if ( $menu_visible && isset( $details['count'] ) ) {
-			$count       = $wpdb->get_var( $details['count'] );
+			$can_count   = CB2_Database::query_ok( $details['count'] );
+			$count       = ( $can_count ? $wpdb->get_var( $details['count'] ) : '!' );
 			$count_class = ( isset( $details['count_class'] ) ? "cb2-usage-count-$details[count_class]" : 'cb2-usage-count-info' );
 			if ( $count ) $menu_title .= " <span class='$count_class'>$count</span>";
 		}

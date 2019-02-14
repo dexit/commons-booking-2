@@ -127,10 +127,11 @@ $show_blocked_periods_checked = ( $show_blocked_periods ? 'checked="1"' : '' );
 $period_status_type_options_html = count_options( CB2_Forms::period_status_type_options() );
 $period_entity_options_html      = count_options( CB2_Forms::period_entity_options() );
 
-$title_text = __( 'Dashboard' );
-$filename   = basename( __FILE__ );
+$title_text   = __( 'Dashboard' );
+$filename     = basename( __FILE__ );
+$extended_url = CB2_Query::pass_through_query_string( NULL, array( 'extended' => 1 ) );
 print( "<h1>Commons Booking 2 $title_text <span>
-		<a class='cb2-WP_DEBUG $class_WP_DEBUG' href='admin.php?page=cb2_menu&amp;extended=1'>$filename: extended debug form</a>
+		<a class='cb2-WP_DEBUG $class_WP_DEBUG' href='$extended_url'>$filename: extended debug form</a>
 		| <a href='options-general.php?page=cb2-options'>settings</a>
 	</span></h1>" );
 
@@ -237,7 +238,13 @@ switch ( $output_type ) {
 		break;
 
 	case 'Map':
-		print( '<div class="cb2-help">Map rendering not complete</div>' );
+		if ( $schema_type != CB2_Location::$static_post_type )
+			print( "<div class='cb2-warning'>location schema hierarchy advised for Map. [$schema_type] sent</div>" );
+		$template_args = array();
+		print( '<ul>' );
+		CB2::the_inner_loop( $template_args, $wp_query, 'hcard' );
+		print( '</ul>' );
+		print( geo_hcard_map_shortcode_handler( NULL ) );
 		break;
 
 	case 'Calendar':

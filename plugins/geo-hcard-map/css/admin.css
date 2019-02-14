@@ -1,0 +1,11 @@
+#geo-hcard-map-settings-notice th,
+#geo-hcard-map-settings-notice .submit {
+  display:none;
+}
+#geo-hcard-map-settings-notice td {
+  padding:0px;
+}
+#geo-hcard-map-settings-notice .success,
+#geo-hcard-map-settings-notice .submitting {
+  display:none;
+}
