@@ -14,6 +14,7 @@
 		"origgami\/cmb2-grid": "dev-master",
 		"nathanielks\/wp-admin-notice": "dev-master",
 		"flegfleg\/cmb2-metatabs-options": "dev-master",
+		"flegfleg\/cmb2-field-switch-button": "dev-master",
 		"rubengc\/cmb2-tabs": "~1.0.0"
 	},
 	"repositories": [
@@ -52,6 +53,10 @@
 		{
 			"type": "git",
 			"url": "https:\/\/github.com\/flegfleg\/cmb2-metatabs-options"
+		},
+		{
+			"type": "git",
+			"url": "https:\/\/github.com\/flegfleg\/cmb2-field-switch-button"
 		}
 	],
 	"config": {
@@ -80,7 +85,8 @@
 				"flegfleg\/cmb2-field-icon",
 				"flegfleg\/cmb2-field-paragraph",
 				"drmonty\/leaflet",
-				"flegfleg\/cmb2-metatabs-options"
+				"flegfleg\/cmb2-metatabs-options",
+				"flegfleg\/cmb2-field-switch-button"
 			],
 			".\/plugins\/{$name}": [
 				"wpackagist-plugin\/geo-hcard-map"
