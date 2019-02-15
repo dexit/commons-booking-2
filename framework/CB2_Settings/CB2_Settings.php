@@ -133,7 +133,7 @@ class CB2_Settings {
 				}
 
 			} // otherwise return global plugin settings
-			elseif (array_key_exists($option_id, $option_array)) { // key exists in settings table
+			elseif (array_key_exists($option_id, (array) $option_array)) { // key exists in settings table
     		return $option_array[$option_id];
 			} else {
 				return false;
