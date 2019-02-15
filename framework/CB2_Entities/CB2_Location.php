@@ -122,6 +122,14 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		return "[cb2_calendar location_id=$ID]";
 	}
 
+	function tabs() {
+		return array(
+			'perioditems'  => 'Period Items',
+			'geo'          => 'Location',
+			'openinghours' => 'Opening Hours'
+		);
+	}
+
 	public static $default_enabled_columns = array( 'cb', 'title', 'opening_hours', 'address', 'date' );
 
   function manage_columns( $columns ) {
