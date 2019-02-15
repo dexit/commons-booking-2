@@ -4,42 +4,43 @@
   $(document).ready(function(){
     var locationsMap, vcards, markers, group, padding;
     var mapDIV = $('#geo-hcard-map');
-    
+
     if (!window.geo_hcard_map_settings) window.geo_hcard_map_settings = {geo_hcard_map_type:'osm'};
-                    
+
     if (mapDIV.length) {
       switch (window.geo_hcard_map_settings.geo_hcard_map_type) {
         case 'osm': {
           if (window.L) {
             locationsMap = L.map(mapDIV[0]).setView([51.505, -0.09], 13);
             markers      = [];
-            
+
             // OSM streets
             L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="https://opendatacommons.org/licenses/odbl/1.0/">ODbL</a>',
                 maxZoom: 18
             }).addTo(locationsMap);
-            
+
             // Add hCard's
             vcards = $('.vcard');
             if (!vcards.length && window.console) console.warn('no .vcard found for the map');
             vcards.each(function() {
               var marker, Icon, icon;
-              var oOptions = {};
+              var oOptions  = {};
               var oIconOptions = {};
-              var adr      = $(this).find('.adr:first');
-              var lat      = adr.find('.geo .latitude').text();
-              var lng      = adr.find('.geo .longitude').text();
-              var iconUrl  = adr.find('.geo .icon').text();
+              var adr       = $(this).find('.adr:first');
+              var lat       = adr.find('.geo .latitude').text();
+              var lng       = adr.find('.geo .longitude').text();
+              var iconUrl   = adr.find('.geo .icon').text();
               var iconShadowUrl = adr.find('.geo .icon-shadow').text();
-              var title    = $(this).find('.fn:first').text();
-              var href     = $(this).find('.fn:first').attr("href");
-              var desc     = '';
-              
+              var title     = $(this).find('.fn:first').text();
+              var href      = $(this).find('.fn:first').attr("href");
+							var css_class = $(this).find('.fn:first').attr("class").replace(/^fn | fn | fn$/, '');
+							var desc      = '';
+
               $(this).find('.cb-popup').each(function() {
                 desc += $("<div/>").append($(this).clone()).html();
               });
-              
+
               // Warnings
               if (window.console) {
                 if (!adr.length) console.warn('.vcard found but has no .adr');
@@ -48,12 +49,12 @@
                 if (lat === '')  console.warn('.vcard found but has no .adr .geo .latitude');
                 if (lng === '')  console.warn('.vcard found but has no .adr .geo .longitude');
               }
-                        
+
               if (lat && lng) {
                 // Give some defaults for best chances of working
                 if (!title) title = '(no title)';
                 if (!href)  href  = '#' + title;  // Should not happen
-                          
+
                 if (iconUrl) {
                   oIconOptions = {
                       iconUrl:      iconUrl,
@@ -69,10 +70,10 @@
                   Icon = L.Icon.extend({options:oIconOptions});
                   oOptions.icon = new Icon();
                 }
-                
+
                 if (window.console) console.info('adding [' + title + '] at [' + lat + ',' + lng + ']');
                 marker = L.marker([lat, lng], oOptions).addTo(locationsMap);
-                marker.bindPopup('<h2><a href="' + href + '">' + title + '</a></h2>' + desc);
+								marker.bindPopup('<h2><a class="' + css_class + '" href="' + href + '">' + title + '</a></h2>' + desc);
                 markers.push(marker);
               }
             });
@@ -84,7 +85,7 @@
               locationsMap.fitBounds(group.getBounds().pad(padding));
               if (window.console) console.log(group.getBounds());
             }
-            
+
             if (window.console) console.log(locationsMap);
           } else if (window.console) console.error('Leaflet library not loaded, get here: http://leafletjs.com/');
           break;

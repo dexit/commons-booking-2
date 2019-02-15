@@ -55,6 +55,11 @@ class CB2 {
 		print( $post && property_exists( $post, 'geo_latitude' ) ? $post->geo_latitude : NULL );
 	}
 
+	public static function the_geo_address() {
+		global $post;
+		print( $post && property_exists( $post, 'geo_address' ) ? $post->geo_address : NULL );
+	}
+
 	public static function the_geo_longitude() {
 		global $post;
 		print( $post && property_exists( $post, 'geo_longitude' ) ? $post->geo_longitude : NULL );

@@ -211,6 +211,14 @@ function cb2_process(){
 		$(this).parent().find('.cb2-calendar-krumo').show();
 	});
 
+	$(document).on('cmb_init_pickers', function(e, pickers) {
+		if (pickers) {
+			for (picker in pickers) {
+				pickers[picker].attr('autocomplete', 'off');
+			}
+		}
+	});
+
 	$('form').submit(function(){
 		var datepickers = $('.cmb2-id-datetime-part-period-start .cmb2-datepicker, .cmb2-id-datetime-part-period-end .cmb2-datepicker');
 		datepickers.show();
@@ -320,5 +328,11 @@ function cb2_process(){
 (function($) {
   'use strict';
   $(document).ready(cb2_process);
-	$(window).on('cb2-popup-appeared', cb2_process);
+	$(window).on('cb2-popup-appeared', function(){
+		cb2_process();
+		if (window.CMB2) {
+			delete window.CMB2.$metabox;
+			window.CMB2.init();
+		}
+	});
 })(jQuery);
