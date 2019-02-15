@@ -124,9 +124,9 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
 	function tabs() {
 		return array(
-			'perioditems'  => 'Period Items',
-			'geo'          => 'Location',
-			'openinghours' => 'Opening Hours'
+			'cb2-tab-perioditems'  => 'Period Items',
+			'cb2-tab-geo'          => 'Location',
+			'cb2-tab-openinghours' => 'Opening Hours'
 		);
 	}
 

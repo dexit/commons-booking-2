@@ -22,9 +22,9 @@ print( "<div id='cb2-tab-definition'>" );
 CB2::the_meta_boxes( $post->period );
 print( '</div>' );
 
-// ------------------------------------ Advanced
-print( "<div id='cb2-tab-advanced'>" );
-CB2::the_meta_boxes( $post, 'advanced' );
+// ------------------------------------ Security
+print( "<div id='cb2-tab-security'>" );
+CB2::the_meta_boxes( $post->period_entity, 'security' );
 print( '</div>' );
 
 // ------------------------------------ Bottom actions
