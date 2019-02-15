@@ -101,6 +101,47 @@ function cb2_form_get_user_roles( $keys_only=false )
 	}
 	return $user_roles_formatted;
 }
+/**
+ * Determines if a post, identified by the specified ID, exist
+ * within the WordPress database.
+ *
+ *
+ * @param    int    $id    The ID of the post to check
+ * @return   bool          True if the post exists; otherwise, false.
+ */
+function cb2_post_exists($id)
+{
+    return is_string(get_post_status($id));
+}
+/**
+ * Checks to see if a given string exists at the start of another string.
+ *
+ * @param $haystack The string to search in.
+ * @param $needle The string we are looking for.
+ * @param bool $caseSensitive Whether we want our search to be case sensitive or not.
+ * @return bool
+ */
+function strStartsWith($haystack, $needle, $caseSensitive = true){
+    //Get the length of the needle.
+    $length = strlen($needle);
+    //Get the start of the haystack.
+    $startOfHaystack = substr($haystack, 0, $length);
+    //If we want our check to be case sensitive.
+    if($caseSensitive){
+        //Strict comparison.
+        if($startOfHaystack === $needle){
+            return true;
+        }
+    } else{
+        //Case insensitive.
+        //If the needle and the start of the haystack are the same.
+        if(strcasecmp($startOfHaystack, $needle) == 0){
+            return true;
+        }
+    }
+    //No matches. Return FALSE.
+    return false;
+}
 
 /**
  * Get a List of slot templates for use in dropdown selects.
@@ -126,6 +167,8 @@ function cb_get_slot_templates_dropdown() {
 	}
   return $dropdown;
 }
+
+
 /**
  * Get array of post types @TODO: Apply filters to let users only add their own post types
  *

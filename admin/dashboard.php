@@ -219,7 +219,7 @@ HTML
 		//if ( $wp_query instanceof WP_Query )
 		//	CB2_Query::reorganise_posts_structure( $wp_query ); // For debug purposes
 		//print( '<div class="cb2-todo">NOTE: krumo disabled because it is causing meta-data calls</div>' );
-		//krumo( $wp_query );
+		krumo( $wp_query );
 		print( "</div></div>" );
 	} else print( "<div>No posts returned!</div>" );
 }

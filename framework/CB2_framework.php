@@ -16,6 +16,7 @@
  */
 require_once( CB2_PLUGIN_ROOT . 'admin/includes/CB2_Metaboxes.php' );
 require_once( CB2_PLUGIN_ROOT . 'admin/includes/lib/yasumi/src/Yasumi/Yasumi.php' ); /* TODO */
+require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-metatabs-options/code/cmb2_metatabs_options.php');
 
 
 /**
@@ -46,6 +47,7 @@ require_once('CB2_Entities/CB2_User.php');
  * Includes - Classes @TODO: Clean up
  */
 require_once('includes/CB2_Strings.php');
+require_once('includes/CB2_Template_Tags.php');
 require_once('CB2_Settings/CB2_Settings.php');
 require_once('includes/CB2_Holidays.php');
 require_once('includes/CB2_Codes.php');

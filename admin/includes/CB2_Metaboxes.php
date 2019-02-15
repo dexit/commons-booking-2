@@ -25,6 +25,7 @@ class CB2_Metaboxes {
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-tabs/cmb2-tabs.php' );
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-field-icon/cmb2-field-icon.php' );
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-field-paragraph/cmb2-field-paragraph.php' );
+		require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-field-switch-button/cmb2-field-switch-button.php' );
 		// Custom local
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/cmb2-field-calendar/cmb2-field-calendar.php' );
 
