@@ -41,7 +41,7 @@ if ( WP_DEBUG ) print( " | <form><div>
 		<input type='hidden' name='password' value='fryace4'/>
 		<input onclick='$processing' $disabled class='cb2-submit cb2-dangerous' type='submit' value='clear all data'/>
 		<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>Clear all <b>CB2</b> wp_post data</label>
-		<input id='testdata'  $testdata_checked  type='checkbox' name='testdata'/> <label for='testdata'><b>Overwrite</b> wp_posts with test data</label>
+		<input id='testdata'  $testdata_checked  type='checkbox' name='testdata'/> <label for='testdata'><b>Overwrite</b> wp_posts with test data and geo</label>
 	</div></form>" );
 print( '</div><hr/>' );
 

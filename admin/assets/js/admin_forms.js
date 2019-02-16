@@ -249,20 +249,11 @@ function cb2_process(){
 			}
 			case 'H': {
 				explanation.html('Only the times are relevant now because the period repeats hourly.');
-				var options = '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">6-7</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence2" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">7-8</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence3" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">8-9</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence4" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">9-10</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence5" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">10-11</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence6" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">11-12</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence7" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">12-13</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence8" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">13-14</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence9" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">14-15</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence10" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">15-16</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence11" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">16-17</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence12" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">17-18</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence13" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">18-19</label></li>';
-				options += '<li><a href="#">...</label></li>';
+				var options = '';
+				for (var h = 0; h <= 23; h++) {
+					options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence' + h + '" value="' + h + '">';
+					options += '<label for="recurrence_sequence' + h + '">' + h + '-' + (h+1) + '</label></li>';
+				}
 				sequence_checks.html(options);
 				break;
 			}
@@ -272,35 +263,25 @@ function cb2_process(){
 				break;
 			}
 			case 'W': {
-				// TODO: replace with Mon-Sun day picker
 				explanation.html('The date indicates the day-of-the-week that repeats.');
-				var options = '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">1</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence2" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">2</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence3" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">3</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence4" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">4</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence5" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">5</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence6" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">6</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence7" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">7</label></li>';
-				options += '<li><a href="#">...</label></li>';
+				var options = '';
+				for (var h = 0; h <= 53; h++) {
+					options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence' + h + '" value="' + h + '">';
+					options += '<label for="recurrence_sequence' + h + '">' + h + '</label></li>';
+				}
 				datepickers.show();
 				sequence_checks.html(options);
 				break;
 			}
 			case 'M': {
-				// TODO: replace with 1-31 day picker
 				explanation.html('The date indicates the day-of-the-month that repeats. The month and year are now irrelevant');
-				var options = '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Jan</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Feb</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Mar</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Apr</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">May</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Jun</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Jul</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Aug</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Sep</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Oct</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Nov</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">Dec</label></li>';
+				var options = '';
+				months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+				for (var h = 0; h < 12; h++) {
+					month = months[h].substr(0,3);
+					options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence' + h + '" value="' + h + '">';
+					options += '<label for="recurrence_sequence' + h + '">' + month + '</label></li>';
+				}
 				datepickers.show();
 				sequence_checks.html(options);
 				break;
@@ -308,14 +289,11 @@ function cb2_process(){
 			case 'Y': {
 				// TODO: replace with month-day picker
 				explanation.html('The date indicates the day-of-the-year that repeats. The year is now irrelevant');
-				var options = '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">2019</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">2020</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">2021</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">2022</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">2023</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">2024</label></li>';
-				options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence1" value="1" data-hash="jna7s5t53nc0" disabled="disabled"><label for="recurrence_sequence1">2025</label></li>';
-				options += '<li><a href="#">...</label></li>';
+				var options = '';
+				for (var h = 2019; h <= 2040; h++) {
+					options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence' + h + '" value="' + h + '">';
+					options += '<label for="recurrence_sequence' + h + '">' + h + '</label></li>';
+				}
 				datepickers.show();
 				sequence_checks.html(options);
 				break;

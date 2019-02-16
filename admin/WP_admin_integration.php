@@ -85,8 +85,6 @@ function cb2_metaboxes() {
 				$id               = $metabox['id'];
 				$object_types     = $metabox['object_types'];
 				$metabox_classes  = ( isset( $metabox[ 'classes' ] ) ? ( is_array( $metabox[ 'classes' ] ) ? $metabox[ 'classes' ] : explode( ',', $metabox[ 'classes' ] ) ) : array() );
-				$debug_only_value = ( isset( $metabox['debug-only'] ) ? $metabox['debug-only'] : FALSE );
-				$debug_only       = ( $debug_only_value == TRUE || $debug_only_value == 'yes' || $debug_only_value == '1' );
 				$on_request       = ( isset( $metabox['on_request'] ) ? $metabox['on_request'] : FALSE );
 				$requested        = in_array( $id, $metabox_wizard_ids );
 				$include_metabox  = ( ! $requests_only && ! $on_request ) || ( $requests_only && $requested );
@@ -96,11 +94,8 @@ function cb2_metaboxes() {
 					$query_name = "{$id}_show";
 					$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
 					$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
-					if ( $query_hide || ( $debug_only && ! WP_DEBUG ) )
+					if ( $query_hide )
 						array_push( $metabox_classes, $hidden_class );
-
-					if ( $debug_only )
-						$metabox['title'] = "<span class='cb2-WP_DEBUG'>$title</span>";
 
 					foreach ( $metabox['fields'] as &$field ) {
 						$field_id = $field['id'];

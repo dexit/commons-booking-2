@@ -17,6 +17,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			'author_ID'             => array( CB2_BIGINT,   (20), CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1 ),
 			'entity_datetime_from'  => array( CB2_DATETIME, NULL, NULL, NULL, NULL, NULL, 'override all period settings' ),
 			'entity_datetime_to'    => array( CB2_DATETIME, NULL, NULL, NULL, NULL, NULL, 'override all period settings' ),
+			'confirmed_user_id'     => array( CB2_BIGINT,   (20), CB2_UNSIGNED ),
+			'approved_user_id'      => array( CB2_BIGINT,   (20), CB2_UNSIGNED ),
 		);
 		$columns = array_merge( $base_columns, $extra_columns );
 
@@ -24,6 +26,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			'period_group_id'       => array( 'cb2_period_groups',       'period_group_id' ),
 			'period_status_type_id' => array( 'cb2_period_status_types', 'period_status_type_id' ),
 			'author_ID'             => array( 'users', 'ID' ),
+			'confirmed_user_id'     => array( 'users', 'ID' ),
+			'approved_user_id'      => array( 'users', 'ID' ),
 		);
 		$foreign_keys = array_merge( $base_foreign_keys, $extra_foreign_keys );
 
@@ -123,6 +127,28 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			)
 		);
 
+		// Security
+		array_push( $metaboxes,
+			array(
+				'title' => __( 'Security', 'commons-booking-2' ),
+				'context' => 'security',
+				'fields' => array(
+					array(
+						'name'    => __( 'Confirmed', 'commons-booking-2' ),
+						'id'      => 'confirmed_user_id',
+						'type'    => 'checkbox',
+						'classes' => 'cb2-cmb2-compact',
+					),
+					array(
+						'name'    => __( 'Authorised', 'commons-booking-2' ),
+						'id'      => 'approved_user_id',
+						'type'    => 'checkbox',
+						'classes' => 'cb2-cmb2-compact',
+					),
+				),
+			)
+		);
+
 		// Advanced
 		// array_push( $metaboxes, CB2_Period::selector_metabox( TRUE, 'advanced' ) ); // Multiple
 		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox( FALSE, 'advanced' ) );
@@ -158,7 +184,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				'postdivrich'         => 'Content',
 				'postbox-container-2' => 'Management',
 				'postbox-container-1' => 'Options',
-				'advanced'            => 'Advanced',
+				'cb2-tab-security'            => 'Security',
 			);
 			if ( WP_DEBUG ) $tabs[ 'debug' ] = 'Debug';
 		}
@@ -402,6 +428,28 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
 		$this->period_count = count( $this->period_group->periods );
+  }
+
+  function confirm( Int $user_id = 1 ) {
+		global $wpdb;
+		$Class = get_class( $this );
+		$wpdb->update( $wpdb->prefix . CB2_Database::database_table( $Class ),
+			array( 'confirmed_user_id' => $user_id ),
+			array( CB2_Database::id_field( $Class ) => $this->id() )
+		);
+		$this->confirmed_user_id = $user_id;
+		return $this;
+  }
+
+  function approve( Int $user_id = 1 ) {
+		global $wpdb;
+		$Class = get_class( $this );
+		$wpdb->update( $wpdb->prefix . CB2_Database::database_table( $Class ),
+			array( 'approved_user_id' => $user_id ),
+			array( CB2_Database::id_field( $Class ) => $this->id() )
+		);
+		$this->approved_user_id = $user_id;
+		return $this;
   }
 
   function save( $update = FALSE, $fire_wordpress_events = TRUE, $depth = 0, $debug = NULL ) {

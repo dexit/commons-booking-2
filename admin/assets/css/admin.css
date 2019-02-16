@@ -132,11 +132,13 @@ body #wpcontent .cmb2-wrap > .cmb-field-list > .cmb-row.cb2-cmb2-compact {
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_misc\.scss}line{font-family:\0000387}}
 body .cmb2-id-recurrence-sequence li,
 body .cb2-calendar-grey .cb2-calendar > .entry-content > .cb2-subposts > li {
+	float:left;
+	margin-right:4px;
   text-align: center;
   border: 1px solid #c7c7c7;
   background-color: #e7e7e7;
   padding: 10px 5px;
-  min-width: 80px;
+  min-width: 50px;
 }
 
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_misc\.scss}line{font-family:\0000396}}
@@ -880,9 +882,7 @@ body .cb2-calendar .cb2-out-of-period-entity-scope * {
 	/* hide tabs if sidebar available */
 	display:none;
 }
-.cb2-popup .cb2-with-template-post .cb2-nexts,
-.cb2-popup .cb2-with-template-post .cb2-tabs,
-.cb2-popup .cb2-with-template-post .cb2-popup-form-next {
+.cb2-popup .cb2-with-template-post .cb2-tabs {
 	display:none;
 }
 .cb2-popup .postbox > h2,
@@ -1003,6 +1003,13 @@ body #post-body-content {
 	padding:2px;
 	width:95%;
 	height:500px;
+}
+.cb2-WP_DEBUG-on #TB_window {
+	top:5%;
+	left:5%;
+	width:90%!important;
+	height:auto;
+	margin:0px!important;
 }
 
 /* Individual metaboxes */

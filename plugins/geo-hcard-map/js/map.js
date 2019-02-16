@@ -73,7 +73,7 @@
 
                 if (window.console) console.info('adding [' + title + '] at [' + lat + ',' + lng + ']');
                 marker = L.marker([lat, lng], oOptions).addTo(locationsMap);
-								marker.bindPopup('<h2><a class="' + css_class + '" href="' + href + '">' + title + '</a></h2>' + desc);
+                marker.bindPopup('<h2><a class="' + css_class + '" href="' + href + '">' + title + '</a></h2>' + desc);
                 markers.push(marker);
               }
             });
