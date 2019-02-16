@@ -130,6 +130,13 @@ class CB2_Forms {
 				// Locations
 				$wpdb->query( "insert into {$wpdb->prefix}posts values( '3', '1', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', 'Budapest fairest', '', 'publish', 'closed', 'closed', '', 'budapest-fairest', '', '', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', '0', 'http://commonsbooking.ddns.net/?post_type=item&#038;p=3', '0', 'location', '', '0');" );
 				$wpdb->query( "insert into {$wpdb->prefix}posts values( '4', '1', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', 'Berlin biscuits',  '', 'publish', 'closed', 'closed', '', 'berlin-biscuits',  '', '', '2018-11-08 17:07:36', '2018-11-08 17:07:36', '', '0', 'http://commonsbooking.ddns.net/?post_type=item&#038;p=4', '0', 'location', '', '0');" );
+				// GEO data
+				$wpdb->query( "insert into {$wpdb->prefix}postmeta values( '1', '3', 'geo_address', 'a place called Chiapas');" );
+				$wpdb->query( "insert into {$wpdb->prefix}postmeta values( '2', '3', 'geo_latitude', '51');" );
+				$wpdb->query( "insert into {$wpdb->prefix}postmeta values( '3', '3', 'geo_longitude', '0');" );
+				$wpdb->query( "insert into {$wpdb->prefix}postmeta values( '4', '4', 'geo_address', 'Spain 1936');" );
+				$wpdb->query( "insert into {$wpdb->prefix}postmeta values( '5', '4', 'geo_latitude', '51.2');" );
+				$wpdb->query( "insert into {$wpdb->prefix}postmeta values( '6', '4', 'geo_longitude', '0.2');" );
 			}
 
 			$cleared = TRUE;
