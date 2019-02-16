@@ -43,7 +43,7 @@ class CB2_Template_Tags {
 	 */
   public $template;
    /**
-	 * Post ID
+	 * Post type
 	 *
 	 * @var string
 	 */
@@ -54,12 +54,6 @@ class CB2_Template_Tags {
 	 * @var string
 	 */
   public $post_id;
-   /**
-	 * Allowed post types
-	 *
-	 * @var array
-	 */
-  public $allowed_post_types = array ('item', 'location', 'periodent-user', 'user');
    /**
 	 * Matches
 	 *
@@ -77,13 +71,20 @@ class CB2_Template_Tags {
 	 *
 	 * @var string
 	 */
-  public $output;
+  public $parsed_template;
+   /**
+	 * Array of classes for the div wrapper
+	 *
+	 * @var string
+	 */
+  public $css_classes_array = array('cb2', 'cb2_template_tag');
+
    /**
 	 * Extra template tags defined in plugin settings
 	 *
 	 * @var array
 	 */
-  public $extra_template_tags;
+  public $extra_template_tags = array ( 'item' => '', 'location' => '', 'user' => '');
 
   public $booking_id = '';
   public $location_id = '';
@@ -93,21 +94,28 @@ class CB2_Template_Tags {
 	/**
 	 * Constructor
 	 *
-	 * @param $template string 	The template
-	 * @param $post_id 					Post id
+	 * @param string $template  	The template
+	 * @param string $post_type		'item', 'location', 'periodent-user', 'user'
+	 * @param int 	 $post_id 		Post id
+	 *
+	 * @uses CB2_Query
 	 */
-	public function __construct( $template=FALSE, $post_id=FALSE ) {
+	public function __construct( $template, $post_type, $post_id ) {
+
+		global $wpdb;
+		global $post;
+
 
 		$this->extra_template_tags = $this->get_extra_template_tags();
 
-		if ( $template && $post_id ) {
+		if ( $template && $post_id && $post_type) {
 			$this->template = $template;
+			$this->post_type = $post_type;
 			$this->post_id = $post_id;
-			$this->queried_post = get_post( $post_id ); //@TODO fix queried post once get_post is working again
-			$this->post_type = get_post_type( $post_id );
+			$this->queried_post = CB2_Query::get_post_with_type( $post_type, $post_id );
 
 			$this->prepare();
-			$this->output = $this->parse();
+			$this->parsed_template = $this->parse();
 		}
 	}
 	/**
@@ -118,7 +126,7 @@ class CB2_Template_Tags {
 	public function get_extra_template_tags() {
 
 		$field_names = array();
-		$extra_fields = CB2_Settings::get('extra_meta_fields') ;
+		$extra_fields = CB2_Settings::get('extrametafields') ;
 
 		if ( isset ( $extra_fields ) && is_array( $extra_fields ) ) {
 			foreach ( $extra_fields as $post_type => $fields_list ) {
@@ -127,15 +135,14 @@ class CB2_Template_Tags {
 					$field_names[$post_type][sanitize_text_field($field)] = '';
 				}
 			}
+			return apply_filters('cb2_extra_template_tags', $field_names );
 		}
-		return apply_filters('cb2_extra_template_tags', $field_names );
 	}
 
 	/**
 	 * Prepare by post type
 	 */
 	private function prepare() {
-
 		if ( $this->post_type == 'periodent-user' ) { // if booking we need to check for items, locations, users too
 			$this->booking_id = $this->post_id;
 			$this->prepare_booking();
@@ -152,21 +159,19 @@ class CB2_Template_Tags {
 		} else if ( $this->post_type == 'user' ) {
 			$this->user_id = $this->post_id;
 			$this->prepare_user();
+		} else {
+			echo ('ID of invalid post type submitted. Please provide either item, location, user or booking.');
 		}
 	}
 	/**
-	 * Output
+	 * parsed_template
 	 */
-	public function output() {
-		echo $this->output;
+	public function output( ) {
+
+		echo '<div class="' . implode ( ' ' , $this->css_classes_array ) . '">' . $this->parsed_template . '</div>';
 	}
-	/**
-	 * Validate template @TODO
-	 */
-	private function is_valid( ) {
-		if ( ! empty($this->template) && ( cb2_post_exists($this->post_id) ) && ( in_array( $allowed_post_types, $this->post_type ) ) ) {
-			return TRUE;
-		}
+	public function add_css_class( $class ) {
+		$this->classes_array[] = $class;
 	}
 	/**
 	 * Parse the template for {{tags}}
@@ -190,19 +195,19 @@ class CB2_Template_Tags {
 		}
 		$result = str_replace($full_matches, $replaces, $this->template);
 
-		return apply_filters('cb2_extra_template_tags', $result, 10, 3);
+		return apply_filters('cb2_template_tags_parsed', $result, 10, 3);
 	}
 	/**
 	 * Prepare item vars
 	 */
 	private function prepare_item( ) {
 
-		$system_tags = array(
-			'name' => get_the_title( $this->item_id ),
-			'categories' => 'cat'
-		);
+		$wp_tags = $this->prepare_generic_wordpress_post( $this->item_id );
+		$cb2_tags = array(	);
 		$extra_meta_tags =  (array) $this->extra_template_tags['item'];
-		$this->replace_array['item'] = array_merge ( $system_tags, $extra_meta_tags );
+
+		$tags = array_merge ( $wp_tags, $cb2_tags, $extra_meta_tags );
+		$this->replace_array['item'] = $tags;
 
 	}
 	/**
@@ -210,12 +215,15 @@ class CB2_Template_Tags {
 	 */
 	private function prepare_location( ) {
 
-		$system_tags = array(
-			'name' => get_the_title( $this->location_id ),
+		$wp_tags = $this->prepare_generic_wordpress_post($this->location_id);
+
+		$cb2_tags = array(
 			'address' => get_post_meta( $this->location_id, 'geo_address', TRUE )
 		);
 		$extra_meta_tags = (array) $this->extra_template_tags['location'];
-		$this->replace_array['location'] = array_merge($system_tags, $extra_meta_tags);
+
+		$this->replace_array['location'] = array_merge( $wp_tags, $cb2_tags, $extra_meta_tags );
+
 
 	}
 	/**
@@ -225,8 +233,21 @@ class CB2_Template_Tags {
 
 		$this->replace_array['user'] = array(
 			'name' => get_the_title( $this->user_id ),
+			'link' => get_the_permalink( $this->user_id ),
 			'email' => get_user_meta( $this->user_id, 'geo_address', TRUE )
 		);
+	}
+	/**
+	 * Prepare generic wp post vars
+	 */
+	private function prepare_generic_wordpress_post( $post_id ) {
+
+		$generic_tags = array (
+			'name' => get_the_title( $post_id  ),
+			'url' => get_the_permalink( $post_id ),
+			'link' => '<a href="' . get_the_permalink( $post_id  ) . '">' . get_the_title( $post_id  ) . '</a>',
+		);
+		return $generic_tags;
 	}
 	/**
 	 * Prepare booking vars
@@ -234,9 +255,9 @@ class CB2_Template_Tags {
 	private function prepare_booking( ) {
 
 		// set up others post type info
-		$this->item_id = $this->queried_post->item_ID;
-		$this->user_id = $this->queried_post->user_ID;
-		$this->location_id = $this->queried_post->location_ID;
+		$this->item_id = $this->queried_post->item->ID;
+		$this->location_id = $this->queried_post->location->ID;
+		$this->user_id = $this->queried_post->user->ID;
 
 		$this->replace_array['booking'] = array(
 			'id' => $this->booking_id,
@@ -255,13 +276,14 @@ class CB2_Template_Tags {
 
 		$posttype = $keys[0];
 		$property = $keys[1];
+
 		if ( isset( $this->replace_array[$posttype][$property] ) ) {
 			$replacement = $this->replace_array[$posttype][$property];
 		} else {
 			$replacement = $match;
 		}
 
-		return $replacement ;
+		return $replacement;
 
 	}
 	/**

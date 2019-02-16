@@ -110,33 +110,34 @@ class CB2_Settings {
 		 * if the same setting exists for the post.
 		 *
 		 * Usage:
-		 * $settings_global = CB2_Settings::get( 'bookingoptions_min-usage' );
-		 * $settings_item = CB2_Settings::get( 'bookingoptions_min-usage', 73);
+		 * $settings_global = CB2_Settings::get( 'bookingoptions_min-usage' ); -> Global settings
+		 * $settings_item = CB2_Settings::get( 'bookingoptions_min-usage', 73); -> id must be provided for override
      *
      * @param string $option_id
      * @param string $post_id (optional)
+		 * @param string default
      *
      * @return string/array $options
      */
-    public static function get( $option_id, $post_id = false ) {
-
+    public static function get( $option_id, $post_id = false, $default='' ) {
 			$option_array = get_option( self::$settings_prefix ); // the unserialised plugin settings array
 
 			// first, check if the settings is overwritten in post meta
-			if ( isset ( $post_id ) && cb2_post_exists ( $post_id ) ) { // post exists
+			if ( ( $post_id ) && cb2_post_exists ( $post_id ) ) { // post exists
 
 				$meta_key = '_' . self::$settings_prefix . '_' . $option_id; // the name
 				$post_type = get_post_type ( $post_id );
 
-				if ( in_array( $meta_key, get_post_custom_keys( $post_id) )) { // check if set in post meta
+				if ( in_array( $meta_key, (array) get_post_custom_keys( $post_id) )) { // check if set in post meta
 					return get_post_meta( $post_id, $meta_key , true);
 				}
 
 			} // otherwise return global plugin settings
 			elseif (array_key_exists($option_id, (array) $option_array)) { // key exists in settings table
+
     		return $option_array[$option_id];
 			} else {
-				return false;
+				return $default;
 			}
     }
 

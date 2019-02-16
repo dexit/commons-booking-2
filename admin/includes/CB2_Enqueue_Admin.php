@@ -44,11 +44,12 @@ class CB2_Enqueue_Admin {
 	}
 	public function add_metabox_to_pages() {
 
-		$args = array(
-    	'object_types' => array('item')
-		);
+		// @TODO: add metabox of settings to pages.
+		// $args = array(
+    // 	'object_types' => array('item')
+		// );
 
-		$box = CB2_Settings::prepare_settings_metabox('features', $args, 'cb2_settings_');
+		// $box = CB2_Settings::prepare_settings_metabox('features', $args, 'cb2_settings_');
 
 	}
 

@@ -99,6 +99,31 @@ array(
 				'id' => 'bookingoptions_approval-needed',
 				'type' => 'checkbox',
 				'default' => cmb2_set_checkbox_default_for_new_post(false)
+			),
+			array(
+				'name' => __( 'Field Name', 'cmb2' ),
+				'desc'    => __( 'Field Description', 'cmb2' ),
+				'id'      => 'your_switch_button',
+				'type'    => 'switch',
+				'default'    => 0,
+				'label'    => array('on'=> 'On', 'off'=> 'Off')
+			),
+			array(
+				'name' => __( 'Field Name', 'cmb2' ),
+				'desc'    => __( 'disabled_warning has been set to true, so off=warning color', 'cmb2' ),
+				'id'      => 'your_switch_button3',
+				'type'    => 'switch',
+				'default'    => 0,
+				'disabled_warning' => true,
+				'label'    => array('on'=> 'On', 'off'=> 'Off')
+			),
+			array(
+				'name' => __( 'Field Name', 'cmb2' ),
+				'desc'    => __( 'Field Description', 'cmb2' ),
+				'id'      => 'your_switch_button_2',
+				'type'    => 'switch',
+				'default'    => 0,
+				'label'    => array('off'=> 'Disabled', 'on'=> 'Enabled')
 			)
 		)
 	),
@@ -214,4 +239,20 @@ array(
 		)
 	),
 	/* email templates end */
+	/* message templates start */
+	'messagetemplates' => array(
+		'title' => __('Messages', 'commons-booking-2'),
+		'id' => 'messagetemplates',
+		'desc' => 'Message templates. You can use html & {{template_tags}}',
+		'fields' => array(
+			array(
+				'name' => __('Booking page confirm your booking', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'messagetemplates_please-confirm',
+				'type' => 'textarea_small',
+				'default' => 'Please confirm your booking of {{item_name}} at {{location_name}}',
+			),
+		)
+	),
+	/* message templates end */
 );
