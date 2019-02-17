@@ -318,6 +318,18 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		// Pure Virtual
 	}
 
+	protected function disable_cb2_hooks() {
+		remove_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY );
+		remove_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 1 );
+		remove_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY );
+	}
+
+	protected function enable_cb2_hooks() {
+		add_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY, 3 );
+		add_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 1, 2 );
+		add_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY, 3 );
+	}
+
 	protected function update_row( $update_data, $formats = NULL, $fire_wordpress_events = TRUE ) {
 		global $wpdb;
 
@@ -369,6 +381,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			$post_after      = $this;
 
 			// CB2 events
+			$this->disable_cb2_hooks();
 			$this->custom_events( TRUE );
 			do_action( 'cb2_data_change', TRUE );
 
@@ -391,6 +404,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			do_action( 'save_post', $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event wp_insert_post</div>" );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
+
+			$this->enable_cb2_hooks();
 		}
 
 		return $this->ID;
@@ -434,6 +449,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			$update          = FALSE;
 
 			// CB2 events
+			$this->disable_cb2_hooks();
 			$this->custom_events( FALSE );
 			do_action( 'cb2_data_change', FALSE );
 
@@ -452,6 +468,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			do_action( 'save_post', $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event wp_insert_post</div>" );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
+
+			$this->enable_cb2_hooks();
 		}
 
 		return $this->ID;

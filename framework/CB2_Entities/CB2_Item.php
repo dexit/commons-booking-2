@@ -49,8 +49,29 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 		}
 
 	static function metaboxes() {
-
-		$metaboxes = array();
+		$metaboxes = array(
+			array(
+				'title'      => __('Use a Location Opening Hours for Pickup/Return', 'commons-booking-2'),
+				'context'    => 'side',
+				'show_on_cb' => array( 'CB2', 'is_not_published' ),
+				'show_names' => TRUE,
+				'fields'     => array(
+					array(
+						'id'      => 'use_opening_hours',
+						'name'    => __('Use Opening Hours', 'commons-booking-2'),
+						'type'    => 'checkbox',
+						'default' => TRUE,
+					),
+					array(
+						'name'    => __('Location', 'commons-booking-2'),
+						'id'      => 'opening_hours_location_ID',
+						'type'    => 'select',
+						'options' => CB2_Forms::location_options(),
+					),
+					CB2_Query::metabox_nosave_indicator( 'item_ID' ),
+				),
+			),
+		);
 
 		return apply_filters('cb2_item_metaboxes', $metaboxes);
 	}
@@ -223,6 +244,41 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 
         return "<div>processed ($count) perioditem availabile in to bookings</div>";
     }
+
+    function post_post_update() {
+			global $wpdb;
+
+			if ( isset( $_POST['use_opening_hours'] ) ) {
+				if ( $location_ID = $_POST['opening_hours_location_ID'] ) {
+					$period_group_ID = $wpdb->get_var( $wpdb->prepare( "select period_group_ID
+							from {$wpdb->prefix}cb2_location_period_groups
+							where location_ID = %d and period_status_type_ID = %d limit 1",
+						array( $location_ID, CB2_PeriodStatusType_Open::bigID(), )
+					) );
+					if ( $period_group_ID ) {
+						$pickup_return_text = __( 'Pickup/Return' );
+						$period_group       = new CB2_PeriodGroup( $period_group_ID );
+						// We did not load the Periods so let us not wipe them
+						$period_group->set_saveable( FALSE );
+						$location           = new CB2_Location( $location_ID );
+						$item_pickup_return = new CB2_PeriodEntity_Timeframe(
+							CB2_CREATE_NEW,
+							"$this->ID $pickup_return_text",
+							$period_group,
+							new CB2_PeriodStatusType_PickupReturn(),
+							TRUE, NULL, NULL,
+							$location, $this
+						);
+						if ( CB2_DEBUG_SAVE ) krumo( $item_pickup_return );
+						$item_pickup_return->save();
+					} else {
+						if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG'>no opening hours found for location [$location_ID]</div>" );
+					}
+				} else {
+					if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG'>no location sent when creating pickup/return times</div>" );
+				}
+			}
+		}
 
     public function manage_columns($columns)
     {

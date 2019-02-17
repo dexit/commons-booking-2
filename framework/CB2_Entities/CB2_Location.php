@@ -52,6 +52,33 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
 		$metaboxes = array(
 			array(
+				'title'      => __( 'Add Default Opening Hours', 'commons-booking-2' ),
+				'context'    => 'side',
+				'show_on_cb' => array( 'CB2', 'is_not_published' ),
+				'show_names' => TRUE,
+				'fields'     => array(
+					array(
+						'id' => 'set_default_opening_hours',
+						'name' => __('Set Default Opening Hours', 'commons-booking-2'),
+						'type' => 'checkbox',
+						'default' => TRUE,
+					),
+					array(
+						'id' => 'with_lunch_break',
+						'name' => __('With Lunch Break', 'commons-booking-2'),
+						'type' => 'checkbox',
+						'default' => TRUE,
+					),
+					array(
+						'id' => 'with_weekend_break',
+						'name' => __('With Weekend Break', 'commons-booking-2'),
+						'type' => 'checkbox',
+						'default' => TRUE,
+					),
+				),
+			),
+
+			array(
 				'title'      => __( 'Geodata', 'commons-booking-2' ),
 				'context'    => 'normal',
 				'priority' 	 => 'high',
@@ -92,9 +119,9 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
   static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			( isset( $properties['location_ID'] )     ? $properties['location_ID'] : $properties['ID'] ),
-			( isset( $properties['geo_address'] )     ? $properties['geo_address'][0]     : NULL ),
-			( isset( $properties['geo_latitude'] )    ? $properties['geo_latitude'][0]    : NULL ),
-			( isset( $properties['geo_longitude'] )   ? $properties['geo_longitude'][0]   : NULL )
+			( isset( $properties['geo_address'] )   && $properties['geo_address']    ? $properties['geo_address'][0]     : NULL ),
+			( isset( $properties['geo_latitude'] )  && $properties['geo_latitude']   ? $properties['geo_latitude'][0]    : NULL ),
+			( isset( $properties['geo_longitude'] ) && $properties['geo_longitude']  ? $properties['geo_longitude'][0]   : NULL )
 		);
 
 		self::copy_all_wp_post_properties( $properties, $object );
@@ -122,12 +149,14 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		return "[cb2_calendar location_id=$ID]";
 	}
 
-	function tabs() {
-		return array(
+	function tabs( $edit_form_advanced = FALSE ) {
+		$tabs = array();
+		if ( ! $edit_form_advanced ) $tabs = array(
 			'cb2-tab-perioditems'  => 'Period Items',
 			'cb2-tab-geo'          => 'Location',
 			'cb2-tab-openinghours' => 'Opening Hours'
 		);
+		return $tabs;
 	}
 
 	public static $default_enabled_columns = array( 'cb', 'title', 'opening_hours', 'address', 'date' );
@@ -312,23 +341,79 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 	}
 
   function get_api_data($version){
-	$location_data = array(
-		'id' => $this->ID,
-		'name' => get_the_title($this),
-		'url' => get_post_permalink($this)
-	);
-	$location_desc = $this->post_excerpt;
-	if($location_desc != NULL){
-		$location_data['description'] = $location_desc;
-	}
-	// $location_meta = get_post_meta($location);
-	// $location_data['longitude'] = $location_meta['geo_longitude'];
-	// $location_data['latitude'] = $location_meta['geo_latitude'];
-	// $location_data['address'] = $location_meta['geo_address'];
-	return $location_data;
+		$location_data = array(
+			'id' => $this->ID,
+			'name' => get_the_title($this),
+			'url' => get_post_permalink($this)
+		);
+		$location_desc = $this->post_excerpt;
+		if($location_desc != NULL){
+			$location_data['description'] = $location_desc;
+		}
+		// $location_meta = get_post_meta($location);
+		// $location_data['longitude'] = $location_meta['geo_longitude'];
+		// $location_data['latitude'] = $location_meta['geo_latitude'];
+		// $location_data['address'] = $location_meta['geo_address'];
+		return $location_data;
   }
 
-  function jsonSerialize() {
+	function post_post_update() {
+		global $wpdb;
+
+		if ( isset( $_POST['set_default_opening_hours'] ) ) {
+			$with_lunch_break   = isset( $_POST['with_lunch_break'] );
+			$with_weekend_break = isset( $_POST['with_weekend_break'] );
+
+			if ( CB2_DEBUG_SAVE ) {
+				$Class = get_class( $this );
+				print( "<div class='cb2-WP_DEBUG'>$Class::post_post_update($this->ID) dependencies:
+						add default opening hours: [1/$with_lunch_break/$with_weekend_break]
+					</div>"
+				);
+			}
+
+			$recurrence_sequence = ( $with_weekend_break ? CB2_Week::day_mask( array( 1, 1, 1, 1, 1 ) ) : 0 );
+
+			$opening_hours_text = __( 'Opening Hours' );
+			$period_group       = new CB2_PeriodGroup( CB2_CREATE_NEW, $opening_hours_text );
+			if ( $with_lunch_break ) {
+				// Add 2 slots
+				$period_group->add_period( new CB2_Period(
+					CB2_CREATE_NEW, __( 'Morning Opening Hours' ),
+					CB2_DateTime::day_start(), CB2_DateTime::lunch_start(),
+					CB2_DateTime::today(),
+					NULL, 'D', NULL, $recurrence_sequence
+				) );
+				$period_group->add_period( new CB2_Period(
+					CB2_CREATE_NEW, __( 'Afternoon Opening Hours' ),
+					CB2_DateTime::lunch_end(), CB2_DateTime::day_end(),
+					CB2_DateTime::today(),
+					NULL, 'D', NULL, $recurrence_sequence
+				) );
+			} else {
+				// Add 1 slot
+				$period_group->add_period( new CB2_Period(
+					CB2_CREATE_NEW, $opening_hours_text,
+					CB2_DateTime::day_start(), CB2_DateTime::day_end(),
+					CB2_DateTime::today(),
+					NULL, 'D', NULL, $recurrence_sequence
+				) );
+			}
+
+			$location_opening_hours = new CB2_PeriodEntity_Location(
+				CB2_CREATE_NEW,
+				"$this->ID $opening_hours_text",
+				$period_group,
+				new CB2_PeriodStatusType_Open(),
+				TRUE, NULL, NULL,
+				$this
+			);
+			if ( CB2_DEBUG_SAVE ) krumo( $location_opening_hours );
+			$location_opening_hours->save();
+		}
+	}
+
+	function jsonSerialize() {
     return array_merge( parent::jsonSerialize(),
       array(
         'perioditems' => &$this->perioditems

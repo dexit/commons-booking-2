@@ -177,7 +177,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $options;
 	}
 
-	public function tabs() {
+	public function tabs( $edit_form_advanced = FALSE ) {
 		$tabs = NULL;
 		if ( $this->post_status == CB2_Post::$PUBLISH ) {
 			$tabs = array(

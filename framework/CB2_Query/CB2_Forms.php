@@ -50,7 +50,8 @@ class CB2_Forms {
 			$db_options = ( CB2_Database::query_ok( $sql ) ? $wpdb->get_results( $sql, OBJECT_K ) : array() );
 			foreach ( $db_options as $id => &$db_option ) {
 				$name = $db_option->name;
-				if ( WP_DEBUG ) $name .= " ($id)";
+				if ( empty( $name ) ) $name = __( '(no title)' );
+				if ( WP_DEBUG )       $name .= " ($id)";
 				$options[$id] = htmlspecialchars( $name );
 			}
 			wp_cache_set( $cache_name, $options ); // Cache the CB2_Forms select options

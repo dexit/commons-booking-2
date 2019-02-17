@@ -397,15 +397,15 @@ class CB2 {
 		return $link;
 	}
 
-	static function the_nexts( Array $nexts = NULL, $selected = NULL ) {
-		print( self::get_the_tabs( $nexts, 'nexts', $selected ) );
+	static function the_nexts( Array $nexts = NULL, $selected = NULL, $edit_form_advanced = FALSE ) {
+		print( self::get_the_tabs( $nexts, 'nexts', $selected, $edit_form_advanced ) );
 	}
 
-	static function the_tabs( Array $tabs = NULL, $selected = NULL ) {
-		print( self::get_the_tabs( $tabs, 'tabs', $selected ) );
+	static function the_tabs( Array $tabs = NULL, $selected = NULL, $edit_form_advanced = FALSE ) {
+		print( self::get_the_tabs( $tabs, 'tabs', $selected, $edit_form_advanced ) );
 	}
 
-	static function get_the_tabs( Array $tabs = NULL, String $class = 'tabs', $selected = NULL ) {
+	static function get_the_tabs( Array $tabs = NULL, String $class = 'tabs', $selected = NULL, $edit_form_advanced = FALSE ) {
 		// TODO: make this configurable based on the 'tab' option in the metaboxes
 		// in order of appearance
 		// We cannot use jQuery tabs here
@@ -415,7 +415,7 @@ class CB2 {
 		CB2_Query::ensure_correct_class( $post );
 
 		if ( is_null( $tabs ) && method_exists( $post, 'tabs' ) ) {
-			$tabs = $post->tabs();
+			$tabs = $post->tabs( $edit_form_advanced );
 		}
 
 		if ( count( $tabs ) ) {

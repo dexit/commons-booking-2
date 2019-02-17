@@ -204,6 +204,22 @@ class CB2_Week extends CB2_TimePostNavigator {
     return (int) ceil( ( $day->dayofyear - $day->dayofweek ) / 7 ) + 1;
   }
 
+	static function day_mask( Array $days ) {
+		// Array( TRUE, FALSE, ... )
+		$mask = array();
+		if ( count( $days ) < 7 )
+			for ( $i = count( $days ); $i < 7; $i++ )
+				array_push( $days, FALSE );
+		$start_of_week = get_option( 'start_of_week' );
+		for ( $i = 1; $i < $start_of_week; $i++ ) array_push( $days, array_shift( $days ) );
+		krumo( $days );
+		for ( $i = 0; $i < count( $days ); $i++ ) {
+			if ( $days[$i] ) array_push( $mask, pow( 2, $i ) );
+		}
+		krumo( $mask );
+		return array_sum( $mask );
+	}
+
   static function factory( $day ) {
     // Design Patterns: Factory Singleton with Multiton
     $year       = $day->date->format( 'Y' );
@@ -353,7 +369,7 @@ class CB2_Day extends CB2_TimePostNavigator {
     return $perioditem;
   }
 
-  function tabs() {
+  function tabs( $edit_form_advanced = FALSE ) {
 		return array(
 			"cb2-tab-status"  => 'Type of Thing',
 			"cb2-tab-objects" => 'Real Stuff',
