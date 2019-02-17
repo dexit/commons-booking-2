@@ -145,43 +145,51 @@ array(
 	),
 	/* maps end */
 	/* test start */
-	'test' => array(
-		'title' => 'test',
-		'id' => 'test',
-		'fields' => array(),
+	'templatetaglisting' => array(
+		'title' => 'templatetaglisting',
+		'id' => 'templatetaglisting',
+		'fields' => array(
+				array(
+				'name' => __('Item meta fields', 'commons-booking-2'),
+				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
+				'id' => 'templatetaglisting',
+				'type' => 'text',
+				'default' => '',
+			),
+		),
 	),
 	/* test end */
 	/* extra_meta_fields start */
-	'extrametafields' => array(
-		'title' => 'Extra meta fields',
-		'id' => 'extrametafields',
+	'usertemplatetags' => array(
+		'title' => __('User template tags', 'commons-booking-2'),
+		'id' => 'usertemplatetags',
 		'desc' => 'If you set up additional meta fields for item, location, user or booking (for example: use another plugin to add registration fields).<br> Enter the field names here to make them available for use as template tags: {{mytemplatetag}}.',
 		'fields' => array(
 			array(
 				'name' => __('Item meta fields', 'commons-booking-2'),
 				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'extrametafields_item',
+				'id' => 'usertemplatetags_item',
 				'type' => 'text',
 				'default' => '',
 			),
 			array(
 				'name' => __('Location meta fields', 'commons-booking-2'),
 				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'extrametafields_location',
+				'id' => 'usertemplatetags_location',
 				'type' => 'text',
 				'default' => '',
 			),
 			array(
 				'name' => __('Booking meta fields', 'commons-booking-2'),
 				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'extrametafields_booking',
+				'id' => 'usertemplatetags_booking',
 				'type' => 'text',
 				'default' => '',
 			),
 			array(
 				'name' => __('User meta fields', 'commons-booking-2'),
 				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'extrametafields_user',
+				'id' => 'usertemplatetags_user',
 				'type' => 'text',
 				'default' => '',
 			),
