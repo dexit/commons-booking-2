@@ -111,8 +111,9 @@ class CB2_Extras_Admin {
 
 		$notices_array = array();
 
-		// check if pretty permalinks are enabled
-		if ( ! get_option('permalink_structure') ) {  $notices_array[] = __( '"Pretty" Permalinks need to be enabled for Commons Booking to work.', 'commons-booking-2');
+		// check if Bookings page is set
+
+		if ( empty ( CB2_Settings::get('pages_page-booking') ) ) {  $notices_array[] = __( 'You need to specify the CommonsBooking 2 bookings page.', 'commons-booking-2');
 		}
 
 		if ( $notices_array ) {
