@@ -4,6 +4,8 @@
  *
  * Template tags {{template_tag}} to be used in emails and messages textareas in the backend
  *
+ * wrapper for this Class: cb2_tag( $template, $post_type, $post_id )
+ *
  *
  * @package   CommonsBooking2
  * @author    Florian Egermann <florian@wielebenwir.de>
@@ -12,12 +14,6 @@
  * @link      http://commonsbooking.wielebenwir.de
  */
 class CB2_Template_Tags {
-	/**
-	 * Instance of this class.
-	 *
-	 * @var object
-	 */
-	protected $instance = null;
    /**
 	 * Item
 	 *
@@ -84,7 +80,7 @@ class CB2_Template_Tags {
 	 *
 	 * @var array
 	 */
-  public $user_defined_template_tags = array ( 'item' => '', 'location' => '', 'user' => '', 'booking' => '');
+  public $user_defined_template_tags;
 
   public $booking_id = '';
   public $location_id = '';
@@ -94,7 +90,7 @@ class CB2_Template_Tags {
 	/**
 	 * Constructor
 	 *
-	 * @param string $template  	The template
+	 * @param string $template  	The template string with {{posttype_field}} tags
 	 * @param string $post_type		'item', 'location', 'periodent-user', 'user'
 	 * @param int 	 $post_id 		Post id
 	 *
@@ -104,7 +100,6 @@ class CB2_Template_Tags {
 
 		global $wpdb;
 		global $post;
-
 
 		$this->user_defined_template_tags = $this->get_user_defined_template_tags_field_list();
 
@@ -143,7 +138,7 @@ class CB2_Template_Tags {
 					}
 				}
 			}
-			var_dump($extra_fields);
+
 			return apply_filters('cb2_user_defined_template_tags_list', $field_names );
 		}
 	}
@@ -195,14 +190,20 @@ class CB2_Template_Tags {
 		}
 	}
 	/**
-	 * parsed_template
+	 * Echo the processed template
 	 */
 	public function output( ) {
 
 		echo '<div class="' . implode ( ' ' , $this->css_classes_array ) . '">' . $this->parsed_template . '</div>';
 	}
+	/**
+	 * Add css class to output
+	 *
+	 * Will be prefixed with 'cb2_'
+	 *
+	 */
 	public function add_css_class( $class ) {
-		$this->classes_array[] = $class;
+		$this->css_classes_array[] = 'cb2_' . $class;
 	}
 	/**
 	 * Parse
@@ -342,6 +343,8 @@ class CB2_Template_Tags {
 	}
 	/**
 	 * Echo all template tags
+	 *
+	 * @TODO
 	 */
 	public function list_template_tags() {
 

@@ -144,22 +144,22 @@ array(
 		)
 	),
 	/* maps end */
-	/* test start */
+	/* templatetaglisting start */
 	'templatetaglisting' => array(
-		'title' => 'templatetaglisting',
+		'title' => 'Available template tags',
 		'id' => 'templatetaglisting',
+		'closed' => TRUE,
 		'fields' => array(
 				array(
-				'name' => __('Item meta fields', 'commons-booking-2'),
-				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
+				'name' => __('Available template tags @TODO', 'commons-booking-2'),
 				'id' => 'templatetaglisting',
-				'type' => 'text',
-				'default' => '',
+				'type' => 'title',
+				'default' => '@TODO',
 			),
 		),
 	),
-	/* test end */
-	/* extra_meta_fields start */
+	/* templatetaglisting end */
+	/* usertemplatetags start */
 	'usertemplatetags' => array(
 		'title' => __('User template tags', 'commons-booking-2'),
 		'id' => 'usertemplatetags',
@@ -195,7 +195,7 @@ array(
 			),
 		)
 	),
-	/* extra_meta_fields end */
+	/* usertemplatetags end */
 	/* email templates start */
 	'emailtemplates' => array(
 		'title' => __('Email templates', 'commons-booking-2'),
