@@ -60,9 +60,6 @@ function cb2_is_debug()
 			return false;
 		}
 }
-
-
-
 function cb2_form_get_pages() {
   // dropdown for page select
   $pages = get_pages();
@@ -109,9 +106,25 @@ function cb2_form_get_user_roles( $keys_only=false )
  * @param    int    $id    The ID of the post to check
  * @return   bool          True if the post exists; otherwise, false.
  */
-function cb2_post_exists($id)
-{
+function cb2_post_exists($id) {
     return is_string(get_post_status($id));
+}
+/**
+ * Echo a template tag
+ *
+ * Wrapper for CB2_Template_Tags
+ *
+ * @uses CB2_Template_Tags
+ *
+ * @param string $template  	The template string with {{posttype_field}} tags
+ * @param string $post_type		'item', 'location', 'periodent-user', 'user'
+ * @param int 	 $post_id 		Post id
+ * @param string $css_class 	Additional css class
+ */
+function cb2_tag( $template, $post_type, $post_id, $css_class ) {
+		$tt = new CB2_Template_Tags( $template, $post_type, $post_id );
+		if ( ! empty ( $css_class )) { $tt->add_css_class( $css_class ); }
+		$tt->output();
 }
 /**
  * Checks to see if a given string exists at the start of another string.
@@ -142,95 +155,6 @@ function strStartsWith($haystack, $needle, $caseSensitive = true){
     //No matches. Return FALSE.
     return false;
 }
-
-/**
- * Get a List of slot templates for use in dropdown selects.
- * @TODO Hardcoded for now
- *
- * @return Array of wordpress pages as [slot_template_group_id][title]
- */
-
-function cb_get_slot_templates_dropdown() {
-	// dropdown for page select
-
-	$obj = new CB2_Slot_Templates();
-	$dropdown = array();
-
-	$slot_templates = $obj->get_slot_templates();
-
-  foreach ( $slot_templates as $key => $val ) {
-		$descriptions = array();
-		foreach ($val as $slot) {
-			$descriptions[] = $slot['description'];
-		}
-    $dropdown[$key] = implode (', ', $descriptions );
-	}
-  return $dropdown;
-}
-
-
-/**
- * Get array of post types @TODO: Apply filters to let users only add their own post types
- *
- * @param string post type single name
- *
- * @return array of wordpress post types as [postID][title]
- */
-
-function cb_get_post_types_list( $post_type_name ) {
-
-	$args = array(
-		'post_type'        => $post_type_name,
-		'author'	   			 => '',
-		'suppress_filters' => true
-	);
-
-	$posts = get_posts( $args  );
-  $dropdown = array();
-
-  foreach ( $posts as $post ) {
-    $dropdown[$post->ID] = $post->post_title;
-  }
-  return apply_filters('cb_get_post_types_list', $dropdown );
-}
-/**
- * Get array of users.
- *
- * @param string post type single name
- *
- * @return array of wordpress post types as [postID][title]
- */
-
-function cb_get_users_list( $roles=array() ) {
-
-	$users = get_users( [ 'role__in' => $roles ] );
-
-  $list = array();
-
-  foreach ( $users as $user ) {
-    $list[$user->ID] = $user->display_name;
-  }
-  return apply_filters('cb_get_users_list', $list );
-}
-/**
- * Create a date Range
- *
- * @return array dates in the format
- */
-function cb_dateRange( $first, $last, $step = '+1 day', $format = 'Y-m-d' ) {
-
-	$dates = array();
-	$current = strtotime( $first );
-	$last = strtotime( $last );
-
-	while( $current <= $last ) {
-
-		$dates[] = date( $format, $current );
-		$current = strtotime( $step, $current );
-	}
-
-	return $dates;
-}
 /**
  * Convert object to array
  *
@@ -238,7 +162,7 @@ function cb_dateRange( $first, $last, $step = '+1 day', $format = 'Y-m-d' ) {
  *
  * @return array
  */
-function cb_obj_to_array( $object ) {
+function cb2_obj_to_array( $object ) {
 
 	$array = json_decode( json_encode( $object), true);
 	return $array;
@@ -370,80 +294,4 @@ function cb2_checkbox_bool( $value ) {
 	}	else {
 		return false;
 	}
-}
-/**
- * Filter dates array by opening_times (days of the week)
- *
- * @param  string $date_start
- * @param  string $date_end
- * @param  array $opening_times
- * @param bool $inverse
- * @return array $matching dates
- */
-function cb_filter_dates_by_opening_times( $date_start, $date_end, $opening_times, $inverse = FALSE ) {
-
-	$matches = array();
-	$misses = array();
-
-	$dates_array = cb_dateRange(  $date_start, $date_end );
-
-	foreach ($dates_array as $date) {
-			$day_number = date('w', strtotime( $date ) );
-			if ( array_key_exists( $day_number, $opening_times ) ) {
-				$matches[] = $date;
-			} else {
-				$misses[] = $date;
-			}
-	}
-	if ( $inverse ) {
-		return $misses;
-	} else {
-		return $matches;
-	}
-}
-/**
- * Determines if a post, identified by the specified ID, exist
- * within the WordPress database.
- *
- * @param    int    $id    The ID of the post to check
- * @return   bool          True if the post exists; otherwise, false.
- * @since    2.0.0
- */
-function cb_post_exists( $id ) {
-  return is_string( get_post_status( $id ) );
-}
-/**
- * Determines if a post, identified by the specified ID, exist
- * within the WordPress database. @TODO
- *
- * @param    int    $id    The ID of the timeframe to check
- * @return   bool          True if the post exists; otherwise, false.
- * @since    2.0.0
- */
-function cb_timeframe_exists( $id ) {
-
-	if ( isset( $id ) && ( ! empty ( $id ) ) ) {
-		return TRUE;
-
-	} else {
-
-		return FALSE;
-	}
-
-}
-/**
- * Return the formatted settings field name including prefix
- *
- * @param    string   $group    the settings group
- * @return   string   $field_name  Name of the settings field
- * @since    2.0.0
- */
-function cb_get_settings_field_name_prefixed( $group, $field_name ) {
-
-	$plugin_slug = CB2_Settings::get_plugin_settings_slug();
-
-	$field_name_prefixed = $plugin_slug . $group . '-' . $field_name;
-
-	return $field_name_prefixed;
-
 }
