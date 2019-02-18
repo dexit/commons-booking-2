@@ -576,7 +576,6 @@ function cb2_settings_load_template() {
 	print( "<div class='cb2-$context cb2-$context-$action cb2-$context-$action-$post_type'>" );
 	if ( WP_DEBUG ) {
 		print( "<div class='cb2-WP_DEBUG'>$ID/$post_type/$context-$action</div>" );
-		print( "<!-- Templates considered (in priority order): \n  " . implode( ", \n  ", $templates_considered ) . "\n -->" );
 	}
 	cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args );
 	print( '</div>' );

@@ -2,10 +2,13 @@
 class CB2 {
 	public static function templates( String $context = 'list', String $type = NULL, Bool $throw_if_not_found = TRUE, &$templates_considered = NULL ) {
 		global $post;
-		$templates = array();
+		$templates            = array();
+		$templates_considered = array();
 
 		if ( $post && method_exists( $post, 'templates' ) )
 			$templates = $post->templates( $context, $type, $throw_if_not_found, $templates_considered );
+		if ( WP_DEBUG )
+			print( "<!-- Templates considered (in priority order): \n  " . implode( ", \n  ", $templates_considered ) . "\n -->" );
 
 		return $templates;
 	}
