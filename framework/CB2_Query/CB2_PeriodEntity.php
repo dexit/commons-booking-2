@@ -476,8 +476,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$period_status_type = ( $type ? "$type-$period_status_type_name" : $period_status_type_name );
 		$templates = parent::templates_considered( $context, $period_status_type, $templates );
 
-		if ( WP_DEBUG ) krumo($templates);
-
 		return $templates;
   }
 
