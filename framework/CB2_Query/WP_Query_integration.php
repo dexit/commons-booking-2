@@ -446,7 +446,7 @@ function cb2_post_class_check( $classes, $class, $ID ) {
 			if ( $post_type ) {
 				if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 					if ( $post_meta_stub = CB2_Database::postmeta_table( $Class ) ) {
-						if ( $post_meta_stub != 'postmeta' )
+						if ( FALSE && $post_meta_stub != 'postmeta' )
 							CB2_Query::debug_print_backtrace( "Please do not use post_class() in CB2 templates with [$post_type] because it cannot be cached. Use CB2::post_class() instead." );
 					}
 				}

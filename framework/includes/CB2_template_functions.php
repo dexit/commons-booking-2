@@ -32,6 +32,11 @@ class CB2 {
 		return $has_posts;
 	}
 
+	public static function is_confirmed() {
+		global $post;
+		return ( $post && property_exists( $post, 'confirmed_user_id' ) && $post->confirmed_user_id );
+	}
+
 	public static function is_published() {
 		global $post;
 		return ( $post && $post->post_status == CB2_Post::$PUBLISH );

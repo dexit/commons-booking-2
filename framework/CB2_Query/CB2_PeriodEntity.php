@@ -476,6 +476,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$period_status_type = ( $type ? "$type-$period_status_type_name" : $period_status_type_name );
 		$templates = parent::templates_considered( $context, $period_status_type, $templates );
 
+		if ( WP_DEBUG ) krumo($templates);
+
 		return $templates;
   }
 
@@ -1218,6 +1220,11 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
     array_push( $this->posts, $this->item );
 		$this->user = $user;
     array_push( $this->posts, $this->user );
+  }
+
+  public function get_the_after_content() {
+		$templates = $this->templates( 'single' );
+		cb2_get_template_part( CB2_TEXTDOMAIN, $templates );
   }
 
 	function summary_actions() {

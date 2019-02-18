@@ -323,7 +323,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 }
                 print("<div class='cb2-column-actions'>");
                 $page         = 'cb2-post-new';
-                $add_new_text = ('add new item pickup return times');
+                $add_new_text = ('add new pickup return times');
                 $post_title   = __('Pickup/Return for') . " $this->post_title";
                 $add_link     = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
                 if ($has_locations) {
