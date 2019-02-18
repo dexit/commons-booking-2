@@ -282,7 +282,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 
     public function manage_columns($columns)
     {
-        $columns['availability'] = 'Pickup/Return <a href="admin.php?page=cb2-timeframes">view all</a>';
+        $columns['pickup_return'] = 'Pickup/Return <a href="admin.php?page=cb2-timeframes">view all</a>';
         $columns['bookings']     = 'Bookings <a href="admin.php?page=cb2-bookings">view all</a>';
         return $columns;
     }
@@ -294,7 +294,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         $has_locations      = count(CB2_forms::location_options());
 
         switch ($column) {
-            case 'availability':
+            case 'pickup_return':
                 $wp_query           = new WP_Query(array(
                     'post_type'   => 'periodent-timeframe',
                     'meta_query'  => array(
@@ -323,7 +323,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 }
                 print("<div class='cb2-column-actions'>");
                 $page         = 'cb2-post-new';
-                $add_new_text = ('add new item availability');
+                $add_new_text = ('add new item pickup return times');
                 $post_title   = __('Pickup/Return for') . " $this->post_title";
                 $add_link     = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
                 if ($has_locations) {
@@ -369,10 +369,12 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 if ( $has_locations ) {
                     $add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
                     print(" <a href='$add_link'>$add_new_booking_text</a>");
-                    $page       = 'cb2_menu';
-                    $view_booking_text = __('view in calendar');
-                    $view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
-                    print(" | <a href='$view_link'>$view_booking_text</a>");
+                    if ( $wp_query->post_count ) {
+											$page       = 'cb2_menu';
+											$view_booking_text = __('view in calendar');
+											$view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
+											print(" | <a href='$view_link'>$view_booking_text</a>");
+										}
                 } else {
                     print('<span class="cb2-no-data-notice">' . __('Add a Location first') . '</span>');
                 }
@@ -420,7 +422,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
             'name' => get_the_title($this),
             'url' => get_post_permalink($this),
             'owner_id' => get_the_author_meta('ID', $this->post_author),
-            'availability' => array()
+            'pickup_return' => array()
         );
         $excerpt = $this->post_excerpt;
         if($excerpt != NULL){

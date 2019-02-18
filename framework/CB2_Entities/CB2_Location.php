@@ -162,10 +162,10 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 	public static $default_enabled_columns = array( 'cb', 'title', 'opening_hours', 'address', 'date' );
 
   function manage_columns( $columns ) {
-		$columns['item_availability'] = 'Item Pickup/Return <a href="admin.php?page=cb2-timeframes">view all</a>';
+		$columns['item_pickup_return'] = 'Item Pickup/Return <a href="admin.php?page=cb2-timeframes">view all</a>';
 		$columns['bookings']          = 'Bookings <a href="admin.php?page=cb2-bookings">view all</a>';
 		$columns['opening_hours']     = 'Opening Hours';
-		$columns['address']           = '<span class="cb2-todo">Address</span> <a class="cb2-todo" href="#">view all on map</a>';
+		$columns['address']           = 'Address <a href="admin.php?page=cb2_menu&output_type=Map&schema_type=location">view all on map</a>';
 		return $columns;
 	}
 
@@ -175,7 +175,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		$current_page       = ( isset( $_GET[$wp_query_page_name] ) ? $_GET[$wp_query_page_name] : 1 );
 
 		switch ( $column ) {
-			case 'item_availability':
+			case 'item_pickup_return':
 				$wp_query = new WP_Query( array(
 					'post_type'   => 'periodent-timeframe',
 					'meta_query'  => array(
@@ -202,7 +202,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				}
 				print( "<div class='cb2-column-actions'>" );
 				$post_title   = __( 'Pickup/Return for' ) . " $this->post_title";
-				$add_new_text = __( 'add new item availability' );
+				$add_new_text = __( 'add new item pickup return times' );
 				$add_link     = "admin.php?page=cb2-post-new&location_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
 				print( " <a href='$add_link'>$add_new_text</a>" );
 				print( '</div>' );
@@ -240,10 +240,13 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				$post_title = __( 'Booking at' ) . " $this->post_title";
 				$add_link   = "admin.php?page=$page&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
 				print( " <a href='$add_link'>$add_new_text</a>" );
-				$page       = 'cb2_menu';
-				$view_text  = __( 'view in calendar' );
-				$view_link  = "admin.php?page=$page&location_ID=$this->ID&period_status_type_ID=$booked_ID";
-				print( " | <a href='$view_link'>$view_text</a>" );
+
+				if ( $wp_query->post_count ) {
+					$page       = 'cb2_menu';
+					$view_text  = __( 'view in calendar' );
+					$view_link  = "admin.php?page=$page&location_ID=$this->ID&period_status_type_ID=$booked_ID";
+					print( " | <a href='$view_link'>$view_text</a>" );
+				}
 				print( '</div>' );
 				break;
 
@@ -271,13 +274,14 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 					print( '<div>' . __( 'No Opening Hours' ) . '</div>' );
 				}
 
-				$period_count       = CB2_Query::array_sum( $wp_query->posts, 'period_count' );
+				// $period_count    = CB2_Query::array_sum( $wp_query->posts, 'period_count' );
+				$period_group_count = $wp_query->post_count;
 				$opening_hours_text = '';
 				$help_text          = '';
 				$count_class        = 'ok';
 				$link               = 'admin.php?page=';
 
-				switch ( $period_count ) {
+				switch ( $period_group_count ) {
 					case 0:
 						// Directly add a / the opening hours
 						$help_text          = __( 'No opening hours set yet' );
@@ -300,15 +304,20 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 					case 1:
 						// Exactly one opening hour: edit it
 						$help_text          = __( '1 opening hours set' );
-						$opening_hours_text = __( 'Edit Opening Hours' );
-						$page               = 'cb2-post-edit';
+						$opening_hours_text = __( 'Add a new Opening Hours set' );
+						$page               = 'cb2-post-new';
 						$post_type          = 'periodent-location';
 						$settings           = array(
+							// Non-wizard setup of advanced
+							'recurrence_type'       => 'D',
+							'recurrence_type_show'  => 'no',
 							'CB2_PeriodEntity_Location_metabox_0_show' => 'no',
+							'period_status_type_id' => 4,
+							'post_title'            => "Opening Hours for $this->post_title",
+							'add_new_label'         => "Set Opening Hours for $this->post_title",
 						);
 						$settings_string    = CB2_Query::implode( '&', $settings );
-						$period_ID          = $wp_query->post->ID;
-						$link              .= "$page&post=$period_ID&post_type=$post_type&action=edit&$settings_string";
+						$link              .= "$page&location_ID=$this->ID&post_type=$post_type&$settings_string";
 						break;
 					default:
 						// Several opening hours created: manage them
@@ -319,14 +328,25 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				}
 				$action  = "<span style='white-space:nowrap;'>";
 				$action .= "<a href='$link'>$opening_hours_text";
-				$action .= " <span class='cb2-usage-count-$count_class' title='$help_text'>$period_count</span> ";
+				$action .= " <span class='cb2-usage-count-$count_class' title='$help_text'>$period_group_count</span> ";
 				$action .= '</a></span>';
 
 				print( $action );
 				break;
 
 			case 'address':
-				print( '-' );
+				$edit_location_link = $this->get_the_edit_post_url();
+				$set_address_text   = __( 'Set the Address' );
+				$set_geo_text       = __( 'Set the Geo location' );
+				if ( is_null( $this->geo_address ) ) {
+					print( "<a href='$edit_location_link'>$set_address_text</a>" );
+				} else if ( is_null( $this->geo_latitude ) || is_null( $this->geo_longitude ) ) {
+					print( $this->geo_address );
+					krumo($this);
+					print( "<br/><a href='$edit_location_link'>$set_geo_text</a>" );
+				} else {
+					print( $this->geo_address );
+				}
 				break;
 		}
 

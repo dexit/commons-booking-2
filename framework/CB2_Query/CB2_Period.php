@@ -452,14 +452,9 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 
   function summary_recurrence_type( ) {
 		$recurrence_string = '';
-		switch ( $this->recurrence_type ) {
-			case 'D': $recurrence_string = 'Daily';   break;
-			case 'W': $recurrence_string = 'Weekly';  break;
-			case 'M': $recurrence_string = 'Monthly'; break;
-			case 'Y': $recurrence_string = 'Yearly';  break;
-		}
 
 		if ( $this->recurrence_sequence ) {
+			// The recurrence_sequence implies the recurrence_type
 			$periods  = NULL;
 			switch ( $this->recurrence_type ) {
 				// TODO: summary_recurrence_type() only days supported so far
@@ -468,17 +463,32 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 					break;
 			}
 
+			// Apply mask
 			if ( $periods ) {
-				$sequence = '';
-				$missing  = FALSE;
+				$sequence         = '';
+				$not_all_selected = FALSE;
 				for ( $i = 0; $i < count( $periods ); $i++ ) {
 					if ( $this->recurrence_sequence & pow( 2, $i ) ) {
 						if ( $sequence ) $sequence .= ',';
 						$sequence .= $periods[$i];
-					} else $missing = TRUE;
+					} else $not_all_selected = TRUE;
 				}
-				if ( $sequence && $missing ) $recurrence_string .= " ($sequence)";
+				if ( $sequence && $not_all_selected )
+					$recurrence_string .= $sequence;
 			}
+		}
+
+		if ( empty( $recurrence_string ) ) {
+			// No recurrence_sequence, so type needed
+			$recurrence_type_string = NULL;
+			switch ( $this->recurrence_type ) {
+				case 'H': $recurrence_type_string = 'Hourly';  break;
+				case 'D': $recurrence_type_string = 'Daily';   break;
+				case 'W': $recurrence_type_string = 'Weekly';  break;
+				case 'M': $recurrence_type_string = 'Monthly'; break;
+				case 'Y': $recurrence_type_string = 'Yearly';  break;
+			}
+			$recurrence_string .= $recurrence_type_string;
 		}
 
 		return $recurrence_string;
@@ -490,10 +500,12 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		if ( is_null( $format_time ) ) $format_time = get_option( 'time_format' );
 
 		if ( $this->datetime_part_period_start->format( CB2_Query::$date_format ) == $this->datetime_part_period_end->format( CB2_Query::$date_format ) ) {
-			if ( $now->format( CB2_Query::$date_format ) == $this->datetime_part_period_start->format( CB2_Query::$date_format ) )
-				$summary .= __( 'Today' );
-			else
-				$summary .= $this->summary_date( $this->datetime_part_period_start );
+			if ( $this->recurrence_type != 'D' && $this->recurrence_type != 'H') {
+				if ( $now->format( CB2_Query::$date_format ) == $this->datetime_part_period_start->format( CB2_Query::$date_format ) )
+					$summary .= __( 'Today' );
+				else
+					$summary .= $this->summary_date( $this->datetime_part_period_start );
+			}
 
 			if      ( $this->fullday )     $summary .= ' ' . __( 'full day' );
 			else if ( $this->fullworkday ) $summary .= ' ' . __( 'full working day' );
