@@ -26,9 +26,8 @@ class CB2_Booking_Page {
 		$this->booking_page_id = CB2_Settings::get('pages_page-booking');
 		$this->user = wp_get_current_user();
 
-		// $this->maybe_create_booking_page( );
+			add_filter('query_vars', array( $this, 'add_booking_vars_filter') );
 		// override content on booking page
-		add_filter('query_vars', array( $this, 'add_booking_vars_filter') );
 		add_filter('the_content', array( $this, 'maybe_do_content'), 1);
 
 	}
@@ -109,20 +108,58 @@ class CB2_Booking_Page {
 	public function maybe_do_content( $content ) {
 
 		global $post;
+
+		if ( ! ( $post->ID == CB2_Settings::get( 'pages_page-booking' ) ) ) { return $content; }
+
 		$this->booking_id = intval ( get_query_var('bid', false) );
 
-		if ( $this->booking_id ) { // query for a single booking
+		if ( $this->booking_id ) { // booking id
+
 			$this->booking = $this->get_single_booking();
-			if ( $this->booking ) { // exists
 
-				$t = new CB2_Template_Tags( CB2_Settings::get('messagetemplates_please-confirm'), 'periodent-user', $this->booking_id );
-				$t->output('cb2_message');
+			if ( $this->booking ) { // booking exists & user is author
+
+				$booking_status = 'unconfirmed';
 
 
-			} else {
-				echo (__('booking not found or you are not the author.', 'commons-booking-2') );
+				$item_id = $this->booking[0]->item_ID;
+				$location_id = $this->booking[0]->location_ID;
+				$user_id = $this->booking[0]->cb2_user_ID;
+
+				switch ($booking_status) {
+
+					case 'unconfirmed':
+						// notice
+						cb2_tag(
+								CB2_Settings::get('messagetemplates_please-confirm'),
+								'periodent-user',
+								$this->booking_id,
+								'notice'
+						);
+
+
+						break;
+
+					case 'confirmed':
+						$content = 'confirmed';
+
+				}
+
+				$content = cb2_get_template_part(CB2_TEXTDOMAIN, 'item-summary', '', array('item_id' => $item_id), true);
+				$content .= cb2_get_template_part(CB2_TEXTDOMAIN, 'location-summary', '', array('location_id' => $location_id), true);
+				$content .= cb2_get_template_part(CB2_TEXTDOMAIN, 'user-summary', '', array('user_id' => $user_id), true);
+
+
+
+
+				// booking id
+
+			} else { // booking exists & user is author
+
+				echo (__('Booking not found or you are not the author.', 'commons-booking-2') );
 			}
-		} else {
+		} else { // booking exists & user is author
+
 			echo (__('You could see a booking if you supplied an id', 'commons-booking-2'));
 
 		}
@@ -130,8 +167,9 @@ class CB2_Booking_Page {
 		return $content;
 	}
 
+
 	 /**
-	 * The content
+	 * Prepare location
 	 *
 	 * @return mixed html
 	 *

@@ -8,48 +8,49 @@
  * @copyright 2015 wielebenwir
  */
 
-/* Color Definitions */
 
-$grey: #E1E1E1;
+/* cb2 brand colors */
+$color-green-light: #56A820;
+$color-green-dark: #207B1C;
+$color-blue: #3356A4;
+
+/* Color Definitions */
+$color-red: #FF0002;
+$color-yellow-bright: rgb(252, 250, 135);
+
+/* Statuses */
+$color-notice: $color-yellow-bright;
+$highlight-color: $color-yellow-bright;
+
+
 $light-grey: #F6F6F6;
 $dark-grey: #414141;
+$grey: #414141;
 $black: #000;
 $white: #fff;
 
+$border-color: $grey;
+$bg-color: $light-grey;
+$border-inner-color: $light-grey;
+$bg-inner-color: $light-grey;
+
+
+
+
+$light-blue: #E5FDFF;
 $blue: #3356A4;
 $dark-blue: darken($blue, 10%);
-$light-blue: #E5FDFF;
 
-$green: #56A820;
-$light-green: #207B1C;
 
-$red: #FF0002;
 $dark-red: #A70001;
 
 /* Element styles */
 
-$bg-color: $white;
-$bg-inner-color: $light-grey;
-
-$border-color: $grey;
-$border-inner-color: $white;
-
-$highlight-color: $blue;
-$highlight-color-dark: $dark-blue;
-$highlight-color-light: $light-blue;
-
-$action-color: $green;
-$action-color-light: $light-green;
-
-$inactive-color: $grey;
-
-$error-color: $red;
-$error-color-dark: $dark-red;
 
 
 /* Elements & widths */
 $padding: 1em;
-$radius: 3px;
+$radius: 5px;
 $width: 100%;
 $cellwidth: $width / 7;
 $cellheight: 80px;
