@@ -236,7 +236,7 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		return ucfirst( $this->post_type() ) . "($this->ID)";
 	}
 
-	function tabs() {
+	function tabs( $edit_form_advanced = FALSE ) {
 		return array(
 			"cb2-tab-instance"   => 'Instance',
 			"cb2-tab-definition" => 'Definition',

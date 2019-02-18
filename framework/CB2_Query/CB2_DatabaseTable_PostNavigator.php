@@ -217,6 +217,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		$Class                   = get_class( $this );
 		$properties              = (array) $this;
 		$properties['author_ID'] = get_current_user_id(); // Always send the user if the database table accepts
+		$top                     = ! $depth;
 
 		// TODO: sort this out: posts and zeros
 		if ( isset( $properties['posts'] ) ) unset( $properties['posts'] );
@@ -229,7 +230,6 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			throw new Exception( "$Class [$this->ID/$depth] is not saveable" );
 
 		if ( CB2_DEBUG_SAVE ) {
-			$top   = ! $depth;
 			$class = ( $depth ? '-small' : '' );
 			if ( $top ) krumo( $properties );
 			print( "<div class='cb2-WP_DEBUG$class'>" );
@@ -307,6 +307,11 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		$this->post_post_update();
 		CB2_Query::unredirect_wpdb();
 
+		// One cb2_data_change per entire top level change
+		// rather than every row
+		if ( $top )
+			do_action( 'cb2_data_change', $update );
+
 		return $this->ID;
 	}
 
@@ -316,6 +321,18 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 
 	protected function custom_events( $update ) {
 		// Pure Virtual
+	}
+
+	protected function disable_cb2_hooks() {
+		remove_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY );
+		remove_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 1 );
+		remove_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY );
+	}
+
+	protected function enable_cb2_hooks() {
+		add_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY, 3 );
+		add_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 1, 2 );
+		add_action( 'save_post', 'cb2_save_post_debug', CB2_DS_PRIORITY, 3 );
 	}
 
 	protected function update_row( $update_data, $formats = NULL, $fire_wordpress_events = TRUE ) {
@@ -369,8 +386,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			$post_after      = $this;
 
 			// CB2 events
+			$this->disable_cb2_hooks();
 			$this->custom_events( TRUE );
-			do_action( 'cb2_data_change', TRUE );
 
 			// Copied from post.php
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event edit_post</div>" );
@@ -391,6 +408,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			do_action( 'save_post', $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event wp_insert_post</div>" );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
+
+			$this->enable_cb2_hooks();
 		}
 
 		return $this->ID;
@@ -434,8 +453,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			$update          = FALSE;
 
 			// CB2 events
+			$this->disable_cb2_hooks();
 			$this->custom_events( FALSE );
-			do_action( 'cb2_data_change', FALSE );
 
 			// Copied from post.php
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event save_post_{$post->post_type}</div>" );
@@ -452,6 +471,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			do_action( 'save_post', $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event wp_insert_post</div>" );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
+
+			$this->enable_cb2_hooks();
 		}
 
 		return $this->ID;

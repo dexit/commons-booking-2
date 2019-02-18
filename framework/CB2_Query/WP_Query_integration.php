@@ -239,7 +239,20 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 	if ( $update ) {
 		if ( ! $auto_draft_publish_transition ) {
 			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+				// CMB2 saves its fields on save_post hook normally to
+				//   wp_postmeta
+				// We are early intercepting and preventing
+				// which unfortunately means that we deny the rest of the valuable update procedure
+				// We cannot redirect to a view because we cannot write to the view
+				// We cannot manually save the meta-data in advance
+				// because, in this multiple-object update, we do not know which Class/table it needs to go to
+				// Instead, we need the data, and to pump in to
+				//   factory_from_properties() recursive
+				if ( CB2_DEBUG_SAVE ) krumo($_POST);
+				$properties = $_POST;
+
 				if ( $class_database_table = CB2_Database::database_table( $Class ) ) {
+					// ------------------------------------------------ custom tables
 					// wp_update_post() will return 0 because we return consider_empty_post = TRUE
 					// causing post.php:377 wp_update_post() to try an update again
 					$consider_empty_post = TRUE; // Do not continue the update procedure!
@@ -248,18 +261,6 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 							print( "<div class='cb2-WP_DEBUG-small'>re-attempt by post.php:388 to wp_update_post($post_id) rejected. Happens because we intercept, return 0 and it re-trys.</div>" );
 					} else {
 						$updated[$post_id] = TRUE;
-
-						// CMB2 saves its fields on save_post hook normally to
-						//   wp_postmeta
-						// We are early intercepting and preventing
-						// which unfortunately means that we deny the rest of the valuable update procedure
-						// We cannot redirect to a view because we cannot write to the view
-						// We cannot manually save the meta-data in advance
-						// because, in this multiple-object update, we do not know which Class/table it needs to go to
-						// Instead, we need the data, and to pump in to
-						//   factory_from_properties() recursive
-						if ( CB2_DEBUG_SAVE ) krumo($_POST);
-						$properties = $_POST;
 
 						// Prevent post.php wp_insert_post() from continuing
 						// with its update of wp_posts
@@ -275,6 +276,15 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 						$cb2_post              = $Class::factory_from_properties( $properties, $container, $update ); // Recursive
 						$cb2_post->save( $update, $fire_wordpress_events );
 					}
+				} else {
+					// ------------------------------------------------ CB2_Post
+					// This is one of our CB2 classes
+					// however, it is a normal post
+					// stored in wp_posts, e.g.
+					//   CB2_Location
+					$cb2_post = $Class::factory_from_properties( $properties );
+					if ( method_exists( $cb2_post, 'post_post_update' ) )
+						$cb2_post->post_post_update();
 				}
 			}
 		}
@@ -348,6 +358,18 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 	if ( $auto_draft_publish_transition ) {
 		$post_type = $post->post_type;
 		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+			// ----------------------------------------------------- Include meta-data
+			// Move all extra metadata in to $properties for later actions to use
+			// Because we are defaulting to SINGLE
+			// meta_value multiple value arrays are returned serialised
+			// currently we do not store any arrays:
+			//   ID lists are stored as comma delimited for example
+			//   bit arrays are handled as unsigned
+			if ( CB2_DEBUG_SAVE )
+				print( "<div class='cb2-WP_DEBUG-small'>include wp_post meta-data</div>" );
+			CB2_Query::get_metadata_assign( $post );
+			$properties = (array) $post;
+
 			if ( $class_database_table = CB2_Database::database_table( $Class ) ) {
 				if ( ! method_exists( $Class, 'factory_from_properties' ) )
 					throw new Exception( "$Class::factory_from_properties not present" );
@@ -359,18 +381,6 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// because we have not hooked in to the wp_insert_post(auto-draft) process
 				if ( CB2_DEBUG_SAVE )
 					print( "<h2>cb2_save_post_move_to_native( $class_database_table/$post_type )</h2>" );
-
-				// ----------------------------------------------------- Include meta-data
-				// Move all extra metadata in to $properties for later actions to use
-				// Because we are defaulting to SINGLE
-				// meta_value multiple value arrays are returned serialised
-				// currently we do not store any arrays:
-				//   ID lists are stored as comma delimited for example
-				//   bit arrays are handled as unsigned
-				if ( CB2_DEBUG_SAVE )
-					print( "<div class='cb2-WP_DEBUG-small'>include wp_post meta-data</div>" );
-				CB2_Query::get_metadata_assign( $post );
-				$properties = (array) $post;
 
 				// Further requests can come from the native tables now
 				// e.g. when loading an associated PeriodStatusType
@@ -407,6 +417,14 @@ function cb2_save_post_move_to_native( $post_id, $post, $update ) {
 				// NOTE: this exit() will prevent other save_post actions firing on post create...
 				cb2_wp_redirect( $URL, 200, TRUE ); // Force JavaScript redirect
 				exit();
+			} else {
+				// This is one of our CB2 classes
+				// however, it is a normal post
+				// stored in wp_posts, e.g.
+				//   CB2_Location
+				$cb2_post   = $Class::factory_from_properties( $properties );
+				if ( method_exists( $cb2_post, 'post_post_update' ) )
+					$cb2_post->post_post_update();
 			}
 		}
 	}
@@ -428,7 +446,7 @@ function cb2_post_class_check( $classes, $class, $ID ) {
 			if ( $post_type ) {
 				if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 					if ( $post_meta_stub = CB2_Database::postmeta_table( $Class ) ) {
-						if ( $post_meta_stub != 'postmeta' )
+						if ( FALSE && $post_meta_stub != 'postmeta' )
 							CB2_Query::debug_print_backtrace( "Please do not use post_class() in CB2 templates with [$post_type] because it cannot be cached. Use CB2::post_class() instead." );
 					}
 				}

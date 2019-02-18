@@ -409,7 +409,7 @@ do_action( 'do_meta_boxes', $post_type, 'side', $post );
 </div><!-- /wrap -->
 */
 function cb2_edit_form_after_title_tab_switcher( $post ) {
-	CB2::the_tabs();
+	CB2::the_tabs( NULL, NULL, TRUE );
 }
 add_action( 'edit_form_after_title', 'cb2_edit_form_after_title_tab_switcher' );
 
@@ -430,7 +430,7 @@ function cb2_edit_form_advanced_tab_extra( $post ) {
 	$post_type = $post->post_type;
 
 	if ( method_exists( $post, 'tabs' ) ) {
-		if ( $tabs = $post->tabs() ) {
+		if ( $tabs = $post->tabs( TRUE ) ) {
 			foreach ( $tabs as $id => $title ) {
 				switch ( $id ) {
 					case 'postbox-container-1':
@@ -578,7 +578,6 @@ function cb2_settings_load_template() {
 	print( "<div class='cb2-$context cb2-$context-$action cb2-$context-$action-$post_type'>" );
 	if ( WP_DEBUG ) {
 		print( "<div class='cb2-WP_DEBUG'>$ID/$post_type/$context-$action</div>" );
-		print( "<!-- Templates considered (in priority order): \n  " . implode( ", \n  ", $templates_considered ) . "\n -->" );
 	}
 	cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args );
 	print( '</div>' );

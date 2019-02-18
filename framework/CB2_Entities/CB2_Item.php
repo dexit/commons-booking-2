@@ -49,8 +49,29 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 		}
 
 	static function metaboxes() {
-
-		$metaboxes = array();
+		$metaboxes = array(
+			array(
+				'title'      => __('Use a Location Opening Hours for Pickup/Return', 'commons-booking-2'),
+				'context'    => 'side',
+				'show_on_cb' => array( 'CB2', 'is_not_published' ),
+				'show_names' => TRUE,
+				'fields'     => array(
+					array(
+						'id'      => 'use_opening_hours',
+						'name'    => __('Use Opening Hours', 'commons-booking-2'),
+						'type'    => 'checkbox',
+						'default' => TRUE,
+					),
+					array(
+						'name'    => __('Location', 'commons-booking-2'),
+						'id'      => 'opening_hours_location_ID',
+						'type'    => 'select',
+						'options' => CB2_Forms::location_options(),
+					),
+					CB2_Query::metabox_nosave_indicator( 'item_ID' ),
+				),
+			),
+		);
 
 		return apply_filters('cb2_item_metaboxes', $metaboxes);
 	}
@@ -224,9 +245,44 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         return "<div>processed ($count) perioditem availabile in to bookings</div>";
     }
 
+    function post_post_update() {
+			global $wpdb;
+
+			if ( isset( $_POST['use_opening_hours'] ) ) {
+				if ( $location_ID = $_POST['opening_hours_location_ID'] ) {
+					$period_group_ID = $wpdb->get_var( $wpdb->prepare( "select period_group_ID
+							from {$wpdb->prefix}cb2_location_period_groups
+							where location_ID = %d and period_status_type_ID = %d limit 1",
+						array( $location_ID, CB2_PeriodStatusType_Open::bigID(), )
+					) );
+					if ( $period_group_ID ) {
+						$pickup_return_text = __( 'Pickup/Return' );
+						$period_group       = new CB2_PeriodGroup( $period_group_ID );
+						// We did not load the Periods so let us not wipe them
+						$period_group->set_saveable( FALSE );
+						$location           = new CB2_Location( $location_ID );
+						$item_pickup_return = new CB2_PeriodEntity_Timeframe(
+							CB2_CREATE_NEW,
+							"$this->ID $pickup_return_text",
+							$period_group,
+							new CB2_PeriodStatusType_PickupReturn(),
+							TRUE, NULL, NULL,
+							$location, $this
+						);
+						if ( CB2_DEBUG_SAVE ) krumo( $item_pickup_return );
+						$item_pickup_return->save();
+					} else {
+						if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG'>no opening hours found for location [$location_ID]</div>" );
+					}
+				} else {
+					if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG'>no location sent when creating pickup/return times</div>" );
+				}
+			}
+		}
+
     public function manage_columns($columns)
     {
-        $columns['availability'] = 'Pickup/Return <a href="admin.php?page=cb2-timeframes">view all</a>';
+        $columns['pickup_return'] = 'Pickup/Return <a href="admin.php?page=cb2-timeframes">view all</a>';
         $columns['bookings']     = 'Bookings <a href="admin.php?page=cb2-bookings">view all</a>';
         return $columns;
     }
@@ -238,7 +294,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         $has_locations      = count(CB2_forms::location_options());
 
         switch ($column) {
-            case 'availability':
+            case 'pickup_return':
                 $wp_query           = new WP_Query(array(
                     'post_type'   => 'periodent-timeframe',
                     'meta_query'  => array(
@@ -267,7 +323,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 }
                 print("<div class='cb2-column-actions'>");
                 $page         = 'cb2-post-new';
-                $add_new_text = ('add new item availability');
+                $add_new_text = ('add new pickup return times');
                 $post_title   = __('Pickup/Return for') . " $this->post_title";
                 $add_link     = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
                 if ($has_locations) {
@@ -313,10 +369,12 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 if ( $has_locations ) {
                     $add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
                     print(" <a href='$add_link'>$add_new_booking_text</a>");
-                    $page       = 'cb2_menu';
-                    $view_booking_text = __('view in calendar');
-                    $view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
-                    print(" | <a href='$view_link'>$view_booking_text</a>");
+                    if ( $wp_query->post_count ) {
+											$page       = 'cb2_menu';
+											$view_booking_text = __('view in calendar');
+											$view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
+											print(" | <a href='$view_link'>$view_booking_text</a>");
+										}
                 } else {
                     print('<span class="cb2-no-data-notice">' . __('Add a Location first') . '</span>');
                 }
@@ -364,7 +422,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
             'name' => get_the_title($this),
             'url' => get_post_permalink($this),
             'owner_id' => get_the_author_meta('ID', $this->post_author),
-            'availability' => array()
+            'pickup_return' => array()
         );
         $excerpt = $this->post_excerpt;
         if($excerpt != NULL){

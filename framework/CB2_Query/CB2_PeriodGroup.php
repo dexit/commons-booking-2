@@ -121,7 +121,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 
   public function __construct(
 		$ID,
-		$name,
+		$name = 'period group',
 		$periods = array()
   ) {
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );

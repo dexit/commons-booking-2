@@ -54,7 +54,6 @@ class CB2_DateTime {
 		if ( $datetime instanceof CB2_DateTime ) {
 			$this->datetime = clone $datetime->datetime;
 		} else if ( $datetime instanceof DateTime ) {
-			print( '__clone' );
 			$this->datetime = clone $datetime;
 		} else if ( is_numeric( $datetime ) ) {
 			$this->datetime = new DateTime();
@@ -72,11 +71,12 @@ class CB2_DateTime {
 		if ( ! ( $this->datetime instanceof DateTime ) )
 			throw new Exception( $parse_error ? $parse_error : "Failed to parse DateTime [$datetime]" );
 
-		if ( WP_DEBUG ) $this->debug_datetime = $this->datetime->format( 'c' );
+		if ( WP_DEBUG ) $this->debug_datetime = $this->datetime->format('c');
 	}
 
 	function __clone() {
 		$this->datetime = clone $this->datetime;
+		if ( WP_DEBUG ) $this->debug_datetime = $this->datetime->format('c');
 	}
 
 	function clone() {

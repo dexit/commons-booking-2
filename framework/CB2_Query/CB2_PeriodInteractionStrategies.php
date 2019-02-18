@@ -9,7 +9,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	/* CB2_PeriodInteractionStrategy deals with
 	 * the display of periods in the calendar
 	 * given:
-	 *   a UX display aim like show_single_item_availability
+	 *   a UX display aim like show_single_item_pickup_return
 	 *   parameters like an CB2_Item
 	 *   an output callback like book
 	 *
@@ -294,7 +294,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 				'name' => get_bloginfo( 'name' ),
 				'url' => network_site_url( '/' ),
 				'description' => get_bloginfo( 'description' ),
-				'language' => get_locale()				
+				'language' => get_locale()
 			),
 			'items' => array(),
 			'owners' => array(),
