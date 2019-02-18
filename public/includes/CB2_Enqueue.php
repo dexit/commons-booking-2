@@ -23,15 +23,18 @@ class CB2_Enqueue {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 
-		add_filter( 'the_content', array ( __CLASS__, 'cb_template_chooser' ) );
-
 		$shortcodes = new CB2_Shortcodes();
 		add_shortcode( 'cb2_calendar', array( $shortcodes, 'calendar_shortcode' ) ) ;
 		add_shortcode( 'cb2_timeframe', array( $shortcodes, 'timeframe_shortcode' ) ) ;
-		
+
 		// create an API end point
 		require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_API.php');
 		$API = new CB2_API;
+
+		// booking page
+		require_once CB2_PLUGIN_ROOT . 'public/includes/CB2_Booking_Page.php';
+
+
 
 	}
 	/**

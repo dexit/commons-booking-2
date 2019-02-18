@@ -80,7 +80,7 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
 			}
 
 			$file_handle = $template;
-			do_action( 'start_operation', 'cb_template_part::' . $file_handle );
+			do_action( 'start_operation', 'cb2_template_part::' . $file_handle );
 
 			ob_start();
 			$return_template = require( $template );
@@ -92,7 +92,7 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
 				$data = "<!-- $Class => $file_debug -->\n$data";
 			}
 
-			do_action( 'end_operation', 'cb_template_part::' . $file_handle );
+			do_action( 'end_operation', 'cb2_template_part::' . $file_handle );
 
 			if ( $cache_args ) {
 				// TODO: this $template cache is not namespaced

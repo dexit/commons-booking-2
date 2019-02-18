@@ -88,7 +88,7 @@ public function create_meta_boxes() {
         'boxes' => $this->do_boxes( ),
         'tabs' => $this->do_tabs(),
         'menuargs' => array(
-        	'menu_title' => 'CB2',
+        	'menu_title' => 'CommonsBooking2',
         ),
     );
 
@@ -132,7 +132,9 @@ public function create_meta_boxes() {
 		$boxes[] = CB2_Settings::prepare_settings_metabox('permissions', $args);
 		$boxes[] = CB2_Settings::prepare_settings_metabox('bookingoptions', $args);
 		$boxes[] = CB2_Settings::prepare_settings_metabox('emailtemplates', $args);
-		$boxes[] = CB2_Settings::prepare_settings_metabox('extrametafields', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('messagetemplates', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('usertemplatetags', $args);
+		$boxes[] = CB2_Settings::prepare_settings_metabox('templatetaglisting', $args);
 
 		foreach ( $boxes as $box ) { // set the object type is necessary for options pages only
 			$box->object_type( 'options-page' );
@@ -152,12 +154,12 @@ public function create_meta_boxes() {
 	public function do_tabs() {
 
 			$this->tabs[] = array(
-					'id' => 'start',
+					'id' => 'features',
 					'title' => 'CB2',
 					'desc' => '',
 					'class' => '',
 					'boxes' => array(
-						CB2_Settings::$settings_prefix .'_features',
+							CB2_Settings::$settings_prefix .'_features'
 					),
 			);
 			$this->tabs[] = array(
@@ -166,7 +168,7 @@ public function create_meta_boxes() {
 				'desc' => '',
 				'class' => '',
 				'boxes' => array(
-						CB2_Settings::$settings_prefix . '_pages',
+						CB2_Settings::$settings_prefix . '_pages'
 				),
 			);
 			$this->tabs[] = array(
@@ -175,8 +177,8 @@ public function create_meta_boxes() {
 				'desc' => '',
 				'class' => '',
 				'boxes' => array(
-				CB2_Settings::$settings_prefix .'_permissions',
-				CB2_Settings::$settings_prefix .'_bookingoptions',
+					CB2_Settings::$settings_prefix .'_permissions',
+					CB2_Settings::$settings_prefix .'_bookingoptions',
 				),
 			);
 			$this->tabs[] = array(
@@ -185,7 +187,9 @@ public function create_meta_boxes() {
 				'desc' => '',
 				'class' => '',
 				'boxes' => array(
+					CB2_Settings::$settings_prefix .'_templatetaglisting',
 					CB2_Settings::$settings_prefix .'_emailtemplates',
+					CB2_Settings::$settings_prefix .'_messagetemplates',
 				),
 			);
 			$this->tabs[] = array(
@@ -198,12 +202,12 @@ public function create_meta_boxes() {
 				),
 			);
 			$this->tabs[] = array(
-				'id' => 'extrametafields',
-				'title' => __( 'Maps', 'commons-booking-2'),
+				'id' => 'usertemplatetags',
+				'title' => __( 'Advanced', 'commons-booking-2'),
 				'desc' => '',
-				'class' => 'optional',
+				'class' => '',
 				'boxes' => array(
-					CB2_Settings::$settings_prefix .'_extrametafields',
+					CB2_Settings::$settings_prefix .'_usertemplatetags',
 				),
 			);
 			return apply_filters( 'cb2_settings_tabs', $this->tabs );

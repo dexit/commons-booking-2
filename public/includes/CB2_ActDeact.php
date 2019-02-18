@@ -120,6 +120,7 @@ class CB2_ActDeact {
 		// add_role( 'advanced', __( 'Advanced' ) ); //Add a custom roles
 		self::add_capabilities();
 		self::upgrade_procedure();
+		self::add_bookingpage();
 		// Clear the permalinks
 		flush_rewrite_rules();
 
@@ -136,9 +137,37 @@ class CB2_ActDeact {
 		// Clear the permalinks
 		flush_rewrite_rules();
 	}
-
 		/**
 	 * Add admin capabilities
+	 *
+	 * @todo
+	 *
+	 * @return void
+	 */
+	public static function add_bookingpage() {
+		if (!CB2_Settings::get('pages_page-booking')) { // page set
+
+    global $wpdb;
+    // Create post object
+    $booking_page = array(
+        'post_title' => __('Booking', 'commmons-booking-2'),
+        'post_content' => 'Bookings page',
+        'post_status' => 'publish',
+        'post_author' => 1,
+        'post_type' => 'page',
+    );
+
+    // Insert the post into the database
+    wp_insert_post($booking_page);
+}
+
+
+
+	}
+		/**
+	 * Add admin capabilities
+	 *
+	 * @todo
 	 *
 	 * @return void
 	 */
@@ -209,9 +238,9 @@ class CB2_ActDeact {
 	 */
 	public static function upgrade_procedure() {
 		if ( is_admin() ) {
-			$version = get_option( 'commons-booking-version' );
+			$version = get_option( 'cb2_version' );
 			if ( version_compare( CB2_VERSION, $version, '>' ) ) {
-				update_option( 'commons-booking-version', CB2_VERSION );
+				update_option( 'cb2_version', CB2_VERSION );
 				delete_option( CB2_TEXTDOMAIN . '_fake-meta' );
 			}
 		}
@@ -236,6 +265,8 @@ class CB2_ActDeact {
 	}
 
 }
+
+
 
 
 new CB2_ActDeact();

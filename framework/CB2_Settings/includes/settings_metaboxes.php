@@ -99,6 +99,31 @@ array(
 				'id' => 'bookingoptions_approval-needed',
 				'type' => 'checkbox',
 				'default' => cmb2_set_checkbox_default_for_new_post(false)
+			),
+			array(
+				'name' => __( 'Field Name', 'cmb2' ),
+				'desc'    => __( 'Field Description', 'cmb2' ),
+				'id'      => 'your_switch_button',
+				'type'    => 'switch',
+				'default'    => 0,
+				'label'    => array('on'=> 'On', 'off'=> 'Off')
+			),
+			array(
+				'name' => __( 'Field Name', 'cmb2' ),
+				'desc'    => __( 'disabled_warning has been set to true, so off=warning color', 'cmb2' ),
+				'id'      => 'your_switch_button3',
+				'type'    => 'switch',
+				'default'    => 0,
+				'disabled_warning' => true,
+				'label'    => array('on'=> 'On', 'off'=> 'Off')
+			),
+			array(
+				'name' => __( 'Field Name', 'cmb2' ),
+				'desc'    => __( 'Field Description', 'cmb2' ),
+				'id'      => 'your_switch_button_2',
+				'type'    => 'switch',
+				'default'    => 0,
+				'label'    => array('off'=> 'Disabled', 'on'=> 'Enabled')
 			)
 		)
 	),
@@ -119,50 +144,58 @@ array(
 		)
 	),
 	/* maps end */
-	/* test start */
-	'test' => array(
-		'title' => 'test',
-		'id' => 'test',
-		'fields' => array(),
+	/* templatetaglisting start */
+	'templatetaglisting' => array(
+		'title' => 'Available template tags',
+		'id' => 'templatetaglisting',
+		'closed' => TRUE,
+		'fields' => array(
+				array(
+				'name' => __('Available template tags @TODO', 'commons-booking-2'),
+				'id' => 'templatetaglisting',
+				'type' => 'title',
+				'default' => '@TODO',
+			),
+		),
 	),
-	/* test end */
-	/* extra_meta_fields start */
-	'extrametafields' => array(
-		'title' => 'Extra meta fields',
-		'id' => 'extrametafields',
+	/* templatetaglisting end */
+	/* usertemplatetags start */
+	'usertemplatetags' => array(
+		'title' => __('User template tags', 'commons-booking-2'),
+		'id' => 'usertemplatetags',
 		'desc' => 'If you set up additional meta fields for item, location, user or booking (for example: use another plugin to add registration fields).<br> Enter the field names here to make them available for use as template tags: {{mytemplatetag}}.',
 		'fields' => array(
 			array(
 				'name' => __('Item meta fields', 'commons-booking-2'),
 				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'extrametafields_item',
+				'id' => 'usertemplatetags_item',
 				'type' => 'text',
 				'default' => '',
 			),
 			array(
 				'name' => __('Location meta fields', 'commons-booking-2'),
 				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'extrametafields_location',
+				'id' => 'usertemplatetags_location',
 				'type' => 'text',
 				'default' => '',
 			),
 			array(
 				'name' => __('Booking meta fields', 'commons-booking-2'),
 				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'extrametafields_booking',
+				'id' => 'usertemplatetags_booking',
 				'type' => 'text',
 				'default' => '',
 			),
 			array(
 				'name' => __('User meta fields', 'commons-booking-2'),
 				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'extrametafields_user',
+				'id' => 'usertemplatetags_user',
 				'type' => 'text',
 				'default' => '',
 			),
 		)
 	),
-	/* extra_meta_fields end */
+	/* usertemplatetags end */
 	/* email templates start */
 	'emailtemplates' => array(
 		'title' => __('Email templates', 'commons-booking-2'),
@@ -214,4 +247,20 @@ array(
 		)
 	),
 	/* email templates end */
+	/* message templates start */
+	'messagetemplates' => array(
+		'title' => __('Messages', 'commons-booking-2'),
+		'id' => 'messagetemplates',
+		'desc' => 'Message templates. You can use html & {{template_tags}}',
+		'fields' => array(
+			array(
+				'name' => __('Booking page confirm your booking', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'messagetemplates_please-confirm',
+				'type' => 'textarea_small',
+				'default' => 'Please confirm your booking of {{item_name}} at {{location_name}}',
+			),
+		)
+	),
+	/* message templates end */
 );

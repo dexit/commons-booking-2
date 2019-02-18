@@ -20,14 +20,17 @@
 /* Base styles */
 @import "partials/_base";
 
+/* Notices */
+@import "partials/_notice";
+
 /* Calendar styles */
-@import "partials/_calendar";
+// @import "partials/_calendar";
 
 /* Booking Bar */
-@import "partials/_bookingbar";
+// @import "partials/_bookingbar";
 
 /* Tooltips */
-@import "partials/_tooltipster";
+// @import "partials/_tooltipster";
 
 /* Leaflet.js customization */
 @import "partials/_map-leaflet.css";
