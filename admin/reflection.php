@@ -148,15 +148,17 @@ if ( isset( $_GET['section'] ) ) {
 			foreach ( $table_definitions as $table_definition ) {
 				$existing_columns = array();
 				$table_name    = $table_definition['name'];
+				$table_exists  = CB2_Database::has_table( $table_name );
 				$pseudo        = ( isset( $table_definition['pseudo'] )  ? $table_definition['pseudo']  : FALSE );
 				$pseudo_class  = ( $pseudo ? 'cb2-pseudo' : 'cb2-real' );
 				$pseudo_title  = ( $pseudo ? ' <b style="color:red">(pseudo)</b>' : '' );
 				$managed       = ( isset( $table_definition['managed'] ) ? $table_definition['managed'] : TRUE );
 				$managed_class = ( $managed ? '' : 'cb2-unmanaged' );
 				$managed_title = ( $managed ? '' : ' <b style="color:red">(unmanaged)</b>' );
+				$table_exists_class = ( $pseudo || $table_exists ? '' : 'cb2-table-not-exist' );
 
 				// ----------------------------------------------- TABLE
-				print( "<table class='cb2-database-table $managed_class'><thead>" );
+				print( "<table class='cb2-database-table $table_exists_class $managed_class'><thead>" );
 				print( "<tr><th colspan='100'><i class='cb2-database-prefix'>$wpdb->prefix</i>$table_name$pseudo_title$managed_title</th></tr>" );
 				print( "<tr>" );
 				foreach ( CB2_Database::$columns as $column )
@@ -164,9 +166,13 @@ if ( isset( $_GET['section'] ) ) {
 				print( "</tr>" );
 				print( "</thead><tbody>" );
 				if ( ! $pseudo ) {
-					$existing_columns = $wpdb->get_results( "DESC {$wpdb->prefix}$table_name;", OBJECT_K );
-					if ( count( $existing_columns ) > count( $table_definition['columns'] ) )
-						print( "<div class='cb2-warning'>$table_name has new columns</div>");
+					if ( CB2_Database::has_table( $table_name ) ) {
+						$existing_columns = $wpdb->get_results( "DESC {$wpdb->prefix}$table_name;", OBJECT_K );
+						if ( count( $existing_columns ) > count( $table_definition['columns'] ) )
+							print( "<div class='cb2-warning'>$table_name has new columns</div>" );
+					} else {
+						print( "<div class='cb2-warning'>$table_name does not exist</div>" );
+					}
 				}
 
 				foreach ( $table_definition['columns'] as $name => $column_definition ) {
@@ -197,11 +203,11 @@ if ( isset( $_GET['section'] ) ) {
 
 				// ----------------------------------------------- stats
 				if ( ! $pseudo ) {
-					$row_count  = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}$table_name" );
-					$class      = ( $row_count >= 1000 ? 'cb2-warning' : '' );
-					print( "<div class='$class'>row count: $row_count</div>" );
-					if ( ! in_array( "$wpdb->prefix$table_name", $exsiting_tables ) )
-						print( "<div class='cb2-warning'>[$wpdb->prefix$table_name] not found in the database</div>" );
+					if ( CB2_Database::has_table( $table_name ) ) {
+						$row_count  = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}$table_name" );
+						$class      = ( $row_count >= 1000 ? 'cb2-warning' : '' );
+						print( "<div class='$class'>row count: $row_count</div>" );
+					}
 				}
 
 				// ----------------------------------------------- TRIGGERS

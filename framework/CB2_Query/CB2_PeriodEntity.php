@@ -32,7 +32,10 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$foreign_keys = array_merge( $base_foreign_keys, $extra_foreign_keys );
 
 		$primary_key = array_keys( $extra_columns );
-		$primary_key = array_merge( $primary_key, array_keys( $base_foreign_keys ) );
+		$primary_key = array_merge( $primary_key, array(
+			'period_group_id',
+			'period_status_type_id',
+		) );
 
 		return array(
 			'name'         => $table_name,
@@ -881,7 +884,10 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			( isset( $properties['location_period_group_ID'] ) ? $properties['location_period_group_ID'] : $properties['ID'] ),
-			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			( isset( $properties['post_title'] )
+				? $properties['post_title']
+				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
+			),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
 			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
@@ -988,7 +994,10 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			( isset( $properties['timeframe_period_group_ID'] ) ? $properties['timeframe_period_group_ID'] : $properties['ID'] ),
-			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			( isset( $properties['post_title'] )
+				? $properties['post_title']
+				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
+			),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
 			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
@@ -1063,6 +1072,124 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
+class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
+  public static $database_table = 'cb2_location_user_period_groups';
+  static $static_post_type      = 'periodent-staff';
+  static $Class_PeriodItem      = 'CB2_PeriodItem_Location_User'; // Associated CB2_PeriodItem
+
+  static function metaboxes() {
+		$metaboxes = parent::metaboxes();
+		array_unshift( $metaboxes, CB2_User::selector_metabox(     'normal', array( 'cb2-object-summary-bar' ) ) );
+		array_unshift( $metaboxes, CB2_Location::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
+		return $metaboxes;
+	}
+
+  static function database_table_name() { return self::$database_table; }
+
+  static function database_table_schemas( $prefix ) {
+		$database_table_name  = self::database_table_name();
+		$post_type            = self::$Class_PeriodItem::$static_post_type; // Associated CB2_PeriodItem
+		$id_field             = CB2_Database::id_field( __class__ );
+
+		return array( CB2_PeriodEntity::database_table_schema_root(
+			$database_table_name,
+			$id_field,
+			array(
+				'location_ID' => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL ),
+				'user_ID'     => array( CB2_BIGINT, (20), CB2_UNSIGNED, CB2_NOT_NULL ),
+			),
+			array(
+				'location_ID' => array( 'posts', 'ID' ),
+				'user_ID'     => array( 'users', 'ID' ),
+			)
+		) );
+  }
+
+  function post_type() {return self::$static_post_type;}
+
+	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+		$object = self::factory(
+			( isset( $properties['location_user_period_group_ID'] ) ? $properties['location_user_period_group_ID'] : $properties['ID'] ),
+			( isset( $properties['post_title'] )
+				? $properties['post_title']
+				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
+			),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
+			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
+			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
+			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
+
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID', $instance_container ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'cb2_user_ID', $instance_container )
+		);
+
+		self::copy_all_wp_post_properties( $properties, $object );
+
+		return $object;
+	}
+
+  static function &factory(
+		$ID,
+		$name,
+		$period_group,
+		$period_status_type,
+		$enabled,
+		$entity_datetime_from = NULL,
+		$entity_datetime_to   = NULL,
+
+		$location = NULL,
+		$item     = NULL,
+		$user     = NULL
+  ) {
+    // Design Patterns: Factory Singleton with Multiton
+		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
+			$object = self::$all[$ID];
+    } else {
+			$reflection = new ReflectionClass( __class__ );
+			$object     = $reflection->newInstanceArgs( func_get_args() );
+    }
+
+    return $object;
+  }
+
+  public function __construct(
+		$ID,
+		$name,
+		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
+    $period_status_type,        // CB2_PeriodStatusType
+    $enabled,
+		$entity_datetime_from,
+		$entity_datetime_to,
+
+    $location,                  // CB2_Location
+    $item,                      // TODO: NULL...
+    $user                       // CB2_User
+  ) {
+		parent::__construct(
+			$ID,
+			$name,
+			$period_group,
+			$period_status_type,
+			$enabled,
+			$entity_datetime_from,
+			$entity_datetime_to,
+			$location,
+			NULL,
+			$user
+    );
+
+		$this->location = $location;
+    array_push( $this->posts, $this->location );
+		$this->user = $user;
+    array_push( $this->posts, $this->user );
+  }
+}
+
+
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
 class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
   public static $database_table = 'cb2_timeframe_user_period_groups';
   static $static_post_type      = 'periodent-user';
@@ -1104,7 +1231,10 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
 		$object = self::factory(
 			( isset( $properties['timeframe_user_period_group_ID'] ) ? $properties['timeframe_user_period_group_ID'] : $properties['ID'] ),
-			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
+			( isset( $properties['post_title'] )
+				? $properties['post_title']
+				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
+			),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
 			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox

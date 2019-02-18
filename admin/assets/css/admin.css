@@ -102,6 +102,9 @@ body #wpcontent .cmb2-wrap > .cmb-field-list > .cmb-row.cb2-cmb2-compact {
   border: 2px dotted #aaa;
   opacity: 0.7;
 }
+body .cb2-table-not-exist {
+	background-color:#fff0f0;
+}
 
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_misc\.scss}line{font-family:\0000365}}
 .cb2-database-views li,

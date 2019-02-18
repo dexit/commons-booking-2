@@ -725,6 +725,104 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
+class CB2_PeriodItem_Location_User extends CB2_PeriodItem {
+  static $database_table = 'cb2_location_user_period_groups';
+  public  static $post_type_args = array(
+		'menu_icon' => 'dashicons-admin-page',
+		'label'     => 'Item Timeframes',
+  );
+
+	static public $static_post_type = 'perioditem-staff';
+
+  function post_type() {return self::$static_post_type;}
+
+  function __construct(
+		$ID,
+		$period_entity,
+    $period,
+		$recurrence_index,
+		$datetime_period_item_start,
+		$datetime_period_item_end,
+    $blocked
+  ) {
+    parent::__construct(
+			$ID,
+			$period_entity,
+			$period,
+			$recurrence_index,
+			$datetime_period_item_start,
+			$datetime_period_item_end,
+			$blocked
+    );
+    array_push( $this->posts, $this->period_entity->location );
+    array_push( $this->posts, $this->period_entity->user );
+    $this->period_entity->item->add_perioditem( $this );
+  }
+
+  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+		$object = self::factory(
+			$properties['ID'],
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe' ),
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_ID',        $instance_container ),
+			$properties['recurrence_index'],
+			$properties['datetime_period_item_start'],
+			$properties['datetime_period_item_end'],
+			$properties['blocked']
+		);
+
+		self::copy_all_wp_post_properties( $properties, $object );
+
+		return $object;
+  }
+
+  static function &factory(
+		$ID,
+		$period_entity, // CB2_PeriodEntity
+    $period,        // CB2_Period
+    $recurrence_index,
+    $datetime_period_item_start,
+    $datetime_period_item_end,
+    $blocked
+  ) {
+    // Design Patterns: Factory Singleton with Multiton
+    // $ID = period_ID * x + recurrence_index
+    // TODO: if 2 different period_entities share the same period, then it will not __construct() twice
+    $key = "$ID";
+		if ( $key && $key != CB2_CREATE_NEW && isset( self::$all[$key] ) ) {
+			$object = self::$all[$key];
+    } else {
+			$reflection = new ReflectionClass( __class__ );
+			$object     = $reflection->newInstanceArgs( func_get_args() );
+    }
+
+    return $object;
+  }
+
+  function jsonSerialize() {
+    $array = parent::jsonSerialize();
+    //$array[ 'location' ] = &$this->period_entity->location;
+    //$array[ 'item' ]     = &$this->item;
+    return $array;
+  }
+
+ 	static function metaboxes() {
+		return CB2_PeriodItem::metaboxes();
+	}
+
+	function get_api_data($version){
+		return array(
+      'status' => get_the_title($this),
+      'start' => $this->datetime_period_item_start->format( CB2_Query::$json_date_format ),
+			'end' => $this->datetime_period_item_start->format( CB2_Query::$json_date_format ),
+			'location' => $this->period_entity->location->ID
+		);
+	}
+}
+
+
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
 class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
   static $database_table         = 'cb2_timeframe_user_period_groups';
   public  static $post_type_args = array(
