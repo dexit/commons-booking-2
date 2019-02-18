@@ -10,6 +10,7 @@
 	'use strict';
 	/** allow jumping to admin tabs via url hash  */
   $(function() {
+		alert('NOT CURRENTLY USED');
 		$('#tabs').tabs({
 			beforeActivate: function (event, ui) {
 				var hash = ui.newTab.children("li a").attr("href");

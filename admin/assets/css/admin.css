@@ -489,6 +489,7 @@ body .cb2-calendar .cb2-out-of-period-entity-scope * {
 
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/commons-booking-2\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000358}}
 .cb2-calendar .type-week > ul.cb2-subposts > li {
+	position: relative;
   float: left;
   width: 14.2%;
 }
