@@ -110,24 +110,17 @@ if ( $Class_display_strategy == 'WP_Query' ) {
 }
 
 $title_text   = __( 'Dashboard' );
-$filename     = basename( __FILE__ );
-$extended_url = CB2_Query::pass_through_query_string( NULL, array( 'extended' => 1 ) );
 print( "<h1>Commons Booking 2 $title_text</h1>" );
 
 if ( (new CB2_DateTime( $startdate_string ))->after( new CB2_DateTime( $enddate_string ) ) ) // PHP 5.2.2
 	print( '<div class="cb2-warning cb2-notice">start date is more than end date</div>' );
-
-$startdate = new CB2_DateTime( $startdate_string );
-$enddate   = new CB2_DateTime( $enddate_string );
-$the_calendar_pager = CB2::get_the_calendar_pager( $startdate, $enddate );
-$template_args = array( 'action' => '' );
 ?>
 <div class="cb2-calendar">
 	<div class="entry-content" style="width:100%;">
 		<?php CB2::the_calendar_header( $wp_query ); ?>
 		<ul class="cb2-subposts">
 			<!-- usually weeks -->
-			<?php CB2::the_inner_loop( $template_args, $wp_query, 'list', $template_part ); ?>
+			<?php CB2::the_inner_loop( array( 'action' => '' ), $wp_query, 'list', $template_part ); ?>
 		</ul>
 		<?php CB2::the_calendar_footer( $wp_query ); ?>
 	</div><!-- .entry-content -->
