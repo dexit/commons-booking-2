@@ -24,7 +24,7 @@
 @import "partials/_notice";
 
 /* Calendar styles */
-// @import "partials/_calendar";
+@import "partials/_calendar";
 
 /* Booking Bar */
 // @import "partials/_bookingbar";
@@ -34,4 +34,6 @@
 
 /* Leaflet.js customization */
 @import "partials/_map-leaflet";
+
+@import "partials/_debug";
 

@@ -8,6 +8,44 @@
  * @copyright 2015 wielebenwir
  */
 
+/* new bits */
+.cb2-calendar ul {
+	list-style: none;
+}
+.cb2-calendar .type-week {
+	clear:both;
+}
+.cb2-calendar .type-week > ul.cb2-subposts > li {
+	float:left;
+	width:14.2%;
+}
+.cb2-calendar .type-day {
+	min-height:100px;
+}
+.cb2-calendar ul.cb2-header > li {
+	float:left;
+	width:14.2%;
+}
+.cb2-calendar ul {
+	list-style: none;
+}
+.cb2-calendar .type-week {
+	clear:both;
+}
+.cb2-calendar .type-week > ul.cb2-subposts > li {
+	float:left;
+	width:14.2%;
+}
+.cb2-calendar .type-day {
+	min-height:100px;
+}
+.cb2-calendar ul.cb2-header > li {
+	float:left;
+	width:14.2%;
+}
+/* /end new bits */
+
+
 
 .item-circle { // the circle
   background-color: gray;
@@ -20,7 +58,7 @@
 
 .cb2-timeframe {
 
-  @extend .cb2-box;
+  @extend .cb2-box !optional;
 
   .cb2-location-info {
     display: block;
@@ -37,7 +75,7 @@ span.cb2-item-dot { // dot representing the items
   li a {
     display: block;
     white-space:nowrap;
-    @extend .cb2-button;
+		@extend .cb2-button !optional;
     margin-bottom: 5px;
     span.cb2-item-dot {
       margin-right: 3px;

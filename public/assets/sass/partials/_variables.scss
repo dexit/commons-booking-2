@@ -13,15 +13,11 @@
 $color-green-light: #56A820;
 $color-green-dark: #207B1C;
 $color-blue: #3356A4;
+$color-yellow: rgb(252, 250, 135);
 
 /* Color Definitions */
 $color-red: #FF0002;
 $color-yellow-bright: rgb(252, 250, 135);
-
-/* Statuses */
-$color-notice: $color-yellow-bright;
-$highlight-color: $color-yellow-bright;
-
 
 $light-grey: #F6F6F6;
 $dark-grey: #414141;
@@ -34,15 +30,18 @@ $bg-color: $light-grey;
 $border-inner-color: $light-grey;
 $bg-inner-color: $light-grey;
 
-
-
-
 $light-blue: #E5FDFF;
 $blue: #3356A4;
 $dark-blue: darken($blue, 10%);
-
-
 $dark-red: #A70001;
+
+/* Statuses */
+$color-notice: $color-yellow-bright;
+$highlight-color: $color-yellow-bright;
+$highlight-color-dark: $color-yellow;
+$inactive-color: $light-grey;
+$action-color: $color-blue;
+$error-color-dark: $dark-red;
 
 /* Element styles */
 

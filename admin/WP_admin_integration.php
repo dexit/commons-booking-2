@@ -468,16 +468,8 @@ function cb2_options_page() {
 	require_once( 'options_page.php' );
 }
 
-function cb2_admin_page() {
-	// Admin data controls
-	print( '<h1>Super Admin Section</h1>' );
-	print( '<p>There be dragons</p>' );
-
-	print( '<h2>status</h2>');
-	print( '<ul>' );
-	print( '<li>error_reporting: ' . error_reporting() . '</li>' );
-	print( '</ul>' );
-
+function cb2_calendar() {
+	require_once( 'calendar.php' );
 }
 
 function cb2_reflection() {

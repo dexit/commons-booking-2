@@ -1,0 +1,68 @@
+/* ---------------------- debug */
+.cb2-debug-control {
+	position:relative;
+	font-size:10px;
+	color:#777;
+	cursor:pointer;
+}
+.cb2-debug-control span {
+	position:absolute;
+	top:-3px;
+	left:40px;
+	z-index:40;
+	border:1px dotted #000;
+	background-color:#fff;
+}
+.cb2-debug-control:before {
+	content: '•';
+
+	display: inline-block;
+	margin: 0px 2px 0 0px;
+	padding: 0px 2px;
+	min-width: 7px;
+	border-radius:11px;
+	background-color: #500;
+	color: #fff;
+	font-size: 6px;
+	line-height:10px;
+	text-align: center;
+}
+.cb2-debug {
+	background-color:Transparent;
+	font-family: Sans;
+	color:#555;
+	font-size:10px;
+	padding:4px;
+	white-space:nowrap;
+}
+body .cb2-low-debug {
+	color: #777;
+}
+.cb2-high-debug {
+	font-weight:bold;
+}
+.cb2-notice {
+	background-color:#fac83f;
+	border:1px solid #888;
+}
+.cb2-dangerous,
+.cb2-warning,
+.cb2-error {
+	color:red;
+}
+.cb2-calendar .cb2-subposts .cb2-selected {
+	border:1px solid #d7d7d7;
+	background-color:#f7f7f7;
+	font-weight:bold;
+}
+.cb2-calendar .cb2-range-selected {
+	border:1px solid #d7d7d7;
+	background-color:#f7f7f7;
+	font-weight:bold;
+}
+
+/* TODO: Future start is not invalid for bookings
+ . c*b2-selected .cb2-future .cb2-invalidity {
+ display:none;
+ }
+ */

@@ -144,6 +144,7 @@ function cb2_init_do_action() {
 							print( "<div class='cb2-WP_DEBUG'>Member {$Class}->do_action_[$action]($post_ID)</div>" );
 							krumo( $args );
 						}
+						// SECURITY: TODO: !!!! $action_post->$method();
 						$action_post->$method( $user, $args );
 					} else throw new Exception( "$method does not exist on $Class" );
 				} else throw new Exception( "Cannot find $Class($post_ID)" );

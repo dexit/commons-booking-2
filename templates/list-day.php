@@ -4,18 +4,21 @@
 	$ID              = get_the_ID();    // CB2_Day
 	$post_type       = get_post_type(); // day
 	$date            = CB2::get_the_date( 'c' ); // CB2_DateTime
-
-	// Direct navigation to normal WordPress page option
-	$action          = ( isset( $template_args['action'] ) ? $template_args['action'] : 'addto' ); // context = 'popup'
-	$href_click      = NULL; // TODO: direct add link?
+	$has_context     = isset( $template_args['post'] );
+	$action          = ( isset( $template_args['action'] )
+		? $template_args['action']        // Can be empty
+		: ( $has_context ? 'addto' : 'add' )
+	);
+	$href_click      = NULL;            // TODO: direct add link?
 	$href_title_text = __( $action );
 	$href_class      = '';
 	$add_new_values  = array();
+	$template_args[ 'day' ] = $post;    // CB2_Day
 
 	// Context settings
 	$classes        = array();
 	$out_of_period_entity_scope = FALSE;
-	if ( isset( $template_args['post'] ) ) {
+	if ( $has_context ) {
 		$context_post = $template_args['post'];
 		$add_new_values[ 'context_post_ID' ]   = $context_post->ID;
 		$add_new_values[ 'context_post_type' ] = $context_post->post_type;
@@ -29,7 +32,6 @@
 			}
 		}
 	}
-	$template_args[ 'day' ] = $post;
 
 	// AJAX Popup navigation
 	if ( CB2_AJAX_POPUPS ) {
@@ -53,11 +55,13 @@
 			<?php CB2::the_inner_loop( $template_args ); ?>
 		</ul>
 
-		<div class="cb2-add-period">
-			<a class="cb2-details cb2-bald <?php print( $href_class ); ?>" title="<?php print( $href_title_text ); ?>" href="<?php print( $href_click ); ?>">
-				<?php print( $href_title_text ); ?>
-			</a>
-		</div>
+		<?php if ( $action ) { ?>
+			<div class="cb2-add-period">
+				<a class="cb2-details cb2-bald <?php print( $href_class ); ?>" title="<?php print( $href_title_text ); ?>" href="<?php print( $href_click ); ?>">
+					<?php print( $href_title_text ); ?>
+				</a>
+			</div>
+		<?php } ?>
 	</div><!-- .entry-content -->
 
 	<?php CB2::the_context_menu(); ?>

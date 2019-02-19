@@ -3,18 +3,46 @@ global $wpdb;
 
 // TODO: convert this $menu_interface specification to JSON
 $menu_interface = array(
-	'cb2-holidays'      => array(
-		'page_title'    => 'Holidays %(for)% %location_ID%',
-		'menu_visible'  => FALSE,
-		'menu_title'    => 'Holidays',
-		'wp_query_args' => 'post_type=periodent-global&post_title=Holidays&period_status_type_ID=' . CB2_PeriodStatusType_Holiday::bigID(),
-		'description'   => 'Edit the global holidays, and holidays for specific locations.',
-		'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Holiday::$id,
+	// --------------------------------------------------- Main Menu
+	// Dashboard is the main decleration in WP_Admin_Integration.php
+	'cb2-calendar' => array(
+		'page_title'    => 'Calendar',
+		'function'      => 'cb2_calendar',
 	),
 	'cb2-items'         => array(
 		'page_title' => 'Items',
 		'wp_query_args' => 'post_type=item',
 		'count'         => "select count(*) from {$wpdb->prefix}posts where post_type='item' and post_status='publish'",
+	),
+	'cb2-locations'     => array(
+		'page_title'     => 'Locations',
+		'wp_query_args'  => 'post_type=location',
+		'count'          => "select count(*) from {$wpdb->prefix}posts where post_type='location' and post_status='publish'",
+	),
+	'cb2-bookings'    => array(
+		'page_title'    => 'Bookings %(for)% %location_ID%',
+		'menu_title'    => 'Bookings',
+		'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=' . CB2_PeriodStatusType_Booked::bigID(),
+		'count'         => "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`",
+		'count_class'   => 'ok',
+	),
+
+	// --------------------------------------------------- Secondary list
+	'cb2-timeframes'    => array(
+		'indent'        => 1,
+		'menu_visible'  => FALSE,
+		'page_title'    => 'Item availibility %(for)% %location_ID%',
+		'menu_title'    => 'Item Availibility',
+		'wp_query_args' => 'post_type=periodent-timeframe&post_title=Availability %(for)% %item_ID%&period_status_type_ID=' . CB2_PeriodStatusType_PickupReturn::bigID(),
+		'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_PickupReturn::$id,
+	),
+	'cb2-opening-hours' => array(
+		'indent'        => 1,
+		'menu_visible'  => FALSE,
+		'page_title'    => 'Opening Hours %(for)% %location_ID%',
+		'menu_title'    => 'Opening Hours',
+		'wp_query_args' => 'post_type=periodent-location&recurrence_type=D&recurrence_type_show=no&post_title=Opening Hours %(for)% %location_ID%&period_status_type_ID=' . CB2_PeriodStatusType_Open::bigID(),
+		'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Open::$id,
 	),
 	'cb2-repairs'       => array(
 		'indent'        => 1,
@@ -25,42 +53,16 @@ $menu_interface = array(
 		'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_user_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Repair::$id,
 		'count_class'   => 'warning',
 	),
-	'cb2-timeframes'    => array(
-		'indent'        => 1,
+	'cb2-holidays'      => array(
+		'page_title'    => 'Holidays %(for)% %location_ID%',
 		'menu_visible'  => FALSE,
-		'page_title'    => 'Item availibility %(for)% %location_ID%',
-		'menu_title'    => 'Item Availibility',
-		'wp_query_args' => 'post_type=periodent-timeframe&post_title=Availability %(for)% %item_ID%&period_status_type_ID=' . CB2_PeriodStatusType_PickupReturn::bigID(),
-		'count'         => "select count(*) from {$wpdb->prefix}cb2_timeframe_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_PickupReturn::$id,
-	),
-	'cb2-locations'     => array(
-		'page_title'     => 'Locations',
-		'wp_query_args'  => 'post_type=location',
-		'count'          => "select count(*) from {$wpdb->prefix}posts where post_type='location' and post_status='publish'",
-	),
-	'cb2-opening-hours' => array(
-		'indent'        => 1,
-		'menu_visible'  => FALSE,
-		'page_title'    => 'Opening Hours %(for)% %location_ID%',
-		'menu_title'    => 'Opening Hours',
-		'wp_query_args' => 'post_type=periodent-location&recurrence_type=D&recurrence_type_show=no&post_title=Opening Hours %(for)% %location_ID%&period_status_type_ID=' . CB2_PeriodStatusType_Open::bigID(),
-		'count'         => "select count(*) from {$wpdb->prefix}cb2_location_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Open::$id,
-	),
-	'cb2-bookings'    => array(
-		'page_title'    => 'Bookings %(for)% %location_ID%',
-		'menu_title'    => 'Bookings',
-		'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=' . CB2_PeriodStatusType_Booked::bigID(),
-		'count'         => "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`",
-		'count_class'   => 'ok',
+		'menu_title'    => 'Holidays',
+		'wp_query_args' => 'post_type=periodent-global&post_title=Holidays&period_status_type_ID=' . CB2_PeriodStatusType_Holiday::bigID(),
+		'description'   => 'Edit the global holidays, and holidays for specific locations.',
+		'count'         => "select count(*) from {$wpdb->prefix}cb2_global_period_groups where enabled = 1 and period_status_type_id = " . CB2_PeriodStatusType_Holiday::$id,
 	),
 
-	// Advanced
-	'cb2-admin' => array(
-		'page_title'    => 'Admin',
-		'function'      => 'cb2_admin_page',
-		'first'         => TRUE,
-		'advanced'      => TRUE,
-	),
+	// --------------------------------------------------- Advanced
 	'cb2-reflection' => array(
 		'page_title'    => 'Reflection',
 		'function'      => 'cb2_reflection',

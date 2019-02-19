@@ -1,0 +1,72 @@
+.cb2-WP_DEBUG-small,
+.cb2-WP_DEBUG,
+.cb2-todo {
+	display: none;
+}
+.cb2-WP_DEBUG-on .cb2-WP_DEBUG-small,
+.cb2-WP_DEBUG-on .cb2-WP_DEBUG,
+.cb2-WP_DEBUG-on .cb2-todo {
+	display:inline-block;
+}
+.cb2-WP_DEBUG-small {
+	color: #555;
+	font-size: 10px;
+}
+
+.cb2-WP_DEBUG-small:before {
+	content: '•';
+
+	margin: 0px 2px 0 0px;
+	padding: 0px 2px;
+	min-width: 7px;
+	border-radius:11px;
+	background-color: #500;
+	color: #fff;
+	font-size: 6px;
+	line-height:10px;
+	text-align: center;
+}
+
+.cb2-WP_DEBUG {
+	color: #555;
+}
+
+.cb2-WP_DEBUG:before {
+	content: 'WP_DEBUG: ';
+
+	margin: 1px 3px 0 2px;
+	padding: 2px 5px;
+	min-width: 7px;
+	border-radius: 11px;
+	background-color: #500;
+	color: #fff;
+	font-size: 9px;
+	text-align: center;
+}
+
+.cb2-WP_DEBUG-on #TB_window {
+	top:5%;
+	left:5%;
+	width:90%!important;
+	height:auto;
+	margin:0px!important;
+}
+
+.cb2-todo:before {
+	content: 'TODO: ';
+
+	margin: 1px 3px 0 2px;
+	padding: 2px 5px;
+	min-width: 7px;
+	border-radius: 11px;
+	background-color: #8aaa1f;
+	color: #fff;
+	font-size: 9px;
+	text-align: center;
+}
+
+.cb2-calendar-krumo-show {
+	cursor: pointer;
+}
+
+

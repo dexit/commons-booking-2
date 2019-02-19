@@ -11,18 +11,18 @@
 
 .ui-state-default {
 	display: inline;
-	border-color: rgb(204, 204, 204);
+	border-color: #cccccc;
 	border-width: 1px;
-	border-style:solid;
+	border-style: solid;
 	border-bottom-width: 0px;
 	padding: 12px 0px;
-	background: none repeat scroll 0% 0% rgb(228, 228, 228);
+	background: none repeat scroll 0% 0% #e4e4e4;
 }
 
 .ui-tabs-nav {
 	padding-bottom: 9px;
 	padding-left: 10px;
-	border-bottom: 1px solid rgb(204, 204, 204);
+	border-bottom: 1px solid #cccccc;
 }
 
 .ui-tabs-anchor {
@@ -30,17 +30,17 @@
 	font-weight: 600;
 	font-size: 15px;
 	line-height: 24px;
-	color: rgb(127, 127, 127);
-	padding:10px;
+	color: #7f7f7f;
+	padding: 10px;
 }
 
-.ui-tabs-anchor:hover,.ui-state-active a {
-	color:black;
+.ui-tabs-anchor:hover, .ui-state-active a {
+	color: black;
 }
 
 .ui-tabs-active, .ui-tabs-active:hover, .ui-tabs-active:active {
-	color: rgb(0, 0, 0);
-	background: rgb(239, 239, 239) !important;
+	color: black;
+	background: #efefef !important;
 }
 
 .settings-tab {
@@ -61,4 +61,145 @@
 			padding-left: 10px;
 		}
 	}
+}
+
+/* ------------------------------------------------------------- nexts */
+.cb2-nexts {
+	padding-bottom:30px;
+	border-bottom: 1px dotted #888;
+}
+.cb2-nexts li {
+	float:left;
+
+}
+.cb2-nexts li.selected a {
+	text-decoration:none;
+	color:#888;
+	font-weight:bold;
+}
+.cb2-nexts li:after {
+	content: '>>';
+	clear:both;
+	margin:0px 5px;
+}
+.cb2-nexts li.cb2-last:after {
+	content: none;
+}
+
+/* ------------------------------------------------------------- tabs2 */
+.cb2-tabs {
+	border-bottom:1px solid #d7d7d7;
+	margin: 20px 0px 0px 0px;
+}
+.cb2-with-tabs #submitdiv {
+	float:right;
+}
+.cb2-tabs-postbox-container-2-selected #submitdiv {
+	display:none;
+}
+.cb2-tabs li {
+	float:left;
+	border-top:1px solid #d7d7d7;
+	border-left:1px solid #d7d7d7;
+	border-right:1px solid #d7d7d7;
+	background:#f1f1f1;
+	margin-bottom:0px;
+}
+.cb2-tabs:after {
+	content: ' ';
+	clear:both;
+	display:table;
+}
+.cb2-tabs li a {
+	padding:8px 44px;
+	display:block;
+	color:#666;
+	text-decoration:none;
+}
+.cb2-tabs li.selected {
+	background:#fff;
+	border-top:1px solid #a7a7a7;
+	border-left:1px solid #a7a7a7;
+	border-right:1px solid #a7a7a7;
+	box-shadow: 0px 0px 1px #aaa;
+	font-weight:bold;
+	margin:-1px -1px -1px -1px;
+	z-index:1000;
+	position:relative;
+}
+.cb2-tabs li.selected a {
+	color:#0073aa;
+}
+
+/* ------------------------------------------------------------- object-summary-bar */
+body #post-body-content {
+	margin-bottom: 0px;
+}
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar {
+	float:left;
+	margin: 0px 0px 20px 0px;
+	clear:none;
+	border:none;
+	min-width:0px;
+}
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar .cmb-td {
+	float:left;
+}
+
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar .cmb-row:before {
+	float:left;
+	margin: 4px 0px 7px 2px;
+	color:#a7a7a7;
+
+	/* copied from WordPress */
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	font-size: 20px;
+	line-height: 1;
+	font-family: dashicons;
+	text-decoration: inherit;
+	font-weight: 400;
+	font-style: normal;
+	vertical-align: top;
+	text-align: center;
+	transition: color .1s ease-in 0;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar .handlediv,
+.cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar h2 {
+	display:none;
+}
+.cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar .inside,
+.cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar h2 {
+	float:left;
+	border-bottom: none;
+	margin:0px;
+}
+.cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar .inside {
+	padding:4px 10px;
+}
+.cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar h2 {
+	padding: 7px 10px;
+}
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar .cmb2-wrap > .cmb-field-list > .cmb-row {
+	padding: 0px;
+	margin: 0px;
+}
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar select {
+	border:none;
+	margin: 0px;
+	box-shadow:none;
+	color:#0073aa;
+	cursor:pointer;
+}
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar .cmb2-id-location-ID:before {
+	content: "\f107";
+}
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar .cmb2-id-item-ID:before {
+	content: "\f108";
+}
+.cb2-with-tabs .cmb2-postbox.cb2-object-summary-bar .cmb2-id-cb2-user-ID:before {
+	content: "\f109";
 }
