@@ -45,6 +45,7 @@ class CMB2_Field_Calendar {
     ) {
 				global $post;
 
+				CB2_Query::ensure_correct_class( $post );
         $this->enqueue_scripts();
 
         if ( version_compare( CMB2_VERSION, '2.2.2', '>=' ) ) {
@@ -63,6 +64,10 @@ class CMB2_Field_Calendar {
         $view             = ( isset( $_GET['view'] ) ? $_GET['view'] : CB2_Week::$static_post_type );
         $startdate        = new CB2_DateTime( $startdate_string );
         $enddate          = new CB2_DateTime( $enddate_string );
+        $classes          = ( isset( $options['classes'] )
+					? ( is_array( $options['classes'] ) ? $options['classes'] : array( $options['classes'] ) )
+					: array()
+				);
 
         // Defaults
         $default_query    = array(
@@ -78,19 +83,18 @@ class CMB2_Field_Calendar {
 				);
 
         // Analyse options
-        $context       = ( isset( $options[ 'context' ] )       ? $options[ 'context' ]  : 'list' );
-        $template      = ( isset( $options[ 'template' ] )      ? $options[ 'template' ] : NULL );
-				$template_args = ( isset( $options[ 'template-args' ] ) ? $options[ 'template-args' ] : array() );
+        $context        = ( isset( $options[ 'context' ] )       ? $options[ 'context' ]  : 'list' );
+        $template       = ( isset( $options[ 'template' ] )      ? $options[ 'template' ] : NULL );
+				$template_args  = ( isset( $options[ 'template-args' ] ) ? $options[ 'template-args' ] : array() );
         $Class_display_strategy = ( isset( $options[ 'display-strategy' ] )  ? $options[ 'display-strategy' ]  : 'WP_Query' );
-        $style         = ( isset( $options[ 'style' ] )         ? $options[ 'style' ]    : NULL );
-        $query_options = ( isset( $options[ 'query' ] )         ? $options[ 'query' ]    : array() );
-        $query_args    = array_merge( $default_query, $query_options );
+        $style          = ( isset( $options[ 'style' ] )         ? $options[ 'style' ]    : NULL );
+        $query_options  = ( isset( $options[ 'query' ] )         ? $options[ 'query' ]    : array() );
+        $query_args     = array_merge( $default_query, $query_options );
 				if ( ! isset( $options['meta_query']['blocked_clause'] ) )
 					$options['meta_query']['blocked_clause'] = 0; // Prevent default
 
         // Convert %...% values to values on the post
         if ( $post->post_status != CB2_Post::$AUTODRAFT ) {
-					CB2_Query::ensure_correct_class( $post );
 					CB2_Query::array_walk_paths( $query_args, $post );
 				}
 
@@ -114,23 +118,15 @@ class CMB2_Field_Calendar {
 				$template_args[ 'options' ] = $options;
 				$template_args[ 'query' ]   = $wp_query;
 
+				// TODO: convert classes() functions to returning arrays
+				if ( method_exists( $post, 'classes' ) )
+					array_push( $classes, $post->classes() );
+
         // Render
         $the_calendar_pager = CB2::get_the_calendar_pager( $startdate, $enddate );
-				print( "<div class='cb2-javascript-form cb2-calendar'>" );
+        $classes_string     = implode( ' ', $classes );
+				print( "<div class='cb2-javascript-form cb2-calendar $classes_string'>" );
 				if ( $style != 'bare' ) print( "<div class='entry-header'>
-						<div class='hide-if-no-js alignright actions bulkactions'>
-							<label for='cb2-calendar-bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label>
-							<!-- no @name on these form elements because it is a *nested* form
-								it is submitted only with JavaScript
-								@js-name => @name during submission
-							-->
-							<select class='hide-if-no-js' id='cb2-calendar-bulk-action-selector-top' js-name='do_action'>
-								<option value=''>Bulk Actions</option>
-								<option value='CB2_PeriodEntity::block'>Block</option>
-								<option value='CB2_PeriodEntity::unblock'>UnBlock</option>
-							</select>
-							<input type='button' class='hide-if-no-js button action' value='Apply'>
-						</div>
 						<div class='cb2-view-selector'>View as:
 							<a class='cb2-$view_is_calendar_class' href='$viewless_url&view=week'>calendar</a>
 							| <a class='cb2-$view_is_list_class' href='$viewless_url&view='>list</a></div>

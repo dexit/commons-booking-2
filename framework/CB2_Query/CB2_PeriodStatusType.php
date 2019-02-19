@@ -247,6 +247,10 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		return array();
   }
 
+  function metabox_calendar_classes_object_cb( $field, $periodentity ) {
+		return array();
+  }
+
   function can( $actions ) {
 		return $this->flags & $actions;
   }
@@ -305,7 +309,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 	}
 
 	function classes() {
-    return "cb2-$this->name";
+    return 'cb2-status-' . preg_replace( '/[^a-z0-9]/', '-', strtolower( $this->name ) );
   }
 
   function indicators() {
@@ -472,9 +476,13 @@ class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
 
+	function metabox_calendar_classes_object_cb( $field, $periodentity ) {
+		return array( 'cb2-calendar-bare' );
+	}
+
 	function metabox_calendar_options_object_cb( $field, $periodentity ) {
 		$options = array(
-			'query' => array(
+			'query'   => array(
 				'meta_query' => array(
 					// When we are showing opening times,
 					// we only show them and holidays

@@ -307,6 +307,22 @@ class CB2 {
 		return $top_priority || $show_overridden_periods;
 	}
 
+	public static function the_bulk_options() {
+		print( "<div class='hide-if-no-js alignright actions bulkactions'>
+			<label for='cb2-bulk-action-selector-top' class='screen-reader-text'>Select bulk action</label>
+			<!-- no @name on these form elements because it is a *nested* form
+				it is submitted only with JavaScript
+				@js-name => @name during submission
+			-->
+			<select class='hide-if-no-js' id='cb2-bulk-action-selector-top' js-name='do_action'>
+				<option value=''>Bulk Actions</option>
+				<option value='CB2_PeriodEntity::block'>Block</option>
+				<option value='CB2_PeriodEntity::unblock'>UnBlock</option>
+			</select>
+			<input type='button' class='hide-if-no-js button action' value='Apply'>
+		</div>" );
+	}
+
 	public static function can_select() {
 		global $post;
 		return $post && ! property_exists( $post, 'no_select' );
@@ -462,6 +478,8 @@ class CB2 {
 		// Some Copied and edited from post-template.php
 		global $post;
 
+		$post_type = $post->post_type;
+
 		if ( ! is_null( $post_id ) )
 			throw new Exception( 'Explicit post_id not supported in CB2::post_class()' );
 
@@ -490,9 +508,11 @@ class CB2 {
 
 		$classes[] = 'post-' . $post->ID;
 		if ( ! is_admin() )
-			$classes[] = $post->post_type;
-		$classes[] = 'type-' . $post->post_type;
+			$classes[] = $post_type;
 		$classes[] = 'status-' . $post->post_status;
+		$classes[] = 'type-' . $post_type;
+		if ( strpos( $post_type, '-' ) !== FALSE )
+			$classes[] = 'type-' . CB2_Query::substring_before( $post_type ); // Additional CB2 class
 
 		// Removed: Post Format
 		// Removed: Post requires password.

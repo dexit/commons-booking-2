@@ -188,11 +188,9 @@ function cb2_process(){
 			success: function(){
 				$(self).removeAttr('disabled');
 				$(self).parents('.cb2-popup, body').removeClass('cb2-saving');
-				if (!WP_DEBUG) {
-					// TODO: callback based refresh => calendar ajax refresh
-					document.location = document.location;
-					$(self).parents('.cb2-popup, body').addClass('cb2-refreshing');
-				}
+				// TODO: callback based refresh => calendar ajax refresh
+				document.location = document.location;
+				$(self).parents('.cb2-popup, body').addClass('cb2-refreshing');
 			},
 			error: function() {
 				$(self).addClass('cb2-ajax-failed');

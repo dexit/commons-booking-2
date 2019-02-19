@@ -71,6 +71,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				'context'    => 'normal',
 				'show_names' => FALSE,
 				'show_on_cb' => array( 'CB2', 'is_published' ),
+				'classes_cb' => array( 'CB2_PeriodEntity', 'metabox_calendar_classes_cb' ),
 				'fields' => array(
 					array(
 						'name'    => __( 'Timeframe', 'commons-booking-2' ),
@@ -160,6 +161,21 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $metaboxes;
 	}
 
+	static function metabox_calendar_classes_cb( $field ) {
+		global $post;
+
+		$classes = array();
+
+		if ( $post ) {
+			CB2_Query::ensure_correct_class( $post );
+			if ( method_exists( $post, 'metabox_calendar_classes_object_cb' ) ) {
+				$classes = array_merge( $classes, $post->metabox_calendar_classes_object_cb( $field ) );
+			}
+		}
+
+		return $classes;
+	}
+
 	static function metabox_calendar_options_cb( $field ) {
 		global $post;
 
@@ -173,6 +189,11 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		}
 
 		return $options;
+	}
+
+	protected function metabox_calendar_classes_object_cb( $field ) {
+		$classes = $this->period_status_type->metabox_calendar_classes_object_cb( $field, $this );
+		return $classes;
 	}
 
 	protected function metabox_calendar_options_object_cb( $field ) {
@@ -541,6 +562,9 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
     $classes  = '';
     $classes .= $this->period_status_type->classes();
     $classes .= ' cb2-' . $this->post_type();
+    if ( property_exists( $this, 'location' ) && $this->location ) $classes .= ' cb2-has-location';
+    if ( property_exists( $this, 'item' )     && $this->item )     $classes .= ' cb2-has-item';
+    if ( property_exists( $this, 'user' )     && $this->user )     $classes .= ' cb2-has-user';
     return $classes;
   }
 

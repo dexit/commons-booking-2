@@ -689,13 +689,23 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
   }
 
   function update_option( $option, $new_value, $autoload = TRUE ) {
-		// TODO: complete update_option() cb2_timeframe_options
-		throw new Exception( 'NOT_COMPLETE' );
-    $update = CB2_Database_UpdateInsert::factory( self::$database_options_table );
-    $update->add_field(     'option_name',  $option );
-    $update->add_field(     'option_value', $new_value );
-    $update->add_condition( 'timeframe_id', $this->id() );
-    $update->run();
+		global $wpdb;
+
+		// TODO: rationalise these DB functions in to parent Class
+		$found = $wpdb->update( $wpdb->prefix . CB2_Database::database_table( $Class ),
+			array( 'option_value' => $new_value ),
+			array(
+				'timeframe_id' => $this->id(),
+				'option_name'  =>  $option,
+			)
+		);
+		if ( ! $found ) $wpdb->insert( $wpdb->prefix . CB2_Database::database_table( $Class ),
+			array(
+				'timeframe_id' => $this->id(),
+				'option_name'  =>  $option,
+				'option_value' => $new_value,
+			)
+		);
 
     return $this;
   }
