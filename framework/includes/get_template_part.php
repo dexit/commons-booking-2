@@ -26,7 +26,13 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
 			$plugin_slug = $plugin_slug . '/';
 			$path        = WP_PLUGIN_DIR . '/'. $plugin_slug . 'templates/';
 			$slug        = $slugs;
-			if ( is_array( $slugs ) ) $slug = $slugs[0];
+			if ( is_array( $slugs ) ) {
+				if ( count( $slugs ) ) {
+					$slug = $slugs[0];
+				} else {
+					return '';
+				}
+			}
 
 			// Look in yourtheme/slug-name.php and yourtheme/plugin-name/slug-name.php
 			if ( $name ) {

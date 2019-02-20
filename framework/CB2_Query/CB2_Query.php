@@ -206,7 +206,7 @@ class CB2_Query {
 					if ( $prevent_auto_draft_publish_transition ) $auto_draft_publish_transition = FALSE;
 					$post = $Class::factory_from_properties( $properties, $instance_container );
 					$auto_draft_publish_transition = $old_auto_draft_publish_transition;
-					self::get_metadata_assign( $post ); // TODO: is this 2nd call cached?
+					if ( $post->ID > 0 ) self::get_metadata_assign( $post ); // TODO: is this 2nd call cached?
 
 					if ( is_null( $post ) )
 						throw new Exception( "Failed to create [$Class] class from post" );
@@ -358,10 +358,14 @@ class CB2_Query {
 
 		if ( ! is_object( $post ) )
 			throw new Exception( 'get_metadata_assign() post object required' );
-		if ( ! property_exists( $post, 'ID' )        || ! $post->ID )
+		if ( ! property_exists( $post, 'ID' )        || ! $post->ID ) {
+			krumo($post);
 			throw new Exception( 'get_metadata_assign: $post->ID required' );
-		if ( ! property_exists( $post, 'post_type' ) || ! $post->post_type )
+		}
+		if ( ! property_exists( $post, 'post_type' ) || ! $post->post_type ) {
+			krumo($post);
 			throw new Exception( 'get_metadata_assign: $post->post_type required' );
+		}
 
 		$ID              = $post->ID;
 		$post_type       = $post->post_type;

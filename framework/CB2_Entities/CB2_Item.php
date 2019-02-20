@@ -121,21 +121,22 @@ class CB2_Item extends CB2_Post implements JsonSerializable
     public function get_the_after_content()
     {
 				// Booking form
-				$Class       = get_class($this);
 				$ID          = $this->ID;
-				$form_action = '';
-				$redirect    = '/periodent-user/%action_return_value%/';
-				$do_action   = 'book';
+				$form_action = '';               // Submit to self: do_action_book() hook will redirect
+				$redirect    = '/periodent-user/%action_return_value%/'; // action_return_value = booking post ID
+				$Class       = get_class($this); // Run the booking action on this Class, see do_action_book() below
+				$do_action   = 'book';           // See CB2_Item->do_action_book() below
 				$submit      = __('book the')   . " $this->post_title";
 				$name        = __('Booking of') . " $this->post_title";
 				$view_mode   = CB2_Week::$static_post_type;        // posts data reorganised into CB2_TimeClass hierarchy
-				$selection_mode    = 'range'; // Only 1 range, from => to, can be selected
+				$selection_mode    = 'range';    // Only 1 range, from => to, can be selected
 				$display_strategy  = 'CB2_SingleItemAvailability'; // posts filtered according to use case
 				// TODO: initial CB2_Item booking calendar pagesize settings
 				$startdate   = '';
 				$enddate     = '';
 
 				$shortcode_atts = array(
+					// item-ID not necessary because CB2_SingleItemAvailability uses the global post
 					'start-date'       => $startdate,
 					'end-date'         => $enddate,
 					'view-mode'        => $view_mode,

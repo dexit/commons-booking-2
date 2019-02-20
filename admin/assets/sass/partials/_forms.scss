@@ -72,11 +72,11 @@ body .cmb2-postbox .cmb-th + .cmb-td {
 	margin-left: 2px !important;
 }
 
-#geo-hcard-map {
+.wrap #geo-hcard-map {
 	border:1px double #666;
 	padding:2px;
-	width:95%;
-	height:500px;
+	width:100%;
+	min-height:500px;
 }
 
 .cmb2-options-page {

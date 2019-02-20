@@ -1,5 +1,9 @@
 <?php
 class CB2 {
+	public static function the_Class() {
+		print( self::get_the_Class() );
+	}
+
 	public static function get_the_Class() {
 		global $post;
 		return ( $post ? get_class( $post ) : NULL );

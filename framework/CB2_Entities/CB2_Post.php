@@ -148,7 +148,7 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   }
 
   function add_perioditem( &$perioditem ) {
-    array_push( $this->perioditems, $perioditem );
+    if ( ! in_array( $perioditem, $this->perioditems ) ) array_push( $this->perioditems, $perioditem );
   }
 
   function get_field_this( $class = '', $date_format = NULL ) {
