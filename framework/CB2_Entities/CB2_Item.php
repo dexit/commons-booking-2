@@ -424,11 +424,10 @@ class CB2_Item extends CB2_Post implements JsonSerializable
     }
     function get_api_data(string $version){
         $data = array(
-            'id' => $this->ID,
+            'id' => get_the_guid($this),
             'name' => get_the_title($this),
             'url' => get_post_permalink($this),
-            'owner_id' => get_the_author_meta('ID', $this->post_author),
-            'pickup_return' => array()
+            'owner_id' => get_the_author_meta('ID', $this->post_author)
         );
         $excerpt = $this->post_excerpt;
         if($excerpt != NULL){
@@ -439,6 +438,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 $data['availability'][] = $period_inst->get_api_data($version);
             }
         }
+        do_action('cb2_api_add_item_metadata', $this, $data);
         return $data;
     }
 }

@@ -727,7 +727,7 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
       'status' => get_the_title($this),
       'start' => $this->datetime_period_item_start->format( CB2_Query::$json_date_format ),
 			'end' => $this->datetime_period_item_start->format( CB2_Query::$json_date_format ),
-			'location' => $this->period_entity->location->ID
+			'location' => get_the_guid($this->period_entity->location)
 		);
 	}
 }
