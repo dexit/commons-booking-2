@@ -364,7 +364,12 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		$location_data = array(
 			'id' => $this->ID,
 			'name' => get_the_title($this),
-			'url' => get_post_permalink($this)
+			'url' => get_post_permalink($this),
+			'address' => $this->geo_address,
+			'geometry' => array(
+				'type'=> 'Point',
+				'coordinates' => [$this->geo_latitude, $this->geo_longitude]
+			)
 		);
 		$location_desc = $this->post_excerpt;
 		if($location_desc != NULL){

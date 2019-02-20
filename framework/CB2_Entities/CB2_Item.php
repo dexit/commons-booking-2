@@ -426,8 +426,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
             'id' => $this->ID,
             'name' => get_the_title($this),
             'url' => get_post_permalink($this),
-            'owner_id' => get_the_author_meta('ID', $this->post_author),
-            'pickup_return' => array()
+            'owner_id' => get_the_author_meta('ID', $this->post_author)
         );
         $excerpt = $this->post_excerpt;
         if($excerpt != NULL){

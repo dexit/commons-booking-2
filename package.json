@@ -1,18 +1,21 @@
 {
-  "name": "commons-booking-2",
-  "version": "2.0.0",
-  "description": "",
-  "author": "Florian Egermann <florian@macht-medien.de>",
-  "devDependencies": {
-    "grunt": "*",
-    "grunt-contrib-compass": "*",
-    "grunt-contrib-watch": "^1.1.0",
-    "matchdep": "^2.0.0"
-  },
-  "dependencies": {
-    "bootstrap": "^4.1.0",
-    "grunt-contrib-jshint": "^1.1.0",
-    "grunt-contrib-uglify": "^3.3.0",
-    "tippy.js": "^2.5.0"
-  }
+	"name": "commons-booking-2",
+	"version": "2.0.0",
+	"description": "",
+	"author": "Florian Egermann <florian@macht-medien.de>",
+	"devDependencies": {
+		"grunt": "*",
+		"grunt-contrib-compass": "*",
+		"grunt-contrib-watch": "^1.1.0",
+		"matchdep": "^2.0.0"
+	},
+	"scripts": {
+		"grunt": "node node_modules/grunt/bin/grunt"
+	},
+	"dependencies": {
+		"bootstrap": "^4.1.0",
+		"grunt-contrib-jshint": "^1.1.0",
+		"grunt-contrib-uglify": "^3.3.0",
+		"tippy.js": "^2.5.0"
+	}
 }
