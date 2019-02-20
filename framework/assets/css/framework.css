@@ -40,7 +40,7 @@
  * @copyright 2015 wielebenwir
  */
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\0000313}}
-.cb2-calendar .type-perioditem .cb2-user-name:before {
+.cb2-calendar .type-perioditem .cb2-details .cb2-user-name:before {
   color: white;
   content: "\f110";
   font-family: dashicons;
@@ -79,7 +79,7 @@
 
 /* Calendar styles */
 /**
- * Admin screen calendars
+ * Calendar base styles for adminn & fornt-end
  *
  * .cb2-calendar
  *   .entry-footer
@@ -92,7 +92,8 @@
  *						div.day-title
  *		 				ul.cb2-subposts
  *		 					li.type-perioditem
- *		 							a.cb2-details
+ *		 							.cb2-details
+ *										span.cb2-item, span.cb2-location
  *
  * @package   CommonsBooking2
  * @author 		Annesley Newholm <annesley_newholm@yahoo.it>
@@ -101,80 +102,56 @@
  * @link      http://www.wielebenwir.de
  * @copyright 2015 wielebenwir
  */
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000325}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000326}}
 .cb2-debug-period-info {
   display: none;
 }
 
 /* calendar bar */
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000329}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000331}}
 .cb2-calendar-filter {
   margin-bottom: 1em;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000331}}
-.cb2-calendar-filter input, .cb2-calendar-filter select {
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000334}}
+.cb2-calendar-filter input,
+.cb2-calendar-filter select {
   font-size: 12px;
   max-width: 150px;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000338}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000342}}
 .cb2-calendar-pager .button {
   /* remove default text from view */
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000351}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000357}}
 .cb2-calendar {
   width: 100%;
-  /* status types */
   /* layout */
   /* fields */
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000355}}
-.cb2-calendar.cb2-has-location .cb2-location-name, .cb2-calendar.cb2-has-item .cb2-item-name, .cb2-calendar.cb2-has-user .cb2-user-name {
-  display: none;
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000361}}
+.cb2-calendar ul.cb2-calendar-header {
+  background-color: #FFF;
+  border: 1px solid #E1E1E1;
+  text-align: center;
+  font-size: 12px;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000360}}
-.cb2-calendar .cb2-item-name,
-.cb2-calendar .cb2-location-name,
-.cb2-calendar .cb2-user-name,
-.cb2-calendar .cb2-time-period {
-  display: block;
-  line-height: 1.1em;
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000367}}
+.cb2-calendar ul.cb2-calendar-header > li {
+  float: left;
+  font-weight: normal;
+  width: 14.2%;
+  padding: 1em 0;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000368}}
-.cb2-calendar .cb2-item-name {
-  position: absolute;
-  width: 25px;
-  overflow: hidden;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  line-height: 1em;
-  padding: 3px;
-  font-weight: bold;
-  color: #000;
-  opacity: .5;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000381}}
-.cb2-calendar .cb2-location-name {
-  margin-left: 34px;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000382}}
-.cb2-calendar .cb2-user-name {
-  margin-left: 34px;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000385}}
-.cb2-calendar .cb2-time-period {
-  margin-left: 34px;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000390}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000375}}
 .cb2-calendar li.type-week > ul.cb2-subposts {
   overflow: hidden;
   height: 100%;
   display: flex;
   flex-direction: row;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000396}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000381}}
 .cb2-calendar li.type-week > ul.cb2-subposts li.type-day {
   display: block;
   position: relative;
@@ -190,45 +167,30 @@
   background-color: #FFF;
   padding-bottom: 30px;
   /* space for + */
+  border-left: 1px solid #E1E1E1;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\0000377}}
 .cb2-calendar li.type-week > ul.cb2-subposts li.type-day:hover {
-  background-color: #FFF9C5;
+  background-color: #F2F2F2;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003107}}
-.cb2-calendar li.type-week > ul.cb2-subposts li.type-day ul li {
-  display: block;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003111}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\0000393}}
 .cb2-calendar li.type-week > ul.cb2-subposts li.type-day div.day-title {
   padding: 1em;
   text-align: center;
   color: #9D9F9D;
-  font-weight: bold;
-  margin: 0px;
   font-size: 14px;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003123}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003104}}
 .cb2-calendar .type-perioditem {
   border-radius: 5px;
-  font-color: #FFF;
+  color: #FFF;
   font-size: 12px;
   padding: 2px 8px;
   margin-bottom: 2px;
   min-height: 38px;
   position: relative;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003134}}
-.cb2-calendar .type-perioditem a {
-  display: block;
-  color: #fff;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003139}}
-.cb2-calendar .type-perioditem .day-header,
-.cb2-calendar .type-perioditem .cb2-periodstatustype-name {
-  display: none;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003148}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003114}}
 .cb2-calendar .type-perioditem.cb2-status-pickup-return {
   -webkit-transition: all 0.3s ease;
   -moz-transition: all 0.3s ease;
@@ -239,9 +201,9 @@
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\0000377}}
 .cb2-calendar .type-perioditem.cb2-status-pickup-return:hover {
-  background-color: brighten(#67b32a, 20%);
+  background-color: #5b9e25;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003151}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003118}}
 .cb2-calendar .type-perioditem.cb2-status-open {
   -webkit-transition: all 0.3s ease;
   -moz-transition: all 0.3s ease;
@@ -252,9 +214,9 @@
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\0000377}}
 .cb2-calendar .type-perioditem.cb2-status-open:hover {
-  background-color: brighten(#0085ba, 20%);
+  background-color: #0073a1;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003154}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003122}}
 .cb2-calendar .type-perioditem.cb2-status-booked {
   -webkit-transition: all 0.3s ease;
   -moz-transition: all 0.3s ease;
@@ -265,9 +227,9 @@
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\0000377}}
 .cb2-calendar .type-perioditem.cb2-status-booked:hover {
-  background-color: brighten(#bf2437, 20%);
+  background-color: #aa2031;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003157}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003126}}
 .cb2-calendar .type-perioditem.cb2-status-holiday {
   -webkit-transition: all 0.3s ease;
   -moz-transition: all 0.3s ease;
@@ -278,9 +240,9 @@
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\0000377}}
 .cb2-calendar .type-perioditem.cb2-status-holiday:hover {
-  background-color: brighten(#9b9b9b, 20%);
+  background-color: #8e8e8e;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003161}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003130}}
 .cb2-calendar .type-perioditem.cb2-multi-day:before {
   float: right;
   content: '\f103';
@@ -290,165 +252,189 @@
   font-size: 12px;
   color: #fff;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003170}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003140}}
 .cb2-calendar .type-perioditem.cb2-first-day {
   /* top-left | top-right | bottom-right | bottom-left */
   border-radius: 5px 0 0 5px;
   margin-right: -3px;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003176}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003148}}
 .cb2-calendar .type-perioditem.cb2-last-day {
   border-radius: 0 5px 5px 0;
   margin-left: -3px;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003181}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003152}}
+.cb2-calendar .type-perioditem a {
+  display: block;
+  color: #fff;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003157}}
+.cb2-calendar .type-perioditem .day-header,
+.cb2-calendar .type-perioditem .cb2-periodstatustype-name {
+  display: none;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003162}}
+.cb2-calendar .type-perioditem .cb2-details {
+  /* status types */
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003165}}
+.cb2-calendar .type-perioditem .cb2-details.cb2-has-location .cb2-location-name, .cb2-calendar .type-perioditem .cb2-details.cb2-has-item .cb2-item-name, .cb2-calendar .type-perioditem .cb2-details.cb2-has-user .cb2-user-name {
+  display: none;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003171}}
+.cb2-calendar .type-perioditem .cb2-details .cb2-item-name,
+.cb2-calendar .type-perioditem .cb2-details .cb2-location-name,
+.cb2-calendar .type-perioditem .cb2-details .cb2-user-name,
+.cb2-calendar .type-perioditem .cb2-details .cb2-time-period {
+  display: block;
+  line-height: 1.1em;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003179}}
+.cb2-calendar .type-perioditem .cb2-details .cb2-location-name,
+.cb2-calendar .type-perioditem .cb2-details .cb2-user-name,
+.cb2-calendar .type-perioditem .cb2-details .cb2-time-period {
+  margin-left: 34px;
+  text-align: right;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003185}}
+.cb2-has-item .cb2-calendar .type-perioditem .cb2-details .cb2-location-name, .cb2-has-item
+.cb2-calendar .type-perioditem .cb2-details .cb2-user-name, .cb2-has-item
+.cb2-calendar .type-perioditem .cb2-details .cb2-time-period {
+  margin-left: 0;
+  text-align: left;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003190}}
+.cb2-display-strategy-CB2_SingleItemAvailability .cb2-calendar .type-perioditem .cb2-details .cb2-location-name, .cb2-display-strategy-CB2_SingleItemAvailability
+.cb2-calendar .type-perioditem .cb2-details .cb2-user-name, .cb2-display-strategy-CB2_SingleItemAvailability
+.cb2-calendar .type-perioditem .cb2-details .cb2-time-period {
+  margin-left: 0;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003195}}
+.cb2-calendar .type-perioditem .cb2-details .cb2-item-name {
+  position: absolute;
+  width: 25px;
+  overflow: hidden;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  line-height: 1em;
+  padding: 3px;
+  font-weight: bold;
+  color: #000;
+  opacity: .5;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003216}}
 .cb2-calendar label {
   cursor: pointer;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003185}}
-.cb2-calendar ul.cb2-calendar-header {
-  background-color: #FFF;
-  border: 1px solid #E1E1E1;
-  text-align: center;
-  font-size: 12px;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003192}}
-.cb2-calendar ul.cb2-calendar-header > li {
-  float: left;
-  font-weight: normal;
-  width: 14.2%;
-  padding: 1em 0;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003200}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003220}}
 .cb2-calendar .cb2-view-selector {
   float: right;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003203}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003225}}
 .cb2-calendar ul,
 .cb2-calendar li {
   padding: 0px;
   margin: 0px;
   list-style-type: none;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003217}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003232}}
 .cb2-calendar .type-week {
   clear: both;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003222}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003236}}
 .cb2-calendar .type-day {
-  border-left: 1px solid #d7d7d7;
   padding-bottom: 24px;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003227}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003239}}
 .cb2-calendar .type-day.cb2-out-of-period-entity-scope {
   opacity: 0.4;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003230}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003242}}
 .cb2-calendar .type-day.cb2-out-of-period-entity-scope * {
   font-weight: normal;
   font-style: italic;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003234}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003247}}
 .cb2-calendar .type-day.cb2-out-of-period-entity-scope .cb2-add-period {
   display: none;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003239}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003252}}
 .cb2-calendar .type-day.cb2-first {
   border-left: 2px solid #506CA9;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003241}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003255}}
 .cb2-calendar .type-day.cb2-first .day-title {
   color: #506CA9;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003246}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003260}}
 .cb2-calendar .type-day > .entry-content > ul.cb2-subposts > li {
   border-top: 1px dotted #888;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003250}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003264}}
 .cb2-calendar .type-day > .day-header > .day-title {
   color: #506CA9;
   margin: 0px;
   font-weight: normal;
   font-size: 14px;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003257}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003271}}
 .cb2-calendar .type-day.cb2-current {
   position: relative;
   box-shadow: 0px 0px 12px 0px #bcb;
   z-index: 1000;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003264}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003278}}
 .cb2-calendar .type-day.cb2-current > .day-title {
   color: #506CA9;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003270}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003284}}
 .cb2-calendar li.cb2-empty-pre-cell {
   border-left: 1px solid #888;
   opacity: 0.1;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003275}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003289}}
 .cb2-calendar > .entry-content > ul.cb2-subposts > li {
   border: 1px solid #e1e1e1;
   background-color: #fff;
   min-width: 100px;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003281}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003295}}
 .cb2-calendar > .entry-content > ul.cb2-subposts > li > .entry-content > ul.cb2-subposts {
   /* position:absolute; */
   border: 1px solid #e1e1e1;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003292}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003306}}
 .cb2-calendar .cb2-blocked,
 .cb2-calendar .cb2-blocked a {
   color: red;
   opacity: 0.7;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003299}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003313}}
 .cb2-calendar .cb2-field-name {
   display: none;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003303}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003317}}
 .cb2-calendar .cb2-period-period-status-type-name .cb2-field-value {
   color: #fff;
   background-color: #000;
   font-size: 10px;
   padding: 1px 4px;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003316}}
-.cb2-calendar .cb2-logs {
-  margin: 0px;
-  padding: 0px;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003320}}
-.cb2-calendar .cb2-logs li {
-  background-color: #ffd7d7;
-  font-style: italic;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003325}}
-.cb2-calendar .cb2-logs li:before {
-  content: 'x';
-  background-color: #ff0000;
-  color: #fff;
-  margin-right: 2px;
-  padding: 2px 4px;
-  font-weight: bold;
-  font-size: 12px;
-  font-style: normal;
-}
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003337}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003324}}
 .cb2-calendar .cb2-perioditem-has-overlap {
   opacity: 0.5;
   color: #333;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003342}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003329}}
 .cb2-calendar .cb2-perioditem-has-overlap .cb2-period-period-status-type-name .cb2-field-value {
   background-color: #777;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003346}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003333}}
 .cb2-calendar .cb2-template-available {
   cursor: pointer;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003350}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003337}}
 .cb2-calendar .cb2-add-period {
   position: absolute;
   bottom: 0;
@@ -457,19 +443,19 @@
   width: inherit;
   text-align: center;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003360}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003347}}
 .cb2-calendar ul.cb2-period-list {
   white-space: nowrap;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003365}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003352}}
 #CB2_PeriodEntity_Global_calendar_view,
 #CB2_PeriodEntity_Location_calendar_view,
 #CB2_PeriodEntity_Timeframe_calendar_view,
 #CB2_PeriodEntity_Timeframe_User_calendar_view {
   /* we currently have to do it like this because we cannot add classes to the outer wrapper :O */
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003370}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003358}}
 #CB2_PeriodEntity_Global_calendar_view h2,
 #CB2_PeriodEntity_Global_calendar_view .handlediv,
 #CB2_PeriodEntity_Location_calendar_view h2,
@@ -480,7 +466,7 @@
 #CB2_PeriodEntity_Timeframe_User_calendar_view .handlediv {
   display: none;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003372}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003363}}
 #CB2_PeriodEntity_Global_calendar_view .cmb2-wrap > .cmb-field-list > .cmb-row,
 #CB2_PeriodEntity_Location_calendar_view .cmb2-wrap > .cmb-field-list > .cmb-row,
 #CB2_PeriodEntity_Timeframe_calendar_view .cmb2-wrap > .cmb-field-list > .cmb-row,
@@ -488,17 +474,40 @@
   padding: 0px;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003377}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003370}}
 .cb2-calendar-bare .day-header > .bulkactions {
   display: none;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003378}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003374}}
 .cb2-calendar-bare .day-header > .cb2-calendar-pager {
   float: left;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003380}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_calendar\.scss}line{font-family:\00003379}}
 .cb2-calendar-bare .cb2-WP_DEBUG {
   margin: 0px;
+}
+
+/* Calendar styles */
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_debug\.scss}line{font-family:\000032}}
+.cb2-calendar .cb2-logs {
+  margin: 0px;
+  padding: 0px;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_debug\.scss}line{font-family:\000036}}
+.cb2-calendar .cb2-logs li {
+  background-color: #ffd7d7;
+  font-style: italic;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_debug\.scss}line{font-family:\0000311}}
+.cb2-calendar .cb2-logs li:before {
+  content: 'x';
+  background-color: #ff0000;
+  color: #fff;
+  margin-right: 2px;
+  padding: 2px 4px;
+  font-weight: bold;
+  font-size: 12px;
+  font-style: normal;
 }
 
 /*# sourceMappingURL=framework.css.map */

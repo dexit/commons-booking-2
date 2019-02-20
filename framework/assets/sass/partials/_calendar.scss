@@ -1,5 +1,5 @@
 /**
- * Admin screen calendars
+ * Calendar base styles for adminn & fornt-end
  *
  * .cb2-calendar
  *   .entry-footer
@@ -12,7 +12,8 @@
  *						div.day-title
  *		 				ul.cb2-subposts
  *		 					li.type-perioditem
- *		 							a.cb2-details
+ *		 							.cb2-details
+ *										span.cb2-item, span.cb2-location
  *
  * @package   CommonsBooking2
  * @author 		Annesley Newholm <annesley_newholm@yahoo.it>
@@ -25,10 +26,13 @@
 .cb2-debug-period-info {
 	display: none;
 }
+
 /* calendar bar */
 .cb2-calendar-filter {
 	margin-bottom: $padding;
-	input, select {
+
+	input,
+	select {
 		font-size: $font-size-small;
 		max-width: 150px;
 	}
@@ -38,9 +42,11 @@
 	.button {
 		/* remove default text from view */
 		@extend %icon-hide-text;
+
 		&.next-page {
 			@extend %icon-page-next; // admin only
 		}
+
 		&.prev-page {
 			@extend %icon-page-prev; // admin only
 		}
@@ -49,138 +55,8 @@
 }
 
 .cb2-calendar {
-	width:100%;
+	width: 100%;
 
-	/* status types */
-	&.cb2-has-location .cb2-location-name,
-	&.cb2-has-item .cb2-item-name,
-	&.cb2-has-user .cb2-user-name {
-		display:none;
-	}
-	.cb2-item-name,
-	.cb2-location-name,
-	.cb2-user-name,
-	.cb2-time-period {
-		display: block;
-		line-height: 1.1em;
-	}
-
-	.cb2-item-name {
-		position: absolute;
-		width: 25px;
-		overflow: hidden;
-		left:0;
-		top:0;
-		bottom: 0;
-		line-height: 1em;
-		padding: $padding-small;
-		font-weight: bold;
-		color: $color-black;
-		opacity: .5;
-	}
-	.cb2-location-name { margin-left: 34px }
-	.cb2-user-name {
-		margin-left: 34px;
-	}
-	.cb2-time-period {
-		margin-left: 34px;
-	}
-
-
-		li.type-week > ul.cb2-subposts {
-			overflow: hidden;
-			height: 100%;
-			display:flex;
-			flex-direction: row;
-
-			li.type-day {
-				display:block;
-				position: relative;
-				float: left;
-				width: 14.2%;
-				padding: $padding-small;
-				box-sizing: border-box;
-				@include background-hover($color-white, $color-yellow-background );
-				padding-bottom: 30px; /* space for + */
-
-
-				ul li {
-					display: block;
-				}
-
-				div.day-title {
-					padding: $padding;
-					text-align: center;
-					color: $color-gray-silver;
-					font-weight: bold;
-					margin: 0px;
-					font-size: $font-size-normal;
-				}
-
-				}
-
-			}
-	.type-perioditem {
-
-		@include round-rect(all);
-		font-color: $color-white;
-		font-size: $font-size-small;
-		padding:2px 8px;
-		margin-bottom:2px;
-		min-height:38px;
-		position: relative;
-
-
-		a {
-			display:block;
-			color:#fff;
-		}
-
-		.day-header,
-		.cb2-periodstatustype-name {
-			display: none;
-		}
-
-		.cb2-user-name {
-			@extend %icon-user !optional; // admin only
-		}
-
-		&.cb2-status-pickup-return {
-			@include background-hover($color-status-available, brighten($color-status-available, 20%));
-		}
-		&.cb2-status-open {
-			@include background-hover($color-status-open, brighten($color-status-open, 20%));
-		}
-		&.cb2-status-booked {
-			@include background-hover($color-status-booked, brighten($color-status-booked, 20%));
-		}
-		&.cb2-status-holiday {
-			@include background-hover($color-status-holiday, brighten($color-status-holiday, 20%));
-		}
-
-		&.cb2-multi-day:before {
-			float:right;
-			content: '\f103';
-			font-family: dashicons;
-			font-weight:bold;
-			margin-left:3px;
-			font-size: $font-size-small;
-			color: #fff;
-		}
-		&.cb2-first-day  {
-			@include round-rect(left);
-		}
-		&.cb2-middle-day {
-			@include round-rect(none);
-		}
-		&.cb2-last-day {
-			@include round-rect(right);
-		}
-	}
-
-	label {
-		cursor: pointer;
-	}
 
 	ul.cb2-calendar-header {
 		background-color: $color-white;
@@ -188,8 +64,7 @@
 		text-align: center;
 		font-size: $font-size-small;
 
-
-		> li {
+		>li {
 			float: left;
 			font-weight: normal;
 			width: 14.2%;
@@ -197,7 +72,154 @@
 		}
 	}
 
-	.cb2-view-selector {float:right;}
+	li.type-week>ul.cb2-subposts {
+		overflow: hidden;
+		height: 100%;
+		display: flex;
+		flex-direction: row;
+
+		li.type-day {
+			display: block;
+			position: relative;
+			float: left;
+			width: 14.2%;
+			padding: $padding-small;
+			box-sizing: border-box;
+			@include background-hover($color-white, $color-gray-background);
+			padding-bottom: 30px;
+			/* space for + */
+			border-left: 1px solid $color-gray-border;
+
+			div.day-title {
+				padding: $padding;
+				text-align: center;
+				color: $color-gray-silver;
+				font-size: $font-size-normal;
+			}
+
+		}
+
+	}
+
+	.type-perioditem {
+
+		@include round-rect(all);
+		color: $color-white;
+		font-size: $font-size-small;
+		padding: 2px 8px;
+		margin-bottom: 2px;
+		min-height: 38px;
+		position: relative;
+
+		&.cb2-status-pickup-return {
+			@include background-hover($color-status-available, darken($color-status-available, 5%));
+		}
+
+		&.cb2-status-open {
+			@include background-hover($color-status-open, darken($color-status-open, 5%));
+		}
+
+		&.cb2-status-booked {
+			@include background-hover($color-status-booked, darken($color-status-booked, 5%));
+		}
+
+		&.cb2-status-holiday {
+			@include background-hover($color-status-holiday, darken($color-status-holiday, 5%));
+		}
+
+		&.cb2-multi-day:before {
+			float: right;
+			content: '\f103';
+			font-family: dashicons;
+			font-weight: bold;
+			margin-left: 3px;
+			font-size: $font-size-small;
+			color: #fff;
+		}
+
+		&.cb2-first-day {
+			@include round-rect(left);
+		}
+
+		&.cb2-middle-day {
+			@include round-rect(none);
+		}
+
+		&.cb2-last-day {
+			@include round-rect(right);
+		}
+
+		a {
+			display: block;
+			color: #fff;
+		}
+
+		.day-header,
+		.cb2-periodstatustype-name {
+			display: none;
+		}
+
+		.cb2-details {
+
+			/* status types */
+			&.cb2-has-location .cb2-location-name,
+			&.cb2-has-item .cb2-item-name,
+			&.cb2-has-user .cb2-user-name {
+				display: none;
+			}
+
+			.cb2-item-name,
+			.cb2-location-name,
+			.cb2-user-name,
+			.cb2-time-period {
+				display: block;
+				line-height: 1.1em;
+			}
+
+			.cb2-location-name,
+			.cb2-user-name,
+			.cb2-time-period {
+				margin-left: 34px;
+				text-align: right;
+
+				.cb2-has-item & {
+					margin-left: 0;
+					text-align: left;
+				}
+
+				.cb2-display-strategy-CB2_SingleItemAvailability & {
+					margin-left: 0;
+				}
+			}
+
+			.cb2-item-name {
+				position: absolute;
+				width: 25px;
+				overflow: hidden;
+				left: 0;
+				top: 0;
+				bottom: 0;
+				line-height: 1em;
+				padding: $padding-small;
+				font-weight: bold;
+				color: $color-black;
+				opacity: .5;
+			}
+
+			.cb2-user-name {
+				@extend %icon-user !optional; // admin only
+			}
+
+		}
+	}
+
+	label {
+		cursor: pointer;
+	}
+
+	.cb2-view-selector {
+		float: right;
+	}
 
 	/* layout */
 	ul,
@@ -207,47 +229,39 @@
 		list-style-type: none;
 	}
 
-	// ul:after,
-	// .entry-content:after {
-	// 	content: '';
-	// 	display: table;
-	// 	clear: both;
-	// }
-
 	.type-week {
 		clear: both;
-
 	}
 
 	.type-day {
-		// min-height:150px;
-		border-left:1px solid #d7d7d7;
 		padding-bottom: 24px;
 
 		&.cb2-out-of-period-entity-scope {
-			opacity:0.4;
+			opacity: 0.4;
 
 			* {
-				font-weight:normal;
-				font-style:italic;
+				font-weight: normal;
+				font-style: italic;
 			}
+
 			.cb2-add-period {
-				display:none;
+				display: none;
 			}
 		}
 
 		&.cb2-first {
 			border-left: 2px solid $color-blue-dark;
+
 			.day-title {
 				color: $color-blue-dark;
 			}
 		}
 
-		> .entry-content > ul.cb2-subposts > li {
+		>.entry-content>ul.cb2-subposts>li {
 			border-top: 1px dotted #888;
 		}
 
-		> .day-header > .day-title {
+		>.day-header>.day-title {
 			color: $color-blue-dark;
 			margin: 0px;
 			font-weight: normal;
@@ -261,7 +275,7 @@
 
 		}
 
-		&.cb2-current > .day-title {
+		&.cb2-current>.day-title {
 			color: $color-blue-dark;
 		}
 	}
@@ -272,18 +286,18 @@
 		opacity: 0.1;
 	}
 
-	> .entry-content > ul.cb2-subposts > li {
+	>.entry-content>ul.cb2-subposts>li {
 		border: 1px solid #e1e1e1;
 		// vertical-align: top;
 		background-color: #fff;
 		min-width: 100px;
 
-		> .entry-content > ul.cb2-subposts {
+		>.entry-content>ul.cb2-subposts {
 			/* position:absolute; */
 			border: 1px solid #e1e1e1;
 		}
 
-		> .entry-content > ul.cb2-subposts > li {
+		>.entry-content>ul.cb2-subposts>li {
 			// position: relative;
 		}
 	}
@@ -307,33 +321,6 @@
 		padding: 1px 4px;
 	}
 
-	// .cb2-time-period:after {
-	// 	content:' ';
-	// 	display:table;
-	// 	clear:both;
-	// }
-
-	.cb2-logs {
-		margin: 0px;
-		padding: 0px;
-
-		li {
-			background-color: #ffd7d7;
-			font-style: italic;
-		}
-
-		li:before {
-			content: 'x';
-			background-color: #ff0000;
-			color: #fff;
-			margin-right: 2px;
-			padding: 2px 4px;
-			font-weight: bold;
-			font-size: 12px;
-			font-style: normal;
-		}
-	}
-
 	.cb2-perioditem-has-overlap {
 		opacity: 0.5;
 		color: #333;
@@ -344,7 +331,7 @@
 	}
 
 	.cb2-template-available {
-		cursor:pointer;
+		cursor: pointer;
 	}
 
 	.cb2-add-period {
@@ -366,16 +353,31 @@
 #CB2_PeriodEntity_Location_calendar_view,
 #CB2_PeriodEntity_Timeframe_calendar_view,
 #CB2_PeriodEntity_Timeframe_User_calendar_view {
+
 	/* we currently have to do it like this because we cannot add classes to the outer wrapper :O */
 	h2,
-	.handlediv {display:none;}
-	.cmb2-wrap > .cmb-field-list > .cmb-row {padding:0px;}
+	.handlediv {
+		display: none;
+	}
+
+	.cmb2-wrap>.cmb-field-list>.cmb-row {
+		padding: 0px;
+	}
 }
 
 .cb2-calendar-bare {
 	.day-header {
-		> .bulkactions {display:none;}
-		> .cb2-calendar-pager {float:left;}
+		>.bulkactions {
+			display: none;
+		}
+
+		>.cb2-calendar-pager {
+			float: left;
+		}
 	}
-	.cb2-WP_DEBUG {margin:0px;}
+
+	.cb2-WP_DEBUG {
+		margin: 0px;
+	}
 }
+
