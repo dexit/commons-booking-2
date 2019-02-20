@@ -28,6 +28,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		'menu_icon' => 'dashicons-admin-tools',
 		'supports' => array('title','thumbnail','editor','excerpt')
 	);
+	public $items = array();
 
 	static function selector_metabox( String $context = 'normal', Array $classes = array(), $none = TRUE ) {
 		return array(
@@ -146,7 +147,8 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
 	function get_the_after_content() {
 		$ID     = $this->ID;
-		return "[cb2_calendar location_id=$ID]";
+		// TODO: set the location-ID
+		return "[cb2_map template-type=items]";
 	}
 
 	function tabs( $edit_form_advanced = FALSE ) {
@@ -157,6 +159,10 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 			'cb2-tab-openinghours' => 'Opening Hours'
 		);
 		return $tabs;
+	}
+
+	function add_item( CB2_Item &$item ) {
+		if ( ! in_array( $item, $this->items ) ) array_push( $this->items, $item );
 	}
 
 	public static $default_enabled_columns = array( 'cb', 'title', 'opening_hours', 'address', 'date' );

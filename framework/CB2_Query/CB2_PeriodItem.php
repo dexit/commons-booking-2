@@ -627,7 +627,8 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
     );
     array_push( $this->posts, $this->period_entity->location );
     array_push( $this->posts, $this->period_entity->item );
-    $this->period_entity->item->add_perioditem( $this );
+		$this->period_entity->location->add_perioditem( $this );
+		$this->period_entity->item->add_perioditem( $this );
   }
 
   static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
@@ -766,7 +767,8 @@ class CB2_PeriodItem_Location_User extends CB2_PeriodItem {
     );
     array_push( $this->posts, $this->period_entity->location );
     array_push( $this->posts, $this->period_entity->user );
-    $this->period_entity->item->add_perioditem( $this );
+		$this->period_entity->location->add_perioditem( $this );
+		$this->period_entity->user->add_perioditem( $this );
   }
 
   static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
@@ -865,6 +867,9 @@ class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
     array_push( $this->posts, $this->period_entity->location );
     array_push( $this->posts, $this->period_entity->item );
     array_push( $this->posts, $this->period_entity->user );
+		$this->period_entity->location->add_perioditem( $this );
+		$this->period_entity->location->add_item( $this->period_entity->item );
+		$this->period_entity->item->add_perioditem( $this );
     $this->period_entity->user->add_perioditem( $this );
   }
 

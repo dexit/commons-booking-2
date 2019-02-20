@@ -712,11 +712,11 @@ body .cmb2-postbox .cmb-th + .cmb-td {
 }
 
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\0000375}}
-#geo-hcard-map {
+.wrap #geo-hcard-map {
   border: 1px double #666;
   padding: 2px;
-  width: 95%;
-  height: 500px;
+  width: 100%;
+  min-height: 500px;
 }
 
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\0000383}}

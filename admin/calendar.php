@@ -1,3 +1,4 @@
+<div class="wrap">
 <?php
 global $wp_query;
 
@@ -139,7 +140,7 @@ $item_text     = __( 'Item' );
 $user_text     = __( 'User' );
 print( <<<HTML
 	<form>
-		<input name='page' type='hidden' value='cb2_menu'/>
+		<input name='page' type='hidden' value='cb2-calendar'/>
 		<input type='text' name='startdate' value='$startdate_string'/> to
 		<input type='text' name='enddate' value='$enddate_string'/>
 		$location_text:<select name="location_ID">$location_options</select>
@@ -174,6 +175,8 @@ if ( (new CB2_DateTime( $startdate_string ))->after( new CB2_DateTime( $enddate_
 if ( WP_DEBUG ) {
 	if ( $output_type == 'Calendar' && ( $schema_type == 'location' || $schema_type == 'item' || $schema_type == 'user'  || $schema_type == 'form' ) )
 		print( '<div class="cb2-help">Calendar rendering of locations / items / users / forms maybe better in JSON output type</div>' );
+	if ( $output_type == 'Map'      && ( $schema_type != CB2_Location::$static_post_type ) )
+		print( "<div class='cb2-warning'>location schema hierarchy advised for Map. [$schema_type] sent</div>" );
 	if ( $wp_query->post_count ) {
 		// Details
 		$post_types     = array();
@@ -237,11 +240,9 @@ switch ( $output_type ) {
 		break;
 
 	case 'Map':
-		if ( $schema_type != CB2_Location::$static_post_type )
-			print( "<div class='cb2-warning'>location schema hierarchy advised for Map. [$schema_type] sent</div>" );
 		$template_args = array();
 		print( '<ul>' );
-		CB2::the_inner_loop( $template_args, $wp_query, 'hcard' );
+		CB2::the_inner_loop( $template_args, $wp_query, 'hcard', $template_part );
 		print( '</ul>' );
 		print( geo_hcard_map_shortcode_handler( NULL ) );
 		break;
@@ -276,3 +277,4 @@ function count_options( $array, $class = 'ok' ) {
 	return "<span class='cb2-usage-count-$class'>$count</span>";
 }
 ?>
+</div>

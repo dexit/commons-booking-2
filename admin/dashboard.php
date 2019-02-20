@@ -1,3 +1,4 @@
+<div class="wrap">
 <?php
 global $wp_query;
 
@@ -115,13 +116,14 @@ print( "<h1>Commons Booking 2 $title_text</h1>" );
 if ( (new CB2_DateTime( $startdate_string ))->after( new CB2_DateTime( $enddate_string ) ) ) // PHP 5.2.2
 	print( '<div class="cb2-warning cb2-notice">start date is more than end date</div>' );
 ?>
-<div class="cb2-calendar">
-	<div class="entry-content" style="width:100%;">
-		<?php CB2::the_calendar_header( $wp_query ); ?>
-		<ul class="cb2-subposts">
-			<!-- usually weeks -->
-			<?php CB2::the_inner_loop( array( 'action' => '' ), $wp_query, 'list', $template_part ); ?>
-		</ul>
-		<?php CB2::the_calendar_footer( $wp_query ); ?>
-	</div><!-- .entry-content -->
+	<div class="cb2-calendar">
+		<div class="entry-content" style="width:100%;">
+			<?php CB2::the_calendar_header( $wp_query ); ?>
+			<ul class="cb2-subposts">
+				<!-- usually weeks -->
+				<?php CB2::the_inner_loop( array( 'action' => '' ), $wp_query, 'list', $template_part ); ?>
+			</ul>
+			<?php CB2::the_calendar_footer( $wp_query ); ?>
+		</div><!-- .entry-content -->
+	</div>
 </div>

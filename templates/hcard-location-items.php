@@ -13,18 +13,6 @@
 		$href_click      = CB2::get_the_edit_post_url();
 		$href_class      = '';
 
-		// AJAX Popup navigation
-		if ( CB2_AJAX_POPUPS && is_admin() ) {
-			$page      = 'cb2-load-template';
-			$action    = 'edit'; // context = 'popup'
-			$template_loader_url = plugins_url(
-				"admin/load_template.php?page=$page&action=$action&ID=$ID&post_type=$post_type",
-				dirname( __FILE__ )
-			);
-			$href_click = "$template_loader_url&title=$href_title_text";
-			$href_class = 'thickbox cb2-todo';
-		}
-
 		$marker        = plugins_url( 'plugins/geo-hcard-map/images/spanner.png',       CB2_PLUGIN_ABSOLUTE );
 		$marker_shadow = plugins_url( 'plugins/geo-hcard-map/images/marker-shadow.png', CB2_PLUGIN_ABSOLUTE );
 ?>
@@ -40,7 +28,10 @@
 		</div>
 
 		<div class="cb-popup">
-			<div><?php CB2::the_geo_address(); ?></div>
+			<div class="cb2-geo-address"><?php CB2::the_geo_address(); ?></div>
+			<ul class="cb2-items">
+				<?php CB2::the_inner_loop(); ?>
+			</ul>
 		</div>
 	</li>
 <?php } ?>
