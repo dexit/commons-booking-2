@@ -100,7 +100,7 @@
 				width: 14.2%;
 				padding: $padding-small;
 				box-sizing: border-box;
-				@include background-hover($color-white);
+				@include background-hover($color-white, $color-yellow-background );
 				padding-bottom: 30px; /* space for + */
 
 
@@ -111,7 +111,7 @@
 				div.day-title {
 					padding: $padding;
 					text-align: center;
-					color: $color-grey-neutral;
+					color: $color-gray-silver;
 					font-weight: bold;
 					margin: 0px;
 					font-size: $font-size-normal;
@@ -146,16 +146,16 @@
 		}
 
 		&.cb2-status-pickup-return {
-			@include background-hover( $color-status-available );
+			@include background-hover($color-status-available, brighten($color-status-available, 20%));
 		}
 		&.cb2-status-open {
-			@include background-hover( $color-status-open );
+			@include background-hover($color-status-open, brighten($color-status-open, 20%));
 		}
 		&.cb2-status-booked {
-			@include background-hover($color-status-booked);
+			@include background-hover($color-status-booked, brighten($color-status-booked, 20%));
 		}
 		&.cb2-status-holiday {
-			@include background-hover($color-status-holiday);
+			@include background-hover($color-status-holiday, brighten($color-status-holiday, 20%));
 		}
 
 		&.cb2-multi-day:before {
@@ -183,8 +183,8 @@
 	}
 
 	ul.cb2-calendar-header {
-		background-color: #fff;
-		border: 1px solid #e1e1e1;
+		background-color: $color-white;
+		border: 1px solid $color-gray-border;
 		text-align: center;
 		font-size: $font-size-small;
 
@@ -193,7 +193,6 @@
 			float: left;
 			font-weight: normal;
 			width: 14.2%;
-			color: #444;
 			padding: $padding 0;
 		}
 	}

@@ -71,11 +71,11 @@
 	}	@else {
 	}
 }
-@mixin background-hover( $baseColor ) {
+@mixin background-hover( $baseColor, $targetcolor ) {
 	@include transition(all .3s ease);
 	background-color: $baseColor;
 	&:hover {
-		background-color: darken($baseColor, 10%);
+		background-color: $targetcolor;
 	}
 }
 @mixin darken-border( $baseColor ) {
