@@ -111,11 +111,6 @@ class CB2_Extras_Admin {
 
 		$notices_array = array();
 
-		// check if Bookings page is set
-
-		if ( empty ( CB2_Settings::get('pages_page-booking') ) ) {  $notices_array[] = __( 'You need to specify the CommonsBooking 2 bookings page.', 'commons-booking-2');
-		}
-
 		if ( $notices_array ) {
 			foreach ( $notices_array as $notice ) {
 				new WP_Admin_Notice( $notice , 'error' );
