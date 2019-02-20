@@ -50,6 +50,16 @@
 			font-weight:bold;
 			color:#ddd;
 		}
+		span.cb2-confirmed-check:before {
+			float:right;
+			content: "\f147";
+			font-family: dashicons;
+		}
+		span.cb2-approved-check:before {
+			float:right;
+			content: "\f110";
+			font-family: dashicons;
+		}
 		.cb2-user-name:before {
 			content: "\f110";
 			font-family: dashicons;

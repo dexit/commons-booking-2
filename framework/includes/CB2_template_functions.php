@@ -1,5 +1,10 @@
 <?php
 class CB2 {
+	public static function get_the_Class() {
+		global $post;
+		return ( $post ? get_class( $post ) : NULL );
+	}
+
 	public static function templates( String $context = 'list', String $type = NULL, Bool $throw_if_not_found = TRUE, &$templates_considered = NULL ) {
 		global $post;
 		$templates            = array();
@@ -37,7 +42,14 @@ class CB2 {
 
 	public static function is_confirmed() {
 		global $post;
-		return ( $post && property_exists( $post, 'confirmed_user_id' ) && $post->confirmed_user_id );
+		$period_entity = ( property_exists( $post, 'period_entity' ) ? $post->period_entity : $post );
+		return ( $period_entity && property_exists( $period_entity, 'confirmed_user_id' ) && $period_entity->confirmed_user_id );
+	}
+
+	public static function is_approved() {
+		global $post;
+		$period_entity = ( property_exists( $post, 'period_entity' ) ? $post->period_entity : $post );
+		return ( $period_entity && property_exists( $period_entity, 'approved_user_id' ) && $period_entity->approved_user_id );
 	}
 
 	public static function is_published() {

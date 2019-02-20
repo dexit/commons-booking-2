@@ -454,6 +454,10 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->period_count = count( $this->period_group->periods );
   }
 
+  function do_action_confirm() {
+		$this->confirm( get_current_user_id() );
+  }
+
   function confirm( Int $user_id = 1 ) {
 		global $wpdb;
 		$Class = get_class( $this );
@@ -547,6 +551,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 	}
 
 	function manage_columns( $columns ) {
+		$columns['confirmed'] = 'Confirmed';
+		$columns['approved']  = 'Approved';
 		if ( ! $this->period_group )
 			throw new Exception( '[' . get_class( $this ) . "] [$this->ID] has no period_group" );
 		return $this->period_group->manage_columns( $columns );
@@ -555,7 +561,18 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 	function custom_columns( $column ) {
 		if ( ! $this->period_group )
 			throw new Exception( '[' . get_class( $this ) . "] [$this->ID] has no period_group" );
-		return $this->period_group->custom_columns( $column );
+		switch ( $column ) {
+			case 'confirmed':
+				if ( property_exists( $this, 'confirmed_user_id' ) && $this->confirmed_user_id )
+					print( "<input class='cb2-tick-only' type='checkbox' checked='1' />" );
+				break;
+			case 'approved':
+				if ( property_exists( $this, 'approved_user_id' ) && $this->approved_user_id )
+					print( "<input class='cb2-tick-only' type='checkbox' checked='1' />" );
+				break;
+			default:
+				$this->period_group->custom_columns( $column );
+		}
 	}
 
   function classes() {
@@ -565,6 +582,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
     if ( property_exists( $this, 'location' ) && $this->location ) $classes .= ' cb2-has-location';
     if ( property_exists( $this, 'item' )     && $this->item )     $classes .= ' cb2-has-item';
     if ( property_exists( $this, 'user' )     && $this->user )     $classes .= ' cb2-has-user';
+    if ( property_exists( $this, 'confirmed_user_id' ) && $this->confirmed_user_id ) $classes .= ' cb2-confirmed';
+    if ( property_exists( $this, 'approved_user_id' )  && $this->confirmed_user_id ) $classes .= ' cb2-approved';
     return $classes;
   }
 

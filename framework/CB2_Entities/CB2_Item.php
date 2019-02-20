@@ -124,6 +124,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 				$Class       = get_class($this);
 				$ID          = $this->ID;
 				$form_action = '';
+				$redirect    = '/periodent-user/%action_return_value%/';
 				$do_action   = 'book';
 				$submit      = __('book the')   . " $this->post_title";
 				$name        = __('Booking of') . " $this->post_title";
@@ -147,6 +148,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 						<input type='hidden' name='name' value='$name' />
 						<input type='hidden' name='do_action' value='$Class::$do_action' />
 						<input type='hidden' name='do_action_post_ID' value='$ID' />
+						<input type='hidden' name='redirect' value='$redirect' />
 						<input type='submit' name='submit' value='$submit' />
 						[cb2_calendar $shortcode_atts_string]
 						<input type='submit' name='submit' value='$submit' />
@@ -156,9 +158,12 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 				return $form;
     }
 
-    public function do_action_book(CB2_User $user, array $values)
+    public function do_action_book( CB2_User $user, array $values )
     {
         // The booking times are based on the perioditems selected
+        $action     = 'book';
+        $booking_ID = NULL;
+
         if (! isset($values['perioditem-timeframes'])) {
             krumo($values);
             throw new Exception("perioditem-timeframes required during [$action]");
@@ -195,7 +200,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 								);
 								// Create object only (e.g. period_status_type will not be updated),
 								// and fire wordpress post events
-								$periodentity_booking->save();
+								$booking_ID = $periodentity_booking->save();
 								break;
 							case 2:
 								// We want the earliest start and the latest end
@@ -221,7 +226,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 								);
 								// Create object only (e.g. period_status_type will not be updated),
 								// and fire wordpress post events
-								$periodentity_booking->save();
+								$booking_ID = $periodentity_booking->save();
 								break;
 							default:
 								throw new Exception( "Booking failed because too many [$count] perioditem-timeframes provided. 1 or 2 is acceptable only." );
@@ -237,12 +242,12 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 								);
 								// Create objects only (e.g. period_status_type will not be updated),
 								// and fire wordpress post events
-								$periodentity_booking->save();
+								$booking_ID = $periodentity_booking->save();
 						}
 						break;
 				}
 
-        return "<div>processed ($count) perioditem availabile in to bookings</div>";
+        return $booking_ID;
     }
 
     function post_post_update() {

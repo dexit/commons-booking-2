@@ -184,6 +184,8 @@ class CB2_Query {
     // factory()s will also create the extra CB2_Time_Classes based OO data structures
     global $auto_draft_publish_transition;
 
+    $debug = WP_DEBUG && FALSE;
+
 		if ( ! $post )
 			throw new Exception( 'ensure_correct_class() requires a valid WP_Post object' );
 		if ( ! property_exists( $post, 'ID' ) )
@@ -204,6 +206,7 @@ class CB2_Query {
 					if ( $prevent_auto_draft_publish_transition ) $auto_draft_publish_transition = FALSE;
 					$post = $Class::factory_from_properties( $properties, $instance_container );
 					$auto_draft_publish_transition = $old_auto_draft_publish_transition;
+					self::get_metadata_assign( $post ); // TODO: is this 2nd call cached?
 
 					if ( is_null( $post ) )
 						throw new Exception( "Failed to create [$Class] class from post" );
@@ -214,14 +217,14 @@ class CB2_Query {
 					//   CB2_PeriodStatusType
 					// pure pseudo classes like CB2_Week are not accessed with get_post()
 					// thus caching is not relevant
-					$wp_cache = ( property_exists( $post, 'ID' ) && ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table ) );
-					if ( $wp_cache ) wp_cache_set( $post->ID, $post, 'posts' );
+					$wp_cache_set = ( property_exists( $post, 'ID' ) && ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table ) );
+					if ( $wp_cache_set ) wp_cache_set( $post->ID, $post, 'posts' );
 
-					if ( WP_DEBUG && FALSE )
-						print( "<div class='cb2-WP_DEBUG-small'>Created a [$Class] for [$post->ID] wp_cache:[$wp_cache]</div>" );
-				}
-			}
-		}
+					if ( $debug )
+						print( "<div class='cb2-WP_DEBUG-small'>Created a [$Class] for [$post->ID] wp_cache_set[$wp_cache_set]</div>" );
+				} else if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>$Class has no factory_from_properties()</div>" );
+			} else if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>$Class already correct Class</div>" );
+		} else if ( $debug ) print( "<div class='cb2-WP_DEBUG-small'>$post->post_type not managed</div>" );
 
 		return $post;
 	}
@@ -392,11 +395,14 @@ class CB2_Query {
 							}
 							*/
 						}
-						$meta_value = $meta_value_array;
-						if ( ! property_exists( $Class, 'no_metadata' ) || ! $Class::$no_metadata )
-							$meta_value = self::to_object( $meta_key, $meta_value_array[0] );
-						$post->$meta_key = $meta_value;
-						if ( WP_DEBUG && FALSE ) print( "<div class='cb2-WP_DEBUG-small'>$meta_key</div>" );
+						if ( ! property_exists( $post, $meta_key ) ) {
+							$meta_value = $meta_value_array;
+							if ( ! property_exists( $Class, 'no_metadata' ) || ! $Class::$no_metadata )
+								$meta_value = self::to_object( $meta_key, $meta_value_array[0] );
+							$post->$meta_key = $meta_value;
+							if ( WP_DEBUG && $meta_key == 'confirmed_user_id' && FALSE )
+								print( "<div class='cb2-WP_DEBUG-small'>$Class($ID)::$meta_key</div>" );
+						}
 					}
 				}
 			}
@@ -932,6 +938,14 @@ class CB2_Query {
 		} else $string = implode( $delimiter, $array );
 
 		return $string;
+	}
+
+	static public function append_token_indicators( $array, $indicator = '%' ) {
+		$new_array = array();
+		foreach ( $array as $key => $value ) {
+			$new_array["$indicator$key$indicator"] = $value;
+		}
+		return $new_array;
 	}
 
 	static function php_array( $value, $key, $output_key = TRUE ) {

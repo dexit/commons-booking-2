@@ -113,15 +113,18 @@ function cb2_init_do_action() {
 	//   bookings
 	//   block / unblock
 	// etc.
-	$_INPUT         = array_merge( $_GET, $_POST );
-	$action_post_ID = NULL;
-	if ( isset( $_INPUT['do_action'] ) ) {
-		$do_action = explode( '::', $_INPUT['do_action'] );
+	$do_action_pair    = ( isset( $_REQUEST['do_action'] )         ? $_REQUEST['do_action']         : NULL );
+	$do_action_post_ID = ( isset( $_REQUEST['do_action_post_ID'] ) ? $_REQUEST['do_action_post_ID'] : NULL );
+	$redirect          = ( isset( $_REQUEST['redirect'] )          ? $_REQUEST['redirect']          : NULL );
+	$tokens            = $_REQUEST;
+
+	if ( $do_action_pair ) {
+		$do_action = explode( '::', $do_action_pair );
 		if ( count( $do_action ) == 2 ) {
 			$Class  = $do_action[0];
 			$action = $do_action[1];
 			$method = "do_action_$action";
-			$args   = $_INPUT;
+			$args   = $_REQUEST;
 			array_shift( $args ); // Remove the page
 
 			$user = CB2_User::factory_current();
@@ -133,10 +136,10 @@ function cb2_init_do_action() {
 				$args[$name]    = ( method_exists( 'CB2_PostNavigator', $interpret_func ) ? CB2_PostNavigator::$interpret_func( $value ) : $value );
 			}
 
-			if ( isset( $_INPUT['do_action_post_ID'] ) ) {
+			if ( $do_action_post_ID ) {
 				// ------------------------------------------ method handler
 				$post_type   = $Class::$static_post_type;
-				$post_ID     = (int) $_INPUT['do_action_post_ID'];
+				$post_ID     = (int) $do_action_post_ID;
 				$action_post = CB2_Query::get_post_with_type( $post_type, $post_ID );
 				if ( $action_post )  {
 					if ( method_exists( $action_post, $method ) ) {
@@ -145,7 +148,7 @@ function cb2_init_do_action() {
 							krumo( $args );
 						}
 						// SECURITY: TODO: !!!! $action_post->$method();
-						$action_post->$method( $user, $args );
+						$tokens['action_return_value'] = $action_post->$method( $user, $args );
 					} else throw new Exception( "$method does not exist on $Class" );
 				} else throw new Exception( "Cannot find $Class($post_ID)" );
 			} else {
@@ -155,19 +158,26 @@ function cb2_init_do_action() {
 						print( "<div class='cb2-WP_DEBUG'>Static $Class::do_action_[$action]()</div>" );
 						//krumo( $args );
 					}
-					$Class::$method( $user, $args );
+					$tokens['action_return_value'] = $Class::$method( $user, $args );
 				} else throw new Exception( "Static $method does not exist on $Class" );
 			}
 		} else throw new Exception( "Invalid do_action request. Format is <Class>::<method stub after do_action_>" );
-	}
 
-	if ( isset( $_INPUT['redirect'] ) )
-		wp_redirect( $_INPUT['redirect'] );
+		// We always redirect after an action
+		// TODO: AJAX will ignore this?
+		if ( $redirect ) {
+			$tokens   = CB2_Query::append_token_indicators( $tokens );
+			$redirect = str_replace( array_keys( $tokens ), array_values( $tokens ), $redirect );
+		} else {
+			$redirect = $_SERVER['REQUEST_URI'];
+			$redirect = preg_replace( '/do_action=[^&]*/', '', $redirect );
+		}
+		wp_redirect( $redirect );
+	}
 
 	return TRUE;
 }
 add_action( 'init', 'cb2_init_do_action' );
-
 
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------

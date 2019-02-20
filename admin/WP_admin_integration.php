@@ -158,6 +158,7 @@ function cb2_post_row_actions( $actions, $post ) {
 	$post_type  = $post->post_type;
 	$post_title = htmlspecialchars( $post->post_title );
 	if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+		// TODO: is this get_metadata_assign necessary? ensure_correct_class() also does it
 		CB2_Query::get_metadata_assign( $post );
 		$cb2_post = CB2_Query::ensure_correct_class( $post );
 

@@ -323,10 +323,11 @@ abstract class CB2_PostNavigator extends stdClass {
 		$property_ID_value = (int) $property_ID_value;
 		$original_ID       = $properties['ID'];
 		$properties['ID']  = $property_ID_value;
-		$object            = ( $property_ID_value == CB2_CREATE_NEW || $force_properties
-			? $TargetClass::factory_from_properties( $properties, $instance_container, $force_properties )
-			: CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container )
-		);
+		$object            = NULL;
+		if ( $property_ID_value == CB2_CREATE_NEW || $force_properties )
+			$object = $TargetClass::factory_from_properties( $properties, $instance_container, $force_properties );
+		else
+			$object = CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container );
 		$properties['ID']  = $original_ID;
 
 		// Is this object created with intention to save?

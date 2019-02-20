@@ -24,7 +24,7 @@ class CB2_Enqueue {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 
 		$shortcodes = new CB2_Shortcodes();
-		add_shortcode( 'cb2_calendar', array( $shortcodes, 'calendar_shortcode' ) ) ;
+		add_shortcode( 'cb2_calendar',  array( $shortcodes, 'calendar_shortcode' ) ) ;
 		add_shortcode( 'cb2_timeframe', array( $shortcodes, 'timeframe_shortcode' ) ) ;
 
 		// create an API end point

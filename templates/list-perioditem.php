@@ -45,7 +45,8 @@
 	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?>>
 		<a class="cb2-details cb2-bald <?php print( $href_class ); ?>" title="<?php print( $href_title_text ); ?>" href="<?php print( $href_click ); ?>">
 			<?php CB2::the_title(); ?>
-			<?php CB2::the_logs(); ?>
+			<?php if ( CB2::is_confirmed() ) print( '<span class="cb2-confirmed-check" />' ); ?>
+			<?php if ( CB2::is_approved() )  print( '<span class="cb2-approved-check" />' ); ?>
 		</a>
 	</li>
 <?php } ?>
