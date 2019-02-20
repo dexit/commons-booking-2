@@ -7,12 +7,15 @@
 				<input class="cb2-perioditem-selector" type="checkbox" id="perioditem-<?php the_ID(); ?>" name="<?php CB2::the_post_type(); ?>s[]" value="<?php the_ID(); ?>"/>
 				<span class="cb2-time-period"><?php CB2::the_time_period(); ?></span>
 			<?php } ?>
-			<?php CB2::the_period_status_type_name(); ?>
-			<?php CB2::the_blocked(); ?>
-			<?php CB2::the_logs(); ?>
+			<div class="cb2-debug-period-info">
+				<?php CB2::the_period_status_type_name(); ?>
+				<?php CB2::the_blocked(); ?>
+				<?php CB2::the_logs(); ?>
+			</div>
 		</div>
-
+	<?php if ( is_admin() ) {	// do not place thickbox if not in wp admin interface  ?>
 		<a class="thickbox cb2-bald cb2-debug-control" name="debug" href="?inlineId=debug_popup_<?php the_ID(); ?>&amp;title=debug&amp;width=300&amp;height=500&amp;#TB_inline"></a>
 		<div id="debug_popup_<?php the_ID(); ?>" style="display:none;"><?php CB2::the_debug(); ?></div>
+	<?php } // end if is_admin ?>
 	</li>
 <?php } ?>

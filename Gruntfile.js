@@ -19,6 +19,14 @@ module.exports = function (grunt) {
           relativeAssets: true
         }
       },
+      framework: {
+        options: {
+          sassDir: 'framework/assets/sass',
+          cssDir: 'framework/assets/css',
+          environment: 'production',
+          relativeAssets: true
+        }
+      },
       adminDev: {
         options: {
           environment: 'development',
@@ -38,6 +46,18 @@ module.exports = function (grunt) {
           noLineComments: false,
           sassDir: 'public/assets/sass',
           cssDir: 'public/assets/css',
+          outputStyle: 'expanded',
+          relativeAssets: true,
+          sourcemap: true
+        }
+      },
+      frameworkDev: {
+        options: {
+          environment: 'development',
+          debugInfo: true,
+          noLineComments: false,
+          sassDir: 'framework/assets/sass',
+          cssDir: 'framework/assets/css',
           outputStyle: 'expanded',
           relativeAssets: true,
           sourcemap: true
@@ -74,7 +94,7 @@ module.exports = function (grunt) {
         'public/assets/js/*.js',
         '!public/assets/js/*.min.js'
       ]
-        
+
     },
 
     // concat and minify our JS
@@ -107,9 +127,10 @@ module.exports = function (grunt) {
         files: [
           'admin/assets/sass/**/*.scss',
           'public/assets/sass/**/*.scss',
+          'framework/assets/sass/**/*.scss',
         ],
         tasks: [
-          'compass:adminDev', 'compass:publicDev',
+					'compass:adminDev', 'compass:publicDev', 'compass:frameworkDev'
         ]
       },
       js: {
@@ -137,6 +158,7 @@ module.exports = function (grunt) {
   grunt.registerTask('dist', [
     'compass:admin',
     'compass:public',
+    'compass:framework',
     'jshint',
     'uglify:dist'
   ]);

@@ -1,0 +1,86 @@
+/*
+ * Admin screen mixins
+ *
+ * @package   CommonsBooking2
+ * @author Florian Egermann <florian@wielebenwir.de>
+ * @license   GPL-2.0+
+ * @since 0.2
+ * @link      http://www.wielebenwir.de
+ * @copyright 2015 wielebenwir
+ */
+
+ %icon-user{
+	 &:before {
+		color:white;
+		content: "\f110";
+		font-family: dashicons;
+		vertical-align: bottom;
+	}
+ }
+ %icon-page-prev{
+	 &:before {
+		content: "\f141";
+		font-family: dashicons;
+	}
+ }
+ %icon-page-next{
+	 &:before {
+		content: "\f522";
+		font-family: dashicons;
+	}
+ }
+
+  %icon-calendar-add {
+  	&:before {
+  		content: "\f132";
+  		font-family: dashicons;
+  	}
+  }
+
+%icon-hide-text {
+		text-indent: -9999px;
+		width: 32px;
+
+		&:before {
+			display: inline-block;
+			position: absolute;
+			text-indent: 9999px;
+		}
+}
+
+@mixin transition($args...) {
+	-webkit-transition: $args;
+	-moz-transition: $args;
+	-ms-transition: $args;
+	-o-transition: $args;
+	transition: $args;
+}
+
+@mixin round-rect($corners) {
+
+	@if $corners=='left' {
+		/* top-left | top-right | bottom-right | bottom-left */
+		border-radius: $radius 0 0 $radius;
+		margin-right: - $padding-small;
+	} @else if $corners=='right' {
+		border-radius: 0 $radius $radius 0;
+		margin-left: - $padding-small;
+	} @else if $corners=='all' {
+		border-radius: $radius ;
+
+	}	@else {
+	}
+}
+@mixin background-hover( $baseColor, $targetcolor ) {
+	@include transition(all .3s ease);
+	background-color: $baseColor;
+	&:hover {
+		background-color: $targetcolor;
+	}
+}
+@mixin darken-border( $baseColor ) {
+	border-color: $baseColor;
+	&:hover {
+		border-color: darken($baseColor, 10%);
+	}
+}
