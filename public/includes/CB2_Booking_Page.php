@@ -130,12 +130,7 @@ class CB2_Booking_Page {
 
 					case 'unconfirmed':
 						// notice
-						cb2_tag(
-								CB2_Settings::get('messagetemplates_please-confirm'),
-								'periodent-user',
-								$this->booking_id,
-								'notice'
-						);
+
 
 
 						break;
@@ -148,6 +143,7 @@ class CB2_Booking_Page {
 				$content = cb2_get_template_part(CB2_TEXTDOMAIN, 'item-summary', '', array('item_id' => $item_id), true);
 				$content .= cb2_get_template_part(CB2_TEXTDOMAIN, 'location-summary', '', array('location_id' => $location_id), true);
 				$content .= cb2_get_template_part(CB2_TEXTDOMAIN, 'user-summary', '', array('user_id' => $user_id), true);
+
 
 
 

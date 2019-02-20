@@ -8,17 +8,8 @@
  * @copyright 2015 wielebenwir
  */
 
-/* Variables: colors, widths, padding */
-@import "partials/_variables";
-
-/* Mixins */
-@import "partials/_mixins";
-
 /* Misc @TODO: move to partials */
 @import "partials/_misc";
-
-/* Calendar styles */
-@import "partials/_calendar";
 
 /* Forms */
 @import "partials/_forms";
@@ -34,4 +25,5 @@
 
 /* Admin Tabs */
 @import "partials/_tabs";
+
 
