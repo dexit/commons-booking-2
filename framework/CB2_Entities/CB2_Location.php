@@ -368,10 +368,14 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
   function get_api_data($version){
 		$location_data = array(
-			'id' => get_the_guid($this),
-			'name' => get_the_title($this),
-			'url' => get_post_permalink($this),
-			'address' => $this->geo_address,
+			'type' => 'Feature',
+			'properties' => array(
+				'id' => get_the_guid($this),
+				'name' => get_the_title($this),
+				'url' => get_post_permalink($this),
+				'address' => $this->geo_address,
+	
+			),
 			'geometry' => array(
 				'type'=> 'Point',
 				'coordinates' => [$this->geo_latitude, $this->geo_longitude]
@@ -379,7 +383,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		);
 		$location_desc = $this->post_excerpt;
 		if($location_desc != NULL){
-			$location_data['description'] = $location_desc;
+			$location_data['properties']['description'] = $location_desc;
 		}
 		// $location_meta = get_post_meta($location);
 		// $location_data['longitude'] = $location_meta['geo_longitude'];
