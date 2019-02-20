@@ -358,10 +358,14 @@ class CB2_Query {
 
 		if ( ! is_object( $post ) )
 			throw new Exception( 'get_metadata_assign() post object required' );
-		if ( ! property_exists( $post, 'ID' )        || ! $post->ID )
+		if ( ! property_exists( $post, 'ID' )        || ! $post->ID ) {
+			krumo($post);
 			throw new Exception( 'get_metadata_assign: $post->ID required' );
-		if ( ! property_exists( $post, 'post_type' ) || ! $post->post_type )
+		}
+		if ( ! property_exists( $post, 'post_type' ) || ! $post->post_type ) {
+			krumo($post);
 			throw new Exception( 'get_metadata_assign: $post->post_type required' );
+		}
 
 		$ID              = $post->ID;
 		$post_type       = $post->post_type;

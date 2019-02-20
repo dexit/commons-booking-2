@@ -30,7 +30,7 @@
 		<div class="cb-popup">
 			<div class="cb2-geo-address"><?php CB2::the_geo_address(); ?></div>
 			<ul class="cb2-items">
-				<?php CB2::the_inner_loop(); ?>
+				<?php CB2::the_inner_loop( $template_args, NULL, 'popup', 'items' ); ?>
 			</ul>
 		</div>
 	</li>
