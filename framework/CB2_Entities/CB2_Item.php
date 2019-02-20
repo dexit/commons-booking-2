@@ -438,7 +438,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 $data['availability'][] = $period_inst->get_api_data($version);
             }
         }
-        do_action('cb2_api_add_item_metadata', $this, $data);
+        $data = apply_filters('cb2_api_add_item_metadata', $data, $this);
         return $data;
     }
 }
