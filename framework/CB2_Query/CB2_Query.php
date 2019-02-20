@@ -206,7 +206,7 @@ class CB2_Query {
 					if ( $prevent_auto_draft_publish_transition ) $auto_draft_publish_transition = FALSE;
 					$post = $Class::factory_from_properties( $properties, $instance_container );
 					$auto_draft_publish_transition = $old_auto_draft_publish_transition;
-					self::get_metadata_assign( $post ); // TODO: is this 2nd call cached?
+					if ( $post->ID > 0 ) self::get_metadata_assign( $post ); // TODO: is this 2nd call cached?
 
 					if ( is_null( $post ) )
 						throw new Exception( "Failed to create [$Class] class from post" );
