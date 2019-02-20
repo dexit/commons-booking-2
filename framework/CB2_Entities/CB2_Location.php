@@ -362,7 +362,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
   function get_api_data($version){
 		$location_data = array(
-			'id' => $this->ID,
+			'id' => get_the_guid($this),
 			'name' => get_the_title($this),
 			'url' => get_post_permalink($this),
 			'address' => $this->geo_address,
