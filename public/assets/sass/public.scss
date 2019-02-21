@@ -8,23 +8,32 @@
  * @copyright 2015 wielebenwir
  */
 
-/* Variables: colors, widths, padding */
+/* Global variables from frameworks */
+@import "../../../framework/assets/sass/partials/variables";
+
+/* Global mixins from frameworks */
+@import "../../../framework/assets/sass/partials/mixins";
+
+/* Public-specific variables */
 @import "partials/_variables";
 
-/* Mixins */
-@import "partials/_mixins";
-
-/* Bootstrap 4: Helper mixins for responsive layouts */
-@import "../../../node_modules/bootstrap/scss/mixins/_breakpoints";
-
-/* Base styles */
-@import "partials/_base";
+/* Calendar styles */
+@import "partials/_calendar";
 
 /* Notices */
 @import "partials/_notice";
 
-/* Calendar styles */
-@import "partials/_calendar";
+// /* Mixins */
+// @import "partials/_mixins";
+
+// /* Bootstrap 4: Helper mixins for responsive layouts */
+// @import "../../../node_modules/bootstrap/scss/mixins/_breakpoints";
+
+// /* Base styles */
+// @import "partials/_base";
+
+
+
 
 /* Booking Bar */
 // @import "partials/_bookingbar";
@@ -33,7 +42,8 @@
 // @import "partials/_tooltipster";
 
 /* Leaflet.js customization */
-@import "partials/_map-leaflet";
+// @import "partials/_map-leaflet";
 
-@import "partials/_debug";
+// @import "partials/_debug";
+
 

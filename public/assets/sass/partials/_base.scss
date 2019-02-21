@@ -29,11 +29,4 @@
 }
 
 /* all individual elements (timeframes, items, etc) are grouped with cb2-box */
-.cb2_box {
-    @extend .padding;
-    overflow: hidden;
-    @include rounded($radius);
-    background: $bg-color;
-    margin-bottom: $padding * 2;
-  }
 

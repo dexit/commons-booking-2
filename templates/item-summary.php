@@ -13,9 +13,14 @@
 
 $item = CB2_Query::get_post_with_type('item', $template_args['item_id'] );
 
-?>
-<div class="cb2-item-summary">
-	<div class="cb2-item-header"><h3>Item:<?php echo $item->post_title; ?></h3></div>
-</div>
+$item_thumb = ( has_post_thumbnail( $item->ID ) ) ? get_the_post_thumbnail( $item->ID, 'thumbnail') : '';
 
+?>
+<div class="cb2-summary cb2-item-summary">
+	<h3><?php echo __('Item: ', 'commons-booking-2'); ?>
+		<a href="<?php echo esc_url( get_permalink( $item->ID ) ); ?>"><?php echo $item->post_title; ?></a>
+	</h3>
+	<div class="cb2-item-thumb cb2-summary-image"><?php echo ( $item_thumb );?></div>
+	<p class="cb2-item-excerpt"><?php echo ( $item->post_excerpt );?></p>
+</div>
 

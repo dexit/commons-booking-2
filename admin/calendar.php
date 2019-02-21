@@ -139,7 +139,7 @@ $location_text = __( 'Location' );
 $item_text     = __( 'Item' );
 $user_text     = __( 'User' );
 print( <<<HTML
-	<form>
+	<form class="cb2-calendar-filter">
 		<input name='page' type='hidden' value='cb2-calendar'/>
 		<input type='text' name='startdate' value='$startdate_string'/> to
 		<input type='text' name='enddate' value='$enddate_string'/>

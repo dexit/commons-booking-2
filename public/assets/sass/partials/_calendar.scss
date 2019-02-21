@@ -1,374 +1,53 @@
-/*
- * Calendar
- * @package   CommonsBooking2
- * @author    Florian Egermann <florian@wielebenwir.de>
- * @license   GPL-2.0+
- * @since     0.7
- * @link      http://www.wielebenwir.de
- * @copyright 2015 wielebenwir
- */
+.cb2-calendar {
+	background: $color-white;
+	box-shadow: -1px 1px 18px 4px rgba(0, 0, 0, 0.23);
+	li.type-day {
 
-/* new bits */
-.cb2-calendar ul {
-	list-style: none;
-}
-.cb2-calendar .type-week {
-	clear:both;
-}
-.cb2-calendar .type-week > ul.cb2-subposts > li {
-	float:left;
-	width:14.2%;
-}
-.cb2-calendar .type-day {
-	min-height:100px;
-}
-.cb2-calendar ul.cb2-header > li {
-	float:left;
-	width:14.2%;
-}
-.cb2-calendar ul {
-	list-style: none;
-}
-.cb2-calendar .type-week {
-	clear:both;
-}
-.cb2-calendar .type-week > ul.cb2-subposts > li {
-	float:left;
-	width:14.2%;
-}
-.cb2-calendar .type-day {
-	min-height:100px;
-}
-.cb2-calendar ul.cb2-header > li {
-	float:left;
-	width:14.2%;
-}
-/* /end new bits */
+		.type-perioditem {
+			font-weight: bold;
+			text-align: center;
+			color: $color-white;
+			height: 38px;
+			overflow: hidden;
 
+			.cb2-details { /* click-target */
+				display: block;
+				height: inherit;
 
+			}
 
-.item-circle { // the circle
-  background-color: gray;
-  border-color: gray;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
+			.cb2-time-period {
+				padding: 0;
+			}
+
+			&.cb2-status-booked {
+				cursor: not-allowed;
+
+			}
+		}
+
+		li.cb2-selectable {
+
+		&.cb2-selected {
+			background: $color-green-period-selected;
+			color: $color-green-period-selected;
+			color: $color-green-dark;
+			&:hover {
+				background: $color-green-period-selected;
+			}
+			.cb2-time-period {
+				user-select: none;
+			}
+		}
+	}
+
 }
 
-.cb2-timeframe {
+	li.type-perioditem {
+		input { /* @TODO fix target */
+			position: absolute;
+			left: -9999px;
+		}
 
-  @extend .cb2-box !optional;
-
-  .cb2-location-info {
-    display: block;
-    overflow: hidden;
-  }
+	}
 }
-
-span.cb2-item-dot { // dot representing the items
-  @extend .item-circle;
-}
-
-// tooltips
-.tooltipster-box {
-  li a {
-    display: block;
-    white-space:nowrap;
-		@extend .cb2-button !optional;
-    margin-bottom: 5px;
-    span.cb2-item-dot {
-      margin-right: 3px;
-    }
-  }
-}
-
-// hide closed and booked days on calendar-all
-.calendar-all {
-  .not-bookable, .closed {
-    display: none !important;
-    &.tooltip-item {
-      display: none !important;
-    }
-  }
-}
-
-  /* Calendar */
-  table.cb2-calendar {
-
-    margin: 1em 0 1em 0;
-    padding: 0;
-    background: $light-grey;
-
-    &:first-child {
-      @include border-radiuses($radius, $radius, $radius, $radius );
-    }
-
-    th {
-      text-align: center;
-      border:none;
-    }
-
-
-    td.day { // 1 date
-          width: 14.285%;
-          vertical-align: top;
-          background: white;
-          border-right: 1px solid $light-grey;
-          border-top: 1px solid $light-grey;
-
-          position: relative;
-          overflow: hidden;
-          text-align: center;
-
-          word-break:break-word;
-
-          &[data-tippy] {
-            cursor: pointer;
-
-          }
-
-          .cb2-j { /* date */
-            @extend .cb2-big;
-						display: block;
-            margin:0;
-            padding: 0;
-            line-height: 1em;
-            &.not-bookable  {
-              color: $inactive-color;
-            }
-          }
-
-          .cb2-M, .cb2-D { /* day name (mon, tue, ...) */
-            @extend .cb2-small;
-            color: $grey;
-          }
-
-          .cb2-field-name {
-            display: none;
-          }
-
-          .cb2-perioditem-has-overlap {
-            opacity: .5;
-          }
-
-
-          ul.cb2-slots { // container for the calendar day items ( dots )
-
-            position: absolute;
-            height: auto;
-            width: auto;
-            top:60%;
-            height: 40%;
-            width: 100%;
-            display: block;
-            z-index: 98;
-            text-align:center;
-
-            li.cb2-slot { // 1 item, for calendar-full only (showing only 1 item;
-
-              display: inline-block;
-
-              @include transition(all .3s ease);
-
-              &.j-selected-only, &.j-selected-first, &.j-selected-last, &.j-between {
-                .cb2-j, .cb2-M {
-                  color: white;
-                }
-              }
-
-              &.j-selected-only {
-                background: $blue;
-                @include border-radiuses($radius, $radius, $radius, $radius );
-
-
-              }
-              &.j-selected-first {
-                  @include border-radiuses(0, 0, $radius, $radius );
-                  background: $blue;
-                }
-                &.j-selected-last {
-                  @include border-radiuses($radius, $radius, 0, 0 );
-                  background: $blue;
-              }
-
-              &.j-between {
-                cursor: not-allowed;
-                background: $blue;
-              }
-
-
-              &[data-state="allow-booking"] { // selectable dates
-                color: $action-color;
-                span.cb2-item-dot {
-                  border-color: transparent !important;
-                  background-color: $action-color;
-                }
-              }
-              &[data-state="blocked"] {
-                span.cb2-item-dot {
-                  display: none;
-                  background-color: #FFFFFF;
-                }
-              }
-            }
-          }
-
-    }
-
-    li.cb2-calendar-day, li.cb2-weekday-row ul li {
-
-      @include transition(background .3s ease);
-
-      &.bookable { // selectable dates
-        cursor: pointer;
-        color: $action-color;
-
-
-        .cb2-cal-inner:hover {
-          background: $highlight-color-dark;
-          color: $bg-color;
-        }
-      }
-      &.selected {
-        background: $highlight-color;
-        color: mix($bg-color, $highlight-color, 60%);
-      }
-      &:hover {
-        // @include border-radius($radius);
-      }
-      &.selected-first {
-        @include selection-start-round($radius);
-        .cb2-cal-inner {
-          color: $bg-color;
-          background: $highlight-color-dark;
-        }
-      }
-      &.selected-last {
-        @include selection-end-round($radius);
-        .cb2-cal-inner {
-          color: $bg-color;
-          background: $highlight-color-dark;
-        }
-      }
-
-      &.booked {
-        cursor: not-allowed;
-        color: $error-color-dark;
-        .cb2-cal-inner {
-          // background: $grey;
-          // color: $error-color-dark;
-          background: $error-color-dark;
-          color: $bg-color;
-        }
-      }
-      &.closed {
-        cursor: not-allowed;
-        color: darken( $inactive-color, 20%);
-        .cb2-cal-inner {
-          background: $bg-inner-color;
-        }
-          &.overbooking {
-            @extend .selected;
-
-        }
-      }
-    }
-
-    li.cb2-date:first-of-type { // add left margin to the k entry to move day to correct cell
-      &.weekday_1 {margin-left: 0; }
-      &.weekday_2 {margin-left: $cellwidth; }
-      &.weekday_3 {margin-left: $cellwidth * 2; }
-      &.weekday_4 {margin-left: $cellwidth * 3; }
-      &.weekday_5 {margin-left: $cellwidth * 4; }
-      &.weekday_6 {margin-left: $cellwidth * 5; }
-      &.weekday_7 {margin-left: $cellwidth * 6; }
-    }
-
-  }
-
-  ul.cb2-calendar-grouped {
-    li.cb2-date {
-      ul.cb2-slots {
-        li.cb2-slot {
-          display: none;
-        }
-        li.cb2-slot[data-state="allow-booking"] {
-          &:nth-child(1) {
-            display: inline-block;
-          }
-
-        }
-        li.cb2-slot-count {
-          display: none;
-        }
-      }
-    }
-  }
-
-  ul.cb2-calendar-grouped-large {
-    li.cb2-date {
-      ul.cb2-slots {
-        li.cb2-slot[data-state="allow-booking"] {
-          &:nth-child(1),&:nth-child(2),&:nth-child(3) {
-            display: inline-block;
-          }
-
-        }
-        li.cb2-slot-count {
-          display: inline-block;
-          font-size:14px;
-        }
-      }
-    }
-  }
-  /*
-  Tooltips
-  */
-  .cb2-calendar-theme {
-    &.tippy-tooltip {
-      box-shadow: 0px 0px 15px rgba(0,0,0,.2);
-      background-color: $white;
-      color:$dark-grey;
-    }
-    .tippy-content {
-      text-align: left;
-      ul {
-        list-style-type: none;
-        padding: 0;
-        margin:0 0 10px 0;
-        li {
-          padding:0;
-          margin:10px 0 0 0;
-        }
-        img {
-          display: inline-block;
-          max-width: 40px;
-          max-height:40px;
-          height:auto;
-          width:auto;
-          margin:0 10px 0 0;
-        }
-        a {
-          display: inline-block;
-          top: -10px;
-          position: relative;
-        }
-      }
-    }
-  }
-
-  .cb2-calendar-grouped {
-    .tippy-popper[x-placement^=top] .tippy-arrow {
-        border-top: 7px solid $white;
-    }
-    .tippy-popper[x-placement^=bottom] .tippy-arrow {
-        border-bottom: 7px solid $white;
-    }
-    .tippy-popper[x-placement^=right] .tippy-arrow {
-        border-right: 7px solid $white;
-    }
-    .tippy-popper[x-placement^=left] .tippy-arrow {
-        border-left: 7px solid $white;
-    }
-  }

@@ -1,0 +1,416 @@
+/**
+ * Calendar base styles for adminn & fornt-end
+ *
+ * .cb2-calendar
+ *   .entry-footer
+ *   .entry-content
+ *		 	.cb2-calendar-header
+ *		 ul.cb2-subposts
+ *		 	li.type-week
+ *		 		ul.cb2-subposts
+ *					li.type-day
+ *						div.day-title
+ *		 				ul.cb2-subposts
+ *		 					li.type-perioditem
+ *		 							.cb2-details
+ *										span.cb2-item, span.cb2-location
+ *
+ * @package   CommonsBooking2
+ * @author 		Annesley Newholm <annesley_newholm@yahoo.it>
+ * @license   GPL-2.0+
+ * @since 0.2
+ * @link      http://www.wielebenwir.de
+ * @copyright 2015 wielebenwir
+ */
+
+.cb2-debug-period-info {
+	display: none;
+}
+
+/* calendar bar */
+.cb2-calendar-filter {
+	margin-bottom: $padding;
+
+	input,
+	select {
+		font-size: $font-size-small;
+		max-width: 150px;
+	}
+}
+
+.cb2-calendar-pager {
+	.button {
+		/* remove default text from view */
+		@extend %icon-hide-text;
+
+		&.next-page {
+			@extend %icon-page-next; // admin only
+		}
+
+		&.prev-page {
+			@extend %icon-page-prev; // admin only
+		}
+
+	}
+}
+
+.cb2-calendar {
+	width: 100%;
+
+
+	ul.cb2-calendar-header {
+		background-color: $color-white;
+		border: 1px solid $color-gray-border;
+		text-align: center;
+		font-size: $font-size-small;
+
+		>li {
+			float: left;
+			font-weight: normal;
+			width: 14.2%;
+			padding: $padding 0;
+		}
+	}
+
+	li.type-week>ul.cb2-subposts {
+		overflow: hidden;
+		height: 100%;
+		display: flex;
+		flex-direction: row;
+
+		li.type-day {
+			display: block;
+			position: relative;
+			float: left;
+			width: 14.2%;
+			padding: $padding-small;
+			box-sizing: border-box;
+			@include background-hover($color-white, $color-gray-background);
+			padding-bottom: 30px;
+			/* space for + */
+			border-left: 1px solid $color-gray-border;
+
+			div.day-title {
+				padding: $padding;
+				text-align: center;
+				color: $color-gray-silver;
+				font-size: $font-size-normal;
+			}
+
+		}
+
+	}
+
+	.type-perioditem {
+
+		@include round-rect(all);
+		color: $color-white;
+		font-size: $font-size-small;
+		padding: 2px 8px;
+		margin-bottom: 2px;
+		min-height: 38px;
+		position: relative;
+
+		&.cb2-status-pickup-return {
+			@include background-hover($color-status-available, darken($color-status-available, 5%));
+		}
+
+		&.cb2-status-open {
+			@include background-hover($color-status-open, darken($color-status-open, 5%));
+		}
+
+		&.cb2-status-booked {
+			@include background-hover($color-status-booked, darken($color-status-booked, 5%));
+		}
+
+		&.cb2-status-holiday {
+			@include background-hover($color-status-holiday, darken($color-status-holiday, 5%));
+		}
+
+		&.cb2-multi-day:before {
+			float: right;
+			content: '\f103';
+			font-family: dashicons;
+			font-weight: bold;
+			margin-left: 3px;
+			font-size: $font-size-small;
+			color: #fff;
+		}
+
+		&.cb2-first-day {
+			@include round-rect(left);
+		}
+
+		&.cb2-middle-day {
+			@include round-rect(none);
+		}
+
+		&.cb2-last-day {
+			@include round-rect(right);
+		}
+
+		a {
+			display: block;
+			color: #fff;
+		}
+
+		.day-header,
+		.cb2-periodstatustype-name {
+			display: none;
+		}
+
+		.cb2-details {
+
+			.cb2-item-name,
+			.cb2-location-name,
+			.cb2-user-name,
+			.cb2-time-period {
+				display: block;
+				line-height: 1.1em;
+			}
+
+
+
+			.cb2-item-name {
+				position: absolute;
+				width: 25px;
+				overflow: hidden;
+				left: 0;
+				top: 0;
+				bottom: 0;
+				line-height: 1em;
+				padding: $padding-small;
+				font-weight: bold;
+				color: $color-black;
+				opacity: .5;
+			}
+
+			.cb2-user-name {
+				@extend %icon-user !optional; // admin only
+			}
+
+			/* hide names if navigated to a screen where the context is set  */
+			.cb2-location-name {
+				.cb2-has-location & {
+					display: none;
+				}
+			}
+			.cb2-item-name {
+				.cb2-has-item & {
+					display: none;
+				}
+			}
+			.cb2-user-name {
+				.cb2-has-user & {
+					display: none;
+				}
+			}
+			.cb2-location-name,
+			.cb2-user-name,
+			.cb2-time-period {
+				margin-left: 34px;
+				text-align: right;
+
+				.cb2-has-item & {
+					margin-left: 0;
+					text-align: left;
+				}
+
+				.cb2-display-strategy-CB2_SingleItemAvailability & {
+					margin-left: 0;
+				}
+			}
+		}
+	}
+
+	label {
+		cursor: pointer;
+	}
+
+	.cb2-view-selector {
+		float: right;
+	}
+
+	/* layout */
+	ul,
+	li {
+		padding: 0px;
+		margin: 0px;
+		list-style-type: none;
+	}
+
+	.type-week {
+		clear: both;
+	}
+
+	.type-day {
+		padding-bottom: 24px;
+
+		&.cb2-out-of-period-entity-scope {
+			opacity: 0.4;
+
+			* {
+				font-weight: normal;
+				font-style: italic;
+			}
+
+			.cb2-add-period {
+				display: none;
+			}
+		}
+
+		&.cb2-first {
+			border-left: 2px solid $color-blue-dark;
+
+			.day-title {
+				color: $color-blue-dark;
+			}
+		}
+
+		>.entry-content>ul.cb2-subposts>li {
+			border-top: 1px dotted #888;
+		}
+
+		>.day-header>.day-title {
+			color: $color-blue-dark;
+			margin: 0px;
+			font-weight: normal;
+			font-size: $font-size-normal;
+		}
+
+		&.cb2-current {
+			position: relative;
+			box-shadow: 0px 0px 12px 0px #bcb;
+			z-index: 1000;
+
+		}
+
+		&.cb2-current>.day-title {
+			color: $color-blue-dark;
+		}
+	}
+
+
+	li.cb2-empty-pre-cell {
+		border-left: 1px solid #888;
+		opacity: 0.1;
+	}
+
+	>.entry-content>ul.cb2-subposts>li {
+		border: 1px solid #e1e1e1;
+		// vertical-align: top;
+		background-color: #fff;
+		min-width: 100px;
+
+		>.entry-content>ul.cb2-subposts {
+			/* position:absolute; */
+			border: 1px solid #e1e1e1;
+		}
+
+		>.entry-content>ul.cb2-subposts>li {
+			// position: relative;
+		}
+	}
+
+	/* fields */
+	.cb2-blocked,
+	.cb2-blocked a {
+		color: red;
+		opacity: 0.7;
+	}
+
+
+	.cb2-field-name {
+		display: none;
+	}
+
+	.cb2-period-period-status-type-name .cb2-field-value {
+		color: #fff;
+		background-color: #000;
+		font-size: 10px;
+		padding: 1px 4px;
+	}
+
+	.cb2-perioditem-has-overlap {
+		opacity: 0.5;
+		color: #333;
+	}
+
+	.cb2-perioditem-has-overlap .cb2-period-period-status-type-name .cb2-field-value {
+		background-color: #777;
+	}
+
+	.cb2-template-available {
+		cursor: pointer;
+	}
+
+	.cb2-add-period {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		width: inherit;
+		text-align: center;
+		@extend %icon-calendar-add;
+	}
+
+	ul.cb2-period-list {
+		white-space: nowrap;
+	}
+}
+
+
+/* Hacks for hiding... @TODO re-orgnise add classes and cleanup */
+#CB2_PeriodEntity_Global_calendar_view,
+#CB2_PeriodEntity_Location_calendar_view,
+#CB2_PeriodEntity_Timeframe_calendar_view,
+#CB2_PeriodEntity_Timeframe_User_calendar_view {
+
+	/* we currently have to do it like this because we cannot add classes to the outer wrapper :O */
+	h2,
+	.handlediv {
+		display: none;
+	}
+
+	.cmb2-wrap>.cmb-field-list>.cmb-row {
+		padding: 0px;
+	}
+}
+
+.cb2-calendar-bare {
+	.day-header {
+		>.bulkactions {
+			display: none;
+		}
+
+		>.cb2-calendar-pager {
+			float: left;
+		}
+	}
+
+	.cb2-WP_DEBUG {
+		margin: 0px;
+	}
+}
+/* 100% width on Availability calendar @TODO: clean up */
+#CB2_PeriodEntity_Timeframe_calendar_view,
+#CB2_PeriodEntity_Location_calendar_view {
+ .cmb-td {
+	 width: 100%
+ 	}
+ }
+/* Hide navigation and other superflous elements on opening hours */
+#CB2_PeriodEntity_Location_calendar_view {
+	.cb2-calendar-pager,
+	.cb2-view-selector,
+	.cb2-object-summary-bar {
+		display: none;
+	}
+
+	.cb2-calendar-header {
+		display: none;
+		&:first-of-type {
+			display: block;
+		}
+	}
+}
