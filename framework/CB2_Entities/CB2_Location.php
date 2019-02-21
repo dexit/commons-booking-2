@@ -371,7 +371,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		$location_data = array(
 			'type' => 'Feature',
 			'properties' => array(
-				'id' => get_the_guid($this),
+				'uid' => get_the_guid($this),
 				'name' => get_the_title($this),
 				'url' => get_post_permalink($this),
 				'address' => $this->geo_address,
@@ -379,7 +379,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 			),
 			'geometry' => array(
 				'type'=> 'Point',
-				'coordinates' => [$this->geo_latitude, $this->geo_longitude]
+				'coordinates' => [(float)$this->geo_latitude, (float)$this->geo_longitude]
 			)
 		);
 		$location_desc = $this->post_excerpt;

@@ -404,27 +404,36 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 			),
 			'items' => array(),
 			'owners' => array(),
-			'locations' => array()
+			'locations' => array(
+				'type' => 'FeatureCollection',
+				'features' => array()
+				)
 		);
+		$locationMap = array();
+		$ownerMap = array();
 		foreach ($this->wp_query->posts as $item) {
 			$data['items'][] = $item->get_api_data($version);
 			// get location data from items (this can not be done by the items themselves as we store the locations in a top-level array within the data structure)
 			if ($item->perioditems != null) {
 				foreach ($item->perioditems as $period_inst) {
 					$location = $period_inst->period_entity->location;
-					if (!array_key_exists($location->ID, $data['locations'])) {
-						$data['locations'][$location->ID] = $location->get_api_data($version);
+					if (!array_key_exists($location->ID, $locationMap)) {
+						$locationData = $location->get_api_data($version);
+						$data['locations']['features'][] = $locationData;
+						$locationMap[$location->ID] = $locationData;
 					}
 				}
 			}
 			// get owner data (this is done here for the same reason as for the location data)
 			$owner_id = $item->post_author;
-			if (!array_key_exists($owner_id, $data['owners'])) {
+			if (!array_key_exists($owner_id, $ownerMap)) {
 				$owner_data = array(
 					'name' => get_the_author_meta('user_nicename', $owner_id),
-					'url' => get_author_posts_url($owner_id)
+					'url' => get_author_posts_url($owner_id),
+					'uid' => (string)$owner_id
 				);
-				$data['owners'][$owner_id] = $owner_data;
+				$ownerMap[$owner_id] = $owner_data;
+				$data['owners'][] = $owner_data;
 			}
 		}
 		return $data;
