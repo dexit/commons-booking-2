@@ -23,7 +23,7 @@
 		$add_new_values[ 'context_post_type' ] = $context_post->post_type;
 		if ( $context_post instanceof CB2_PeriodEntity ) {
 			// In context with main post?
-			if ( ( $context_post->entity_datetime_to   && $context_post->entity_datetime_to->before( $date  ) )
+			if ( ( $context_post->entity_datetime_to   && $context_post->entity_datetime_to->lessThanOrEqual( $date  ) )
 				|| ( $context_post->entity_datetime_from && $context_post->entity_datetime_from->after( $date ) )
 			) {
 				$out_of_period_entity_scope = TRUE;

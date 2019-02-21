@@ -149,16 +149,22 @@
 			@include round-rect(right);
 		}
 
-		.cb2-confirmed-check:before {
-			float:right;
-			content: "\f147";
-			font-family: dashicons;
-		}
-
+		.cb2-confirmed-check:before,
 		.cb2-approved-check:before {
 			float:right;
-			content: "\f110";
 			font-family: dashicons;
+		}
+		.cb2-confirmed-check:after,
+		.cb2-approved-check:after {
+			content:' ';
+			clear:both;
+			display: table;
+		}
+		.cb2-confirmed-check:before {
+			content: "\f147";
+		}
+		.cb2-approved-check:before {
+			content: "\f110";
 		}
 
 		a {

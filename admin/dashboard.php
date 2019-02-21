@@ -21,4 +21,6 @@ $title_text   = __( 'Dashboard' );
 			<?php CB2::the_calendar_footer( $wp_query ); ?>
 		</div><!-- .entry-content -->
 	</div>
+	<br style="clear:both;"/>
+	<?php if ( WP_DEBUG ) krumo( $wp_query ); ?>
 </div>
