@@ -161,13 +161,6 @@
 
 		.cb2-details {
 
-			/* status types */
-			&.cb2-has-location .cb2-location-name,
-			&.cb2-has-item .cb2-item-name,
-			&.cb2-has-user .cb2-user-name {
-				display: none;
-			}
-
 			.cb2-item-name,
 			.cb2-location-name,
 			.cb2-user-name,
@@ -176,21 +169,7 @@
 				line-height: 1.1em;
 			}
 
-			.cb2-location-name,
-			.cb2-user-name,
-			.cb2-time-period {
-				margin-left: 34px;
-				text-align: right;
 
-				.cb2-has-item & {
-					margin-left: 0;
-					text-align: left;
-				}
-
-				.cb2-display-strategy-CB2_SingleItemAvailability & {
-					margin-left: 0;
-				}
-			}
 
 			.cb2-item-name {
 				position: absolute;
@@ -210,6 +189,37 @@
 				@extend %icon-user !optional; // admin only
 			}
 
+			/* hide names if navigated to a screen where the context is set  */
+			.cb2-location-name {
+				.cb2-has-location & {
+					display: none;
+				}
+			}
+			.cb2-item-name {
+				.cb2-has-item & {
+					display: none;
+				}
+			}
+			.cb2-user-name {
+				.cb2-has-user & {
+					display: none;
+				}
+			}
+			.cb2-location-name,
+			.cb2-user-name,
+			.cb2-time-period {
+				margin-left: 34px;
+				text-align: right;
+
+				.cb2-has-item & {
+					margin-left: 0;
+					text-align: left;
+				}
+
+				.cb2-display-strategy-CB2_SingleItemAvailability & {
+					margin-left: 0;
+				}
+			}
 		}
 	}
 
@@ -349,6 +359,8 @@
 	}
 }
 
+
+/* Hacks for hiding... @TODO re-orgnise add classes and cleanup */
 #CB2_PeriodEntity_Global_calendar_view,
 #CB2_PeriodEntity_Location_calendar_view,
 #CB2_PeriodEntity_Timeframe_calendar_view,
@@ -380,4 +392,25 @@
 		margin: 0px;
 	}
 }
+/* 100% width on Availability calendar @TODO: clean up */
+#CB2_PeriodEntity_Timeframe_calendar_view,
+#CB2_PeriodEntity_Location_calendar_view {
+ .cmb-td {
+	 width: 100%
+ 	}
+ }
+/* Hide navigation and other superflous elements on opening hours */
+#CB2_PeriodEntity_Location_calendar_view {
+	.cb2-calendar-pager,
+	.cb2-view-selector,
+	.cb2-object-summary-bar {
+		display: none;
+	}
 
+	.cb2-calendar-header {
+		display: none;
+		&:first-of-type {
+			display: block;
+		}
+	}
+}

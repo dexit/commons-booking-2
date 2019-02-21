@@ -254,11 +254,18 @@ array(
 		'desc' => 'Message templates. You can use html & {{template_tags}}',
 		'fields' => array(
 			array(
-				'name' => __('Booking page confirm your booking', 'commons-booking-2'),
+				'name' => __('Please confirm your booking', 'commons-booking-2'),
 				'desc' => __('', 'commons-booking-2'),
 				'id' => 'messagetemplates_please-confirm',
 				'type' => 'textarea_small',
-				'default' => 'Please confirm your booking of {{item_name}} at {{location_name}}',
+				'default' => __('Please confirm your booking of {{item_name}} at {{location_name}}', 'commons-booking-2'),
+			),
+			array(
+				'name' => __('Booking page confirm your booking', 'commons-booking-2'),
+				'desc' => __('', 'commons-booking-2'),
+				'id' => 'messagetemplates_booking-confirmed',
+				'type' => 'textarea_small',
+				'default' => __('Your booking of {{item_name}} at {{location_name}} has been confirmed!', 'commons-booking-2'),
 			),
 		)
 	),

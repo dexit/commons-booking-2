@@ -39,6 +39,23 @@
  * @link      http://www.wielebenwir.de
  * @copyright 2015 wielebenwir
  */
+/* -------------------- ICONS -------------------- */
+/* -------------------- Animation -------------------- */
+/* -------------------- Round rect (periods) -------------------- */
+/* -------------------- @Extend Blocks -------------------- */
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\0000399}}
+.cb2_box, .cb2_notice, .cb2-button, .cb2-summary {
+  padding: 0.5em 1em;
+  overflow: hidden;
+  border-radius: 5px;
+  margin-bottom: 2em;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\00003106}}
+.cb2-notice {
+  background-color: #FFF9C5;
+}
+
 /* Public-specific variables */
 /*
  * Base colors etc.
@@ -96,6 +113,60 @@
   /* @TODO fix target */
   position: absolute;
   left: -9999px;
+}
+
+/* Notices */
+/*
+ * Notices
+ *
+ * @package   CommonsBooking2
+ * @author    Florian Egermann <florian@wielebenwir.de>
+ * @license   GPL-2.0+
+ * @since 0.2
+ * @link      http://www.wielebenwir.de
+ * @copyright 2015 wielebenwir
+ */
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_notice\.scss}line{font-family:\0000312}}
+.cb2_notice {
+  background-color: #FFF9C5;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_notice\.scss}line{font-family:\0000317}}
+.cb2-button {
+  margin: 0;
+  background-color: #67b32a;
+  color: #FFF;
+  font-weight: bold;
+  box-shadow: 0 0 transparent !important;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_notice\.scss}line{font-family:\0000324}}
+.cb2-button:hover {
+  background-color: darken #67b32a, 30%;
+  color: #FFF;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_notice\.scss}line{font-family:\0000330}}
+.cb2-summary {
+  display: block;
+  border: 1px solid #84AE53;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_notice\.scss}line{font-family:\0000333}}
+.cb2-summary dt {
+  margin: 0;
+  padding: 0;
+  float: left;
+  min-width: 150px;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_notice\.scss}line{font-family:\0000337}}
+.cb2-summary dt dl {
+  margin: 0;
+  padding: 0;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/fleg\/WorkBench\/3\%20DEV\/Apache\/cb2\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_notice\.scss}line{font-family:\0000343}}
+.cb2-summary .cb2-summary-image {
+  margin-right: 1em;
+  border-radius: 5px;
+  float: left;
 }
 
 /* Booking Bar */

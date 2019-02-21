@@ -9,6 +9,9 @@
  * @copyright 2015 wielebenwir
  */
 
+
+/* -------------------- ICONS -------------------- */
+
  %icon-user{
 	 &:before {
 		color:white;
@@ -48,6 +51,8 @@
 		}
 }
 
+/* -------------------- Animation -------------------- */
+
 @mixin transition($args...) {
 	-webkit-transition: $args;
 	-moz-transition: $args;
@@ -55,6 +60,16 @@
 	-o-transition: $args;
 	transition: $args;
 }
+
+@mixin background-hover($baseColor, $targetcolor) {
+	@include transition(all .3s ease);
+	background-color: $baseColor;
+
+	&:hover {
+		background-color: $targetcolor;
+	}
+}
+/* -------------------- Round rect (periods) -------------------- */
 
 @mixin round-rect($corners) {
 
@@ -71,16 +86,23 @@
 	}	@else {
 	}
 }
-@mixin background-hover( $baseColor, $targetcolor ) {
-	@include transition(all .3s ease);
-	background-color: $baseColor;
-	&:hover {
-		background-color: $targetcolor;
-	}
-}
+
 @mixin darken-border( $baseColor ) {
 	border-color: $baseColor;
 	&:hover {
 		border-color: darken($baseColor, 10%);
 	}
+}
+
+/* -------------------- @Extend Blocks -------------------- */
+
+.cb2_box {
+	padding: $padding / 2 $padding;
+	overflow: hidden;
+	@include round-rect(all);
+	margin-bottom: $padding * 2;
+}
+
+.cb2-notice {
+	background-color: $color-yellow-background;
 }
