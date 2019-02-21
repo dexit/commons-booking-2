@@ -30,7 +30,7 @@ define( 'CB2_AJAX_POPUPS', TRUE );
 // ----------------------------------------------------------------------------------------
 class CB2_Query {
 	// TODO: rename CB2_Query to CB2_Utility
-  public static $json_date_format = 'Y-m-d H:i:s';
+  public static $json_date_format = 'Y-m-d\TH:i:sP';
   public static $date_format      = 'Y-m-d';
   public static $datetime_format  = 'Y-m-d H:i:s';
 

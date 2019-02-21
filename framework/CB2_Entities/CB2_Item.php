@@ -424,10 +424,10 @@ class CB2_Item extends CB2_Post implements JsonSerializable
     }
     function get_api_data(string $version){
         $data = array(
-            'id' => get_the_guid($this),
+            'uid' => get_the_guid($this),
             'name' => get_the_title($this),
             'url' => get_post_permalink($this),
-            'owner_id' => get_the_author_meta('ID', $this->post_author)
+            'owner_uid' => (string)get_the_author_meta('ID', $this->post_author)
         );
         $excerpt = $this->post_excerpt;
         if($excerpt != NULL){
