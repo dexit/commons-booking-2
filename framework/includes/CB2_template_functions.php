@@ -224,11 +224,11 @@ class CB2 {
 		echo get_post_type();
 	}
 
-	public static function the_calendar_footer( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-header">', $after = '</ul>' ) {
+	public static function the_calendar_footer( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-calendar-header">', $after = '</ul>' ) {
 		echo self::get_the_calendar_footer( $query, $classes, $type, $before, $after );
 	}
 
-	public static function get_the_calendar_footer( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-header">', $after = '</ul>' ) {
+	public static function get_the_calendar_footer( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-calendar-header">', $after = '</ul>' ) {
 		return self::get_the_calendar_header( $query, $classes, $type, $before, $after );
 	}
 
@@ -263,17 +263,19 @@ class CB2 {
 
 		return "<div class='entry-footer'>
 				<div class='cb2-calendar-pager'>
-					<a href='$timeless_url&startdate=$prevpage_start_string&enddate=$prevpage_end_string'>&lt;&lt; previous page</a>
-					| <a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string'>next page &gt;&gt;</a>
+					<span class='pagination-links'>
+					<a href='$timeless_url&startdate=$prevpage_start_string&enddate=$prevpage_end_string' class='prev-page button'>&lt;&lt; previous page</a>
+					<a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string' class='next-page button'>next page &gt;&gt;</a>
+					</span>
 				</div>
 			</div>";
 	}
 
-	public static function the_calendar_header( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-header">', $after = '</ul>' ) {
+	public static function the_calendar_header( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-calendar-header">', $after = '</ul>' ) {
 		echo self::get_the_calendar_header( $query, $classes, $type, $before, $after );
 	}
 
-	public static function get_the_calendar_header( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-header">', $after = '</ul>' ) {
+	public static function get_the_calendar_header( $query = NULL, $classes = '', $type = 'li', $before = '<ul class="cb2-calendar-header">', $after = '</ul>' ) {
 		global $wp_query;
 		$html = '';
 		$schema_type = NULL;

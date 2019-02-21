@@ -11,6 +11,39 @@
 
  .cb2_notice {
 	@extend .cb2_box;
-	background: $color-notice;
+	background-color: $color-yellow-background;
  }
 
+.cb2-button {
+	@extend .cb2_box;
+	margin: 0;
+	background-color: $color-status-available;
+	color: $color-white;
+	font-weight: bold;
+	box-shadow: 0 0 transparent !important;
+	&:hover {
+		background-color: darken ( $color-status-available, 30% );
+		color: $color-white;
+	}
+}
+
+.cb2-summary {
+		@extend .cb2_box;
+		display: block;
+		dt {
+			margin: 0; padding: 0;
+			float: left;
+			min-width: 150px;
+			dl {
+				margin: 0;
+				padding: 0;
+			}
+		}
+		border: 1px solid $color-green-dark;
+		.cb2-summary-image {
+			margin-right: $padding;
+			border-radius: $radius;
+			float: left;
+		}
+
+}

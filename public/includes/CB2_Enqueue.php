@@ -45,7 +45,10 @@ class CB2_Enqueue {
 	 * @return void
 	 */
 	public static function enqueue_styles() {
-		wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+		if ( !is_admin() ) { // prevent style from loading in admin
+			wp_enqueue_style( CB2_TEXTDOMAIN . '-framework-styles', plugins_url( 'framework/assets/css/framework.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+			wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+		}
 	}
 	/**
 	 * Register and enqueues public-facing JavaScript files.

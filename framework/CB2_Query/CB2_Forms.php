@@ -146,7 +146,7 @@ class CB2_Forms {
     return $cleared;
   }
 
-  static function the_form( Array &$selections, Array $defaults = array(), $form_class = '' ) {
+  static function the_form( Array &$selections, Array $defaults = array(), $form_class = 'cb2-calendar-filter' ) {
 		$selections       = array_merge( $defaults, $selections );
 
 		// --------------------------------------- Defaults

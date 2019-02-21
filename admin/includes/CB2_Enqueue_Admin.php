@@ -60,6 +60,9 @@ class CB2_Enqueue_Admin {
 	 * @since 2.0.0
 	 */
 	public function enqueue_admin_styles() {
+
+		wp_enqueue_style(CB2_TEXTDOMAIN . '-framework-styles', plugins_url('framework/assets/css/framework.css', CB2_PLUGIN_ABSOLUTE), array(), CB2_VERSION);
+
 		wp_enqueue_style( CB2_TEXTDOMAIN . '-admin-styles', plugins_url( 'admin/assets/css/admin.css', CB2_PLUGIN_ABSOLUTE ), array( 'dashicons' ), CB2_VERSION );
 		geo_hcard_map_load_styles();
 	}
