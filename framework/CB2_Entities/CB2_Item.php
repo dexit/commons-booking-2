@@ -128,20 +128,15 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 				$do_action   = 'book';           // See CB2_Item->do_action_book() below
 				$submit      = __('book the')   . " $this->post_title";
 				$name        = __('Booking of') . " $this->post_title";
-				$view_mode   = CB2_Week::$static_post_type;        // posts data reorganised into CB2_TimeClass hierarchy
-				$selection_mode    = 'range';    // Only 1 range, from => to, can be selected
-				$display_strategy  = 'CB2_SingleItemAvailability'; // posts filtered according to use case
-				// TODO: initial CB2_Item booking calendar pagesize settings
-				$startdate   = '';
-				$enddate     = '';
 
 				$shortcode_atts = array(
+					// TODO: initial CB2_Item booking calendar pagesize settings
+					'startdate'        => '',
+					'enddate'          => '',
 					// item-ID not necessary because CB2_SingleItemAvailability uses the global post
-					'start-date'       => $startdate,
-					'end-date'         => $enddate,
-					'view-mode'        => $view_mode,
-					'display-strategy' => $display_strategy,
-					'selection-mode'   => $selection_mode,
+					'schema-type'      => CB2_Week::$static_post_type,
+					'display-strategy' => 'CB2_SingleItemAvailability',
+					'selection-mode'   => 'range',
         );
         $shortcode_atts_string = CB2_Query::implode( ' ', $shortcode_atts, '=', NULL, FALSE ); // Ignore empty
 
@@ -376,7 +371,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                     $add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
                     print(" <a href='$add_link'>$add_new_booking_text</a>");
                     if ( $wp_query->post_count ) {
-											$page       = 'cb2_menu';
+											$page       = 'cb2-menu';
 											$view_booking_text = __('view in calendar');
 											$view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
 											print(" | <a href='$view_link'>$view_booking_text</a>");

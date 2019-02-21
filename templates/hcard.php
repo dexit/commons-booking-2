@@ -39,7 +39,7 @@
 			<a class="fn <?php print( $href_class ); ?>" href="<?php print( $href_click ); ?>"><?php CB2::the_title(); ?></a>
 		</div>
 
-		<div class="cb-popup">
+		<div class="cb-popup cb2-popup">
 			<div><?php CB2::the_geo_address(); ?></div>
 		</div>
 	</li>

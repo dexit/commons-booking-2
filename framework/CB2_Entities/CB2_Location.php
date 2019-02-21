@@ -146,9 +146,10 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
   }
 
 	function get_the_after_content() {
-		$ID     = $this->ID;
-		// TODO: set the location-ID
-		return "[cb2_map template-type=items]";
+		return CB2_Shortcodes::calendar_shortcode( array(
+				'location-ID'      => $this->ID,
+				'display-strategy' => 'CB2_AllItemAvailability',
+			) );
 	}
 
 	function tabs( $edit_form_advanced = FALSE ) {
@@ -171,7 +172,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		$columns['item_pickup_return'] = 'Item Pickup/Return <a href="admin.php?page=cb2-timeframes">view all</a>';
 		$columns['bookings']          = 'Bookings <a href="admin.php?page=cb2-bookings">view all</a>';
 		$columns['opening_hours']     = 'Opening Hours';
-		$columns['address']           = 'Address <a href="admin.php?page=cb2_menu&output_type=Map&schema_type=location">view all on map</a>';
+		$columns['address']           = 'Address <a href="admin.php?page=cb2-menu&output_type=Map&schema_type=location">view all on map</a>';
 		return $columns;
 	}
 
@@ -248,7 +249,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				print( " <a href='$add_link'>$add_new_text</a>" );
 
 				if ( $wp_query->post_count ) {
-					$page       = 'cb2_menu';
+					$page       = 'cb2-menu';
 					$view_text  = __( 'view in calendar' );
 					$view_link  = "admin.php?page=$page&location_ID=$this->ID&period_status_type_ID=$booked_ID";
 					print( " | <a href='$view_link'>$view_text</a>" );

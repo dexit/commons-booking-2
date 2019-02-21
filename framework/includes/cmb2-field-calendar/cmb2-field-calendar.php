@@ -47,27 +47,22 @@ class CMB2_Field_Calendar {
 
 				CB2_Query::ensure_correct_class( $post );
         $this->enqueue_scripts();
-
-        if ( version_compare( CMB2_VERSION, '2.2.2', '>=' ) ) {
-            $field_type_object->type = new CMB2_Type_Text( $field_type_object );
+				if ( version_compare( CMB2_VERSION, '2.2.2', '>=' ) ) {
+					$field_type_object->type = new CMB2_Type_Text( $field_type_object );
         }
-
-        $default_size     = 'P2M';
-        $today            = CB2_DateTime::today();
-        $next2month       = $today->clone()->add( $default_size )->endTime();
 
         // Inputs
         $url              = $_SERVER['REQUEST_URI'];
         $options          = $field->options();
-				$startdate_string = ( isset( $_GET['startdate'] )   ? $_GET['startdate'] : $today->format(  CB2_Query::$datetime_format ) );
-				$enddate_string   = ( isset( $_GET['enddate']   )   ? $_GET['enddate']   : $next2month->format( CB2_Query::$datetime_format ) );
-        $view             = ( isset( $_GET['view'] ) ? $_GET['view'] : CB2_Week::$static_post_type );
+
+        $default_size     = 'P2M';
+        $today            = CB2_DateTime::today();
+        $next2month       = $today->clone()->add( $default_size )->endTime();
+				$startdate_string = ( isset( $_REQUEST['startdate'] )   ? $_REQUEST['startdate'] : $today->format(  CB2_Query::$datetime_format ) );
+				$enddate_string   = ( isset( $_REQUEST['enddate']   )   ? $_REQUEST['enddate']   : $next2month->format( CB2_Query::$datetime_format ) );
+        $schema_type      = ( isset( $_REQUEST['schema_type'] ) ? $_REQUEST['schema_type'] : CB2_Week::$static_post_type );
         $startdate        = new CB2_DateTime( $startdate_string );
         $enddate          = new CB2_DateTime( $enddate_string );
-        $classes          = ( isset( $options['classes'] )
-					? ( is_array( $options['classes'] ) ? $options['classes'] : array( $options['classes'] ) )
-					: array()
-				);
 
         // Defaults
         $default_query    = array(
@@ -78,15 +73,11 @@ class CMB2_Field_Calendar {
 					'date_query'     => array(
 						'after'   => $startdate_string,
 						'before'  => $enddate_string,
-						'compare' => $view,
+						'compare' => $schema_type,
 					),
 				);
 
         // Analyse options
-        $context        = ( isset( $options[ 'context' ] )       ? $options[ 'context' ]  : 'list' );
-        $template       = ( isset( $options[ 'template' ] )      ? $options[ 'template' ] : NULL );
-				$template_args  = ( isset( $options[ 'template-args' ] ) ? $options[ 'template-args' ] : array() );
-        $Class_display_strategy = ( isset( $options[ 'display-strategy' ] )  ? $options[ 'display-strategy' ]  : 'WP_Query' );
         $style          = ( isset( $options[ 'style' ] )         ? $options[ 'style' ]    : NULL );
         $query_options  = ( isset( $options[ 'query' ] )         ? $options[ 'query' ]    : array() );
         $query_args     = array_merge( $default_query, $query_options );
@@ -94,23 +85,29 @@ class CMB2_Field_Calendar {
 					$options['meta_query']['blocked_clause'] = 0; // Prevent default
 
         // Convert %...% values to values on the post
+        // TODO: move this in to the DisplayStrategy
         if ( $post->post_status != CB2_Post::$AUTODRAFT ) {
 					CB2_Query::array_walk_paths( $query_args, $post );
 				}
 
 				// Request period items
+        $context        = ( isset( $options[ 'context' ] )       ? $options[ 'context' ]  : 'list' );
+        $template       = ( isset( $options[ 'template' ] )      ? $options[ 'template' ] : NULL );
+				$template_args  = ( isset( $options[ 'template-args' ] ) ? $options[ 'template-args' ] : array() );
+        $Class_display_strategy = ( isset( $options[ 'display-strategy' ] )  ? $options[ 'display-strategy' ]  : 'WP_Query' );
 				if ( $Class_display_strategy == 'WP_Query' ) {
 					$wp_query = new WP_Query( $query_args );
 				} else {
 					$wp_query = $Class_display_strategy::factory_from_query_args( $query_args );
 				}
-        // Context Menu Actions
+
+				// Context Menu Actions
 				$wp_query->actions = ( isset( $options[ 'actions' ] ) ? $options[ 'actions' ] : array() );
 
         // View handling
-        $view_is_calendar_class = ( $view == CB2_Week::$static_post_type ? 'selected' : 'unselected' );
-        $view_is_list_class     = ( $view == '' ? 'selected' : 'unselected' );
-        $viewless_url           = preg_replace( '/&view=[^&]*/', '', $url );
+        $view_is_calendar_class = ( $schema_type == CB2_Week::$static_post_type ? 'selected' : 'unselected' );
+        $view_is_list_class     = ( $schema_type == '' ? 'selected' : 'unselected' );
+        $viewless_url           = preg_replace( '/&schema_type=[^&]*/', '', $url );
 
         // Template args
 				if ( ! is_array( $template_args ) ) $template_args = array( $template_args );
@@ -119,6 +116,10 @@ class CMB2_Field_Calendar {
 				$template_args[ 'query' ]   = $wp_query;
 
 				// TODO: convert classes() functions to returning arrays
+        $classes          = ( isset( $options['classes'] )
+					? ( is_array( $options['classes'] ) ? $options['classes'] : array( $options['classes'] ) )
+					: array()
+				);
 				if ( method_exists( $post, 'classes' ) )
 					array_push( $classes, $post->classes() );
 
@@ -128,8 +129,8 @@ class CMB2_Field_Calendar {
 				print( "<div class='cb2-javascript-form cb2-calendar $classes_string'>" );
 				if ( $style != 'bare' ) print( "<div class='entry-header'>
 						<div class='cb2-view-selector'>View as:
-							<a class='cb2-$view_is_calendar_class' href='$viewless_url&view=week'>calendar</a>
-							| <a class='cb2-$view_is_list_class' href='$viewless_url&view='>list</a></div>
+							<a class='cb2-$view_is_calendar_class' href='$viewless_url&schema_type=week'>calendar</a>
+							| <a class='cb2-$view_is_list_class' href='$viewless_url&schema_type='>list</a></div>
 						$the_calendar_pager
 					</div>"
 				);

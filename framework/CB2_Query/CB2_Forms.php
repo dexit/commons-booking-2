@@ -31,7 +31,7 @@ class CB2_Forms {
   static function get_options( String $table, String $post_type = NULL, String $id_field = 'ID', String $name_field = 'post_title', String $condition = '1=1', $none = FALSE, $none_id = CB2_CREATE_NEW ) {
 		global $wpdb;
 
-		$cache_name = "CB2_Forms::get_options($table, $post_type, $id_field, $name_field, $condition, $none)";
+		$cache_name = "self::get_options($table, $post_type, $id_field, $name_field, $condition, $none)";
 		$options    = wp_cache_get( $cache_name );
 		if ( ! $options ) {
 			$options    = array();
@@ -54,7 +54,7 @@ class CB2_Forms {
 				if ( WP_DEBUG )       $name .= " ($id)";
 				$options[$id] = htmlspecialchars( $name );
 			}
-			wp_cache_set( $cache_name, $options ); // Cache the CB2_Forms select options
+			wp_cache_set( $cache_name, $options ); // Cache the self select options
 		}
 		return $options;
   }
@@ -145,4 +145,117 @@ class CB2_Forms {
 
     return $cleared;
   }
+
+  static function the_form( Array &$selections, Array $defaults = array(), $form_class = '' ) {
+		$selections       = array_merge( $defaults, $selections );
+
+		// --------------------------------------- Defaults
+		if ( ! isset( $selections['interval_to_show'] ) ) $selections['interval_to_show'] = 'P1M';
+		if ( ! isset( $selections['output_type'] ) )      $selections['output_type']      = 'Calendar';
+		if ( ! isset( $selections['context'] ) )          $selections['context']          = 'list';
+		if ( ! isset( $selections['template_part'] ) )    $selections['template_part']    = NULL;
+		if ( ! isset( $selections['selection_mode'] ) )   $selections['selection_mode']   = NULL;
+		if ( ! isset( $selections['schema_type'] ) )      $selections['schema_type']      = CB2_Week::$static_post_type;
+		$today            = CB2_DateTime::today();
+		$plusXmonths      = $today->clone()->add( $selections['interval_to_show'] )->endTime();
+
+		// --------------------------------------- Checks
+		$output_type      = $selections['output_type'];
+		$schema_type      = $selections['schema_type'];
+		if ( $output_type == 'Calendar' && (
+				 $schema_type == CB2_Location::$static_post_type
+			|| $schema_type == CB2_Item::$static_post_type
+			|| $schema_type == CB2_User::$static_post_type
+			|| $schema_type == 'form' // TODO: Legacy?
+		) )
+			print( '<div class="cb2-help">Calendar rendering of locations / items / users / forms maybe better in JSON output type</div>' );
+		if ( $output_type == 'Map'      && ( $schema_type != CB2_Location::$static_post_type ) )
+			print( "<div class='cb2-warning'>location schema hierarchy advised for Map. [$schema_type] sent</div>" );
+
+		// --------------------------------------- Filter selection Form
+		$startdate_string  = CB2_Query::isset( $selections, 'startdate', $today->format( CB2_Query::$datetime_format ) );
+		$enddate_string    = CB2_Query::isset( $selections, 'enddate',   $plusXmonths->format( CB2_Query::$datetime_format ) );
+		$location_options  = self::select_options( self::location_options(), CB2_Query::isset( $selections, 'location_ID' ) );
+		$item_options      = self::select_options( self::item_options(), CB2_Query::isset( $selections, 'item_ID' ) );
+		$user_options      = self::select_options( self::user_options(), CB2_Query::isset( $selections, 'user_ID' ) );
+		$author_options    = self::select_options( self::user_options(), CB2_Query::isset( $selections, 'author_ID' ) );
+		$period_status_type_options = self::select_options( self::period_status_type_options(), CB2_Query::isset( $selections, 'period_status_type_ID' ), TRUE );
+		$period_entity_options = self::select_options( self::period_entity_options(), CB2_Query::isset( $selections, 'period_entity_ID' ), TRUE );
+		$show_overridden_periods_checked = ( CB2_Query::isset( $selections, 'show_overridden_periods' ) ? 'checked="1"' : '' );
+		$show_blocked_periods_checked    = ( CB2_Query::isset( $selections, 'show_blocked_periods' )    ? 'checked="1"' : '' );
+		$period_status_type_options_html = self::count_options( self::period_status_type_options() );
+		$period_entity_options_html      = self::count_options( self::period_entity_options() );
+
+		$output_options    = self::select_options( array(
+			'Calendar' => 'Calendar',
+			'Map'      => 'Map',
+			'API/JSON' => 'API/JSON'
+		), CB2_Query::isset( $selections, 'output_type' ) );
+		$schema_options    = self::select_options( self::schema_options(), CB2_Query::isset( $selections, 'schema_type' ) );
+		$context_options   = self::select_options( array(
+			'list'   => 'list',
+			'popup'  => 'popup',
+			'hcard'  => 'hcard',
+			'single' => 'single',
+		), CB2_Query::isset( $selections, 'context' ) );
+		$template_options  = self::select_options( array(
+			'available' => 'available'
+		), CB2_Query::isset( $selections, 'template_part' ) );
+		$selection_mode_options   = self::select_options( array(
+			'range'   => 'range',
+		), CB2_Query::isset( $selections, 'selection_mode' ), TRUE );
+		$display_strategys = self::select_options(
+			CB2_Query::subclasses( 'CB2_PeriodInteractionStrategy' ),
+			CB2_Query::isset( $selections, 'display_strategy', 'WP_Query' ),
+			TRUE, TRUE
+		);
+		$class_WP_DEBUG    = ( WP_DEBUG ? '' : 'hidden' );
+		$extended_class    = ( isset( $selections['extended'] )    ? '' : 'none' );
+
+		$extended_url  = CB2_Query::pass_through_query_string( NULL, array( 'extended' => 1 ) );
+		$location_text = __( 'Location' );
+		$item_text     = __( 'Item' );
+		$user_text     = __( 'User' );
+		$author_text   = __( 'Author' );
+		$advanced_text = __( 'advanced' );
+
+		print( <<<HTML
+			<form class='$form_class'>
+				<input name='page' type='hidden' value='cb2-calendar'/>
+				<input type='text' name='startdate' value='$startdate_string'/> to
+				<input type='text' name='enddate' value='$enddate_string'/>
+				$location_text:<select name="location_ID">$location_options</select>
+				$item_text:<select name="item_ID">$item_options</select>
+				<span class="cb2-todo">$user_text</span>:<select name="user_ID">$user_options</select>
+				<div style='display:$extended_class'>
+					<input type="hidden" name="extended$extended_class" value="1"/>
+					Period Status Type:
+						$period_status_type_options_html
+						<select name="period_status_type_ID">$period_status_type_options</select>
+					Period Entity:
+						$period_entity_options_html
+						<select name="period_entity_ID">$period_entity_options</select>
+					<span class="cb2-todo">$author_text</span>:<select name="author_ID">$author_options</select>
+					<br/>
+					Output Type:      <select name="output_type">$output_options</select>
+					Schema Hierarchy: <select name="schema_type">$schema_options</select>
+					Template Context: <select name="context">$context_options</select>
+					Template Part:    <select name="template_part">$template_options</select>
+					<br/>
+					Display Strategy: <select name="display_strategy">$display_strategys</select>
+					Selection Mode:   <select name="selection_mode">$selection_mode_options</select>
+					<input id='show_overridden_periods' type='checkbox' $show_overridden_periods_checked name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
+					<input id='show_blocked_periods'    type='checkbox' $show_blocked_periods_checked    name='show_blocked_periods'/>    <label for='show_blocked_periods'>show blocked periods</label>
+				</div>
+				<input class="cb2-submit button" type="submit" value="Filter"/>
+				<a class='cb2-WP_DEBUG $class_WP_DEBUG' href='$extended_url'>+ $advanced_text</a>
+			</form>
+HTML
+		);
+	}
+
+	static function count_options( $array, $class = 'ok' ) {
+		$count = count( $array );
+		return "<span class='cb2-usage-count-$class'>$count</span>";
+	}
 }

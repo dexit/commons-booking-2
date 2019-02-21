@@ -21,7 +21,7 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
      * @param array $template_args  wp_args style argument list
      * @return string
      */
-    function cb2_get_template_part( $plugin_slug, $slugs, $name = '', $template_args = array(), $return = false, $cache_args = array() ) {
+    function cb2_get_template_part( $plugin_slug, $slugs, $name = '', $template_args = array(), $return = false, $cache_args = array(), $template_type = '' ) {
 			$template    = '';
 			$plugin_slug = $plugin_slug . '/';
 			$path        = WP_PLUGIN_DIR . '/'. $plugin_slug . 'templates/';

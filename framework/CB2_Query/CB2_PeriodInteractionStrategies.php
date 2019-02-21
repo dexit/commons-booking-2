@@ -32,17 +32,24 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	 */
 	private $wp_query;
 
-	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = NULL, Array $query = NULL ) {
+	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = NULL, Array $query = NULL ) {
 		// Defaults
-		if ( is_null( $startdate ) ) $startdate   = ( isset( $_GET['startdate'] ) ? new CB2_DateTime( $_GET['startdate'] ) : new CB2_DateTime() );
-		if ( is_null( $enddate ) )   $enddate     = ( isset( $_GET['enddate'] )   ? new CB2_DateTime( $_GET['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
-		if ( is_null( $view_mode ) ) $view_mode   = ( isset( $_GET['view_mode'] ) ? $_GET['view_mode'] : CB2_Week::$static_post_type );
-		if ( is_null( $query ) )     $query       = array();
+		if ( is_null( $startdate ) )   $startdate   = ( isset( $_REQUEST['startdate'] )   ? new CB2_DateTime( $_REQUEST['startdate'] ) : new CB2_DateTime() );
+		if ( is_null( $enddate ) )     $enddate     = ( isset( $_REQUEST['enddate'] )     ? new CB2_DateTime( $_REQUEST['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
+		if ( is_null( $schema_type ) ) $schema_type = ( isset( $_REQUEST['schema_type'] )
+			? $_REQUEST['schema_type']
+			: CB2_Week::$static_post_type
+		);
+		if ( is_null( $query ) )     $query         = array();
 
 		// Properties
-		$this->startdate = $startdate;
-		$this->enddate   = $enddate;
-		$this->view_mode = $view_mode;
+		$this->startdate   = $startdate;
+		$this->enddate     = $enddate;
+		$this->schema_type = $schema_type;
+
+		// --------------------------------------- Checks
+		if ( WP_DEBUG && ( $startdate->after( $enddate ) ) )
+			throw new Exception( 'start date is more than end date' );
 
 		// Construct args
 		if ( ! isset( $query['post_status'] ) )    $query['post_status'] = CB2_Post::$PUBLISH;
@@ -54,7 +61,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		if ( ! isset( $query['date_query']['before'] ) ) $query['date_query']['before'] = $this->enddate->format( CB2_Query::$datetime_format );
 		// This sets which CB2_(ObjectType) is the resultant primary posts array
 		// e.g. CB2_Weeks generated from the CB2_PeriodItem records
-		if ( ! isset( $query['date_query']['compare'] ) ) $query['date_query']['compare'] = $this->view_mode;
+		if ( ! isset( $query['date_query']['compare'] ) ) $query['date_query']['compare'] = $this->schema_type;
 		// Single period item blocking
 		if ( ! isset( $query['meta_query']['blocked_clause'] ) ) $query['meta_query']['blocked_clause'] = array(
 			'key'     => 'blocked',
@@ -74,6 +81,105 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 
 		// Expose the private WP_Query in WP_DEBUG mode
 		if ( WP_DEBUG ) $this->debug_wp_query = $this->wp_query;
+	}
+
+	public static function factory_from_args( Array &$inputs, Array $defaults = array() ) {
+		$wp_query               = NULL;
+		$wp_query_args          = self::array_to_wp_query_args( $inputs, $defaults );
+		if ( ! isset( $inputs['display_strategy'] ) || ! $inputs['display_strategy'] )
+			$inputs['display_strategy'] = 'WP_Query';
+		$Class_display_strategy = $inputs['display_strategy'];
+
+		if ( $Class_display_strategy == 'WP_Query' ) {
+			$wp_query = new WP_Query( $wp_query_args );
+		} else {
+			$wp_query = $Class_display_strategy::factory_from_query_args( $wp_query_args );
+		}
+		if ( WP_DEBUG ) $wp_query->inputs = $inputs;
+
+		return $wp_query;
+	}
+
+	public static function sanitize_input_keys( $key ) {
+		return preg_replace( '/-/', '_', $key );
+	}
+
+	private static function array_to_wp_query_args( Array &$inputs, Array $defaults = array() ) {
+		// Inputs override defaults
+		// TODO: Integrate this with cb2_pre_get_posts_query_string_extensions()
+		$inputs = array_merge( $defaults, $inputs );
+		$inputs = CB2_Query::array_walk_keys( $inputs, array( get_class(), 'sanitize_input_keys' ) );
+
+		// --------------------------------------- Query Parameters
+		$interval_to_show = ( isset( $inputs['interval_to_show'] ) ? $inputs['interval_to_show'] : 'P1M' );
+		$today            = CB2_DateTime::today();
+		$plusXmonths      = $today->clone()->add( $interval_to_show )->endTime();
+		if ( ! isset( $inputs['startdate'] ) )   $inputs['startdate']   = $today->format( CB2_Query::$datetime_format );
+		if ( ! isset( $inputs['enddate']   ) )   $inputs['enddate']     = $plusXmonths->format( CB2_Query::$datetime_format );
+		if ( ! isset( $inputs['location_ID'] ) ) $inputs['location_ID'] = NULL;
+		if ( ! isset( $inputs['item_ID'] ) )     $inputs['item_ID']     = NULL;
+		if ( ! isset( $inputs['user_ID'] ) )     $inputs['user_ID']     = NULL;
+		if ( ! isset( $inputs['period_group_id'] ) )  $inputs['period_group_id'] = NULL;
+		if ( ! isset( $inputs['period_status_type_ID'] ) ) $inputs['period_status_type_ID'] = NULL;
+		if ( ! isset( $inputs['period_entity_ID'] ) ) $inputs['period_entity_ID'] = NULL;
+		if ( ! isset( $inputs['schema_type'] ) )      $inputs['schema_type'] = CB2_Week::$static_post_type;
+		if ( ! isset( $inputs['show_blocked_periods'] ) ) $inputs['show_blocked_periods'] = FALSE;
+		if ( ! isset( $inputs['show_overridden_periods'] ) ) $inputs['show_overridden_periods'] = FALSE;
+
+		$meta_query       = array();
+		$meta_query_items = array();
+		if ( $inputs['location_ID'] )
+			$meta_query_items[ 'location_ID_clause' ] = array(
+				'key' => 'location_ID',
+				'value' => array( $inputs['location_ID'], 0 ),
+			);
+		if ( $inputs['item_ID'] )
+			$meta_query_items[ 'item_ID_clause' ] = array(
+				'key' => 'item_ID',
+				'value' => array( $inputs['item_ID'], 0 ),
+			);
+		if ( $inputs['period_status_type_ID'] )
+			$meta_query_items[ 'period_status_type_clause' ] = array(
+				'key' => 'period_status_type_ID',
+				'value' => array( $inputs['period_status_type_ID'], 0 ),
+			);
+		if ( $inputs['period_entity_ID'] )
+			$meta_query_items[ 'period_entity_clause' ] = array(
+				'key' => 'period_entity_ID',
+				'value' => array( $inputs['period_entity_ID'], 0 ),
+			);
+		if ( $inputs['show_blocked_periods'] )
+			$meta_query['blocked_clause'] = 0; // Prevent it from defaulting
+		else
+			$meta_query['blocked_clause'] = array(
+				'key'     => 'blocked',
+				'value'   => '0',
+			);
+
+		if ( $meta_query_items ) {
+			if ( ! isset( $meta_query_items[ 'relation' ] ) )
+				$meta_query_items[ 'relation' ] = 'AND';
+			$meta_query[ 'entities' ] = $meta_query_items;
+		}
+
+		$post_status = array( CB2_Post::$PUBLISH );
+		if ( $inputs['show_overridden_periods'] )
+			array_push( $post_status, CB2_Post::$TRASH );
+
+		// --------------------------------------- Output
+		return array(
+			'author'         => $inputs['user_ID'],
+			'post_status'    => $post_status,
+			'post_type'      => CB2_PeriodItem::$all_post_types,
+			'posts_per_page' => -1,
+			'order'          => 'ASC',          // defaults to post_date
+			'date_query'     => array(
+				'after'   => $inputs['startdate'],
+				'before'  => $inputs['enddate'],
+				'compare' => $inputs['schema_type'],
+			),
+			'meta_query' => $meta_query,        // Location, Item, User
+		);
 	}
 
 	// -------------------------------------------- query functions
@@ -283,9 +389,9 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	}
 	function get_api_data(string $version)
 	{
-		$view_mode = isset( $this->wp_query->query['date_query']['compare'])? $this->wp_query->query['date_query']['compare'] : NULL;
-		if($view_mode != 'item'){
-			throw new Exception("View mode is set to [$view_mode]. Api data can only be created from an AllItemAvailability strategy that is in 'item' view mode.");
+		$schema_type = isset( $this->wp_query->query['date_query']['compare'])? $this->wp_query->query['date_query']['compare'] : NULL;
+		if($schema_type != 'item'){
+			throw new Exception("View mode is set to [$schema_type]. Api data can only be created from an AllItemAvailability strategy that is in 'item' view mode.");
 		}
 		CB2_Query::reorganise_posts_structure($this->wp_query);
 		$data = array(
@@ -370,18 +476,18 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 	*/
 
 	static function factory_from_query_args( Array $args ) {
-		$startdate = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
-		$enddate   = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
-		$view_mode = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
+		$startdate   = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
+		$enddate     = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
+		$schema_type = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
 
-		$startdate = ( $startdate ? new CB2_DateTime( $startdate ) : NULL );
-		$enddate   = ( $enddate   ? new CB2_DateTime( $enddate )   : NULL );
+		$startdate   = ( $startdate ? new CB2_DateTime( $startdate ) : NULL );
+		$enddate     = ( $enddate   ? new CB2_DateTime( $enddate )   : NULL );
 
-		return new self( $startdate, $enddate, $view_mode, $args );
+		return new self( $startdate, $enddate, $schema_type, $args );
 	}
 
-	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = 'week', Array $query = array() ) {
-		parent::__construct( $startdate, $enddate, $view_mode, $query );
+	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = 'week', Array $query = array() ) {
+		parent::__construct( $startdate, $enddate, $schema_type, $query );
 	}
 
 	function markup( CB2_PeriodItem &$perioditem ) {
@@ -437,25 +543,36 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 class CB2_SingleItemAvailability extends CB2_AllItemAvailability {
 	// Standard situation when viewing a single item with the intention to book it
 	static function factory_from_query_args( Array $args ) {
-		$item_ID     = ( isset( $args['meta_query']['entities']['item_ID_clause']['value'][0] ) ? $args['meta_query']['entities']['item_ID_clause']['value'][0] : NULL );
+		global $post;
+		$item_ID     = ( isset( $args['meta_query']['entities']['item_ID_clause']['value'][0] )
+			? $args['meta_query']['entities']['item_ID_clause']['value'][0]
+			: NULL
+		);
 		$startdate   = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
 		$enddate     = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
-		$view_mode   = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
+		$schema_type = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
 		$post_status = ( isset( $args['post_status'] ) ? $args['post_status'] : NULL );
 		$show_overridden_periods = ( $post_status == CB2_Post::$TRASH
 			|| ( is_array( $post_status ) && in_array( CB2_Post::$TRASH, $post_status ) ) );
 
-		if ( is_null( $item_ID ) )
-			throw new Exception( "CB2_SingleItemAvailability::factory_from_query_args() requires ['meta_query']['entities']['item_ID_clause']['value'][0]" );
+		$item = NULL;
+		if ( is_null( $item_ID ) ) {
+			// Try to use the global $post
+			if ( $post && $post->post_type == CB2_Item::$static_post_type )
+				$item = $post;
+			else
+				throw new Exception( "CB2_SingleItemAvailability::factory_from_query_args() requires global CB2_Item post or ['meta_query']['entities']['item_ID_clause']['value'][0]" );
+		} else {
+			$item = CB2_Query::get_post_with_type( CB2_Item::$static_post_type, $item_ID );
+		}
 
-		$item      = CB2_Query::get_post_with_type( CB2_Item::$static_post_type, $item_ID );
 		$startdate = ( $startdate ? new CB2_DateTime( $startdate ) : NULL );
 		$enddate   = ( $enddate   ? new CB2_DateTime( $enddate )   : NULL );
 
-		return new self( $item, $startdate, $enddate, $view_mode, $show_overridden_periods, $args );
+		return new self( $item, $startdate, $enddate, $schema_type, $show_overridden_periods, $args );
 	}
 
-	function __construct( CB2_Item $item = NULL, CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $view_mode = 'week', Bool $show_overridden_periods = FALSE, Array $query = array() ) {
+	function __construct( CB2_Item $item = NULL, CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = 'week', Bool $show_overridden_periods = FALSE, Array $query = array() ) {
 		global $post;
 		$this->item = ( $item ? $item : $post );
 		if ( ! $this->item instanceof CB2_Item )
@@ -475,7 +592,7 @@ class CB2_SingleItemAvailability extends CB2_AllItemAvailability {
 			$query['post_status'] = $post_status;
 		}
 
-		parent::__construct( $startdate, $enddate, $view_mode, $query );
+		parent::__construct( $startdate, $enddate, $schema_type, $query );
 	}
 
 	function dynamic_priority( CB2_PeriodItem &$perioditem, Array $overlaps ) {

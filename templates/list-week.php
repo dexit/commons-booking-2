@@ -8,6 +8,6 @@
 			}
 		?>
 
-		<?php CB2::the_inner_loop( $template_args ); ?>
+		<?php CB2::the_inner_loop( $template_args, $post, 'list', $template_type ); ?>
 	</ul>
 </li>

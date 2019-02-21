@@ -500,7 +500,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
   function templates_considered( $context = 'list', $type = NULL, &$templates = NULL ) {
 		$templates = parent::templates_considered( $context, $type, $templates );
 
-		$period_status_type_name = $this->period_status_type->name;
+		$period_status_type_name = preg_replace( '/[^a-zA-Z0-9]/', '-', $this->period_status_type->name );
 		$period_status_type = ( $type ? "$type-$period_status_type_name" : $period_status_type_name );
 		$templates = parent::templates_considered( $context, $period_status_type, $templates );
 

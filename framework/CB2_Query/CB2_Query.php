@@ -164,7 +164,7 @@ class CB2_Query {
 		// TODO: Several embedded WP_Querys would cause a build up of static $all:
 		//   move static <Time class>::$all arrays on to the $instance_container (not used yet)
 		// static CB2_User::$all are ok, but CB2_Time varies according to the query
-		// only a problem when using compare => view_mode
+		// only a problem when using compare => schema_type
 		// Currently, if several DIFFERENT time queries happen in the page load
 		// the CB2_Week::$all will have all of the times in
 		// However, this: will cause an error if no new CB2_Week are generated:
@@ -944,12 +944,21 @@ class CB2_Query {
 		return $string;
 	}
 
-	static public function append_token_indicators( $array, $indicator = '%' ) {
+	static public function array_walk_keys( Array $array, $callback, $userdata = NULL ) {
 		$new_array = array();
 		foreach ( $array as $key => $value ) {
-			$new_array["$indicator$key$indicator"] = $value;
+			$new_key = call_user_func( $callback, $key, $userdata, $value );
+			if ( ! is_null( $new_key ) ) $new_array[ $new_key ] = $value;
 		}
 		return $new_array;
+	}
+
+	static public function append_token_indicators( String $key, $indicator, $value ) {
+		if ( is_null( $indicator ) ) $indicator = '%';
+		return ( is_string( $value ) || is_numeric( $value )
+			? "$indicator$key$indicator"
+			: NULL
+		);
 	}
 
 	static function php_array( $value, $key, $output_key = TRUE ) {
@@ -1008,6 +1017,10 @@ class CB2_Query {
 			unset( $columns[$column] );
 			$columns[$column] = $title;
 		}
+	}
+
+	static function isset( $array, $name, $default = NULL ) {
+		return ( isset( $array[$name] ) ? $array[$name] : $default );
 	}
 
 	static function debug_print_backtrace( String $message = NULL ) {

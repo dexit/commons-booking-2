@@ -166,13 +166,14 @@ function cb2_init_do_action() {
 		// We always redirect after an action
 		// TODO: AJAX will ignore this?
 		if ( $redirect ) {
-			$tokens   = CB2_Query::append_token_indicators( $tokens );
+			$tokens   = CB2_Query::array_walk_keys( $tokens, array( 'CB2_Query', 'append_token_indicators' ) );
 			$redirect = str_replace( array_keys( $tokens ), array_values( $tokens ), $redirect );
 		} else {
 			$redirect = $_SERVER['REQUEST_URI'];
 			$redirect = preg_replace( '/do_action=[^&]*/', '', $redirect );
 		}
 		wp_redirect( $redirect );
+		exit();
 	}
 
 	return TRUE;
@@ -875,6 +876,8 @@ function cb2_posts_where_allow_NULL_meta_query( $where ) {
 
 function cb2_pre_get_posts_query_string_extensions() {
 	// Allows meta limits on the main WP_Query built from the query string
+	// TODO: this should be integrated in to the main system more
+	// for example: CB2_PeriodInteractionStrategy has its own copy of these concepts
 	if ( WP_DEBUG ) {
 		global $wp_query;
 		if ( ! is_object( $wp_query ) )

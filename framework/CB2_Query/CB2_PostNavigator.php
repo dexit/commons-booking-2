@@ -641,14 +641,15 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $templates;
   }
 
-  function templates( $context = 'list', $type = NULL, $throw_if_not_found = TRUE, &$templates = NULL ) {
+  function templates( $context = 'list', $type = NULL, $throw_if_not_found = TRUE, &$templates_considered = NULL ) {
 		$post_type = $this->post_type;
-		$templates = $this->templates_considered( $context, $type, $templates );
+		$templates_considered = $this->templates_considered( $context, $type, $templates_considered );
 
 		// file_exists() sanitize against the templates directory
 		$templates_valid   = array();
 		$cb2_template_path = CB2::template_path();
-		foreach ( $templates as $template ) {
+		foreach ( $templates_considered as $template ) {
+			$template      = preg_replace( '/[^a-zA-Z0-9]/', '-', $template );
 			$template_path = "$cb2_template_path/$template.php";
 			if ( file_exists( $template_path ) )
 				array_push( $templates_valid, $template );

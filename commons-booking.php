@@ -27,7 +27,7 @@ define( 'CB2_VERSION', '2.0.0' );
 define( 'CB2_DEV_BUILD', '181120' );
 define( 'CB2_TEXTDOMAIN', 'commons-booking-2' );
 define( 'CB2_NAME', 'CommonsBooking 2' );
-define( 'CB2_MENU_SLUG', 'cb2_menu');
+define( 'CB2_MENU_SLUG', 'cb2-menu');
 /* Paths */
 define( 'CB2_PLUGIN_ROOT', plugin_dir_path( __FILE__ ) );
 define( 'CB2_PLUGIN_ABSOLUTE',  __FILE__  );

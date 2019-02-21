@@ -292,7 +292,6 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
   function classes() {
     $classes  = '';
     if ( $this->period_entity ) $classes .= $this->period_entity->period_status_type->classes();
-    $classes .= ' cb2-period-group-type-' . $this->post_type();
     $classes .= ( $this->is_top_priority() ? ' cb2-perioditem-no-overlap' : ' cb2-perioditem-has-overlap' );
     if ( $this->blocked ) $classes .= ' cb2-blocked';
     return $classes;

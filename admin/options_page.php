@@ -2,7 +2,7 @@
 // main CB2 options page
 global $wpdb;
 
-print( '<h1>Commons Booking 2 Settings <a href="admin.php?page=cb2_menu">dashboard</a></h1>' );
+print( '<h1>Commons Booking 2 Settings <a href="admin.php?page=cb2-menu">dashboard</a></h1>' );
 print( '<ul>' );
 $capability_default = 'manage_options';
 

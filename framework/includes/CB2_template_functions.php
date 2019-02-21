@@ -9,6 +9,10 @@ class CB2 {
 		return ( $post ? get_class( $post ) : NULL );
 	}
 
+	public static function the_form( Array $selections, Array $defaults = array() ) {
+		return CB2_Forms::the_form( $selections, $defaults );
+	}
+
 	public static function templates( String $context = 'list', String $type = NULL, Bool $throw_if_not_found = TRUE, &$templates_considered = NULL ) {
 		global $post;
 		$templates            = array();
@@ -118,7 +122,7 @@ class CB2 {
 					$html      .= $before;
 					CB2_Query::redirect_wpdb_for_post_type( $post_type );
 					$templates  = self::templates( $context, $template_type );
-					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE );
+					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE, array(), $template_type );
 					$html      .= $li;
 					// Some period-items are suppressed but have debug output
 					if ( trim( preg_replace( '/<!--.*-->/', '', $li ) ) ) $i++;
@@ -151,6 +155,40 @@ class CB2 {
 		}
 
 		return $html;
+	}
+
+	public static function the_short_name( $the_post = NULL ) {
+		print( self::get_the_short_name( $the_post ) );
+	}
+
+	public static function get_the_short_name( $the_post = NULL ) {
+		global $post;
+		if ( is_null( $the_post ) ) $the_post = $post;
+		$short_name = NULL;
+		if ( is_object( $the_post ) && method_exists( $the_post, 'get_the_short_name' ) ) {
+			$short_name = $the_post->get_the_short_name();
+		} else {
+			$short_name = preg_replace( '/[^A-Z]/', '', $the_post->post_title );
+		}
+
+		return $short_name;
+	}
+
+	public static function the_colour( $the_post = NULL ) {
+		print( self::get_the_colour( $the_post ) );
+	}
+
+	public static function get_the_colour( $the_post = NULL ) {
+		global $post;
+		if ( is_null( $the_post ) ) $the_post = $post;
+		$the_colour = NULL;
+		if ( is_object( $the_post ) && method_exists( $the_post, 'get_the_colour' ) ) {
+			$the_colour = $the_post->get_the_colour();
+		} else {
+			$the_colour = '#67b32a';
+		}
+
+		return $the_colour;
 	}
 
 	public static function the_context_menu( $context = NULL ) {

@@ -5,10 +5,9 @@
 	$post_type       = get_post_type(); // day
 	$date            = CB2::get_the_date( 'c' ); // CB2_DateTime
 	$has_context     = isset( $template_args['post'] );
-	$action          = ( isset( $template_args['action'] )
-		? $template_args['action']        // Can be empty
-		: ( $has_context ? 'addto' : 'add' )
-	);
+	$action          = ( $has_context ? 'addto' : 'add' );
+	if ( isset( $template_args['action'] ) ) $action = $template_args['action']; // Can be empty
+	if ( ! is_admin() ) $action = NULL;
 	$href_click      = NULL;            // TODO: direct add link?
 	$href_title_text = __( $action );
 	$href_class      = '';
@@ -52,7 +51,7 @@
 	</header>
 	<div class="entry-content">
 		<ul class="cb2-subposts">
-			<?php CB2::the_inner_loop( $template_args ); ?>
+			<?php CB2::the_inner_loop( $template_args, $post, 'list', $template_type ); ?>
 		</ul>
 
 		<?php if ( $action ) { ?>
