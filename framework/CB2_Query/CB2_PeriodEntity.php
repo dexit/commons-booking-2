@@ -234,13 +234,12 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		if ( $copy_period_group ) {
 			// We do not want to clone the period_group
 			// only the period item *instance*
-			$datetime_now = new CB2_DateTime();
 			$period = new CB2_Period(
 				CB2_CREATE_NEW,
 				( $name ? $name : $perioditem_from->post_title ),
 				$perioditem_from->datetime_period_item_start, // datetime_part_period_start
 				$perioditem_to->datetime_period_item_end,     // datetime_part_period_end
-				$datetime_now                                 // datetime_from
+				CB2_DateTime::yesterday()                     // datetime_from
 			);
 			$period_group = new CB2_PeriodGroup(
 				CB2_CREATE_NEW,
