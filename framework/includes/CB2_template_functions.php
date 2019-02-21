@@ -168,8 +168,12 @@ class CB2 {
 		if ( is_object( $the_post ) && method_exists( $the_post, 'get_the_short_name' ) ) {
 			$short_name = $the_post->get_the_short_name();
 		} else {
-			$short_name = preg_replace( '/[^A-Z]/', '', $the_post->post_title );
+			if ( strlen( $the_post->post_title ) > 3 )
+				$short_name = preg_replace( '/[^A-Z]/', '', $the_post->post_title );
+			else
+				$short_name = $the_post->post_title;
 		}
+		if ( ! $short_name ) $short_name = '(' . __( 'no title' ) . ')';
 
 		return $short_name;
 	}

@@ -173,6 +173,24 @@
 /* Booking Bar */
 /* Tooltips */
 /* Leaflet.js customization */
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_map-leaflet\.scss}line{font-family:\000031}}
+#geo-hcard-map {
+  border: 1px double #666;
+  padding: 2px;
+  width: 100%;
+  min-height: 400px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_map-leaflet\.scss}line{font-family:\000037}}
+.cb-popup {
+  display: none;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_map-leaflet\.scss}line{font-family:\0000310}}
+#geo-hcard-map .cb-popup {
+  display: block;
+}
+
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_timeframes\.scss}line{font-family:\000031}}
 .cb2-popup .cb2-item-name {
   float: left;

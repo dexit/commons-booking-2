@@ -4,3 +4,9 @@
 	width:100%;
 	min-height:400px;
 }
+.cb-popup {
+	display:none;
+}
+#geo-hcard-map .cb-popup {
+	display:block;
+}

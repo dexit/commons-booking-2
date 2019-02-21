@@ -4,6 +4,7 @@
 }
 .vcard .adr .geo .latitude,
 .vcard .adr .geo .longitude,
+.vcard .fn,
 .vcard .adr .geo .icon,
 .vcard .adr .geo .icon-shadow {
   display:none;
