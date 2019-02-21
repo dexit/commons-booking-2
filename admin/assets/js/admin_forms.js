@@ -222,6 +222,14 @@ function cb2_process(){
 		datepickers.show();
 	});
 
+	$('.cmb-type-text-datetime-timestamp').change(function(){
+		var datepicker = $(this).find('.cmb2-datepicker');
+		var timepicker = $(this).find('.cmb2-timepicker');
+		if (datepicker.length && !datepicker.val()) {
+			timepicker.val('');
+		}
+	});
+
 	var datepickers       = $('.cmb2-id-datetime-part-period-start .cmb2-datepicker, .cmb2-id-datetime-part-period-end .cmb2-datepicker');
 	var explanation       = $('.cmb2-id-period-explanation p');
 	var recurrence_boxes  = $('.cmb2-id-recurrence-sequence, .cmb2-id-datetime-from, .cmb2-id-datetime-to');

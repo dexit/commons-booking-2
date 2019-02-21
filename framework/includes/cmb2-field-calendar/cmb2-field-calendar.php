@@ -81,8 +81,8 @@ class CMB2_Field_Calendar {
         $style          = ( isset( $options[ 'style' ] )         ? $options[ 'style' ]    : NULL );
         $query_options  = ( isset( $options[ 'query' ] )         ? $options[ 'query' ]    : array() );
         $query_args     = array_merge( $default_query, $query_options );
-				if ( ! isset( $options['meta_query']['blocked_clause'] ) )
-					$options['meta_query']['blocked_clause'] = 0; // Prevent default
+				if ( ! isset( $query_args['meta_query']['blocked_clause'] ) )
+					$query_args['meta_query']['blocked_clause'] = 0; // Prevent default
 
         // Convert %...% values to values on the post
         // TODO: move this in to the DisplayStrategy

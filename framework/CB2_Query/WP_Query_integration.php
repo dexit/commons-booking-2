@@ -907,7 +907,7 @@ function cb2_pre_get_posts_query_string_extensions() {
 	if ( isset( $_GET[ 'period_status_type_name' ] ) )
 		$meta_query_items[ 'period_status_type_clause' ] = array( 'key' => 'period_status_type_name', 'value' => $_GET[ 'period_status_type_name' ] );
 	if ( isset( $_GET[ 'show_blocked_periods' ] ) )
-		$meta_query_items[ 'blocked_clause' ] = 0; // Prevent it from being set
+		$meta_query[ 'blocked_clause' ] = 0; // Prevent it from being set
 
 	if ( $meta_query_items ) {
 		if ( ! isset( $meta_query_items[ 'relation' ] ) ) $meta_query_items[ 'relation' ] = 'AND';

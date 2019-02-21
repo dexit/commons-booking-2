@@ -149,6 +149,18 @@
 			@include round-rect(right);
 		}
 
+		.cb2-confirmed-check:before {
+			float:right;
+			content: "\f147";
+			font-family: dashicons;
+		}
+
+		.cb2-approved-check:before {
+			float:right;
+			content: "\f110";
+			font-family: dashicons;
+		}
+
 		a {
 			display: block;
 			color: #fff;
