@@ -64,13 +64,15 @@ For now, just* import this sql file into your db:
 * Run `$ grunt watch` to compile scss and javascript for both front- and backend.
 
 
-## Supported by
+## CommonsBooking is funded by
 
 ### CB 2.0
 
 * [ADFC Essen](https://www.adfc-nrw.de/kreisverbaende/kv-essen/kreisverband-essen.html) / [Essener Lastenräder](https://essener-lastenrad.de)
 * [ADFC Bundesverband](https://www.adfc.de)
 * [Freie Lasten – Dein Lastenrad in Marburg](https://freie-lasten.org/)
+* [Deutsche Postcode Lotterie](https://www.postcode-lotterie.de/projekte)
+* [Das Commons-Institut – Commons entstehen durch Commoning](https://commons-institut.org/) 
 
 ### CB 1.0
 
