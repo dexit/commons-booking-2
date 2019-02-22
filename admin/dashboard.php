@@ -7,7 +7,7 @@ global $wp_query;
 wp_reset_query();
 $wp_query = CB2_PeriodInteractionStrategy::factory_from_args( $_REQUEST, array(
 	'enddate'          => CB2_DateTime::next_week_end()->format( CB2_Query::$datetime_format ),
-	//'display-strategy' => 'CB2_AllItemAvailability',
+	'display-strategy' => 'CB2_AllItemAvailability',
 ) );
 $title_text   = __( 'Dashboard' );
 ?>
