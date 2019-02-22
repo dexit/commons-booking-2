@@ -47,7 +47,6 @@
 ?>
 <li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?>>
 		<?php the_title( '<div class="day-title">', '</div>' ); ?>
-	<div class="entry-content">
 		<ul class="cb2-subposts">
 			<?php CB2::the_inner_loop( $template_args, $post, 'list', $template_type ); ?>
 		</ul>
@@ -59,7 +58,6 @@
 				</a>
 			</div>
 		<?php } ?>
-	</div><!-- .entry-content -->
 
 	<?php CB2::the_context_menu(); ?>
 </li>
