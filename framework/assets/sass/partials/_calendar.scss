@@ -111,22 +111,6 @@
 		min-height: 38px;
 		position: relative;
 
-		&.cb2-status-pickup-return {
-			@include background-hover($color-status-available, darken($color-status-available, 5%));
-		}
-
-		&.cb2-status-open {
-			@include background-hover($color-status-open, darken($color-status-open, 5%));
-		}
-
-		&.cb2-status-booked {
-			@include background-hover($color-status-booked, darken($color-status-booked, 5%));
-		}
-
-		&.cb2-status-holiday {
-			@include background-hover($color-status-holiday, darken($color-status-holiday, 5%));
-		}
-
 		&.cb2-multi-day:before {
 			float: right;
 			content: '\f103';

@@ -150,6 +150,10 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		if ( $this->ID ) unset( self::$all[$this->ID] );
   }
 
+  function get_the_colour() {
+		return $this->period_entity->period_status_type->colour;
+  }
+
   function is_blocked() {
 		return $this->blocked;
   }

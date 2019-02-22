@@ -42,7 +42,7 @@
 			$href_click = "$template_loader_url&title=$href_title_text";
 		}
 ?>
-	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?>>
+	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?> style="background-color:<?php CB2::the_colour(); ?>">
 		<a class="cb2-details cb2-bald <?php print( $href_class ); ?>" title="<?php print( $href_title_text ); ?>" href="<?php print( $href_click ); ?>">
 			<?php CB2::the_title(); ?>
 			<?php CB2::the_debug_popup(); ?>

@@ -17,12 +17,12 @@
 .cb2-button {
 	@extend .cb2_box;
 	margin: 0;
-	background-color: $color-status-available;
+	background-color: #67b32a;
 	color: $color-white;
 	font-weight: bold;
 	box-shadow: 0 0 transparent !important;
 	&:hover {
-		background-color: darken ( $color-status-available, 30% );
+		background-color: darken ( #67b32a, 30% );
 		color: $color-white;
 	}
 }

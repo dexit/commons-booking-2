@@ -97,12 +97,12 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 
 	static function database_data() {
 		return array(
-			array( '1', 'pickup/return', NULL, '7', '#55ff55', '100', '2', '1' ),
-			array( '2', 'booked',        NULL, '0', '#dd3333', '50',  '6', '1' ),
-			array( '3', 'closed',        NULL, '2', '#f7f7f7', '50',  '3', '1' ),
-			array( '4', 'open',          NULL, '7', '#456456', '100', '1', '1' ),
-			array( '5', 'repair',        NULL, '0', '#999999', '100', '4', '1' ),
-			array( '6', 'holiday',       NULL, '2', '#a7a7a7', '100', '5', '1' ),
+			array( '1', 'pickup/return', NULL, '7', '#67b32a', '100', '2', '1' ),
+			array( '2', 'booked',        NULL, '0', '#bf2437', '50',  '6', '1' ),
+			array( '3', 'closed',        NULL, '2', '#333333', '50',  '3', '1' ),
+			array( '4', 'open',          NULL, '7', '#0085ba', '100', '1', '1' ),
+			array( '5', 'repair',        NULL, '0', '#ff0404', '100', '4', '1' ),
+			array( '6', 'holiday',       NULL, '2', '#9b9b9b', '100', '5', '1' ),
 		);
 	}
 
@@ -414,6 +414,10 @@ class CB2_PeriodStatusType_PickupReturn extends CB2_SystemPeriodStatusType {
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
 
+	static function metaboxes() {
+		return CB2_PeriodStatusType::metaboxes();
+	}
+
 	function metabox_calendar_options_object_cb( $field, $periodentity ) {
 		// Availability should show a more complex calendar
 		$options = array();
@@ -447,6 +451,10 @@ class CB2_PeriodStatusType_Booked    extends CB2_SystemPeriodStatusType {
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
+
+	static function metaboxes() {
+		return CB2_PeriodStatusType::metaboxes();
+	}
 }
 
 class CB2_PeriodStatusType_Closed    extends CB2_SystemPeriodStatusType {
@@ -460,6 +468,10 @@ class CB2_PeriodStatusType_Closed    extends CB2_SystemPeriodStatusType {
 			$args = array( $ID, 'closed' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
+	}
+
+	static function metaboxes() {
+		return CB2_PeriodStatusType::metaboxes();
 	}
 }
 
@@ -506,6 +518,10 @@ class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 		);
 		return $options;
 	}
+
+	static function metaboxes() {
+		return CB2_PeriodStatusType::metaboxes();
+	}
 }
 
 class CB2_PeriodStatusType_Repair    extends CB2_SystemPeriodStatusType {
@@ -520,6 +536,10 @@ class CB2_PeriodStatusType_Repair    extends CB2_SystemPeriodStatusType {
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
 	}
+
+	static function metaboxes() {
+		return CB2_PeriodStatusType::metaboxes();
+	}
 }
 
 class CB2_PeriodStatusType_Holiday   extends CB2_SystemPeriodStatusType {
@@ -533,5 +553,9 @@ class CB2_PeriodStatusType_Holiday   extends CB2_SystemPeriodStatusType {
 			$args = array( $ID, 'holiday' );
 		}
 		call_user_func_array( array( get_parent_class(), '__construct' ), $args );
+	}
+
+	static function metaboxes() {
+		return CB2_PeriodStatusType::metaboxes();
 	}
 }
