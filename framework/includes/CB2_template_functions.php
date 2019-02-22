@@ -415,6 +415,17 @@ class CB2 {
 		return ( is_object( $wp_query ) && property_exists( $wp_query, 'actions' ) ? $wp_query->actions : array() );
 	}
 
+	public static function the_debug_popup() {
+		// do not place thickbox if not in wp admin interface
+		if ( WP_DEBUG && is_admin() ) {
+			$ID = get_the_ID();
+			print( "<a class='thickbox cb2-bald cb2-debug-control' name='debug' href='?inlineId=debug_popup_$ID&amp;title=debug&amp;width=300&amp;height=500&amp;#TB_inline'></a>" );
+			print( "<div id='debug_popup_$ID' style='display:none;'>" );
+			self::the_debug();
+			print( '</div>' );
+		}
+	}
+
 	public static function the_debug( $before = '', $afer = '' ) {
 		global $post;
 		if ( WP_DEBUG && is_object( $post ) && method_exists( $post, 'get_the_debug' ) ) {

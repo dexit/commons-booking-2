@@ -62,8 +62,10 @@
 }
 
 #TB_ajaxContent {
-	height:auto!important;
-	width:auto!important;
+	/* TODO: popup sizes?
+	 * height:auto!important;
+	 * width:auto!important;
+	 */
 }
 #TB_title {
 	background-image: linear-gradient(to right, #d7d7d7, #fff);
