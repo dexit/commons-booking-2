@@ -260,8 +260,8 @@ function cb2_wp_insert_post_empty_content( $maybe_empty, $postarr ) {
 				// because, in this multiple-object update, we do not know which Class/table it needs to go to
 				// Instead, we need the data, and to pump in to
 				//   factory_from_properties() recursive
-				if ( CB2_DEBUG_SAVE ) krumo($_POST);
-				$properties = $_POST;
+				if ( CB2_DEBUG_SAVE ) krumo( $postarr );
+				$properties = $postarr;
 
 				if ( $class_database_table = CB2_Database::database_table( $Class ) ) {
 					// ------------------------------------------------ custom tables

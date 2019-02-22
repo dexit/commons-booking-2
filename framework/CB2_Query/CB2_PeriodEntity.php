@@ -15,8 +15,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			'period_status_type_id' => array( CB2_INT,      (11), CB2_UNSIGNED, CB2_NOT_NULL ),
 			'enabled'               => array( CB2_BIT,      (1),  NULL,         CB2_NOT_NULL, NULL,  1 ),
 			'author_ID'             => array( CB2_BIGINT,   (20), CB2_UNSIGNED, CB2_NOT_NULL, FALSE, 1 ),
-			'entity_datetime_from'  => array( CB2_DATETIME, NULL, NULL, NULL, NULL, NULL, 'override all period settings' ),
-			'entity_datetime_to'    => array( CB2_DATETIME, NULL, NULL, NULL, NULL, NULL, 'override all period settings' ),
+			'entity_datetime_from'  => array( CB2_DATETIME, NULL, NULL,         CB2_NOT_NULL, NULL, '2019-01-01 00:00:00', 'override all period settings' ),
+			'entity_datetime_to'    => array( CB2_DATETIME, NULL, NULL,         NULL,         NULL, NULL, 'override all period settings' ),
 			'confirmed_user_id'     => array( CB2_BIGINT,   (20), CB2_UNSIGNED ),
 			'approved_user_id'      => array( CB2_BIGINT,   (20), CB2_UNSIGNED ),
 		);
@@ -35,6 +35,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$primary_key = array_merge( $primary_key, array(
 			'period_group_id',
 			'period_status_type_id',
+			'entity_datetime_from',
 		) );
 
 		return array(
