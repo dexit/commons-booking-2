@@ -61,7 +61,8 @@
 	},
 	"require-dev": {
 		"phpro\/grumphp": "^0.12",
-		"lucatume\/function-mocker": "~1.0"
+		"lucatume\/function-mocker": "~1.0",
+		"kktsvetkov/krumo": "dev-master"
 	},
 	"minimum-stability": "dev",
 	"extra": {
