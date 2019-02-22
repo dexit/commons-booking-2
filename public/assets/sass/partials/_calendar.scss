@@ -1,6 +1,13 @@
+	article.type-item .cb2-calendar-pager {
+		display: none;
+	}
+
+
 .cb2-calendar {
 	background: $color-white;
 	box-shadow: -1px 1px 18px 4px rgba(0, 0, 0, 0.23);
+
+
 
 		a,
 		a:hover {
@@ -20,31 +27,40 @@
 			.cb2-details { /* click-target */
 				display: block;
 				height: inherit;
+				text-align: center;
 
 			}
 
 			.cb2-time-period {
 				padding: 0;
+				text-align: center;
+				padding-top: 5px;
 			}
 
 			&.cb2-status-booked {
 				cursor: not-allowed;
 
 			}
+
+		}
+
+		&.cb2-range-selected {
+			background: lighten($color-green-period-selected, 10%);
 		}
 
 		li.cb2-selectable {
 
-		&.cb2-selected {
-			background: $color-green-period-selected;
-			color: $color-green-period-selected;
-			&:hover {
-				background: $color-green-period-selected;
-			}
-			.cb2-time-period {
-				user-select: none;
-			}
-		}
+				&.cb2-selected,
+				&.cb2-range-selected {
+					background: $color-green-period-selected !important; /* @TODO change this after bgcolor is no longer in code */
+					color: $color-blue-dark;
+					&:hover {
+						background: $color-green-period-selected;
+					}
+					.cb2-time-period {
+						user-select: none;
+					}
+				}
 	}
 
 }

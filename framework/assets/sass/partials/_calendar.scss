@@ -112,13 +112,6 @@
 		position: relative;
 
 		&.cb2-multi-day:before {
-			float: right;
-			content: '\f103';
-			font-family: dashicons;
-			font-weight: bold;
-			margin-left: 3px;
-			font-size: $font-size-small;
-			color: #fff;
 		}
 
 		&.cb2-first-day {
@@ -316,8 +309,7 @@
 	/* fields */
 	.cb2-blocked,
 	.cb2-blocked a {
-		color: red;
-		opacity: 0.7;
+		background-color: $color-gray-silver !important; /* @TODO */
 	}
 
 	.cb2-field-name {
@@ -349,9 +341,12 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		width: inherit;
+		width: 100%;
 		text-align: center;
-		@extend %icon-calendar-add;
+		padding: $padding;
+		a {
+			color: $color-blue-dark;
+		}
 	}
 
 	ul.cb2-period-list {
