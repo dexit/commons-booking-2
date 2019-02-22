@@ -127,15 +127,15 @@
 			@include background-hover($color-status-holiday, darken($color-status-holiday, 5%));
 		}
 
-		&.cb2-multi-day:before {
-			float: right;
-			content: '\f103';
-			font-family: dashicons;
-			font-weight: bold;
-			margin-left: 3px;
-			font-size: $font-size-small;
-			color: #fff;
-		}
+		// &.cb2-multi-day:before {
+		// 	float: right;
+		// 	content: '\f103';
+		// 	font-family: dashicons;
+		// 	font-weight: bold;
+		// 	margin-left: 3px;
+		// 	font-size: $font-size-small;
+		// 	color: #fff;
+		// }
 
 		&.cb2-first-day {
 			@include round-rect(left);
@@ -187,11 +187,9 @@
 				line-height: 1.1em;
 			}
 
-
-
 			.cb2-item-name {
 				position: absolute;
-				width: 25px;
+				width: 30px;
 				overflow: hidden;
 				left: 0;
 				top: 0;
@@ -201,6 +199,7 @@
 				font-weight: bold;
 				color: $color-black;
 				opacity: .5;
+				word-wrap: break-word;
 			}
 
 			.cb2-user-name {
@@ -336,7 +335,6 @@
 		color: red;
 		opacity: 0.7;
 	}
-
 
 	.cb2-field-name {
 		display: none;

@@ -1,0 +1,56 @@
+
+/*
+ * Map (leaflet)
+ *
+ * @package   CommonsBooking2
+ * @author Florian Egermann <florian@wielebenwir.de>
+ * @license   GPL-2.0+
+ * @since 0.2
+ * @link      http://www.wielebenwir.de
+ * @copyright 2015 wielebenwir
+ */
+
+ .leaflet-container {
+	 min-height: 400px !important;
+
+	 .leaflet-popup {
+		a, a:hover {
+				box-shadow: 0 0 transparent; /* Twentysixteen Theme annoyances */
+		}
+		h2 {
+			margin-bottom: 0;
+			color: $color-blue-dark;
+			font-weight: bold;
+		}
+		.cb2-geo-address {
+			margin-bottom: $padding;
+		}
+
+		ul.cb2-items {
+			li {
+			@include round-rect(all);
+			color: $color-white;
+			font-size: $font-size-small;
+			padding: 2px 8px;
+			margin-bottom: 2px;
+			min-height: 38px;
+			position: relative;
+			background-color: $color-status-available;
+			a {
+				color: $color-white;
+				font-weight: bold;
+			}
+			}
+		}
+
+	 .leaflet-popup-content-wrapper {
+		border-radius: $radius;
+
+
+
+		h2 {
+			font-size: $font-size-normal;
+		}
+	 }
+ }
+	 }

@@ -1,6 +1,13 @@
 .cb2-calendar {
 	background: $color-white;
 	box-shadow: -1px 1px 18px 4px rgba(0, 0, 0, 0.23);
+
+		a,
+		a:hover {
+			box-shadow: 0 0 transparent;
+			/* Twentysixteen Theme annoyances */
+		}
+
 	li.type-day {
 
 		.type-perioditem {

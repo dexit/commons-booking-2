@@ -13,7 +13,7 @@
 		$href_click      = CB2::get_the_edit_post_url();
 		$href_class      = '';
 
-		$marker        = plugins_url( 'plugins/geo-hcard-map/images/spanner.png',       CB2_PLUGIN_ABSOLUTE );
+		$marker        = plugins_url( 'framework/assets/images/icons/location-has-availalable-items.svg', CB2_PLUGIN_ABSOLUTE );
 		$marker_shadow = plugins_url( 'plugins/geo-hcard-map/images/marker-shadow.png', CB2_PLUGIN_ABSOLUTE );
 ?>
 	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?>>

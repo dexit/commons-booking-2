@@ -82,8 +82,10 @@
 		margin-left: - $padding-small;
 	} @else if $corners=='all' {
 		border-radius: $radius ;
-
-	}	@else {
+	}	@else if $corners =='none' {
+		border-radius: 0;
+		margin-right: - $padding-small;
+		margin-left: - $padding-small;
 	}
 }
 
