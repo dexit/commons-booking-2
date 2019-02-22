@@ -2,6 +2,7 @@
 global $post;
 
 // Load wordpress
+// TODO: move to proper WP AJAX system! https://codex.wordpress.org/AJAX_in_Plugins
 $DR = $_SERVER['DOCUMENT_ROOT'];
 define( 'WP_USE_THEMES', FALSE );
 require_once( "$DR/wp-load.php" );

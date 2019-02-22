@@ -269,22 +269,27 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		return is_null( $object1 ) || is_null( $object2 ) || $object1 == $object2;
   }
 
-  function overlaps_perioditem_object( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2, String $property_name ) {
-		$object1 = ( property_exists( $perioditem1, $property_name ) ? $perioditem1->$property_name : NULL );
-		$object2 = ( property_exists( $perioditem2, $property_name ) ? $perioditem2->$property_name : NULL );
+  function overlaps_perioditem_object( CB2_PeriodEntity $periodentity1, CB2_PeriodEntity $periodentity2, String $property_name ) {
+		$object1 = ( property_exists( $periodentity1, $property_name ) ? $periodentity1->$property_name : NULL );
+		$object2 = ( property_exists( $periodentity2, $property_name ) ? $periodentity2->$property_name : NULL );
 		return $this->overlaps_object( $object1, $object2 );
   }
 
   function overlaps_locaton( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
-		return $this->overlaps_perioditem_object( $perioditem1, $perioditem2, 'location' );
+		return $this->overlaps_perioditem_object( $perioditem1->period_entity, $perioditem2->period_entity, 'location' );
   }
 
   function overlaps_item( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
-		return $this->overlaps_perioditem_object( $perioditem1, $perioditem2, 'item' );
+		return $this->overlaps_perioditem_object( $perioditem1->period_entity, $perioditem2->period_entity, 'item' );
+  }
+
+  function overlaps_user( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
+		// TODO: overlapping users?
+		return $this->overlaps_perioditem_object( $perioditem1->period_entity, $perioditem2->period_entity, 'user' );
   }
 
   function overlaps( CB2_PeriodItem $perioditem1, CB2_PeriodItem $perioditem2 ) {
-		return $perioditem1 != $perioditem2
+		return ( $perioditem1 != $perioditem2 )
 			&&   $this->overlaps_time(    $perioditem1, $perioditem2 )
 			&&   $this->overlaps_locaton( $perioditem1, $perioditem2 )
 			&&   $this->overlaps_item(    $perioditem1, $perioditem2 );
@@ -296,6 +301,19 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 			$perioditem->overlap_perioditems = $overlap_perioditems;
 			// Can be NULL, indicating that this item is always overridden, even if alone
 			$perioditem->priority = $this->dynamic_priority( $perioditem, $overlap_perioditems );
+
+			// Set the top_priority_overlap_period
+			// based on the comparative priorities
+			foreach ( $overlap_perioditems as $overlap_perioditem ) {
+				if ( $overlap_perioditem->priority() > $perioditem->priority() ) {
+					$perioditem->priority_overlap_periods[ $overlap_perioditem->priority() ] = $overlap_perioditem;
+					if ( is_null( $perioditem->top_priority_overlap_period )
+						|| $overlap_perioditem->priority() > $perioditem->top_priority_overlap_period->priority()
+					)
+						$perioditem->top_priority_overlap_period = $overlap_perioditem;
+				}
+			}
+
 			$this->set_processed( $perioditem );
 		}
   }

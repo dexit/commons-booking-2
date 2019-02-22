@@ -24,8 +24,8 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		'perioditem-user',
 	);
   private static $null_recurrence_index = 0;
-  private $priority_overlap_periods     = array();
-  private $top_priority_overlap_period  = NULL;
+  public $priority_overlap_periods     = array();
+  public $top_priority_overlap_period  = NULL;
 
 	static function database_table_name() { return self::$database_table; }
 
@@ -128,16 +128,6 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 				array_push( $this->days, $day );
 				$date->add( 1 );
 			} while ( $date->before( $this->datetime_period_item_end ) );
-
-			// Overlapping periods
-			// Might partially overlap many different non-overlapping periods
-			// TO DO: location-location doesn't overlap, item-item doesn't overlap
-			foreach ( self::$all as $existing_perioditem ) {
-				if ( $this->overlaps( $existing_perioditem ) ) {
-					$existing_perioditem->add_new_overlap( $this );
-					$this->add_new_overlap( $existing_perioditem );
-				}
-			}
 		}
 
     parent::__construct();
@@ -212,17 +202,6 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 		) );
   }
 
-  function overlaps( $period ) {
-		return $this->overlaps_time( $period );
-  }
-
-  function overlaps_time( $period ) {
-		return ( $this->datetime_period_item_start->moreThanOrEqual( $period->datetime_period_item_start )
-			    && $this->datetime_period_item_start->lessThanOrEqual( $period->datetime_period_item_end ) )
-			||   ( $this->datetime_period_item_end->moreThanOrEqual( $period->datetime_period_item_start )
-			    && $this->datetime_period_item_end->lessThanOrEqual( $period->datetime_period_item_end ) );
-  }
-
   function get_the_edit_post_url( $context = 'display' ) {
 		// Redirect the edit post to the entity
 		return $this->period_entity->get_the_edit_post_url( $context );
@@ -243,19 +222,6 @@ abstract class CB2_PeriodItem extends CB2_PostNavigator implements JsonSerializa
 			"cb2-tab-security"   => 'Security',
 		);
 	}
-
-  function add_new_overlap( $new_perioditem ) {
-		// A Linked list of overlapping periods is not logical
-		// Just because A overlaps B and B overlaps C
-		//   does not mean that A overlaps C
-		if ( $new_perioditem->priority() > $this->priority() ) {
-			$this->priority_overlap_periods[ $new_perioditem->priority() ] = $new_perioditem;
-			if ( is_null( $this->top_priority_overlap_period )
-				|| $new_perioditem->priority() > $this->top_priority_overlap_period->priority()
-			)
-				$this->top_priority_overlap_period = $new_perioditem;
-		}
-  }
 
   function templates_considered( $context = 'list', $type = NULL, &$templates = NULL ) {
 		// Priority order
@@ -546,18 +512,6 @@ class CB2_PeriodItem_Location extends CB2_PeriodItem {
     return $object;
   }
 
-	function overlaps( $existing_perioditem ) {
-		$parent_overlaps = parent::overlaps( $existing_perioditem );
-
-		$not_different = (
-			 ! property_exists( $existing_perioditem, 'location' )
-			|| is_null( $this->location )
-			|| $this->location->is( $existing_perioditem->period_entity->location )
-		);
-
-		return $not_different && $parent_overlaps;
-  }
-
   function jsonSerialize() {
     $array = parent::jsonSerialize();
     //$array[ 'location' ] = &$this->location;
@@ -667,18 +621,6 @@ class CB2_PeriodItem_Timeframe extends CB2_PeriodItem {
     }
 
     return $object;
-  }
-
-	function overlaps( $existing_perioditem ) {
-		$parent_overlaps = parent::overlaps( $existing_perioditem );
-
-		$not_different = (
-			 ! property_exists( $existing_perioditem, 'item' )
-			|| is_null( $this->item )
-			|| $this->item->is( $existing_perioditem->period_entity->item )
-		);
-
-		return $not_different && $parent_overlaps;
   }
 
   function get_option( $option, $default = FALSE ) {
@@ -907,18 +849,6 @@ class CB2_PeriodItem_Timeframe_User extends CB2_PeriodItem {
     }
 
     return $object;
-  }
-
-	function overlaps( $existing_perioditem ) {
-		$parent_overlaps = parent::overlaps( $existing_perioditem );
-
-		$not_different = (
-			 ! property_exists( $existing_perioditem, 'user' )
-			|| is_null( $this->user )
-			|| $this->user->is( $existing_perioditem->period_entity->user )
-		);
-
-		return $not_different && $parent_overlaps;
   }
 
   function jsonSerialize() {

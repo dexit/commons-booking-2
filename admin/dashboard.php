@@ -6,7 +6,8 @@ global $wp_query;
 // And also so pre_get_posts will not bulk with no global $wp_query
 wp_reset_query();
 $wp_query = CB2_PeriodInteractionStrategy::factory_from_args( $_REQUEST, array(
-	'enddate' => CB2_DateTime::next_week_end()->format( CB2_Query::$datetime_format ),
+	'enddate'          => CB2_DateTime::next_week_end()->format( CB2_Query::$datetime_format ),
+	//'display-strategy' => 'CB2_AllItemAvailability',
 ) );
 $title_text   = __( 'Dashboard' );
 ?>

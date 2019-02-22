@@ -428,18 +428,18 @@ abstract class CB2_PostNavigator extends stdClass {
 	}
 
   function get_the_debug( $before = '', $after = '', $depth = 0, $object_ids = array() ) {
-		$classname = get_class( $this );
+		$Class = get_class( $this );
 
 		if ( isset( $object_ids[$this->ID] ) ) {
-			$debug = "<div class='cb2-warning'>recursion on $classname::$this->ID</div>";
+			$debug = "<div class='cb2-warning'>recursion on $Class::$this->ID</div>";
 		} else if ( $depth > 3 ) {
-			$debug = "<div class='cb2-warning'>maxdepth exceeeded on $classname::$this->ID</div>";
+			$debug = "<div class='cb2-warning'>maxdepth exceeeded on $Class::$this->ID</div>";
 		} else {
 			$object_ids[$this->ID] = TRUE;
 
 			$debug  = $before;
 			$debug .= "<ul class='cb2-WP_DEBUG cb2-depth-$depth'>";
-			$debug .= "<li class='cb2-classname'>$classname:</li>";
+			$debug .= "<li class='cb2-classname'>$Class:</li>";
 			foreach ( $this as $name => $value ) {
 				if ( $name
 					&& ( ! isset( CB2_Post::$POST_PROPERTIES[$name] ) || CB2_Post::$POST_PROPERTIES[$name] )
@@ -448,14 +448,21 @@ abstract class CB2_PostNavigator extends stdClass {
 					if      ( is_null( $value ) ) $value = '<i>NULL</i>';
 					else if ( method_exists( $value, 'format' ) ) $value = $value->format( CB2_Query::$datetime_format );
 					else if ( is_array( $value ) ) {
-						/*
-						$debug .= "<ul>";
+						$value_array  = 'Array(' . count( $value ) . ')';
+						$value_array .= "<ul>";
 						foreach ( $value as $value2 ) {
-							$debug .= "<li>$value2</li>";
+							$value_array .= '<li>';
+							if ( $value2 instanceof CB2_PostNavigator ) {
+								$Class2 = get_class( $value2 );
+								$ID2    = $value2->ID;
+								$value_array .= "$Class2($ID2)";
+							} else if ( is_string( $value2 ) || is_numeric( $value2 ) ) {
+								$value_array .= $value2;
+							}
+							$value_array .= '</li>';
 						}
-						$debug .= "</ul>";
-						*/
-						$value = 'Array(' . count( $value ) . ')';
+						$value_array .= "</ul>";
+						$value = $value_array;
 					} else if ( is_object($value) && method_exists( $value, 'get_the_debug' ) )
 						$value = $value->get_the_debug( $before, $after, $depth + 1, $object_ids );
 					$debug .= "<li><b>$name</b>: $value</li>";
