@@ -19,6 +19,7 @@ print( '</div>' );
 
 // ------------------------------------ Definition
 print( "<div id='cb2-tab-definition'>" );
+if ( WP_DEBUG ) print( "<div class='cb2-WP_DEBUG-small'>$post->period->ID</div>" );
 CB2::the_meta_boxes( $post->period );
 print( '</div>' );
 
