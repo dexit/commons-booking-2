@@ -137,6 +137,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 					'schema-type'      => CB2_Week::$static_post_type,
 					'display-strategy' => 'CB2_SingleItemAvailability',
 					'selection-mode'   => 'range',
+					'template-type'    => 'available',
         );
         $shortcode_atts_string = CB2_Query::implode( ' ', $shortcode_atts, '=', NULL, FALSE ); // Ignore empty
 

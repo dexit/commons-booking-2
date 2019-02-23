@@ -74,7 +74,7 @@
 
 	li.type-week>ul.cb2-subposts {
 		overflow: hidden;
-		height: 100%;
+		/* height: 100%; */ /* this causes huge high cells in the calendar... so commented out */
 		display: flex;
 		flex-direction: row;
 
