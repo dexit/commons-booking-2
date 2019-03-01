@@ -17,14 +17,17 @@ $href_title_text = __( 'View' );
 if ( CB2_AJAX_POPUPS && FALSE ) {
 	$ID        = get_the_ID( $item );
 	$post_type = get_post_type( $item );
-	$page      = 'cb2-load-template';
-	$action    = 'edit'; // context = 'popup'
-	$template_loader_url = plugins_url(
-		"admin/load_template.php?page=$page&action=$action&ID=$ID&post_type=$post_type",
-		dirname( __FILE__ )
-	);
+	$query_string  = CB2_Query::implode_query_string( array(
+		'cb2_load_template' => 1,
+		'page'         => 'cb2-post-edit', // To force is_admin()
+		'context'      => 'popup',
+		'template_type'=> 'edit',
+		'ID'           => $ID,
+		'post_type'    => $post_type,
+		'title'        => $href_title_text,
+	) );
+	$href_click = admin_url( "admin.php?$query_string" );
 	$href_class = 'thickbox';
-	$href_click = "$template_loader_url&title=$href_title_text";
 }
 
 $classes = array( 'cb2-item-name', 'cb2-template-items' );

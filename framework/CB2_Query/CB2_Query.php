@@ -927,6 +927,10 @@ class CB2_Query {
 		return preg_replace( '/([a-z0-9])([A-Z])/', '\1_\2', $name );
 	}
 
+	static function implode_query_string( $array, $object = NULL ) {
+		return self::implode( '&', $array, '=', $object, TRUE, TRUE );
+	}
+
 	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL, $include_empty_values = TRUE, $urlencode = FALSE ) {
 		$string = NULL;
 		if ( self::array_has_associative( $array ) ) {

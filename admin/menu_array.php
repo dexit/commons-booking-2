@@ -140,9 +140,4 @@ $menu_interface = array(
 		'function'      => 'cb2_settings_post_edit',
 		'advanced'      => TRUE,
 	),
-	'cb2-load-template' => array(
-		'page_title'    => 'Load Template',
-		'function'      => 'cb2_settings_load_template',
-		'advanced'      => TRUE,
-	),
 );

@@ -68,7 +68,6 @@ add_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY, 3 );
 
 // Prevent updates of wp_posts
 add_filter( 'wp_insert_post_empty_content', 'cb2_wp_insert_post_empty_content', 1, 2 );
-//add_filter( 'edit_post', 'cb2_edit_post', 1, 2 );
 add_action( 'cmb2_save_post_fields',        'cb2_cmb2_save_post_fields_debug', 10, 4 );
 
 // Direct metadata updates
@@ -677,6 +676,7 @@ function cb2_init_register_post_types() {
 			);
 			if ( property_exists( $Class, 'post_type_args' ) )
 				$args = array_merge( $args, $Class::$post_type_args );
+
 			if ( WP_DEBUG && FALSE ) {
 				print( "<div class='cb2-WP_DEBUG'>register_post_type([$post_type])</div>" );
 				krumo($args);
@@ -842,8 +842,9 @@ add_filter( 'map_meta_cap', 'cb2_map_meta_cap', 10, 4 );
 
 function cb2_query_debug( $query ) {
 	global $wp;
-	if ( CB2_DEBUG_SAVE && FALSE )
+	if ( WP_DEBUG && FALSE && strstr( $query, '_posts' ) ) {
 		print( "<div class='cb2-WP_DEBUG-small'>$query</div>" );
+	}
 
 	//if ( trim( $query ) == 'SELECT * FROM wp_posts WHERE ID = 1100000002 LIMIT 1' )
 	//	throw new Exception( 'query ran' );
