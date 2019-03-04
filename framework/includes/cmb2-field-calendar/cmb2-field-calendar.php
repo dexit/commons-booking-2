@@ -71,8 +71,16 @@ class CMB2_Field_Calendar {
 					'posts_per_page' => -1,
 					'order'          => 'ASC',          // defaults to post_date
 					'date_query'     => array(
-						'after'   => $startdate_string,
-						'before'  => $enddate_string,
+						array(
+							// post_modified_gmt is the end date of the period instance
+							'column' => 'post_modified_gmt',
+							'after'  => $startdate_string,
+						),
+						array(
+							// post_gmt is the start date of the period instance
+							'column' => 'post_date_gmt',
+							'before' => $enddate_string,
+						),
 						'compare' => $schema_type,
 					),
 				);

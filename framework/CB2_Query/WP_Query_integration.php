@@ -738,11 +738,11 @@ function cb2_post_results_unredirect_wpdb( $posts, $wp_query ) {
 
 function cb2_posts_results_add_automatic( $posts, $wp_query ) {
 	if ( isset( $wp_query->query['date_query'] )
-		&& isset( $wp_query->query['date_query']['after'] )
-		&& isset( $wp_query->query['date_query']['before'] )
+		&& CB2_Query::key_exists_recursive( $wp_query->query['date_query'], 'after' )
+		&& CB2_Query::key_exists_recursive( $wp_query->query['date_query'], 'before' )
 	) {
-		$startdate_string = $wp_query->query['date_query']['after'];
-		$enddate_string   = $wp_query->query['date_query']['before'];
+		$startdate_string = CB2_Query::value_recursive( $wp_query->query['date_query'], 'after' );
+		$enddate_string   = CB2_Query::value_recursive( $wp_query->query['date_query'], 'before' );
 		if ( $startdate_string && $enddate_string ) {
 			$startdate = new CB2_DateTime( $startdate_string );
 			$enddate   = new CB2_DateTime( $enddate_string );

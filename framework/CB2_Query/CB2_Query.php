@@ -948,6 +948,38 @@ class CB2_Query {
 		return $string;
 	}
 
+	static public function value_recursive( Array $array, String $search ) {
+		// This function will NOT find NULLs
+		$found = NULL;
+		foreach ( $array as $key => $value ) {
+			if ( $key === $search && ! is_null( $value ) ) {
+				$found = $value;
+				break;
+			}
+			if ( is_array( $value ) ) {
+				$found = self::value_recursive( $value, $search );
+				if ( ! is_null( $found  ) ) break;
+			}
+		}
+		return $found;
+	}
+
+	static public function key_exists_recursive( Array $array, String $search ) {
+		$found = FALSE;
+		foreach ( $array as $key => $value ) {
+			if ( $key === $search ) {
+				$found = TRUE;
+				break;
+			}
+			if ( is_array( $value ) ) {
+				if ( $found = self::key_exists_recursive( $value, $search ) ) {
+					break;
+				}
+			}
+		}
+		return $found;
+	}
+
 	static public function array_walk_keys( Array $array, $callback, $userdata = NULL ) {
 		$new_array = array();
 		foreach ( $array as $key => $value ) {
