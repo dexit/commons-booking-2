@@ -57,8 +57,16 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		if ( ! isset( $query['posts_per_page'] ) ) $query['posts_per_page'] = -1;
 		if ( ! isset( $query['order'] ) )          $query['order'] = 'ASC'; // defaults to post_date
 		if ( ! isset( $query['date_query'] ) )     $query['date_query'] = array();
-		if ( ! isset( $query['date_query']['after'] ) )  $query['date_query']['after']  = $this->startdate->format( CB2_Query::$datetime_format );
-		if ( ! isset( $query['date_query']['before'] ) ) $query['date_query']['before'] = $this->enddate->format( CB2_Query::$datetime_format );
+		if ( ! CB2_Query::key_exists_recursive( $query['date_query'], 'after' ) )
+			array_push( $query['date_query'], array(
+				'column' => 'post_modified_gmt',
+				'after'  => $this->startdate->format( CB2_Query::$datetime_format )
+			) );
+		if ( ! CB2_Query::key_exists_recursive( $query['date_query'], 'before' ) )
+			array_push( $query['date_query'], array(
+				'column' => 'post_date_gmt',
+				'before' => $this->enddate->format( CB2_Query::$datetime_format )
+			) );
 		// This sets which CB2_(ObjectType) is the resultant primary posts array
 		// e.g. CB2_Weeks generated from the CB2_PeriodItem records
 		if ( ! isset( $query['date_query']['compare'] ) ) $query['date_query']['compare'] = $this->schema_type;
@@ -174,8 +182,16 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 			'posts_per_page' => -1,
 			'order'          => 'ASC',          // defaults to post_date
 			'date_query'     => array(
-				'after'   => $inputs['startdate'],
-				'before'  => $inputs['enddate'],
+				array(
+					// post_modified_gmt is the end date of the period instance
+					'column' => 'post_modified_gmt',
+					'after'  => $inputs['startdate'],
+				),
+				array(
+					// post_gmt is the start date of the period instance
+					'column' => 'post_date_gmt',
+					'before' => $inputs['enddate'],
+				),
 				'compare' => $inputs['schema_type'],
 			),
 			'meta_query' => $meta_query,        // Location, Item, User
@@ -503,9 +519,9 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 	*/
 
 	static function factory_from_query_args( Array $args ) {
-		$startdate   = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
-		$enddate     = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
-		$schema_type = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
+		$startdate   = CB2_Query::value_recursive( $args['date_query'], 'after' );
+		$enddate     = CB2_Query::value_recursive( $args['date_query'], 'before' );
+		$schema_type = CB2_Query::value_recursive( $args['date_query'], 'compare' );
 
 		$startdate   = ( $startdate ? new CB2_DateTime( $startdate ) : NULL );
 		$enddate     = ( $enddate   ? new CB2_DateTime( $enddate )   : NULL );
@@ -575,10 +591,10 @@ class CB2_SingleItemAvailability extends CB2_AllItemAvailability {
 			? $args['meta_query']['entities']['item_ID_clause']['value'][0]
 			: NULL
 		);
-		$startdate   = ( isset( $args['date_query']['after'] )   ? $args['date_query']['after']   : NULL );
-		$enddate     = ( isset( $args['date_query']['before'] )  ? $args['date_query']['before']  : NULL );
-		$schema_type = ( isset( $args['date_query']['compare'] ) ? $args['date_query']['compare'] : NULL );
-		$post_status = ( isset( $args['post_status'] ) ? $args['post_status'] : NULL );
+		$startdate   = CB2_Query::value_recursive( $args['date_query'], 'after' );
+		$enddate     = CB2_Query::value_recursive( $args['date_query'], 'before' );
+		$schema_type = CB2_Query::value_recursive( $args['date_query'], 'compare' );
+		$post_status = CB2_Query::isset( $args, 'post_status' );
 		$show_overridden_periods = ( $post_status == CB2_Post::$TRASH
 			|| ( is_array( $post_status ) && in_array( CB2_Post::$TRASH, $post_status ) ) );
 

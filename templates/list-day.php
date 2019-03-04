@@ -4,6 +4,7 @@
 	$ID              = get_the_ID();    // CB2_Day
 	$post_type       = get_post_type(); // day
 	$date            = CB2::get_the_date( 'c' ); // CB2_DateTime
+	$context_post    = NULL;
 	$has_context     = isset( $template_args['post'] );
 	$action          = ( $has_context ? 'addto' : 'add' );
 	if ( isset( $template_args['action'] ) ) $action = $template_args['action']; // Can be empty
@@ -11,7 +12,6 @@
 	$href_click      = NULL;            // TODO: direct add link?
 	$href_title_text = __( $action );
 	$href_class      = '';
-	$add_new_values  = array();
 	$template_args[ 'day' ] = $post;    // CB2_Day
 
 	// Context settings
@@ -19,8 +19,6 @@
 	$out_of_period_entity_scope = FALSE;
 	if ( $has_context ) {
 		$context_post = $template_args['post'];
-		$add_new_values[ 'context_post_ID' ]   = $context_post->ID;
-		$add_new_values[ 'context_post_type' ] = $context_post->post_type;
 		if ( $context_post instanceof CB2_PeriodEntity ) {
 			// In context with main post?
 			if ( ( $context_post->entity_datetime_to   && $context_post->entity_datetime_to->lessThanOrEqual( $date  ) )
@@ -34,15 +32,20 @@
 
 	// AJAX Popup navigation
 	if ( CB2_AJAX_POPUPS ) {
-		$page      = 'cb2-load-template';
-		$date      = urlencode( $date );
-		$values_string = CB2_Query::implode( '&', $add_new_values, '=', NULL, TRUE, TRUE ); // urlencode values
-		$template_loader_url = plugins_url(
-			"admin/load_template.php?page=$page&action=$action&ID=$ID&date=$date&post_type=$post_type&$values_string",
-			dirname( __FILE__ )
-		);
+		$query_string  = CB2_Query::implode_query_string( array(
+			'cb2_load_template' => 1,
+			'page'         => 'cb2-post-edit', // To force is_admin()
+			'context'      => 'popup',
+			'template_type'=> $action,
+			'ID'           => $ID,
+			'post_type'    => $post_type,
+			'date'         => $date,
+			'title'        => $href_title_text,
+			'context_post_ID'   => ( $context_post ? $context_post->ID        : NULL ),
+			'context_post_type' => ( $context_post ? $context_post->post_type : NULL ),
+		) );
+		$href_click = admin_url( "admin.php?$query_string" );
 		$href_class = 'thickbox';
-		$href_click = "$template_loader_url&title=$href_title_text";
 	}
 ?>
 <li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?>>

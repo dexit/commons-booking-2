@@ -819,8 +819,16 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 							'query'  => array(
 								'post_status' => 'any',
 								'date_query' => array(
-									'after'   => CB2_DateTime::next_week_start()->format( CB2_Query::$date_format ),
-									'before'  => CB2_DateTime::next_week_end()->format(   CB2_Query::$date_format ),
+									array(
+										// post_modified_gmt is the end date of the period instance
+										'column' => 'post_modified_gmt',
+										'after'  => CB2_DateTime::next_week_start()->format( CB2_Query::$date_format ),
+									),
+									array(
+										// post_gmt is the start date of the period instance
+										'column' => 'post_date_gmt',
+										'before' => CB2_DateTime::next_week_end()->format(   CB2_Query::$date_format ),
+									),
 									'compare' => CB2_Week::$static_post_type,
 								),
 								'meta_query' => array(

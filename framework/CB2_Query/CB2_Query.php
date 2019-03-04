@@ -927,6 +927,10 @@ class CB2_Query {
 		return preg_replace( '/([a-z0-9])([A-Z])/', '\1_\2', $name );
 	}
 
+	static function implode_query_string( $array, $object = NULL ) {
+		return self::implode( '&', $array, '=', $object, TRUE, TRUE );
+	}
+
 	static function implode( $delimiter, $array, $associative_delimiter = '=', $object = NULL, $include_empty_values = TRUE, $urlencode = FALSE ) {
 		$string = NULL;
 		if ( self::array_has_associative( $array ) ) {
@@ -942,6 +946,38 @@ class CB2_Query {
 		} else $string = implode( $delimiter, $array );
 
 		return $string;
+	}
+
+	static public function value_recursive( Array $array, String $search ) {
+		// This function will NOT find NULLs
+		$found = NULL;
+		foreach ( $array as $key => $value ) {
+			if ( $key === $search && ! is_null( $value ) ) {
+				$found = $value;
+				break;
+			}
+			if ( is_array( $value ) ) {
+				$found = self::value_recursive( $value, $search );
+				if ( ! is_null( $found  ) ) break;
+			}
+		}
+		return $found;
+	}
+
+	static public function key_exists_recursive( Array $array, String $search ) {
+		$found = FALSE;
+		foreach ( $array as $key => $value ) {
+			if ( $key === $search ) {
+				$found = TRUE;
+				break;
+			}
+			if ( is_array( $value ) ) {
+				if ( $found = self::key_exists_recursive( $value, $search ) ) {
+					break;
+				}
+			}
+		}
+		return $found;
 	}
 
 	static public function array_walk_keys( Array $array, $callback, $userdata = NULL ) {

@@ -93,11 +93,11 @@ class CB2 {
 		print( $post && property_exists( $post, 'geo_longitude' ) ? $post->geo_longitude : NULL );
 	}
 
-	public static function the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
-		echo self::get_the_inner_loop( $template_args, $post_navigator, $context, $template_type, $before, $after );
+	public static function the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
+		echo self::get_the_inner_loop( $template_args, $post_navigator, $context, $template_type, $before, $after, $reorder_function );
 	}
 
-	public static function get_the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
+	public static function get_the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
 		global $post;
 		$html       = '';
 
@@ -114,6 +114,7 @@ class CB2 {
 				// the_post() will trigger loop_start
 				//   CB2_Query::reorganise_posts_structure() which will not do anything
 				// because the wp_query is marked as re-organised already
+				if ( $reorder_function ) uasort( $post_navigator->posts, $reorder_function );
 				$i = 0;
 				while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 					$even_class = ( $i % 2 ? 'cb2-row-odd' : 'cb2-row-even' );
@@ -618,6 +619,7 @@ class CB2 {
 	// -------------------------------------------------------------------------------------
 	public static function the_content( $content ) {
 		global $post;
+
 		if ( $post ) {
 			$post_type = $post->post_type;
 			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
@@ -627,6 +629,7 @@ class CB2 {
 					$content = $post->get_the_content();
 			}
 		}
+
 		return $content;
 	}
 
@@ -682,10 +685,11 @@ class CB2 {
 		</div><br/>" );
 	}
 
-	public static function the_hidden_form( String $post_type = '', Array $classes = array(), $post = NULL, String $form_action = 'editpost', String $post_url = NULL ) {
+	public static function the_hidden_form( String $post_type = '', Array $classes = array(), $post = NULL, String $template_type = 'editpost', String $post_url = NULL ) {
 		$user_ID          = get_current_user_id();
 		$post_ID          = ( $post ? $post->ID : CB2_CREATE_NEW );
 		$nonce_action     = 'update-post_' . $post_ID;
+		$form_action      = 'cb2_template_save';
 		$active_post_lock = '';
 		$referer          = wp_get_referer();
 		$post_author      = ( $post ? $post->post_author : NULL );
@@ -693,13 +697,20 @@ class CB2 {
 		$form_extra       = ( $post ? "<input type='hidden' id='post_ID' name='post_ID' value='" . esc_attr($post_ID) . "' />" : '' );
 		if ( $post )
 			array_push( $classes, 'cb2-with-template-post' );
-		if ( is_null( $post_url ) )
-			$post_url = CB2_Query::pass_through_query_string( NULL, array(
-				'action'    => $form_action,
-				'ID'        => $post_ID,
-				'post_type' => $post_type,
-				'context'   => 'save',
-			) );
+		if ( is_null( $post_url ) ) {
+			$post_url = CB2_Query::pass_through_query_string( admin_url( 'admin-ajax.php' ),
+				array(
+					'context'       => 'save',
+					'template_type' => $template_type,
+					'ID'            => $post_ID,
+					'post_type'     => $post_type,
+				),
+				array(
+					'cb2_load_template', // Used to load the template, would override the save
+					'page'
+				)
+			);
+		}
 
 		// Texts
 		$cancel_text   = __( 'Cancel' );
@@ -771,6 +782,8 @@ class CB2 {
 		// Populate the $wp_meta_boxes array
 		$post_type = $post->post_type;
 		if ( is_null( $wp_meta_boxes ) ) {
+			$screen = WP_Screen::get( $post_type );
+			set_current_screen( $screen );
 			do_action( 'add_meta_boxes', $post_type,  $post );
 			do_action( "add_meta_boxes_$post_type", $post );
 			if ( WP_DEBUG && is_null( $wp_meta_boxes ) )
@@ -823,9 +836,14 @@ class CB2 {
 		}
 
 		// Populate the $wp_meta_boxes array
+		$post_type = $post->post_type;
 		if ( is_null( $wp_meta_boxes ) ) {
+			$screen = WP_Screen::get( $post_type );
+			set_current_screen( $screen );
 			do_action( 'add_meta_boxes', $post->post_type,  $post );
 			do_action( "add_meta_boxes_{$post->post_type}", $post );
+			if ( WP_DEBUG && is_null( $wp_meta_boxes ) )
+				throw new Exception( "Failed to load meta boxes for [$post_type]" );
 		}
 
 		// Find it
@@ -855,7 +873,7 @@ class CB2 {
 		// so we need to redirect the DB for:
 		//   	=> get_metadata(... 'post')
 		if ( $box ) {
-			if ( $post ) CB2_Query::redirect_wpdb_for_post_type( $post->post_type );
+			if ( $post ) CB2_Query::redirect_wpdb_for_post_type( $post_type );
 			$object = $post;
 			// Taken from do_meta_boxes():
 			echo '<div id="' . $box['id'] . '" class="postbox ' . postbox_classes($box['id'], $page ) . '" ' . '>' . "\n";
@@ -879,6 +897,12 @@ class CB2 {
 
 	public static function the_title( $HTML = TRUE ) {
 		print( self::get_the_title( $HTML ) );
+	}
+
+	public static function the_link() {
+		$url   = get_the_permalink();
+		$title = get_the_title();
+		print( "<a href='$url'>$title</a>" );
 	}
 
 	public static function get_the_title( $HTML = TRUE ) {

@@ -309,8 +309,9 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 
 		// One cb2_data_change per entire top level change
 		// rather than every row
-		if ( $top )
-			do_action( 'cb2_data_change', $update );
+		if ( $top ) {
+			do_action( 'save_post_top', $this->ID, $this, $update );
+		}
 
 		return $this->ID;
 	}
@@ -453,6 +454,12 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			$update          = FALSE;
 
 			// CB2 events
+			// NOTE: add_action( 'save_post', 'cb2_save_post_move_to_native', CB2_MTN_PRIORITY, 3 );
+			// will trigger this process, with these events disabled
+			// when moving a post from wp_posts to the native tables for the first time
+			// using this->save()
+			// and then redirect to the edit for that new fake post_ID
+			// thus wp_insert_post will never fire
 			$this->disable_cb2_hooks();
 			$this->custom_events( FALSE );
 

@@ -38,11 +38,8 @@ class CB2_TimePostNavigator extends CB2_PostNavigator implements JsonSerializabl
 // --------------------------------------------------------------------
 class CB2_Year extends CB2_TimePostNavigator {
   static $all                   = array();
-  static $static_post_type      = 'year';
+  static $static_post_type      = 'yr'; // Cannot use year, because that causes issues
   public $is_current            = FALSE;
-  public static $post_type_args = array(
-		'public' => FALSE,
-  );
 
   function post_type() {return self::$static_post_type;}
   public function __toString() {return $this->post_title;}

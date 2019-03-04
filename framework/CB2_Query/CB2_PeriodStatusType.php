@@ -510,8 +510,16 @@ class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 				),
 				// Let's show next week only
 				'date_query' => array(
-					'after'  => (string) CB2_DateTime::next_week_start(),
-					'before' => (string) CB2_DateTime::next_week_end(),
+					array(
+						// post_modified_gmt is the end date of the period instance
+						'column' => 'post_modified_gmt',
+						'after'  => (string) CB2_DateTime::next_week_start(),
+					),
+					array(
+						// post_gmt is the start date of the period instance
+						'column' => 'post_date_gmt',
+						'before' => (string) CB2_DateTime::next_week_end(),
+					),
 					'compare' => CB2_Week::$static_post_type,
 				),
 			),

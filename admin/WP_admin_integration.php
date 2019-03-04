@@ -556,26 +556,6 @@ function cb2_settings_list_page() {
 	return TRUE;
 }
 
-function cb2_settings_load_template() {
-	global $post;
-
-	$ID            = $_GET['ID'];
-	$post_type     = ( isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post' );
-	$action        = ( isset( $_GET['action'] )    ? $_GET['action']    : 'edit' );
-	$context       = ( isset( $_GET['context'] )   ? $_GET['context']   : 'popup' );
-	$post          = CB2_Query::get_post_with_type( $post_type, $ID );
-
-	$templates     = CB2::templates( $context, $action, FALSE, $templates_considered );
-	$template_args = array();
-
-	print( "<div class='cb2-$context cb2-$context-$action cb2-$context-$action-$post_type'>" );
-	if ( WP_DEBUG ) {
-		print( "<div class='cb2-WP_DEBUG'>$ID/$post_type/$context-$action</div>" );
-	}
-	cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args );
-	print( '</div>' );
-}
-
 function cb2_settings_post_new() {
 	global $auto_draft_publish_transition;
 	global $is_IE;
@@ -703,3 +683,117 @@ function cb2_settings_post_edit() {
 	require_once( dirname( __FILE__ ) . '/wp-admin/post.php' );
 }
 
+function cb2_load_template() {
+	global $post;
+
+	if ( isset( $_REQUEST['cb2_load_template'] ) && ! $_POST ) {
+		// ------------------------------------------- Inputs
+		$ID              = ( isset( $_REQUEST['ID'] )              ? $_REQUEST['ID']        : NULL );
+		$post_type       = ( isset( $_REQUEST['post_type'] )       ? $_REQUEST['post_type'] : NULL );
+		$context         = ( isset( $_REQUEST['context'] )         ? $_REQUEST['context']   : 'popup' );
+		$template_type   = ( isset( $_REQUEST['template_type'] )   ? $_REQUEST['template_type']    : 'edit' );
+		$context_post_ID = ( isset( $_REQUEST['context_post_ID'] ) ? $_REQUEST['context_post_ID'] : NULL );
+		$template_args   = $_REQUEST;
+
+		// ------------------------------------------- Main post
+		// works without a post
+		// works with pseudo posts like CB2_Day
+		$post = NULL;
+		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+			if ( CB2_Database::posts_table( $Class ) )
+				$post = CB2_Query::get_post_with_type( $post_type, $ID );
+			else if ( method_exists($Class, 'factory_from_properties' ) )
+				$post = $Class::factory_from_properties( $_REQUEST ); // e.g. CB2_Day(date)
+			else
+				throw new Exception( "Cannot instantiate / get [$Class]" );
+		}
+		$templates = CB2::templates( $context, $template_type, FALSE, $templates_considered );
+
+		// ------------------------------------------- extra template_args
+		// The outer post displaying a calendar with days in it
+		if ( $context_post_ID )
+			$template_args[ 'context_post' ] = CB2_Query::get_post_with_type( $_REQUEST[ 'context_post_type' ], $_REQUEST[ 'context_post_ID' ] );
+
+		// ------------------------------------------- DEBUG
+		if ( WP_DEBUG ) {
+			print( "<!-- $ID/$post_type/$context-$template_type -->\n" );
+			print( "<!-- Templates considered (in priority order): \n  " . implode( ", \n  ", $templates_considered ) . "\n -->\n" );
+			print( "<!--\n" );
+			foreach( $_POST as $name => $value ) {
+				if      ( is_string( $value ) ) print( "  $name => $value\n" );
+				else if ( is_array(  $value ) ) print( "  $name => Array(...)\n" );
+				else print( "  $name => ...\n" );
+			}
+			print( "\n-->\n" );
+		}
+
+		// ------------------------------------------- Popup
+		print( "<div class='cb2-$context cb2-$context-$template_type cb2-$context-$template_type-$post_type'>" );
+		cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args );
+		print( "<script>setTimeout(function(){
+					jQuery('#TB_window').trigger('cb2-popup-appeared');
+				}, 0);
+			</script>" );
+		print( '</div>' );
+		exit();
+	}
+}
+add_action( 'admin_init', 'cb2_load_template', 1 );
+
+function cb2_template_save() {
+	global $post;
+	$html = '';
+
+	// ------------------------------------------- Inputs
+	$ID              = ( isset( $_REQUEST['ID'] )              ? $_REQUEST['ID']              : NULL );
+	$post_type       = ( isset( $_REQUEST['post_type'] )       ? $_REQUEST['post_type']       : NULL );
+	$context         = ( isset( $_REQUEST['context'] )         ? $_REQUEST['context']         : 'save' );
+	$template_type   = ( isset( $_REQUEST['template_type'] )   ? $_REQUEST['template_type']   : 'edit' );
+	$context_post_ID = ( isset( $_REQUEST['context_post_ID'] ) ? $_REQUEST['context_post_ID'] : NULL );
+	$template_args   = $_REQUEST;
+
+	// ------------------------------------------- Main post
+	// works without a post
+	// works with pseudo posts like CB2_Day
+	$post = NULL;
+	if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
+		if ( CB2_Database::posts_table( $Class ) ) {
+			$post = CB2_Query::get_post_with_type( $post_type, $ID );
+		} else if ( method_exists($Class, 'factory_from_properties' ) ) {
+			$post = $Class::factory_from_properties( $_REQUEST ); // e.g. CB2_Day(date)
+		} else {
+			http_response_code( 500 );
+			throw new Exception( "Cannot instantiate / get [$Class]" );
+		}
+	}
+	$templates = CB2::templates( $context, $template_type, FALSE, $templates_considered );
+
+	// ------------------------------------------- extra template_args
+	// The outer post displaying a calendar with days in it
+	if ( $context_post_ID )
+		$template_args[ 'context_post' ] = CB2_Query::get_post_with_type( $_REQUEST[ 'context_post_type' ], $_REQUEST[ 'context_post_ID' ] );
+
+	// ------------------------------------------- DEBUG
+	if ( WP_DEBUG ) {
+		$html .= ( "<!-- $ID/$post_type/$context-$template_type -->\n" );
+		$html .= ( "<!-- Templates considered (in priority order): \n  " . implode( ", \n  ", $templates_considered ) . "\n -->\n" );
+		$html .= ( "<!--\n" );
+		foreach( $_POST as $name => $value ) {
+			if      ( is_string( $value ) ) $html .= ( "  $name => $value\n" );
+			else if ( is_array(  $value ) ) $html .= ( "  $name => Array(...)\n" );
+			else $html .= ( "  $name => ...\n" );
+		}
+		$html .= ( "\n-->\n" );
+	}
+
+	try {
+		$html .= cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE );
+	} catch ( Exception $ex ) {
+		http_response_code( 500 );
+		$message = htmlspecialchars( $ex->getMessage() );
+		$html .= ( "<result message='$message'>Server Error</result>" );
+	}
+	print( $html );
+	exit();
+}
+add_action( 'wp_ajax_cb2_template_save', 'cb2_template_save' );
