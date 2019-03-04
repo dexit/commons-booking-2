@@ -768,7 +768,10 @@ abstract class CB2_PostNavigator extends stdClass {
 	function get_the_content() {
 		$content = '';
 		if ( property_exists( $this, 'post_content' ) ) $content .= $this->post_content;
-		$content .= $this->get_the_after_content();
+		if ( method_exists( $this, 'get_the_after_content' ) ) {
+			$content .= '<!--more-->';
+			$content .= $this->get_the_after_content();
+		}
 		return $content;
 	}
 

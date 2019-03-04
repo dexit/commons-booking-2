@@ -93,11 +93,11 @@ class CB2 {
 		print( $post && property_exists( $post, 'geo_longitude' ) ? $post->geo_longitude : NULL );
 	}
 
-	public static function the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
-		echo self::get_the_inner_loop( $template_args, $post_navigator, $context, $template_type, $before, $after );
+	public static function the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
+		echo self::get_the_inner_loop( $template_args, $post_navigator, $context, $template_type, $before, $after, $reorder_function );
 	}
 
-	public static function get_the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '' ) {
+	public static function get_the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
 		global $post;
 		$html       = '';
 
@@ -114,6 +114,7 @@ class CB2 {
 				// the_post() will trigger loop_start
 				//   CB2_Query::reorganise_posts_structure() which will not do anything
 				// because the wp_query is marked as re-organised already
+				if ( $reorder_function ) uasort( $post_navigator->posts, $reorder_function );
 				$i = 0;
 				while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 					$even_class = ( $i % 2 ? 'cb2-row-odd' : 'cb2-row-even' );
@@ -618,6 +619,7 @@ class CB2 {
 	// -------------------------------------------------------------------------------------
 	public static function the_content( $content ) {
 		global $post;
+
 		if ( $post ) {
 			$post_type = $post->post_type;
 			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
@@ -627,6 +629,7 @@ class CB2 {
 					$content = $post->get_the_content();
 			}
 		}
+
 		return $content;
 	}
 
@@ -894,6 +897,12 @@ class CB2 {
 
 	public static function the_title( $HTML = TRUE ) {
 		print( self::get_the_title( $HTML ) );
+	}
+
+	public static function the_link() {
+		$url   = get_the_permalink();
+		$title = get_the_title();
+		print( "<a href='$url'>$title</a>" );
 	}
 
 	public static function get_the_title( $HTML = TRUE ) {
