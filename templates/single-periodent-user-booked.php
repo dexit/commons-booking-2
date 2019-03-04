@@ -8,7 +8,7 @@ if ( CB2::is_confirmed() ) {
 
 	CB2::the_inner_loop( NULL, NULL, 'summary', NULL, '', '', 'cb2_item_location_summary' );
 } else {
-	$do_action = 'confirm';
+	$do_action    = 'confirm';
 	$confirm_text = __( 'Confirm', 'commons-booking-2' );
 
 	cb2_tag( CB2_Settings::get('messagetemplates_please-confirm'), 'periodent-user', $ID, 'notice' );
