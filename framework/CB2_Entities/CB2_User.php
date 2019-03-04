@@ -112,11 +112,6 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         $this->post_title   = $user_login;
         $this->post_type    = self::$static_post_type;
 
-        // TODO: load User values
-        $this->user_registered = '1971-01-01 00:00:00';
-        $this->first_name      = 'TODO';
-        $this->last_name       = 'todo';
-
         parent::__construct($this->perioditems);
 
         self::$all[$ID] = $this;

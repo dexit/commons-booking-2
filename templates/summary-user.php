@@ -10,9 +10,6 @@
  *
  * @see       CB2_Enqueue::cb_template_chooser()
  */
-global $post;
-// $user_meta = get_user_meta($post ->ID);
-
 ?>
 <div class="cb2-summary cb2-user-summary">
 	<h3><?php echo __('Your information', 'commons-booking-2'); ?></h3>
@@ -26,7 +23,7 @@ global $post;
 	</dl>
 	<dl class="cb2-user-registered-on">
     <dt><?php echo __('Member since', 'commons-booking-2'); ?></dt>
-		<dd><?php echo date_i18n(get_option('date_format'), strtotime( get_the_author_meta( $post->user_registered ) ) ); ?>
+		<dd><?php echo date_i18n(get_option('date_format'), strtotime( get_the_author_meta( 'user_registered' ) ) ); ?>
 	</dd>
 </div>
 
