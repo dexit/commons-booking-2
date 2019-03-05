@@ -22,20 +22,20 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
   static function database_table_name() { return self::$database_table; }
 
   static function database_table_schemas( $prefix ) {
-		$period_item_posts      = "{$prefix}cb2_view_perioditem_posts";
-		$period_item_meta       = "{$prefix}cb2_view_perioditemmeta";
+		$period_inst_posts      = "{$prefix}cb2_view_periodinst_posts";
+		$period_inst_meta       = "{$prefix}cb2_view_periodinstmeta";
 		$period_group_period    = "{$prefix}cb2_period_group_period";
-		$perioditem_cache_table = "{$prefix}cb2_cache_perioditems";
+		$periodinst_cache_table = "{$prefix}cb2_cache_periodinsts";
 		$postmeta               = "{$prefix}postmeta";
 		$id_field               = CB2_Database::id_field( __class__ );
 		$safe_updates_off       = CB2_Database::$safe_updates_off;
 		$safe_updates_restore   = CB2_Database::$safe_updates_restore;
 
-		// period => perioditem cacheing
-		$cache_fields   = 'period_id, recurrence_index, datetime_period_item_start, datetime_period_item_end, blocked';
-		$refresh_cache  = "delete from $perioditem_cache_table;\n";
-		$refresh_cache .= "insert into $perioditem_cache_table($cache_fields)\n";
-		$refresh_cache .= "		select $cache_fields from {$prefix}cb2_view_perioditems;";
+		// period => periodinst cacheing
+		$cache_fields   = 'period_id, recurrence_index, datetime_period_inst_start, datetime_period_inst_end, blocked';
+		$refresh_cache  = "delete from $periodinst_cache_table;\n";
+		$refresh_cache .= "insert into $periodinst_cache_table($cache_fields)\n";
+		$refresh_cache .= "		select $cache_fields from {$prefix}cb2_view_periodinsts;";
 
 		$trigger_check_recurrence_type = "
 					if new.recurrence_type not in('Y', 'M', 'W', 'D') then
@@ -48,6 +48,19 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 
 					if new.datetime_part_period_end < new.datetime_part_period_start then
 						signal sqlstate '45000' set message_text = 'datetime_part_period_end must be after datetime_part_period_start';
+					end if;
+
+					if new.recurrence_type is null then
+						if new.datetime_from > new.datetime_part_period_start then
+							signal sqlstate '45001' set message_text = 'datetime_from cannot be more than datetime_part_period_start';
+						end if;
+						if not new.datetime_to is null then
+							if new.datetime_to < new.datetime_part_period_start then
+								signal sqlstate '45002' set message_text = 'datetime_to cannot be less than datetime_part_period_start';
+							elseif new.datetime_to < new.datetime_part_period_end then
+								signal sqlstate '45003' set message_text = 'datetime_to cannot be less than datetime_part_period_end';
+							end if;
+						end if;
 					end if;";
 
 		return array(
@@ -81,18 +94,18 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			),
 
 			array(
-				'name'    => 'cb2_cache_perioditems',
+				'name'    => 'cb2_cache_periodinsts',
 				'columns' => array(
 					'period_id'        => array( CB2_INT,     (11), CB2_UNSIGNED, CB2_NOT_NULL, ),
 					'recurrence_index' => array( CB2_INT,     (11), CB2_UNSIGNED, CB2_NOT_NULL, ),
-					'datetime_period_item_start' => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, ),
-					'datetime_period_item_end'   => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, ),
+					'datetime_period_inst_start' => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, ),
+					'datetime_period_inst_end'   => array( CB2_DATETIME, NULL, NULL, CB2_NOT_NULL, ),
 					'blocked'          => array( CB2_TINYINT, (1),  CB2_UNSIGNED, CB2_NOT_NULL, ),
 				),
 				'primary key' => array( 'period_id', 'recurrence_index', ),
 				'keys'        => array(
-					'datetime_period_item_start',
-					'datetime_period_item_end',
+					'datetime_period_inst_start',
+					'datetime_period_inst_end',
 				),
 			),
 		);
@@ -312,15 +325,22 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		if ( isset( $properties['period_group_IDs'] ) )
 			$period_group_IDs = CB2_Query::ensure_ints( 'period_group_IDs', $properties['period_group_IDs'], TRUE );
 
+		// Important that the datetime_from does not mask the whole period
+		// this only happens if recurrence_type is NULL
+		// so, if it is not specified, we set it to the overall datetime_part_period_start
+		// The database will throw helpful Exceptions if anything is amiss
+		$datetime_part_period_start = CB2_Query::isset( $properties, 'datetime_part_period_start', CB2_DateTime::day_start()->format() );
+		$datetime_from = CB2_Query::isset( $properties, 'datetime_from', $datetime_part_period_start );
+
 		$object = self::factory(
 			( isset( $properties['period_ID'] )  ? $properties['period_ID']            : $properties['ID']   ),
 			( isset( $properties['post_title'] )
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name'] : '' )
 			),
-			( isset( $properties['datetime_part_period_start'] ) ? $properties['datetime_part_period_start'] : CB2_DateTime::day_start()->format() ),
+			$datetime_part_period_start,
 			( isset( $properties['datetime_part_period_end'] )   ? $properties['datetime_part_period_end']   : CB2_DateTime::day_end()->format() ),
-			( isset( $properties['datetime_from'] )        ? $properties['datetime_from']        : CB2_DateTime::yesterday() ),
+			$datetime_from,
 			( isset( $properties['datetime_to'] )          ? $properties['datetime_to']          : NULL ),
 			( isset( $properties['recurrence_type'] )      ? $properties['recurrence_type']      : NULL ),
 			( isset( $properties['recurrence_frequency'] ) ? $properties['recurrence_frequency'] : NULL ),
@@ -361,16 +381,20 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
   public function __construct(
 		$ID,
     $name,
-    $datetime_part_period_start, // DateTime
-    $datetime_part_period_end,   // DateTime
-    $datetime_from,              // DateTime
-    $datetime_to = NULL,         // DateTime (NULL)
+    $datetime_part_period_start,  // DateTime
+    $datetime_part_period_end,    // DateTime
+    $datetime_from        = NULL, // DateTime
+    $datetime_to          = NULL, // DateTime (NULL)
     $recurrence_type      = NULL,
     $recurrence_frequency = NULL,
     $recurrence_sequence  = NULL,
     $period_group_IDs     = array()
   ) {
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
+
+		// We helpfully allow setting datetime_from to the datetime_part_period_start here
+		// even though the Database DOES NOT allow this
+		if ( is_null( $datetime_from ) ) $this->datetime_from = $datetime_part_period_start;
 
     $this->fullday = ( $this->datetime_part_period_start && $this->datetime_part_period_end )
 			&& ( 	 $this->datetime_part_period_start->format( 'H:i:s' ) == '00:00:00'

@@ -155,7 +155,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 	function tabs( $edit_form_advanced = FALSE ) {
 		$tabs = array();
 		if ( ! $edit_form_advanced ) $tabs = array(
-			'cb2-tab-perioditems'  => 'Period Items',
+			'cb2-tab-periodinsts'  => 'Period Instances',
 			'cb2-tab-geo'          => 'Location',
 			'cb2-tab-openinghours' => 'Opening Hours'
 		);
@@ -375,7 +375,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				'name' => get_the_title($this),
 				'url' => get_post_permalink($this),
 				'address' => $this->geo_address,
-	
+
 			),
 			'geometry' => array(
 				'type'=> 'Point',
@@ -452,7 +452,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 	function jsonSerialize() {
     return array_merge( parent::jsonSerialize(),
       array(
-        'perioditems' => &$this->perioditems
+        'periodinsts' => &$this->periodinsts
     ));
   }
 }

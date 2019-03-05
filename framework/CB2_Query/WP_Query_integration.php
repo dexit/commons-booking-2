@@ -30,18 +30,18 @@
  *
  * ---- Performace tuning with triggers
  * Some of the views can be slow when returing normalised meta-data
- * for millions of generated PeriodItems, which are then filtered.
- * So PeriodItems DO NOT use a wp_cb2_view_perioditemmeta view directly.
+ * for millions of generated PeriodInsts, which are then filtered.
+ * So PeriodInsts DO NOT use a wp_cb2_view_periodinstmeta view directly.
  * Instead triggers on the native tables sync the metadata in to wp_postmeta
  * so that normal WordPress metadata queries work.
- * The triggers use wp_cb2_view_perioditemmeta to sync the metadata during post saves()
+ * The triggers use wp_cb2_view_periodinstmeta to sync the metadata during post saves()
  * of periods or entities.
  */
 global $auto_draft_publish_transition;
 $auto_draft_publish_transition = isset( $_GET['auto_draft_publish_transition'] );
 
 // --------------------------------------------- Misc
-add_filter( 'query',            'cb2_query_debug' );
+if ( WP_DEBUG && FALSE ) add_filter( 'query', 'cb2_query_debug' );
 add_filter( 'query',            'cb2_wpdb_mend_broken_date_selector' );
 add_filter( 'posts_where',      'cb2_posts_where_allow_NULL_meta_query' );
 add_filter( 'pre_get_posts',    'cb2_pre_get_posts_query_string_extensions');
@@ -97,12 +97,6 @@ add_filter( 'loop_start',    'cb2_loop_start' );
 // --------------------------------------------- Custom post types and templates
 add_action( 'init', 'cb2_init_register_post_types' );
 add_action( 'admin_enqueue_scripts', 'cb2_admin_enqueue_scripts' );
-
-function cb2_wpdb_query_select_debug( $sql ) {
-	print( "<div>$sql</div>" );
-	return $sql;
-}
-// if ( WP_DEBUG ) add_filter( 'query', 'cb2_wpdb_query_select_debug' );
 
 // ------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------
@@ -475,7 +469,7 @@ function cb2_get_cb2_metadata( $type, $post_id, $meta_key, $single ) {
 		CB2_Query::debug_print_backtrace( "Request for CB2 [$type] meta data [$meta_key] without redirected wpdb." );
 	return NULL; // Continue with normal operation
 }
-add_filter( 'get_perioditem_metadata',       'cb2_get_cb2_metadata', 10, 4 );
+add_filter( 'get_periodinst_metadata',       'cb2_get_cb2_metadata', 10, 4 );
 add_filter( 'get_periodent_metadata',        'cb2_get_cb2_metadata', 10, 4 );
 add_filter( 'get_period_metadata',           'cb2_get_cb2_metadata', 10, 4 );
 add_filter( 'get_periodgroup_metadata',      'cb2_get_cb2_metadata', 10, 4 );
@@ -519,7 +513,7 @@ function cb2_the_posts_cache_meta( $posts, $wp_query ) {
 	// because it caches under 'post' only, not post_type
 	if ( count( $posts ) ) {
 		// We traverse the whole array
-		// because there will be a mixture of Item, Location, Automatic and PeriodItems
+		// because there will be a mixture of Item, Location and PeriodInsts
 		$object_ids = array();
 		$meta_type  = NULL;
 		foreach ( $posts as $post ) {
@@ -653,6 +647,7 @@ function cb2_init_register_post_types() {
 		if ( ! property_exists( $Class, 'register_post_type' ) || $Class::$register_post_type ) {
 			$supports = ( property_exists( $Class, 'supports' ) ? $Class::$supports : array(
 				'title',
+				// TODO: 'comments',
 			) );
 			$rewrite = ( property_exists( $Class, 'rewrite' ) ? $Class::$rewrite : array ( 'slug' => $Class::$static_post_type));
 
@@ -677,9 +672,9 @@ function cb2_init_register_post_types() {
 			if ( property_exists( $Class, 'post_type_args' ) )
 				$args = array_merge( $args, $Class::$post_type_args );
 
-			if ( WP_DEBUG && FALSE ) {
+			if ( WP_DEBUG && isset( $_GET['debug'] ) ) {
 				print( "<div class='cb2-WP_DEBUG'>register_post_type([$post_type])</div>" );
-				krumo($args);
+				//krumo($args);
 			}
 			register_post_type( $post_type, $args );
 		}
@@ -693,7 +688,7 @@ function cb2_init_register_post_types() {
 function cb2_pre_get_posts_prevent_update_post_meta_cache( &$wp_query ) {
 	// Prevent standard attempt to cache with meta_type = post
 	// our custom types should be cached under the base post_type meta_type:
-	//   perioditem_meta[ID]
+	//   periodinst_meta[ID]
 	//   NOT post_meta[ID]
 	// update_postmeta_cache() has hardcoded 'post' meta_type
 	// See
@@ -841,14 +836,7 @@ function cb2_map_meta_cap( $caps, $cap, $user_id, $args ) {
 add_filter( 'map_meta_cap', 'cb2_map_meta_cap', 10, 4 );
 
 function cb2_query_debug( $query ) {
-	global $wp;
-	if ( WP_DEBUG && FALSE && strstr( $query, '_posts' ) ) {
-		print( "<div class='cb2-WP_DEBUG-small'>$query</div>" );
-	}
-
-	//if ( trim( $query ) == 'SELECT * FROM wp_posts WHERE ID = 1100000002 LIMIT 1' )
-	//	throw new Exception( 'query ran' );
-
+	print( "<div class='cb2-WP_DEBUG-small'>$query</div>" );
 	return $query;
 }
 

@@ -26,7 +26,7 @@ class CB2_Shortcodes {
 		if ( ! is_array( $atts ) ) $atts = array( $atts );
 		$args             = array_merge( $atts, $args, $_REQUEST );
 		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args );
-		if ( WP_DEBUG ) krumo( $display_strategy );
+		if ( WP_DEBUG && FALSE ) krumo( $display_strategy );
 
 		// ------------------------------------- CSS and INPUT all args
 		$css_classes = '';

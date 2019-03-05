@@ -1,10 +1,10 @@
 <?php
 global $post;
 
-if ( ! $post instanceof CB2_PeriodItem )
-	throw new Exception( 'CB2_PeriodItem required for popup' );
+if ( ! $post instanceof CB2_PeriodInst )
+	throw new Exception( 'CB2_PeriodInst required for popup' );
 if ( ! $post->period )
-	throw new Exception( 'CB2_PeriodItem has no specific period (CB2_Period)' );
+	throw new Exception( 'CB2_PeriodInst has no specific period (CB2_Period)' );
 
 // <div form...
 CB2::the_hidden_form( $post->post_type(), array(), $post );

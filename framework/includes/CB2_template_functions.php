@@ -123,9 +123,9 @@ class CB2 {
 					$html      .= $before;
 					CB2_Query::redirect_wpdb_for_post_type( $post_type );
 					$templates  = self::templates( $context, $template_type );
-					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE, array(), $template_type );
+					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE );
 					$html      .= $li;
-					// Some period-items are suppressed but have debug output
+					// Some periodinsts are suppressed but have debug output
 					if ( trim( preg_replace( '/<!--.*-->/', '', $li ) ) ) $i++;
 					CB2_Query::unredirect_wpdb();
 					$html      .= $after;
@@ -349,7 +349,7 @@ class CB2 {
 	}
 
 	public static function is_top_priority() {
-		// Indicates if the perioditem is overridden by another overlapping perioditem
+		// Indicates if the periodinst is overridden by another overlapping periodinst
 		global $post, $wp_query;
 
 		$top_priority            = TRUE;

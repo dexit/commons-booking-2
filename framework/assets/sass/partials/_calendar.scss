@@ -11,7 +11,7 @@
  *					li.type-day
  *						div.day-title
  *		 				ul.cb2-subposts
- *		 					li.type-perioditem
+ *		 					li.type-periodinst
  *		 							.cb2-details
  *										span.cb2-item, span.cb2-location
  *
@@ -101,7 +101,7 @@
 
 	}
 
-	.type-perioditem {
+	.type-periodinst {
 
 		@include round-rect(all);
 		color: $color-white;
@@ -323,12 +323,12 @@
 		padding: 1px 4px;
 	}
 
-	.cb2-perioditem-has-overlap {
+	.cb2-periodinst-has-overlap {
 		opacity: 0.5;
 		color: #333;
 	}
 
-	.cb2-perioditem-has-overlap .cb2-period-period-status-type-name .cb2-field-value {
+	.cb2-periodinst-has-overlap .cb2-period-period-status-type-name .cb2-field-value {
 		background-color: #777;
 	}
 

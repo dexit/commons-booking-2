@@ -27,7 +27,7 @@ require_once('CB2_Query/CB2_Query.php');
 require_once('CB2_Query/CB2_Database.php');
 require_once('CB2_Query/CB2_PostNavigator.php');
 require_once('CB2_Query/CB2_DatabaseTable_PostNavigator.php');
-require_once('CB2_Query/CB2_PeriodItem.php');
+require_once('CB2_Query/CB2_PeriodInst.php');
 require_once('CB2_Query/CB2_PeriodEntity.php');
 require_once('CB2_Query/CB2_PeriodInteractionStrategies.php');
 require_once('CB2_Query/CB2_Time_Classes.php');

@@ -19,7 +19,7 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   public static $PUBLISH        = 'publish';
   public static $AUTODRAFT      = 'auto-draft';
   public static $TRASH          = 'trash';
-  public static $schema         = 'with-perioditems'; //this-only, with-perioditems
+  public static $schema         = 'with-periodinsts'; //this-only, with-periodinsts
   public static $posts_table    = 'posts';    // not a pseudo class
   public static $postmeta_table = 'postmeta'; // not a pseudo class
   public static $database_table = FALSE;
@@ -142,13 +142,13 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   protected function __construct( $ID ) {
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
-		$this->perioditems = array();
+		$this->periodinsts = array();
 
-    parent::__construct( $this->perioditems );
+    parent::__construct( $this->periodinsts );
   }
 
-  function add_perioditem( &$perioditem ) {
-    if ( ! in_array( $perioditem, $this->perioditems ) ) array_push( $this->perioditems, $perioditem );
+  function add_periodinst( &$periodinst ) {
+    if ( ! in_array( $periodinst, $this->periodinsts ) ) array_push( $this->periodinsts, $periodinst );
   }
 
   function get_field_this( $class = '', $date_format = NULL ) {
@@ -165,8 +165,8 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
       'ID' => $this->ID,
       'post_title' => $this->post_title,
     );
-    if ( self::$schema == 'with-perioditems' )
-			$array[ 'perioditems' ] = &$this->perioditems;
+    if ( self::$schema == 'with-periodinsts' )
+			$array[ 'periodinsts' ] = &$this->periodinsts;
 
     return $array;
   }

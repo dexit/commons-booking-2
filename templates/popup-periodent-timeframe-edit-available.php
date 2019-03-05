@@ -1,2 +1,2 @@
 <?php
-require( 'popup-perioditem-edit.php' );
+require( 'popup-periodinst-edit.php' );

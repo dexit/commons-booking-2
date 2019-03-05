@@ -67,7 +67,7 @@ class CMB2_Field_Calendar {
         // Defaults
         $default_query    = array(
 					'post_status'    => CB2_Post::$PUBLISH,
-					'post_type'      => CB2_PeriodItem::$all_post_types,
+					'post_type'      => CB2_PeriodInst::$all_post_types,
 					'posts_per_page' => -1,
 					'order'          => 'ASC',          // defaults to post_date
 					'date_query'     => array(
@@ -98,7 +98,7 @@ class CMB2_Field_Calendar {
 					CB2_Query::array_walk_paths( $query_args, $post );
 				}
 
-				// Request period items
+				// Request periodinsts
         $context        = ( isset( $options[ 'context' ] )       ? $options[ 'context' ]  : 'list' );
         $template       = ( isset( $options[ 'template' ] )      ? $options[ 'template' ] : NULL );
 				$template_args  = ( isset( $options[ 'template-args' ] ) ? $options[ 'template-args' ] : array() );

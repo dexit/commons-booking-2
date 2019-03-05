@@ -23,7 +23,7 @@ $menu_interface = array(
 		'page_title'    => 'Bookings %(for)% %location_ID%',
 		'menu_title'    => 'Bookings',
 		'wp_query_args' => 'post_type=periodent-user&period_status_type_ID=' . CB2_PeriodStatusType_Booked::bigID(),
-		'count'         => "select count(*) from {$wpdb->prefix}cb2_view_perioditem_posts `po` where ((`po`.`datetime_period_item_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`",
+		'count'         => "select count(*) from {$wpdb->prefix}cb2_view_periodinst_posts `po` where ((`po`.`datetime_period_inst_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`",
 		'count_class'   => 'ok',
 	),
 

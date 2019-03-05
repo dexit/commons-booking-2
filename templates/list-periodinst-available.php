@@ -4,7 +4,7 @@
 	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( 'cb2-template-available cb2-selectable' ); ?> style="background-color:<?php CB2::the_colour(); ?>">
 		<div class="cb2-details">
 			<?php if ( CB2::can_select() ) { ?>
-				<input class="cb2-perioditem-selector" type="checkbox" id="perioditem-<?php the_ID(); ?>" name="<?php CB2::the_post_type(); ?>s[]" value="<?php the_ID(); ?>"/>
+				<input class="cb2-periodinst-selector" type="checkbox" id="periodinst-<?php the_ID(); ?>" name="<?php CB2::the_post_type(); ?>s[]" value="<?php the_ID(); ?>"/>
 				<span class="cb2-time-period"><?php CB2::the_time_period(); ?></span>
 			<?php } ?>
 			<div class="cb2-debug-period-info">

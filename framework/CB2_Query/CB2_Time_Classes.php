@@ -6,6 +6,7 @@ class CB2_TimePostNavigator extends CB2_PostNavigator implements JsonSerializabl
   public static $posts_table    = FALSE;
   public static $postmeta_table = FALSE;
   public static $database_table = FALSE;
+  public static $register_post_type = FALSE;
 	public $first = FALSE;
 
 	static function max_days() {
@@ -275,8 +276,9 @@ class CB2_Day extends CB2_TimePostNavigator {
 
   protected function __construct( CB2_DateTime $date = NULL, String $title_format = NULL ) {
 		if ( is_null( $date ) ) $date = new CB2_DateTime();
+		else $date = $date->clone();
 		$date->clearTime();
-    $this->perioditems  = array();
+    $this->periodinsts  = array();
 
     // http://php.net/manual/en/function.date.php
     $this->date         = $date;
@@ -298,7 +300,7 @@ class CB2_Day extends CB2_TimePostNavigator {
     $this->post_type    = self::$static_post_type;
     $this->post_date    = $date->format( CB2_Query::$date_format );
 
-    parent::__construct( $this->perioditems );
+    parent::__construct( $this->periodinsts );
   }
 
   static function &factory_from_properties( Array $properties ) {
@@ -308,6 +310,11 @@ class CB2_Day extends CB2_TimePostNavigator {
 		$title_format = ( isset( $properties[ 'title_format' ] ) ? $properties[ 'title_format' ] : NULL );
 		$date         = new CB2_DateTime( $properties[ 'date' ] );
 		return self::factory( $date, $title_format );
+  }
+
+  static function day_exists( CB2_DateTime $date ) {
+    $key = $date->format( 'Y-z' ); // year-dayofyear: 2019-364
+    return isset( self::$all[$key] );
   }
 
   static function &factory( CB2_DateTime $date, String $title_format = NULL ) {
@@ -354,16 +361,16 @@ class CB2_Day extends CB2_TimePostNavigator {
   function classes() {
     $classes = parent::classes();
 
-    foreach ( $this->perioditems as $perioditem ) {
-      $classes .= $perioditem->classes_for_day( $this );
+    foreach ( $this->periodinsts as $periodinst ) {
+      $classes .= $periodinst->classes_for_day( $this );
     }
 
     return $classes;
   }
 
-  function add_perioditem( $perioditem ) {
-    array_push( $this->perioditems, $perioditem );
-    return $perioditem;
+  function add_periodinst( $periodinst ) {
+    array_push( $this->periodinsts, $periodinst );
+    return $periodinst;
   }
 
   function tabs( $edit_form_advanced = FALSE ) {
@@ -385,7 +392,7 @@ class CB2_Day extends CB2_TimePostNavigator {
       'dayofweek'   => $this->dayofweek,
       'today'       => $this->today,
       'title'       => $this->title,
-      'periods'     => &$this->perioditems
+      'periods'     => &$this->periodinsts
     ];
   }
 }

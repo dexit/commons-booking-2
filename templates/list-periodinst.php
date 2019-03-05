@@ -9,7 +9,7 @@
 		$even_class      = ( isset( $template_args[ 'even_class' ] ) ? $template_args[ 'even_class' ] : '' );
 		$classes         = array( $even_class );
 
-		// PeriodItem relationship to Day
+		// PeriodInst relationship to Day
 		if ( isset( $template_args[ 'day' ] ) ) {
 			$day  = $template_args[ 'day' ];
 			$days = $post->days;

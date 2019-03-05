@@ -51,7 +51,12 @@ abstract class CB2_PostNavigator extends stdClass {
 		//
 		// CB2_MAX_CB2_POSTS:
 		// More CB2 posts than this will overlap with the next quota of post_type
-		// this needs to be high because perioditem-* also has a $CB2_MAX_DAYS
+		// this needs to be high because periodinst-* also has a $CB2_MAX_DAYS
+		//
+		// CB2_MAX_PERIODS:
+		// Period_IDs can be the same for different PeriodEntities: global, location, timeframe, etc.
+		// they cannot overlap:
+		//   `global_period_group_id` * `pt_pi`.`ID_multiplier`) + (`po`.`period_id` * 10000)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`
 		//
 		// $CB2_MAX_DAYS:
 		// This is the maximum number of recurrences
@@ -64,8 +69,8 @@ abstract class CB2_PostNavigator extends stdClass {
 		// Usually int(2,147,483,647) in 32 bit systems
 		// and int(9223372036854775807) in 64 bit systems. Available since PHP 5.0.5'
 		$CB2_MAX_DAYS     = CB2_TimePostNavigator::max_days();
-		$perioditem_quota = CB2_MAX_CB2_POSTS * $CB2_MAX_DAYS;
-		if ( 4 * $perioditem_quota + CB2_ID_BASE > PHP_INT_MAX )
+		$periodinst_quota = CB2_MAX_CB2_POSTS * $CB2_MAX_DAYS * CB2_MAX_PERIODS;
+		if ( 4 * $periodinst_quota + CB2_ID_BASE > PHP_INT_MAX )
 			throw new Exception( 'Fake CB2 post IDs are above PHP_INT_MAX [' . PHP_INT_MAX . ']' );
 
 		return array(
@@ -79,11 +84,11 @@ abstract class CB2_PostNavigator extends stdClass {
 			// 1 Shared view
 			// several of these post_types may be requested at the SAME TIME
 			// thus requireing one view for all types
-			// recurrence causes many perioditems
-			array( '4',  'perioditem-global',    0 * $perioditem_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
-			array( '5',  'perioditem-location',  1 * $perioditem_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
-			array( '6',  'perioditem-timeframe', 2 * $perioditem_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
-			array( '7',  'perioditem-user',      3 * $perioditem_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+			// recurrence causes many periodinsts
+			array( '4',  'periodinst-global',    0 * $periodinst_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+			array( '5',  'periodinst-location',  1 * $periodinst_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+			array( '6',  'periodinst-timeframe', 2 * $periodinst_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+			array( '7',  'periodinst-user',      3 * $periodinst_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
 
 			// 1 Shared view
 			// several of these post_types may be requested at the SAME TIME
@@ -769,6 +774,11 @@ abstract class CB2_PostNavigator extends stdClass {
 		$content = '';
 		if ( property_exists( $this, 'post_content' ) ) $content .= $this->post_content;
 		if ( method_exists( $this, 'get_the_after_content' ) ) {
+			// TODO: this remove_filter wpautop is quite rude
+			// as it removes it for the entire remaining process
+			// and no content will br wpauto
+			remove_filter( 'the_content', 'wpautop' );
+			remove_filter( 'the_excerpt', 'wpautop' );
 			$content .= '<!--more-->';
 			$content .= $this->get_the_after_content();
 		}
@@ -782,24 +792,24 @@ abstract class CB2_PostNavigator extends stdClass {
 
 	// --------------------------------------- input interpretation
 	// Used by do_action_*()
-	static function post_perioditem_user_IDs_interpret( $perioditem_user_IDs ) {
-		return self::get_posts_with_type( $perioditem_user_IDs, 'perioditem-user' );
+	static function post_periodinst_user_IDs_interpret( $periodinst_user_IDs ) {
+		return self::get_posts_with_type( $periodinst_user_IDs, 'periodinst-user' );
 	}
 
-	static function post_perioditem_globals_interpret( $perioditem_timeframe_IDs ) {
-		return self::get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-global' );
+	static function post_periodinst_globals_interpret( $periodinst_timeframe_IDs ) {
+		return self::get_posts_with_type( $periodinst_timeframe_IDs, 'periodinst-global' );
 	}
 
-	static function post_perioditem_locations_interpret( $perioditem_timeframe_IDs ) {
-		return self::get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-location' );
+	static function post_periodinst_locations_interpret( $periodinst_timeframe_IDs ) {
+		return self::get_posts_with_type( $periodinst_timeframe_IDs, 'periodinst-location' );
 	}
 
-	static function post_perioditem_timeframes_interpret( $perioditem_timeframe_IDs ) {
-		return self::get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-timeframe' );
+	static function post_periodinst_timeframes_interpret( $periodinst_timeframe_IDs ) {
+		return self::get_posts_with_type( $periodinst_timeframe_IDs, 'periodinst-timeframe' );
 	}
 
-	static function post_perioditem_timeframe_users_interpret( $perioditem_timeframe_IDs ) {
-		return self::get_posts_with_type( $perioditem_timeframe_IDs, 'perioditem-user' );
+	static function post_periodinst_timeframe_users_interpret( $periodinst_timeframe_IDs ) {
+		return self::get_posts_with_type( $periodinst_timeframe_IDs, 'periodinst-user' );
 	}
 
 	// ---------------------------------------------- Fake post helpers

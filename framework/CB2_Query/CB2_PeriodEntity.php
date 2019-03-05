@@ -216,9 +216,9 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $tabs;
 	}
 
-  protected static function factory_from_to_perioditems(
-		CB2_PeriodItem $perioditem_from,
-		CB2_PeriodItem $perioditem_to,
+  protected static function factory_from_to_periodinsts(
+		CB2_PeriodInst $periodinst_from,
+		CB2_PeriodInst $periodinst_to,
 		$new_periodentity_Class,
 		$new_period_status_type_Class,
 		$name = NULL,
@@ -228,23 +228,22 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		CB2_Item     $item     = NULL,
 		CB2_User     $user     = NULL
   ) {
-		$period_entity = $perioditem_from->period_entity;
+		$period_entity = $periodinst_from->period_entity;
 
 		// PeriodGroup, Period and refrences
 		$period_group  = NULL;
 		if ( $copy_period_group ) {
 			// We do not want to clone the period_group
-			// only the period item *instance*
+			// only the period *instance*
 			$period = new CB2_Period(
 				CB2_CREATE_NEW,
-				( $name ? $name : $perioditem_from->post_title ),
-				$perioditem_from->datetime_period_item_start, // datetime_part_period_start
-				$perioditem_to->datetime_period_item_end,     // datetime_part_period_end
-				CB2_DateTime::yesterday()                     // datetime_from
+				( $name ? $name : $periodinst_from->post_title ),
+				$periodinst_from->datetime_period_inst_start, // datetime_part_period_start
+				$periodinst_to->datetime_period_inst_end      // datetime_part_period_end
 			);
 			$period_group = new CB2_PeriodGroup(
 				CB2_CREATE_NEW,
-				( $name ? $name : $perioditem_from->post_title ),
+				( $name ? $name : $periodinst_from->post_title ),
 				array( $period ) // periods
 			);
 		} else {
@@ -270,8 +269,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $new_period_entity;
   }
 
-  protected static function factory_from_perioditem(
-		CB2_PeriodItem $perioditem,
+  protected static function factory_from_periodinst(
+		CB2_PeriodInst $periodinst,
 		$new_periodentity_Class,
 		$new_period_status_type_Class,
 		$name = NULL,
@@ -281,24 +280,24 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		CB2_Item     $item     = NULL,
 		CB2_User     $user     = NULL
 	) {
-		$period_entity = $perioditem->period_entity;
+		$period_entity = $periodinst->period_entity;
 
 		// PeriodGroup, Period and refrences
 		$period_group  = NULL;
 		if ( $copy_period_group ) {
 			// We do not want to clone the period_group
-			// only the period item *instance*
+			// only the period *instance*
 			$datetime_now = new CB2_DateTime();
 			$period = new CB2_Period(
 				CB2_CREATE_NEW,
-				( $name ? $name : $perioditem->post_title ),
-				$perioditem->datetime_period_item_start, // datetime_part_period_start
-				$perioditem->datetime_period_item_end,   // datetime_part_period_end
+				( $name ? $name : $periodinst->post_title ),
+				$periodinst->datetime_period_inst_start, // datetime_part_period_start
+				$periodinst->datetime_period_inst_end,   // datetime_part_period_end
 				$datetime_now                            // datetime_from
 			);
 			$period_group = new CB2_PeriodGroup(
 				CB2_CREATE_NEW,
-				( $name ? $name : $perioditem->post_title ),
+				( $name ? $name : $periodinst->post_title ),
 				array( $period ) // periods
 			);
 		} else {
@@ -524,17 +523,17 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			throw new Exception( "User does not have sufficient permissions to $do_action" );
 
 		// Compile all the object arrays sent through
-		$perioditems = array();
-		foreach ( $args as $name => $perioditem_array )
-			if ( substr( $name, 0, 11 ) == 'perioditem-'
-				&& is_array( $perioditem_array )
-				&& count( $perioditem_array )
-				&& $perioditem_array[0] instanceof CB2_PeriodItem
+		$periodinsts = array();
+		foreach ( $args as $name => $periodinst_array )
+			if ( substr( $name, 0, 11 ) == 'periodinst-'
+				&& is_array( $periodinst_array )
+				&& count( $periodinst_array )
+				&& $periodinst_array[0] instanceof CB2_PeriodInst
 			)
-				$perioditems = array_merge( $perioditems, $perioditem_array );
+				$periodinsts = array_merge( $periodinsts, $periodinst_array );
 
-		foreach ( $perioditems as $perioditem )
-			$perioditem->$do_action();
+		foreach ( $periodinsts as $periodinst )
+			$periodinst->$do_action();
   }
 
   static function do_action_block( CB2_User $user, $args ) {
@@ -634,7 +633,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
   public static $database_table = 'cb2_global_period_groups';
   static $static_post_type      = 'periodent-global';
-  static $Class_PeriodItem      = 'CB2_PeriodItem_Global'; // Associated CB2_PeriodItem
+  static $Class_PeriodInst      = 'CB2_PeriodInst_Global'; // Associated CB2_PeriodInst
 
 	static function metaboxes() {
 		return parent::metaboxes();
@@ -644,7 +643,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 
   static function database_table_schemas( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$Class_PeriodItem::$static_post_type;
+		$post_type            = self::$Class_PeriodInst::$static_post_type;
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return array( CB2_PeriodEntity::database_table_schema_root(
@@ -723,7 +722,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
   public static $database_table = 'cb2_location_period_groups';
   static $static_post_type      = 'periodent-location';
-  static $Class_PeriodItem      = 'CB2_PeriodItem_Location'; // Associated CB2_PeriodItem
+  static $Class_PeriodInst      = 'CB2_PeriodInst_Location'; // Associated CB2_PeriodInst
 
 	static function metaboxes() {
 		$metaboxes         = parent::metaboxes();
@@ -915,7 +914,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 
   static function database_table_schemas( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$Class_PeriodItem::$static_post_type; // Associated CB2_PeriodItem
+		$post_type            = self::$Class_PeriodInst::$static_post_type; // Associated CB2_PeriodInst
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return array( CB2_PeriodEntity::database_table_schema_root(
@@ -1010,7 +1009,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
   public static $database_table = 'cb2_timeframe_period_groups';
   static $static_post_type      = 'periodent-timeframe';
-  static $Class_PeriodItem      = 'CB2_PeriodItem_Timeframe'; // Associated CB2_PeriodItem
+  static $Class_PeriodInst      = 'CB2_PeriodInst_Timeframe'; // Associated CB2_PeriodInst
 
   static function metaboxes() {
 		$metaboxes = parent::metaboxes();
@@ -1023,7 +1022,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
   static function database_table_schemas( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$Class_PeriodItem::$static_post_type; // Associated CB2_PeriodItem
+		$post_type            = self::$Class_PeriodInst::$static_post_type; // Associated CB2_PeriodInst
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return array( CB2_PeriodEntity::database_table_schema_root(
@@ -1126,7 +1125,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
   public static $database_table = 'cb2_location_user_period_groups';
   static $static_post_type      = 'periodent-staff';
-  static $Class_PeriodItem      = 'CB2_PeriodItem_Location_User'; // Associated CB2_PeriodItem
+  static $Class_PeriodInst      = 'CB2_PeriodInst_Location_User'; // Associated CB2_PeriodInst
 
   static function metaboxes() {
 		$metaboxes = parent::metaboxes();
@@ -1139,7 +1138,7 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 
   static function database_table_schemas( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$Class_PeriodItem::$static_post_type; // Associated CB2_PeriodItem
+		$post_type            = self::$Class_PeriodInst::$static_post_type; // Associated CB2_PeriodInst
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return array( CB2_PeriodEntity::database_table_schema_root(
@@ -1244,7 +1243,7 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
   public static $database_table = 'cb2_timeframe_user_period_groups';
   static $static_post_type      = 'periodent-user';
-  static $Class_PeriodItem      = 'CB2_PeriodItem_Timeframe_User'; // Associated CB2_PeriodItem
+  static $Class_PeriodInst      = 'CB2_PeriodInst_Timeframe_User'; // Associated CB2_PeriodInst
 
   static function metaboxes() {
 		$metaboxes = parent::metaboxes();
@@ -1258,7 +1257,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
   static function database_table_schemas( $prefix ) {
 		$database_table_name  = self::database_table_name();
-		$post_type            = self::$Class_PeriodItem::$static_post_type; // Associated CB2_PeriodItem
+		$post_type            = self::$Class_PeriodInst::$static_post_type; // Associated CB2_PeriodInst
 		$id_field             = CB2_Database::id_field( __class__ );
 
 		return array( CB2_PeriodEntity::database_table_schema_root(
@@ -1326,43 +1325,43 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
     return $object;
   }
 
-  static function factory_booked_from_available_timeframe_item_from_to( CB2_PeriodItem_Timeframe $perioditem_available_from, CB2_PeriodItem_Timeframe $perioditem_available_to, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
-		if ( ! $perioditem_available_from->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
-			throw new Exception( 'Tried to morph into perioditem-user from non-available status [' . $perioditem_available->period_status_type->name . ']' );
-		if ( ! $perioditem_available_to->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
-			throw new Exception( 'Tried to morph into perioditem-user from non-available status [' . $perioditem_available->period_status_type->name . ']' );
+  static function factory_booked_from_available_timeframe_item_from_to( CB2_PeriodInst_Timeframe $periodinst_available_from, CB2_PeriodInst_Timeframe $periodinst_available_to, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
+		if ( ! $periodinst_available_from->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
+			throw new Exception( 'Tried to morph into periodinst-user from non-available status [' . $periodinst_available->period_status_type->name . ']' );
+		if ( ! $periodinst_available_to->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
+			throw new Exception( 'Tried to morph into periodinst-user from non-available status [' . $periodinst_available->period_status_type->name . ']' );
 		if ( ! $user )
 			throw new Exception( 'Tried to morph into periodentity-user without user]' );
 
-		return CB2_PeriodEntity::factory_from_to_perioditems(
-			$perioditem_available_from,
-			$perioditem_available_to,
+		return CB2_PeriodEntity::factory_from_to_periodinsts(
+			$periodinst_available_from,
+			$periodinst_available_to,
 			'CB2_PeriodEntity_Timeframe_User',
 			'CB2_PeriodStatusType_Booked',
 			$name,
 
 			$copy_period_group,
-			NULL, // Copy location from $perioditem_available_from
-			NULL, // Copy location from $perioditem_available_from
+			NULL, // Copy location from $periodinst_available_from
+			NULL, // Copy location from $periodinst_available_to
 			$user
 		);
   }
 
-  static function factory_booked_from_available_timeframe_item( CB2_PeriodItem_Timeframe $perioditem_available, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
-		if ( ! $perioditem_available->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
-			throw new Exception( 'Tried to morph into perioditem-user from non-available status [' . $perioditem_available->period_status_type->name . ']' );
+  static function factory_booked_from_available_timeframe_item( CB2_PeriodInst_Timeframe $periodinst_available, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
+		if ( ! $periodinst_available->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
+			throw new Exception( 'Tried to morph into periodinst-user from non-available status [' . $periodinst_available->period_status_type->name . ']' );
 		if ( ! $user )
 			throw new Exception( 'Tried to morph into periodentity-user without user]' );
 
-		return CB2_PeriodEntity::factory_from_perioditem(
-			$perioditem_available,
+		return CB2_PeriodEntity::factory_from_periodinst(
+			$periodinst_available,
 			'CB2_PeriodEntity_Timeframe_User',
 			'CB2_PeriodStatusType_Booked',
 			$name,
 
 			$copy_period_group,
-			NULL, // Copy location from $perioditem_available
-			NULL, // Copy location from $perioditem_available
+			NULL, // Copy location from $periodinst_available
+			NULL, // Copy location from $periodinst_available
 			$user
 		);
   }

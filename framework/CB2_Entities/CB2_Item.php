@@ -118,67 +118,35 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         return $object;
     }
 
-    public function get_the_after_content()
-    {
-				// Booking form
-				$ID          = $this->ID;
-				$form_action = '';               // Submit to self: do_action_book() hook will redirect
-				$redirect    = '/periodent-user/%action_return_value%/'; // action_return_value = booking post ID
-				$Class       = get_class($this); // Run the booking action on this Class, see do_action_book() below
-				$do_action   = 'book';           // See CB2_Item->do_action_book() below
-				$submit      = __('book the')   . " $this->post_title";
-				$name        = __('Booking of') . " $this->post_title";
-
-				$shortcode_atts = array(
-					// TODO: initial CB2_Item booking calendar pagesize settings
-					'startdate'        => '',
-					'enddate'          => '',
-					// item-ID not necessary because CB2_SingleItemAvailability uses the global post
-					'schema-type'      => CB2_Week::$static_post_type,
-					'display-strategy' => 'CB2_SingleItemAvailability',
-					'selection-mode'   => 'range',
-					'template-type'    => 'available',
-        );
-        $shortcode_atts_string = CB2_Query::implode( ' ', $shortcode_atts, '=', NULL, FALSE ); // Ignore empty
-
-        $form = "<form action='$form_action' method='POST'><div>
-						<input type='hidden' name='name' value='$name' />
-						<input type='hidden' name='do_action' value='$Class::$do_action' />
-						<input type='hidden' name='do_action_post_ID' value='$ID' />
-						<input type='hidden' name='redirect' value='$redirect' />
-						<input type='submit' name='submit' value='$submit' />
-						[cb2_calendar $shortcode_atts_string]
-						<input type='submit' name='submit' value='$submit' />
-					</div></form>";
-				$form = str_replace( "\n", '', $form ); // Prevent WordPress replacing with <br>
-
-				return $form;
+    public function get_the_after_content() {
+			$templates = $this->templates( 'single', 'booking' ); // single-item-booking.php
+			return cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', array(), TRUE );
     }
 
     public function do_action_book( CB2_User $user, array $values )
     {
-        // The booking times are based on the perioditems selected
+        // The booking times are based on the periodinsts selected
         $action     = 'book';
         $booking_ID = NULL;
 
-        if (! isset($values['perioditem-timeframes'])) {
+        if (! isset($values['periodinst-timeframes'])) {
             krumo($values);
-            throw new Exception("perioditem-timeframes required during [$action]");
+            throw new Exception("periodinst-timeframes required during [$action]");
         }
-        if (! is_array($values['perioditem-timeframes'])) {
+        if (! is_array($values['periodinst-timeframes'])) {
             krumo($values);
-            throw new Exception("perioditem-timeframes not an array during [$action]");
+            throw new Exception("periodinst-timeframes not an array during [$action]");
         }
-        if ( count($values['perioditem-timeframes']) == 0) {
+        if ( count($values['periodinst-timeframes']) == 0) {
             krumo($values);
-            throw new Exception("perioditem-timeframes empty during [$action]");
+            throw new Exception("periodinst-timeframes empty during [$action]");
         }
 
         // Book these availabilities
-        $available_perioditems = $values['perioditem-timeframes'];
+        $available_periodinsts = $values['periodinst-timeframes'];
         $name                  = __('Booking');
         $copy_period_group     = true;      // Default
-        $count                 = count($available_perioditems);
+        $count                 = count($available_periodinsts);
         $selection_mode        = ( isset( $values['selection_mode'] ) ? $values['selection_mode'] : 'range' );
 
         if (isset($values['name'])) {
@@ -190,7 +158,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 						switch ( $count ) {
 							case 1:
 								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
-										$available_perioditems[0],
+										$available_periodinsts[0],
 										$user,
 										$name,
 										$copy_period_group
@@ -201,22 +169,22 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 								break;
 							case 2:
 								// We want the earliest start and the latest end
-								// in the case that one perioditem's time span completely contains the other,
-								// we would send through the larger perioditem twice
-								$available_perioditem_from = (
-									$available_perioditems[0]->datetime_period_item_start->before( $available_perioditems[1]->datetime_period_item_start ) ?
-									$available_perioditems[0] :
-									$available_perioditems[1]
+								// in the case that one periodinst's time span completely contains the other,
+								// we would send through the larger periodinst twice
+								$available_periodinst_from = (
+									$available_periodinsts[0]->datetime_period_inst_start->before( $available_periodinsts[1]->datetime_period_inst_start ) ?
+									$available_periodinsts[0] :
+									$available_periodinsts[1]
 								);
-								$available_perioditem_to = (
-									$available_perioditems[0]->datetime_period_item_end->after( $available_perioditems[1]->datetime_period_item_end ) ?
-									$available_perioditems[0] :
-									$available_perioditems[1]
+								$available_periodinst_to = (
+									$available_periodinsts[0]->datetime_period_inst_end->after( $available_periodinsts[1]->datetime_period_inst_end ) ?
+									$available_periodinsts[0] :
+									$available_periodinsts[1]
 								);
 
 								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item_from_to(
-										$available_perioditem_from,
-										$available_perioditem_to,
+										$available_periodinst_from,
+										$available_periodinst_to,
 										$user,
 										$name,
 										$copy_period_group
@@ -226,13 +194,13 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 								$booking_ID = $periodentity_booking->save();
 								break;
 							default:
-								throw new Exception( "Booking failed because too many [$count] perioditem-timeframes provided. 1 or 2 is acceptable only." );
+								throw new Exception( "Booking failed because too many [$count] periodinst-timeframes provided. 1 or 2 is acceptable only." );
 						}
 						break;
 					default:
-						foreach ($available_perioditems as $available_perioditem) {
+						foreach ($available_periodinsts as $available_periodinst) {
 								$periodentity_booking = CB2_PeriodEntity_Timeframe_User::factory_booked_from_available_timeframe_item(
-										$available_perioditem,
+										$available_periodinst,
 										$user,
 										$name,
 										$copy_period_group
@@ -429,8 +397,8 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         if($excerpt != NULL){
             $data['description'] = $excerpt;
         }
-        if($this->perioditems != null){
-            foreach($this->perioditems as $period_inst){
+        if($this->periodinsts != null){
+            foreach($this->periodinsts as $period_inst){
                 $data['availability'][] = $period_inst->get_api_data($version);
             }
         }

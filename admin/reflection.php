@@ -268,7 +268,7 @@ if ( isset( $_GET['section'] ) ) {
 		<p>The periods are purely concerned with time and its repetition. For example: every Monday this year.
 		Consider it as a new DATETIME type with repetition built in. The Period table has 1 row per definition.
 		Periods can be grouped together in the PeriodGroup table and can have simple exceptions.
-		The view view_perioditems takes the definitions in period and creates 1 row per repetition for each period definition.
+		The view view_periodinsts takes the definitions in period and creates 1 row per repetition for each period definition.
 		This view is cached by triggers on the main period table due to the amount of processing power needed to run the calculations.
 		</p>
 

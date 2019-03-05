@@ -8,7 +8,7 @@
 			$('.cb2-template-available > .cb2-details').click(function(e){
 				var selection_container = $(this).closest('.cb2-selection-container');
 				var container      = $(this).parent();
-				var checkbox       = $(this).children('.cb2-perioditem-selector');
+				var checkbox       = $(this).children('.cb2-periodinst-selector');
 				var cssClass       = container.attr('class').trim();
 				var target         = $(e.target);
 				var clicked_input  = (target.is(checkbox));

@@ -40,7 +40,7 @@ function cb2_process(){
 
 	$('.cb2-template-available > .cb2-details').click(function(e){
 		var container      = $(this).parent();
-		var checkbox       = $(this).children('.cb2-perioditem-selector');
+		var checkbox       = $(this).children('.cb2-periodinst-selector');
 		var cssClass       = $(this).attr('class').trim();
 		var target         = $(e.target);
 		var clicked_input  = (target.is(checkbox));
@@ -189,7 +189,7 @@ function cb2_process(){
 				$(self).removeAttr('disabled');
 				$(self).parents('.cb2-popup, body').removeClass('cb2-saving');
 				// TODO: callback based refresh => calendar ajax refresh
-				//document.location = document.location;
+				document.location = document.location;
 				$(self).parents('.cb2-popup, body').addClass('cb2-refreshing');
 			},
 			error: function() {

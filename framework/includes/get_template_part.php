@@ -22,6 +22,8 @@ if ( !function_exists( 'cb2_get_template_part' ) ) {
      * @return string
      */
     function cb2_get_template_part( $plugin_slug, $slugs, $name = '', $template_args = array(), $return = FALSE, $cache_args = array(), $template_type = '' ) {
+			// $template_type is here so that it can be passed through easily
+			// maintaining the type
 			$template    = '';
 			$plugin_slug = $plugin_slug . '/';
 			$path        = WP_PLUGIN_DIR . '/'. $plugin_slug . 'templates/';

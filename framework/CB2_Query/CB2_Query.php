@@ -17,6 +17,7 @@ define( 'CB2_DEBUG_SAVE', WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
 define( 'CB2_ID_SHARING',    TRUE );
 define( 'CB2_ID_BASE',       0 );
 define( 'CB2_MAX_CB2_POSTS', 10000 );
+define( 'CB2_MAX_PERIODS',   1000 );
 
 define( 'CB2_CREATE_NEW',    -1 );
 define( 'CB2_UPDATE', TRUE );
@@ -119,7 +120,7 @@ class CB2_Query {
 		// Convert the WP_Query CB post_type results from WP_Post in to CB2_* objects
 		if ( $wp_query instanceof WP_Query && property_exists( $wp_query, 'posts' ) ) {
 			if ( is_array( $wp_query->posts ) && ! property_exists( $wp_query, '_cb2_converted_posts' ) ) {
-				// Create the CB2_PeriodItem objects from the WP_Post results
+				// Create the CB2_PeriodInst objects from the WP_Post results
 				// This will also create all the associated CB2_* Objects like CB2_Week
 				// WP_Posts will be left unchanged
 				CB2_Query::ensure_correct_classes( $wp_query->posts, $wp_query );
@@ -286,7 +287,7 @@ class CB2_Query {
 		if ( ! $auto_draft_publish_transition ) {
 			if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 				if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
-					// perioditem-global => perioditem
+					// periodinst-global => periodinst
 					$post_type_stub = CB2_Query::substring_before( $post_type );
 					$posts_table    = "{$wpdb->prefix}cb2_view_{$post_type_stub}_posts";
 					if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
@@ -298,7 +299,7 @@ class CB2_Query {
 
 				if ( $meta_redirect ) {
 					if ( ! property_exists( $Class, 'postmeta_table' ) || $Class::$postmeta_table !== FALSE ) {
-						// perioditem-global => perioditem
+						// periodinst-global => periodinst
 						$meta_type      = CB2_Query::substring_before( $post_type );
 						$postmeta_table = "{$wpdb->prefix}cb2_view_{$meta_type}meta";
 						if ( property_exists( $Class, 'postmeta_table' ) && is_string( $Class::$postmeta_table ) ) {
@@ -376,11 +377,11 @@ class CB2_Query {
 			// get_metadata( $meta_type, ... )
 			//   meta.php has _get_meta_table( $meta_type );
 			//   $table_name = $meta_type . 'meta';
-			//   $meta_type  = post_type stub, e.g. perioditem
+			//   $meta_type  = post_type stub, e.g. periodinst
 			// get_metadata() will use standard WP caches
 			self::redirect_wpdb_for_post_type( $post_type, TRUE, $meta_type );
 			if ( WP_DEBUG ) $debug_postmeta = $wpdb->postmeta;
-			$metadata = get_metadata( $meta_type, $ID ); // e.g. perioditem, 40004004
+			$metadata = get_metadata( $meta_type, $ID ); // e.g. periodinst, 40004004
 			self::unredirect_wpdb();
 
 			// Convert to objects

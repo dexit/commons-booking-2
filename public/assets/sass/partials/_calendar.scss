@@ -17,7 +17,7 @@
 
 	li.type-day {
 
-		.type-perioditem {
+		.type-periodinst {
 			font-weight: bold;
 			text-align: center;
 			color: $color-white;
@@ -65,7 +65,7 @@
 
 }
 
-	li.type-perioditem {
+	li.type-periodinst {
 		input { /* @TODO fix target */
 			position: absolute;
 			left: -9999px;

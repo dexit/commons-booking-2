@@ -14,7 +14,7 @@
 class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
 {
     public static $all    = array();
-    public static $schema = 'with-perioditems'; //this-only, with-perioditems
+    public static $schema = 'with-periodinsts'; //this-only, with-periodinsts
     public static $posts_table    = FALSE;
     public static $postmeta_table = FALSE;
     public static $database_table = FALSE;
@@ -108,11 +108,11 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
 				CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
         // other values
-				$this->perioditems  = array();
+				$this->periodinsts  = array();
         $this->post_title   = $user_login;
         $this->post_type    = self::$static_post_type;
 
-        parent::__construct($this->perioditems);
+        parent::__construct($this->periodinsts);
 
         self::$all[$ID] = $this;
     }
@@ -156,9 +156,9 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         return user_can($this->ID, $capability);
     }
 
-    public function add_perioditem(&$perioditem)
+    public function add_periodinst(&$periodinst)
     {
-        array_push($this->perioditems, $perioditem);
+        array_push($this->periodinsts, $periodinst);
     }
 
     public function jsonSerialize()
@@ -167,8 +167,8 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
       'ID' => $this->ID,
       'user_login' => $this->user_login,
     );
-        if (self::$schema == 'with-perioditems') {
-            $array[ 'perioditems' ] = &$this->perioditems;
+        if (self::$schema == 'with-periodinsts') {
+            $array[ 'periodinsts' ] = &$this->periodinsts;
         }
 
         return $array;

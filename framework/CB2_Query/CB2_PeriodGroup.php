@@ -44,8 +44,8 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
   static function database_table_schemas( $prefix ) {
  		$safe_updates_off     = CB2_Database::$safe_updates_off;
 		$safe_updates_restore = CB2_Database::$safe_updates_restore;
-		$period_item_posts    = "{$prefix}cb2_view_perioditem_posts";
-		$period_item_meta     = "{$prefix}cb2_view_perioditemmeta";
+		$period_inst_posts    = "{$prefix}cb2_view_periodinst_posts";
+		$period_inst_meta     = "{$prefix}cb2_view_periodinstmeta";
 		$postmeta             = "{$prefix}postmeta";
 		$id_field             = CB2_Database::id_field( __class__ );
 
