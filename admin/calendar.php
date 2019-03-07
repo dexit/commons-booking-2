@@ -93,10 +93,11 @@ switch ( $_REQUEST['output_type'] ) {
 
 	case 'Calendar':
 		$the_calendar_pager = CB2::get_the_calendar_pager( $startdate, $enddate );
+		$interaction_style  = $_REQUEST['interaction_style'];
 		?>
-		<div class="cb2-calendar">
-			<?php echo $the_calendar_pager; ?><br/>
-			<div class="entry-content" style="width:100%;">
+		<div class="cb2-calendar <?php echo $interaction_style; ?>">
+			<?php echo $the_calendar_pager; ?>
+			<div class="entry-content">
 				<?php CB2::the_calendar_header( $wp_query ); ?>
 				<ul class="cb2-subposts">
 					<!-- usually weeks -->
@@ -104,7 +105,7 @@ switch ( $_REQUEST['output_type'] ) {
 				</ul>
 				<?php CB2::the_calendar_footer( $wp_query ); ?>
 			</div><!-- .entry-content -->
-			<br/><?php echo $the_calendar_pager; ?>
+			<?php echo $the_calendar_pager; ?>
 		</div>
 	<?php
 		break;

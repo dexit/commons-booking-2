@@ -873,12 +873,12 @@ class CB2_Database {
   }
 
   static function query_ok( String $sql ) {
+		global $wpdb;
 		$ok = TRUE;
-		if ( WP_DEBUG && preg_match( '/\sfrom\s+$wpdb->prefix([a-z0-9_]+)/i', $sql, $matches ) ) {
+		if ( WP_DEBUG && preg_match( "/\sfrom\s+$wpdb->prefix([a-z0-9_]+)/i", $sql, $matches ) ) {
 			$table = $matches[1];
 			$table = preg_replace( "/^$wpdb->prefix/", '', $table );
 			$ok    = self::has_table( $table );
-			if ( ! $ok ) throw new Exception( "[$table] does not exist" );
 		}
 		return $ok;
   }

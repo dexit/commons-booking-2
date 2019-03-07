@@ -8,11 +8,11 @@ $calendar_atts = array(
 );
 ?>
 <form action='' method='POST'><div>
-	<input type='hidden' name='name' value='<?php echo __('Booking of'); ?> <?php the_title(); ?>' />
+	<input type='hidden' name='name' value='<?php echo __('Booking of'); ?> <?php CB2::the_title(); ?>' />
 	<input type='hidden' name='do_action' value='<?php echo CB2::the_Class(); ?>::book' />
 	<input type='hidden' name='do_action_post_ID' value='<?php the_ID() ?>' />
 	<input type='hidden' name='redirect' value='/periodent-user/%action_return_value%/' />
-	<input type='submit' name='submit' value='<?php echo __('book the'); ?> <?php the_title(); ?>' />
+	<input type='submit' name='submit' value='<?php echo __('book the'); ?> <?php CB2::the_title(); ?>' />
 	<?php echo CB2_Shortcodes::calendar_shortcode( $calendar_atts ); ?>
-	<input type='submit' name='submit' value='<?php echo __('book the'); ?> <?php the_title(); ?>' />
+	<input type='submit' name='submit' value='<?php echo __('book the'); ?> <?php CB2::the_title(); ?>' />
 </div></form>

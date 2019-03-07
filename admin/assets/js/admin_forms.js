@@ -2,6 +2,16 @@ function cb2_process(){
 	var $ = jQuery;
 	var WP_DEBUG = $('body.cb2-WP_DEBUG-on').length;
 
+	$('.type-day').click(function(){
+		// Day selected, lets check for listeners
+		// e.g. a map which needs to re-adjust its view
+		var date_selected, date_selected_element = $(this).find('.cb2-full-date');
+		if (date_selected_element.length) {
+			date_selected = new Date(date_selected_element.text());
+			if (window.console) console.log(date_selected);
+		}
+	});
+
 	$('.cb2-javascript-form input[type=button]').click(function(){
 		var sExisting;
 		var sRedirect = document.location;

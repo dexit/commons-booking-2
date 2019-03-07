@@ -294,10 +294,10 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 		$actions[ 'trash occurence' ] = '<a href="#" class="submitdelete">Trash Occurence</a>';
 	}
 
-  function indicators() {
-    $indicators = array();
-    if ( $this->period_entity ) $indicators = $this->period_entity->period_status_type->indicators();
-    return $indicators;
+  function flags() {
+    $flags = array();
+    if ( $this->period_entity ) $flags = $this->period_entity->period_status_type->flags();
+    return $flags;
   }
 
   function classes_for_day( $day ) {
@@ -329,11 +329,11 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 	}
 
   function get_the_content( $more_link_text = null, $strip_teaser = false ) {
-    // Indicators field
-    $html = "<td class='cb2-indicators'><ul>";
-    foreach ( $this->indicators() as $indicator ) {
-			$letter = ( substr( $indicator, 0, 3 ) == 'no-' ? $indicator[3] : $indicator[0] );
-      $html  .= "<li class='cb2-indicator-$indicator'>$letter</li>";
+    // Flags field
+    $html = "<td class='cb2-flags'><ul>";
+    foreach ( $this->flags() as $flag ) {
+			$letter = ( substr( $flag, 0, 3 ) == 'no-' ? $flag[3] : $flag[0] );
+      $html  .= "<li class='cb2-indicator-$flag'>$letter</li>";
     }
     $html .= '</ul></td>';
 
@@ -364,8 +364,8 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
       'recurrence_sequence' => $this->period->recurrence_sequence,
       'day_percent_position' => $this->day_percent_position(),
       'classes' => $this->classes(),
-      'styles' => $this->styles(),
-      'indicators' => $this->indicators(),
+      'styles'  => $this->styles(),
+      'flag'    => $this->flags(),
       'fullday' => $this->period->fullday,
     );
   }

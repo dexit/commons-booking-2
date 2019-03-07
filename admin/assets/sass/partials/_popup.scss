@@ -61,11 +61,19 @@
 	}
 }
 
+#TB_window {
+	/*
+	top:5%;
+	left:5%;
+	width:90%!important;
+	margin:0px!important;
+	max-width:600px;
+	height:auto;
+	*/
+}
 #TB_ajaxContent {
-	/* TODO: popup sizes?
-	 * height:auto!important;
-	 * width:auto!important;
-	 */
+	height:auto!important;
+	max-width:600px!important;
 }
 #TB_title {
 	background-image: linear-gradient(to right, #d7d7d7, #fff);

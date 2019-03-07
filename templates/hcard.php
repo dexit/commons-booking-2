@@ -9,7 +9,7 @@
 		$classes         = array( 'vcard', 'cb2-hidden' );
 
 		// Direct navigation to normal WordPress page option
-		$href_title_text = __( 'View / Edit ' ) . CB2::get_the_title( FALSE );
+		$href_title_text = __( 'View / Edit ' ) . CB2::get_the_title( '', '', FALSE );
 		$ajax_url        = CB2::get_the_edit_post_url();
 		$href_class      = '';
 

@@ -150,12 +150,13 @@ class CB2_Forms {
 		$selections       = array_merge( $defaults, $selections );
 
 		// --------------------------------------- Defaults
-		if ( ! isset( $selections['interval_to_show'] ) ) $selections['interval_to_show'] = 'P1M';
-		if ( ! isset( $selections['output_type'] ) )      $selections['output_type']      = 'Calendar';
-		if ( ! isset( $selections['context'] ) )          $selections['context']          = 'list';
-		if ( ! isset( $selections['template_part'] ) )    $selections['template_part']    = NULL;
-		if ( ! isset( $selections['selection_mode'] ) )   $selections['selection_mode']   = NULL;
-		if ( ! isset( $selections['schema_type'] ) )      $selections['schema_type']      = CB2_Week::$static_post_type;
+		if ( ! isset( $selections['interval_to_show'] ) )  $selections['interval_to_show'] = 'P1M';
+		if ( ! isset( $selections['interaction_style'] ) ) $selections['interaction_style'] = NULL;
+		if ( ! isset( $selections['output_type'] ) )       $selections['output_type']      = 'Calendar';
+		if ( ! isset( $selections['context'] ) )           $selections['context']          = 'list';
+		if ( ! isset( $selections['template_part'] ) )     $selections['template_part']    = NULL;
+		if ( ! isset( $selections['selection_mode'] ) )    $selections['selection_mode']   = NULL;
+		if ( ! isset( $selections['schema_type'] ) )       $selections['schema_type']      = CB2_Week::$static_post_type;
 		$today            = CB2_DateTime::today();
 		$plusXmonths      = $today->clone()->add( $selections['interval_to_show'] )->endTime();
 
@@ -186,6 +187,9 @@ class CB2_Forms {
 		$period_status_type_options_html = self::count_options( self::period_status_type_options() );
 		$period_entity_options_html      = self::count_options( self::period_entity_options() );
 
+		$interaction_style    = self::select_options( array(
+			'cb2-one-row-scroll' => 'One Row Scroll',
+		), CB2_Query::isset( $selections, 'interaction_style' ) );
 		$output_options    = self::select_options( array(
 			'Calendar' => 'Calendar',
 			'Map'      => 'Map',
@@ -199,7 +203,9 @@ class CB2_Forms {
 			'single' => 'single',
 		), CB2_Query::isset( $selections, 'context' ) );
 		$template_options  = self::select_options( array(
-			'available' => 'available'
+			'available'  => 'available',
+			'items'      => 'items',
+			'indicators' => 'indicators',
 		), CB2_Query::isset( $selections, 'template_part' ) );
 		$selection_mode_options   = self::select_options( array(
 			'range'   => 'range',
@@ -237,13 +243,14 @@ class CB2_Forms {
 						<select name="period_entity_ID">$period_entity_options</select>
 					<span class="cb2-todo">$author_text</span>:<select name="author_ID">$author_options</select>
 					<br/>
-					Output Type:      <select name="output_type">$output_options</select>
-					Schema Hierarchy: <select name="schema_type">$schema_options</select>
-					Template Context: <select name="context">$context_options</select>
-					Template Part:    <select name="template_part">$template_options</select>
+					Interaction Style: <select name="interaction_style">$interaction_style</select>
+					Output Type:       <select name="output_type">$output_options</select>
+					Schema Hierarchy:  <select name="schema_type">$schema_options</select>
+					Template Context:  <select name="context">$context_options</select>
+					Template Part:     <select name="template_part">$template_options</select>
 					<br/>
-					Display Strategy: <select name="display_strategy">$display_strategys</select>
-					Selection Mode:   <select name="selection_mode">$selection_mode_options</select>
+					Display Strategy:  <select name="display_strategy">$display_strategys</select>
+					Selection Mode:    <select name="selection_mode">$selection_mode_options</select>
 					<input id='show_overridden_periods' type='checkbox' $show_overridden_periods_checked name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
 					<input id='show_blocked_periods'    type='checkbox' $show_blocked_periods_checked    name='show_blocked_periods'/>    <label for='show_blocked_periods'>show blocked periods</label>
 				</div>

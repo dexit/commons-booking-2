@@ -118,6 +118,15 @@ class CB2_ActDeact {
 		set_transient('CB2_message_ActDeact', $sql, 0);
 
 		// add_role( 'advanced', __( 'Advanced' ) ); //Add a custom roles
+		add_role(
+			'cb2_contributor',
+			__( 'CB2 Contributor' ),
+			array(
+				'read'         => true,  // true allows this capability
+				'edit_posts'   => true,
+				'delete_posts' => false, // Use false to explicitly deny
+			)
+		);
 		self::add_capabilities();
 		self::upgrade_procedure();
 		self::add_bookingpage();

@@ -26,7 +26,7 @@
 		}
 
 		// Direct navigation to normal WordPress page option
-		$href_title_text = __( 'View / Edit ' ) . CB2::get_the_title( FALSE );
+		$href_title_text = __( 'View / Edit ' ) . CB2::get_the_title( '', '', FALSE );
 		$href_class      = '';
 		$href_click      = CB2::get_the_edit_post_url();
 

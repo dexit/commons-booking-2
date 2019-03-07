@@ -31,11 +31,17 @@ if ( WP_DEBUG ) print( " | <form><div>
 	</div></form>" );
 if ( WP_DEBUG ) print( "<br/><form><div>
 		<input type='hidden' name='page' value='cb2-reflection'/>
-		<input type='hidden' name='section' value='reinstall'>
-		<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='re-install'/>
+		<input type='hidden' name='section' value='un-install'>
+		<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='un-install'/>
 		<input name='password' placeholder='password (fryace4)' value=''>
 	</div></form>" );
 if ( WP_DEBUG ) print( " | <form><div>
+		<input type='hidden' name='page' value='cb2-reflection'/>
+		<input type='hidden' name='section' value='install'>
+		<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='install'/>
+		<input name='password' placeholder='password (fryace4)' value=''>
+	</div></form>" );
+if ( WP_DEBUG ) print( "<br/><form><div>
 		<input type='hidden' name='page' value='cb2-reflection'/>
 		<input type='hidden' name='section' value='reset_data'/>
 		<input type='hidden' name='password' value='fryace4'/>
@@ -52,17 +58,24 @@ if ( isset( $_GET['section'] ) ) {
 				print( '<div>Data reset successful' . ( $and_posts ? ', with posts and postmeta': '' ) . '</div>' );
 			}
 			break;
-		case 'reinstall':
+		case 'un-install':
 			if ( $_GET['password'] == 'fryace4' ) {
 				CB2_Database::uninstall();
+				print( '<div>Finished UnInstallation.</div>' );
+			} else throw new Exception( 'Invalid password' );
+			break;
+		case 'install':
+			if ( $_GET['password'] == 'fryace4' ) {
 				CB2_Database::install();
-				print( '<div>Finished.</div>' );
+				print( '<div>Finished Installation.</div>' );
 			} else throw new Exception( 'Invalid password' );
 			break;
 		case 'reinstall_sql':
 			$full_sql = CB2_Database::get_reinstall_SQL_full( $_GET['character_set'] );
 			print( "<pre>$full_sql</pre>" );
 			break;
+		default:
+			print( "<div>commad [$_GET[section]] not understood</div>" );
 	}
 } else {
 	$schema_array = CB2_Database::schema_array();

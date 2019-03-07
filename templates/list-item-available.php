@@ -11,7 +11,7 @@
  * @see       CB2_Enqueue::cb_template_chooser()
  */
 ?>
-<?php the_title(); ?>
+<?php CB2::the_title(); ?>
 <?php the_excerpt(); ?>
 <li class="cb2-calendar"><header class="entry-header"><h1 class="entry-title">calendar</h1></header>
 		<ul class="cb2-subposts">

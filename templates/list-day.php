@@ -49,7 +49,7 @@
 	}
 ?>
 <li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?>>
-		<?php the_title( '<div class="day-title">', '</div>' ); ?>
+		<?php CB2::the_title( '<div class="day-title">', '</div>' ); ?>
 		<ul class="cb2-subposts">
 			<?php CB2::the_inner_loop( $template_args, $post, 'list', $template_type ); ?>
 		</ul>

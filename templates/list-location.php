@@ -16,6 +16,6 @@
  */
 ?>
 <li>
-	<?php the_title(); ?>
+	<?php CB2::the_title(); ?>
 </li>
 

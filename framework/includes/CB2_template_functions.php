@@ -69,8 +69,23 @@ class CB2 {
 		return ! self::is_published();
 	}
 
-	public static function get_the_date() {
-		return new CB2_DateTime( get_the_date() );
+	public static function the_date( $format = NULL ) {
+		print( self::get_the_date( $format ) );
+	}
+
+	public static function get_the_date( $format = NULL, $the_post = NULL ) {
+		global $post;
+		if ( is_null( $the_post ) ) $the_post = $post;
+
+		if ( '' == $format ) {
+			$the_date = mysql2date( get_option( 'date_format' ), $the_post->post_date );
+		} else {
+			$the_date = mysql2date( $format, $the_post->post_date );
+		}
+
+		$the_date = apply_filters( 'get_the_date', $the_date, $format, $the_post );
+
+		return new CB2_DateTime( $the_date );
 	}
 
 	public static function has_geo() {
@@ -123,7 +138,7 @@ class CB2 {
 					$html      .= $before;
 					CB2_Query::redirect_wpdb_for_post_type( $post_type );
 					$templates  = self::templates( $context, $template_type );
-					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE );
+					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE, array(), $template_type );
 					$html      .= $li;
 					// Some periodinsts are suppressed but have debug output
 					if ( trim( preg_replace( '/<!--.*-->/', '', $li ) ) ) $i++;
@@ -682,7 +697,7 @@ class CB2 {
 					<input type='$type' class='cmb2-$type' name='$id' value='$value_esc' id='cb2-$id' placeholder='$placeholder_text' />
 				</div>
 			</div>
-		</div><br/>" );
+		</div>" );
 	}
 
 	public static function the_hidden_form( String $post_type = '', Array $classes = array(), $post = NULL, String $template_type = 'editpost', String $post_url = NULL ) {
@@ -895,8 +910,8 @@ class CB2 {
 		}
 	}
 
-	public static function the_title( $HTML = TRUE ) {
-		print( self::get_the_title( $HTML ) );
+	public static function the_title( $before = '', $after = '', $HTML = TRUE ) {
+		print( self::get_the_title( $before, $after, $HTML ) );
 	}
 
 	public static function the_link() {
@@ -905,7 +920,7 @@ class CB2 {
 		print( "<a href='$url'>$title</a>" );
 	}
 
-	public static function get_the_title( $HTML = TRUE ) {
+	public static function get_the_title( $before, $after, $HTML = TRUE ) {
 		global $post;
 
 		// Unlike the_content() above, this is not a filter call
@@ -920,7 +935,7 @@ class CB2 {
 					$title = $post->get_the_title( $HTML );
 			}
 		}
-		return $title;
+		return $before . $title . $after;
 	}
 
 	public static function template_path() {

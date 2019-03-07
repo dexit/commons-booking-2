@@ -312,13 +312,13 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     return 'cb2-status-' . preg_replace( '/[^a-z0-9]/', '-', strtolower( $this->name ) );
   }
 
-  function indicators() {
-    $indicators = array();
-    array_push( $indicators, ( $this->return  === TRUE ? 'return'  : 'no-return'  ) );
-    array_push( $indicators, ( $this->collect === TRUE ? 'collect' : 'no-collect' ) );
-    array_push( $indicators, ( $this->use     === TRUE ? 'use'     : 'no-use'     ) );
+  function flags() {
+    $flags = array();
+    array_push( $flags, ( $this->return  === TRUE ? 'return'  : 'no-return'  ) );
+    array_push( $flags, ( $this->collect === TRUE ? 'collect' : 'no-collect' ) );
+    array_push( $flags, ( $this->use     === TRUE ? 'use'     : 'no-use'     ) );
 
-    return $indicators;
+    return $flags;
   }
 
 	protected function reference_count( $not_from = NULL ) {
@@ -353,7 +353,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     return array_merge( (array) $this, array(
       'styles'     => $this->styles(),
       'classes'    => $this->classes(),
-      'indicators' => $this->indicators(),
+      'flags'      => $this->flags(),
     ) );
   }
 }
