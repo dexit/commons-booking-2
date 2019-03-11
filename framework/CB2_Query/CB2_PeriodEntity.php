@@ -66,6 +66,42 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$morning_format    = CB2_Query::$date_format . ' 08:00:00';
 		$evening_format    = CB2_Query::$date_format . ' 18:00:00';
 
+		array_push( $metaboxes, array(
+			'title'      => __( 'Post date', 'commons-booking-2' ),
+			'context'    => 'normal',
+			'priority'   => 'high',
+			'show_names' => FALSE,
+			'classes'    => array( 'cb2-object-summary-bar' ),
+			'fields'     => array(
+				array(
+					'name'  => __( 'Post date', 'commons-booking-2' ),
+					'id'    => 'entity_post_data_post_date',
+					'type'  => 'post_data',
+					'field' => 'post_date',
+				),
+				CB2_Query::metabox_nosave_indicator( 'entity_post_data_post_date' ),
+			),
+		) );
+
+		array_push( $metaboxes, array(
+			'title'      => __( 'Item View', 'commons-booking-2' ),
+			'context'    => 'normal',
+			'classes'    => array( 'cb2-object-summary-bar' ),
+			'show_names' => FALSE,
+			'fields'     => array(
+				array(
+					'name'      => __( 'Item', 'commons-booking-2' ),
+					'id'        => 'item_ID',
+					'action'    => 'view',
+					'title'     => __( 'view on website', 'commons-booking-2' ),
+					'type'      => 'post_link',
+					'default'   => ( isset( $_GET['item_ID'] ) ? $_GET['item_ID'] : NULL ),
+					'post_type' => CB2_Item::$static_post_type,
+				),
+				CB2_Query::metabox_nosave_indicator( 'item_ID' ),
+			),
+		) );
+
 		array_push( $metaboxes,
 			array(
 				'title'      => __( 'Calendar view', 'commons-booking-2' ),

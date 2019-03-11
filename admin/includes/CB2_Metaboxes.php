@@ -29,6 +29,7 @@ class CB2_Metaboxes {
 		// Custom local
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/cmb2-field-calendar/cmb2-field-calendar.php' );
 		require_once( CB2_PLUGIN_ROOT . 'framework/includes/cmb2-field-post-link/cmb2-field-post-link.php' );
+		require_once( CB2_PLUGIN_ROOT . 'framework/includes/cmb2-field-post-data/cmb2-field-post-data.php' );
 
 		/* @TODO: add metaboxes for items & locations */
 		// add_action( 'cmb2_init', array( $this, 'cmb_demo_metaboxes' ) );
