@@ -1013,8 +1013,8 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
   static function metaboxes() {
 		$metaboxes = parent::metaboxes();
-		array_unshift( $metaboxes, CB2_Item::selector_metabox(     'normal', array( 'cb2-object-summary-bar' ) ) );
-		array_unshift( $metaboxes, CB2_Location::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
+		array_unshift( $metaboxes, CB2_Item::post_link_metabox(     'normal', array( 'cb2-object-summary-bar' ) ) );
+		array_unshift( $metaboxes, CB2_Location::post_link_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
 		return $metaboxes;
 	}
 

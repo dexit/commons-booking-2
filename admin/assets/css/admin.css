@@ -862,6 +862,11 @@ body #post-body-content {
   margin: 0px;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_tabs\.scss}line{font-family:\00003196}}
+.cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar a {
+  padding: 5px 7px;
+  display: block;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_tabs\.scss}line{font-family:\00003200}}
 .cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar select {
   border: none;
   margin: 0px;
@@ -869,15 +874,15 @@ body #post-body-content {
   color: #0073aa;
   cursor: pointer;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_tabs\.scss}line{font-family:\00003203}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_tabs\.scss}line{font-family:\00003207}}
 .cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar .cmb2-id-location-ID:before {
   content: "\f107";
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_tabs\.scss}line{font-family:\00003206}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_tabs\.scss}line{font-family:\00003210}}
 .cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar .cmb2-id-item-ID:before {
   content: "\f108";
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_tabs\.scss}line{font-family:\00003209}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_tabs\.scss}line{font-family:\00003213}}
 .cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar .cmb2-id-cb2-user-ID:before {
   content: "\f109";
 }

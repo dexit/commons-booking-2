@@ -48,6 +48,25 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         );
 		}
 
+	static function post_link_metabox( String $context = 'normal', Array $classes = array(), $none = TRUE ) {
+		return array(
+			'title'      => __( 'Item', 'commons-booking-2' ),
+			'context'    => $context,
+			'classes'    => $classes,
+			'show_names' => FALSE,
+			'fields'     => array(
+				array(
+					'name'      => __( 'Item', 'commons-booking-2' ),
+					'id'        => 'item_ID',
+					'type'      => 'post_link',
+					'default'   => ( isset( $_GET['item_ID'] ) ? $_GET['item_ID'] : NULL ),
+					'post_type' => CB2_Item::$static_post_type,
+				),
+				CB2_Query::metabox_nosave_indicator( 'item_ID' ),
+			),
+		);
+	}
+
 	static function metaboxes() {
 		$metaboxes = array(
 			array(
