@@ -63,7 +63,7 @@ function cb2_admin_pages() {
 
 function cb2_metaboxes() {
 	$metaboxes          = array();
-	$hidden_class       = 'cb2-hidden';
+	$hidden_class       = 'hidden';
 	$metabox_wizard_ids = ( isset( $_GET['metabox_wizard_ids'] ) ? $_GET['metabox_wizard_ids'] : '' );
 	$metabox_wizard_ids = ( $metabox_wizard_ids ? explode( ',', $metabox_wizard_ids ) : array() );
 	$requests_only      = (bool) count( $metabox_wizard_ids );
@@ -421,7 +421,7 @@ function cb2_postbox_classes_object_summary_bar( $classes ) {
 //add_filter() is carried out in metabox registration
 
 function cb2_postbox_classes_hidden( $classes ) {
-	array_push( $classes, 'cb2-hidden' );
+	array_push( $classes, 'hidden' );
 	return $classes;
 }
 //add_filter() is carried out in metabox registration

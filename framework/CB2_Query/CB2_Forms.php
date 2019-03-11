@@ -206,6 +206,7 @@ class CB2_Forms {
 			'available'  => 'available',
 			'items'      => 'items',
 			'indicators' => 'indicators',
+			'overlaid'   => 'overlaid',
 		), CB2_Query::isset( $selections, 'template_part' ) );
 		$selection_mode_options   = self::select_options( array(
 			'range'   => 'range',

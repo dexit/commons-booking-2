@@ -6,7 +6,7 @@
 	if ( CB2::is_top_priority() && CB2::has_geo() ) {
 		$ID              = get_the_ID();
 		$post_type       = get_post_type();
-		$classes         = array( 'vcard', 'cb2-hidden' );
+		$classes         = array( 'vcard', 'hidden' );
 
 		// Direct navigation to normal WordPress page option
 		$href_title_text = __( 'View / Edit ' ) . CB2::get_the_title( '', '', FALSE );

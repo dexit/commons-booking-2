@@ -18,10 +18,6 @@
   @extend .cb2-big;
   a { color: $highlight-color }
 }
-.cb2-hidden {
-  display: none;
-}
-
 
 /* all individual elements (timeframes, items, etc) are grouped with cb2-box */
 .cb2-wrapper {

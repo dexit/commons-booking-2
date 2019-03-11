@@ -45,8 +45,12 @@
 			$href_click    = admin_url( "admin.php?$query_string" );
 			$href_class    = 'thickbox';
 		}
+
+		$style_options = array(
+			'absolute-positioning' => TRUE,
+		)
 ?>
-	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?> style="<?php CB2::the_styles(); ?>">
+	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?> style="<?php CB2::the_styles( '', $style_options ); ?>">
 		<a class="cb2-details cb2-bald <?php print( $href_class ); ?>" title="<?php print( $href_title_text ); ?>" href="<?php print( $href_click ); ?>">
 			<?php CB2::the_title(); ?>
 			<?php CB2::the_debug_popup(); ?>

@@ -276,14 +276,21 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
   	return ! $this->top_priority_overlap_period && ! is_null( $this->priority() );
   }
 
-  function styles() {
-    $styles = '';
+  function styles( String $styles = '', Array $options = array() ) {
+    if ( isset( $options['absolute-positioning'] ) && $options['absolute-positioning'] ) {
+			$priority             = $this->priority(); // Maybe overridden
+			$day_percent_position = $this->day_percent_position();
+			$styles .= 'position:absolute;';
+			$styles .= "z-index:$priority;";
+			$styles .= "top:$day_percent_position[start_percent]%;";
+			$styles .= "height:$day_percent_position[diff_percent]%;";
+		}
 
-    $day_percent_position = $this->day_percent_position();
-    $styles .= "top:$day_percent_position[start_percent]%;";
-    $styles .= "height:$day_percent_position[diff_percent]%;";
+		// May call through to the period_status_type as well
+		$color = $this->get_the_colour();
+		if ( $color ) $styles .= "background-color:$color;";
 
-    $styles .= $this->period_entity->period_status_type->styles();
+    $styles  = $this->period_entity->period_status_type->styles( $styles, $options );
 
     return $styles;
   }

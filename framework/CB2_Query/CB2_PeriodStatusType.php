@@ -255,9 +255,8 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		return $this->flags & $actions;
   }
 
-  function styles() {
-    $styles = '';
-    if ( $this->colour   ) $styles .= 'color:#'  . $this->colour           . ';';
+  function styles( String $styles = '', Array $options = array() ) {
+    if ( $this->colour   ) $styles .= 'color:'   . $this->colour           . ';';
     if ( $this->priority ) $styles .= 'z-index:' . ( $this->priority + 10000 ) . ';';
     if ( $this->opacity && $this->opacity != 100 ) $styles .= 'opacity:' . ( $this->opacity / 100 ) . ';';
     return $styles;

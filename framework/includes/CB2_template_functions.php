@@ -194,6 +194,18 @@ class CB2 {
 		return $short_name;
 	}
 
+	public static function the_styles( String $styles = '', Array $options = array() ) {
+		print( self::get_the_styles( $styles, $options ) );
+	}
+
+	public static function get_the_styles( String $styles = '', Array $options = array() ) {
+		global $post;
+		if ( is_object( $post ) && method_exists( $post, 'styles' ) ) {
+			$styles = $post->styles( $styles, $options );
+		}
+		return $styles;
+	}
+
 	public static function the_colour( $the_post = NULL ) {
 		print( self::get_the_colour( $the_post ) );
 	}
