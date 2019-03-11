@@ -98,8 +98,8 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 	static function database_data() {
 		return array(
 			array( '1', 'pickup/return', NULL, '7', '#67b32a', '100', '2', '1' ),
-			array( '2', 'booked',        NULL, '0', '#bf2437', '50',  '6', '1' ),
-			array( '3', 'closed',        NULL, '2', '#333333', '50',  '3', '1' ),
+			array( '2', 'booked',        NULL, '0', '#bf2437', '100', '6', '1' ),
+			array( '3', 'closed',        NULL, '2', '#333333', '100', '3', '1' ),
 			array( '4', 'open',          NULL, '7', '#0085ba', '100', '1', '1' ),
 			array( '5', 'repair',        NULL, '0', '#ff0404', '100', '4', '1' ),
 			array( '6', 'holiday',       NULL, '2', '#9b9b9b', '100', '5', '1' ),
@@ -257,7 +257,6 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 
   function styles( String $styles = '', Array $options = array() ) {
     if ( $this->colour   ) $styles .= 'color:'   . $this->colour           . ';';
-    if ( $this->priority ) $styles .= 'z-index:' . ( $this->priority + 10000 ) . ';';
     if ( $this->opacity && $this->opacity != 100 ) $styles .= 'opacity:' . ( $this->opacity / 100 ) . ';';
     return $styles;
   }

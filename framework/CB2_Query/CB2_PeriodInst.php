@@ -278,10 +278,10 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 
   function styles( String $styles = '', Array $options = array() ) {
     if ( isset( $options['absolute-positioning'] ) && $options['absolute-positioning'] ) {
-			$priority             = $this->priority(); // Maybe overridden
+			$zindex               = 10000 + $this->priority(); // Maybe overridden
 			$day_percent_position = $this->day_percent_position();
 			$styles .= 'position:absolute;';
-			$styles .= "z-index:$priority;";
+			$styles .= "z-index:$zindex;";
 			$styles .= "top:$day_percent_position[start_percent]%;";
 			$styles .= "height:$day_percent_position[diff_percent]%;";
 		}
