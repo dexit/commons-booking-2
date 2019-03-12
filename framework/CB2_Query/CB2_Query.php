@@ -882,13 +882,20 @@ class CB2_Query {
     return $subclasses;
 	}
 
-  static public function array_walk_paths( Array &$array, stdClass $object ) {
-		array_walk_recursive( $array, array( 'CB2_Query', 'array_walk_paths_callback' ), $object );
+  static public function array_walk_paths( Array &$array, $object ) {
+		array_walk_recursive( $array, array( 'CB2_Query', 'array_walk_paths_string' ), $object );
   }
 
-  static public function array_walk_paths_callback( &$value, String $name, stdClass $object ) {
-		if ( is_string( $value ) && preg_match( '/%[^%]+%/', $value ) )
-			$value = self::object_value_path( $object, $value );
+  static public function array_walk_paths_string( &$value, String $name, $object ) {
+		if ( is_string( $value ) ) {
+			if ( preg_match_all( '/%[^%]+%/', $value, $matches ) ) {
+				foreach ( $matches[0] as $match ) {
+					$replacement = self::object_value_path( $object, $match );
+					$value       = str_replace( $match, $replacement, $value );
+				}
+			}
+		}
+		return $value;
   }
 
 	static public function object_value_path( $object, $spec ) {

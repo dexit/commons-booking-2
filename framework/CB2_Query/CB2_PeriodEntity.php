@@ -77,7 +77,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 					'name'  => __( 'Post date', 'commons-booking-2' ),
 					'id'    => 'entity_post_data_post_date',
 					'type'  => 'post_data',
-					'field' => 'post_date',
+					'text_paths' => '%post_date% - %post_modified%',
 				),
 				CB2_Query::metabox_nosave_indicator( 'entity_post_data_post_date' ),
 			),

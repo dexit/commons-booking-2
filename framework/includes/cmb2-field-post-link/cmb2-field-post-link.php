@@ -72,9 +72,9 @@ class CMB2_Field_Post_Link {
 							default:
 								$url = get_the_permalink( $post );
 						}
-						if ( WP_DEBUG ) $title .= " ($ID)";
 						$target_string = ( $target ? "target='$target'" : '' );
-						print( "<div><span class='post_type hidden'>$post_type<span class='colon'>: </span></span><a $target_string href='$url'>$title</a></div>");
+						$link_html     = "<a $target_string href='$url'>$title</a>";
+						print( "<div><span class='post_type hidden'>$post_type<span class='colon'>: </span></span>$link_html</div>");
 					} else {
 						print( '<div class="error">' . __( 'Post not found' ) . ": $post_type / $ID</div>" );
 					}

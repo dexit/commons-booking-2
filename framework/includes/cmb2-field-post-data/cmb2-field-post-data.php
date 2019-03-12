@@ -58,7 +58,8 @@ class CMB2_Field_Post_Data {
 					? $attributes['post_type']
 					: $post->post_type
 				);
-        $field      = ( isset( $attributes['field'] ) ? $attributes['field'] : 'post_title' );
+        $field      = ( isset( $attributes['field'] )      ? $attributes['field']      : NULL );
+        $text_paths = ( isset( $attributes['text_paths'] ) ? $attributes['text_paths'] : NULL );
 
 				$this->ID        = $ID;
 				$this->post_type = $post_type;
@@ -69,8 +70,10 @@ class CMB2_Field_Post_Data {
 						'post_type' => $post_type,
 					) );
 					if ( is_array( $query->posts ) && count( $query->posts ) ) {
-						$post          = $query->posts[0];
-						$data          = $post->{$field};
+						$post = $query->posts[0];
+						$data = '';
+						if ( ! is_null( $field ) )      $data .= $post->{$field};
+						if ( ! is_null( $text_paths ) ) $data .= self::array_walk_paths_string( $text_paths, '', $post );
 						print( "<div class='post_data $field'>$data</div>");
 					} else {
 						print( '<div class="error">' . __( 'Post not found' ) . ": $post_type / $ID</div>" );
@@ -81,6 +84,55 @@ class CMB2_Field_Post_Data {
 
         $field_type_object->_desc( true, true );
     }
+
+		protected function array_walk_paths( Array &$array, $object ) {
+			array_walk_recursive( $array, array( get_class(), 'array_walk_paths_string' ), $object );
+		}
+
+		protected function array_walk_paths_string( &$value, String $name, $object ) {
+			if ( is_string( $value ) ) {
+				if ( preg_match_all( '/%[^%]+%/', $value, $matches ) ) {
+					foreach ( $matches[0] as $match ) {
+						$replacement = self::object_value_path( $object, $match );
+						$value       = str_replace( $match, $replacement, $value );
+					}
+				}
+			}
+			return $value;
+		}
+
+		protected function object_value_path( $object, $spec ) {
+			// $spec = %object_property_name->object_property_name->...%
+			// e.g. date->time
+			$value = $spec;
+			if ( is_string( $spec ) && preg_match( '/%[^%]+%/', $spec ) ) {
+				$property_path = explode( '->', substr( $spec, 1, -1 ) );
+				$properties    = (array) $object;
+				foreach ( $property_path as $property_step ) {
+					if ( is_array( $properties ) && isset( $properties[$property_step] ) ) {
+						$value      = $properties[$property_step];
+						$properties = (array) $value;
+					} else if ( WP_DEBUG ) {
+						krumo( $properties, $property_step );
+						throw new Exception( "[$property_step] not found on object" );
+					}
+				}
+				switch ( $property_step ) {
+					case 'post_date':
+					case 'post_modified':
+						if ( $value ) {
+							$date  = new DateTime( $value );
+							$value = $date->format( get_option( 'date_format' ) );
+						}
+						break;
+					case 'author':
+						if ( $user = get_user_by( 'id', $value ) )
+							$value = $user->user_login;
+						break;
+				}
+			}
+			return $value;
+		}
 }
 
 new CMB2_Field_Post_Data();
