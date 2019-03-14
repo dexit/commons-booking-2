@@ -50,6 +50,7 @@ class CMB2_Field_Post_Data {
 
         // Post_Datas
         $attributes = $field->args();
+        $name       = ( isset( $attributes['name'] ) ? $attributes['name'] : 'no name' );
         $ID         = ( isset( $attributes['ID'] )
 					? $attributes['ID']
 					: ( $field_escaped_value ? $field_escaped_value : $post->ID )
@@ -76,10 +77,10 @@ class CMB2_Field_Post_Data {
 						if ( ! is_null( $text_paths ) ) $data .= self::array_walk_paths_string( $text_paths, '', $post );
 						print( "<div class='post_data $field'>$data</div>");
 					} else {
-						print( '<div class="error">' . __( 'Post not found' ) . ": $post_type / $ID</div>" );
+						print( '<div class="error">' . __( 'Post not found' ) . ": $name / $post_type / $ID</div>" );
 					}
 				} else {
-					print( '<div class="error">' . __( 'No ID' ) . '</div>' );
+					print( '<div class="error">' . __( 'No ID' ) . ": $name</div>" );
 				}
 
         $field_type_object->_desc( true, true );

@@ -207,19 +207,24 @@ body #post-body-content {
 		color:#0073aa;
 		cursor:pointer;
 	}
-	#cmb2-metabox-CB2_PeriodEntity_Timeframe_item_view .cmb-row:before {
+	.cmb-type-post-link.cmb2-id-item-ID:before {
 		content: "\f115";
 	}
-	#cmb2-metabox-CB2_PeriodEntity_Timeframe_post_date .cmb-row:before {
+	.cmb2-id-entity-post-data-post-date:before {
 		content: "\f108";
 	}
-	#cmb2-metabox-CB2_PeriodEntity_Timeframe_location .cmb-row:before {
+	.cmb2-id-location-ID:before {
 		content: "\f107";
 	}
-	#cmb2-metabox-CB2_PeriodEntity_Timeframe_item .cmb-row:before {
+	.cmb2-id-item-ID:before {
 		content: "\f108";
 	}
-	#cmb2-metabox-CB2_PeriodEntity_Timeframe_user .cmb-row:before {
+	.cmb2-id-user-ID:before {
 		content: "\f109";
+	}
+	.cmb2-id-entity-post-data-post-date {
+		font-weight:bold;
+		padding:7px 7px;
+		font-size:10px;
 	}
 }
