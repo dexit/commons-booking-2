@@ -16,6 +16,7 @@ define( 'CB2_DEBUG_SAVE', WP_DEBUG && ! defined( 'DOING_AJAX' ) && FALSE );
 // Native posts
 define( 'CB2_ID_SHARING',    TRUE );
 define( 'CB2_ID_BASE',       0 );
+define( 'CB2_MAX_DAYS',      10000 );
 define( 'CB2_MAX_CB2_POSTS', 10000 );
 define( 'CB2_MAX_PERIODS',   1000 );
 
@@ -292,6 +293,8 @@ class CB2_Query {
 					$posts_table    = "{$wpdb->prefix}cb2_view_{$post_type_stub}_posts";
 					if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
 						$posts_table = $wpdb->prefix . $Class::$posts_table;
+					if ( property_exists( $Class, 'cached_posts' ) && $Class::$cached_posts !== FALSE )
+						$posts_table .= '_cache';
 					$wpdb->posts    = $posts_table;
 					$redirected     = TRUE;
 					if ( WP_DEBUG && FALSE ) print( "<span class='cb2-WP_DEBUG-small'>redirect [$Class::$post_type] =&gt; [$posts_table]</span>" );
@@ -306,6 +309,8 @@ class CB2_Query {
 							$postmeta_table = $wpdb->prefix . $Class::$postmeta_table;
 							if ( $Class::$postmeta_table == 'postmeta' ) $meta_type = 'post';
 						}
+						if ( property_exists( $Class, 'cached_postmeta' ) && $Class::$cached_postmeta !== FALSE )
+							$postmeta_table .= '_cache';
 						$post_type_meta = "{$meta_type}meta";
 						$wpdb->$post_type_meta = $postmeta_table;
 						// Note that requests using a redirected postmeta
@@ -381,6 +386,18 @@ class CB2_Query {
 			// get_metadata() will use standard WP caches
 			self::redirect_wpdb_for_post_type( $post_type, TRUE, $meta_type );
 			if ( WP_DEBUG ) $debug_postmeta = $wpdb->postmeta;
+			// Intelligent cache management for conflicting IDs
+			// get_metadata() will check the following cache first
+			$metadata_cache = wp_cache_get( $ID, $meta_type . '_meta' );
+			if ( is_array( $metadata_cache ) ) {
+				// Note that $cache_post_type will be post for CB2_Item and CB2_Location
+				$cache_post_type = ( isset( $metadata_cache['post_type'] ) ? $metadata_cache['post_type'][0] : 'post' );
+				$cache_meta_type = self::substring_before( $cache_post_type );
+				if ( $cache_meta_type != $meta_type ) {
+ 					if ( WP_DEBUG ) print( "<div class='cb2-WP_DEBUG-small'>conflicting post_types between metadata cache ($cache_post_type/$cache_meta_type) and new request ($post_type/$meta_type) for post $ID</div>" );
+					wp_cache_delete( $ID, $meta_type . '_meta' );
+				}
+			}
 			$metadata = get_metadata( $meta_type, $ID ); // e.g. periodinst, 40004004
 			self::unredirect_wpdb();
 

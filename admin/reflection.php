@@ -146,6 +146,7 @@ if ( isset( $_GET['section'] ) ) {
 		$post_type         = ( property_exists( $Class, 'static_post_type' ) ? $Class::$static_post_type : '' );
 		$table_definitions = ( isset( $object_types['table'] ) ? $object_types['table'] : NULL );
 		$views             = ( isset( $object_types['views'] ) ? $object_types['views'] : NULL );
+		$stored_procedures = ( isset( $object_types['stored procedures'] ) ? $object_types['stored procedures'] : NULL );
 
 		print( "<h2>$Class</h2>" );
 		// ----------------------------------------------- Infrastructure
@@ -266,6 +267,19 @@ if ( isset( $_GET['section'] ) ) {
 					$class     = ( $row_count >= 1000 ? 'cb2-warning' : '' );
 					print( "&nbsp;<span class='$class'>($row_count)</span>" );
 				}
+				print( '</li>' );
+				$first = ', ';
+			}
+			print( "</ul></div>" );
+		}
+
+		// ----------------------------------------------- Stored Procedures
+		if ( count( $stored_procedures ) ) {
+			print( "<div>stored procedures: <ul class='cb2-database-stored-procedures'>" );
+			$first = '';
+			foreach ( $stored_procedures as $name => $body ) {
+				$full_name = "cb2_$name";
+				print( "<li>$first$full_name" );
 				print( '</li>' );
 				$first = ', ';
 			}

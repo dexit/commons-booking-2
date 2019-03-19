@@ -54,6 +54,8 @@ class CB2_Database {
 				$schema_array[ $Class ][ 'views' ] = $Class::database_views( $wpdb->prefix );
 			if ( CB2_Query::has_own_method( $Class, 'database_data' ) )
 				$schema_array[ $Class ][ 'data' ]  = $Class::database_data( $wpdb->prefix );
+			if ( CB2_Query::has_own_method( $Class, 'database_stored_procedures' ) )
+				$schema_array[ $Class ][ 'stored procedures' ]  = $Class::database_stored_procedures( $wpdb->prefix );
 		}
 		return $schema_array;
   }
@@ -151,14 +153,6 @@ class CB2_Database {
 		}
 
 		foreach ( $schema_array as $Class => $objects ) {
-			if ( isset( $objects['data'] ) ) {
-				// TODO: only the primary table can be populated at the moment
-				$table_name = $Class::database_table_name();
-				$install_SQLs = array_merge( $install_SQLs, self::database_data_SQL( $wpdb->prefix, $table_name, $objects['data'] ) );
-			}
-		}
-
-		foreach ( $schema_array as $Class => $objects ) {
 			if ( isset( $objects['table'] ) ) {
 				foreach ( $objects['table'] as $table ) {
 					$pseudo  = ( isset( $table['pseudo'] )  ? $table['pseudo']  : FALSE );
@@ -173,6 +167,23 @@ class CB2_Database {
 				foreach ( $objects['views'] as $name => $body ) {
 					$install_SQLs = array_merge( $install_SQLs, self::database_views_SQL( $wpdb->prefix, $name, $body ) );
 				}
+			}
+		}
+
+		foreach ( $schema_array as $Class => $objects ) {
+			if ( isset( $objects['stored procedures'] ) ) {
+				foreach ( $objects['stored procedures'] as $name => $body ) {
+					$install_SQLs = array_merge( $install_SQLs, self::database_stored_procedures_SQL( $wpdb->prefix, $name, $body ) );
+				}
+			}
+		}
+
+		// We do the data last because its values may be dependent on views
+		foreach ( $schema_array as $Class => $objects ) {
+			if ( isset( $objects['data'] ) ) {
+				// TODO: only the primary table can be populated at the moment
+				$table_name = $Class::database_table_name();
+				$install_SQLs = array_merge( $install_SQLs, self::database_data_SQL( $wpdb->prefix, $table_name, $objects['data'] ) );
 			}
 		}
 
@@ -212,13 +223,21 @@ class CB2_Database {
 		return $sqls;
 	}
 
+	private static function database_view_drops_SQL( $prefix, $name ) {
+		return array( "DROP VIEW IF EXISTS `$prefix$name` CASCADE" );
+	}
+
+	private static function database_stored_procedure_drops_SQL( $prefix, $name ) {
+		return array( "DROP PROCEDURE IF EXISTS `cb2_$name`" );
+	}
+
 	private static function database_table_drops_SQL( $prefix, $definition ) {
 		$sqls       = array();
 		$table_name = $definition['name'];
 		$pseudo     = ( isset( $definition['pseudo'] )  ? $definition['pseudo']  : FALSE );
 		$managed    = ( isset( $definition['managed'] ) ? $definition['managed'] : TRUE );
 		if ( $pseudo || ! $managed ) throw new Exception( "$table_name is not managed. Why is drop SQL being requested?" );
-		array_push( $sqls, "DROP TABLE IF EXISTS `$prefix$table_name`" );
+		array_push( $sqls, "DROP TABLE IF EXISTS `$prefix$table_name` CASCADE" );
 		return $sqls;
 	}
 
@@ -385,6 +404,13 @@ class CB2_Database {
 		return $sqls;
 	}
 
+	private static function database_stored_procedures_SQL( String $prefix, String $name, String $body ) {
+		return array( "CREATE PROCEDURE `cb2_$name`()
+			BEGIN
+				$body
+			END" );
+	}
+
 	private static function database_views_SQL( String $prefix, String $name, String $body ) {
 		$sqls = array();
 		$body = str_replace( "@@VIEW_NAME@@", "'$name'", $body );
@@ -435,6 +461,14 @@ class CB2_Database {
 		$schema_array = self::schema_array();
 
 		foreach ( $schema_array as $Class => $objects ) {
+			if ( isset( $objects['views'] ) ) {
+				foreach ( $objects['views'] as $view => $body ) {
+					$install_SQLs = array_merge( $install_SQLs, self::database_view_drops_SQL( $wpdb->prefix, $view ) );
+				}
+			}
+		}
+
+		foreach ( $schema_array as $Class => $objects ) {
 			if ( isset( $objects['table'] ) ) {
 				foreach ( $objects['table'] as $table ) {
 					$pseudo  = ( isset( $table['pseudo'] )  ? $table['pseudo']  : FALSE );
@@ -453,6 +487,15 @@ class CB2_Database {
 					}
 				}
 		}
+
+		foreach ( $schema_array as $Class => $objects ) {
+				if ( isset( $objects['stored procedures'] ) ) {
+					foreach ( $objects['stored procedures'] as $name => $body ) {
+						$install_SQLs = array_merge( $install_SQLs, self::database_stored_procedure_drops_SQL( $wpdb->prefix, $name ) );
+					}
+				}
+		}
+
 
 		return $install_SQLs;
 	}

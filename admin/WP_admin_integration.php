@@ -137,10 +137,12 @@ function cb2_metaboxes() {
 					foreach ( $metabox_classes as $metabox_class ) {
 						foreach ( $object_types as $object_type ) {
 							$hook = 'cb2_postbox_classes_' . str_replace( '-', '_', preg_replace( '/^[^-]*-/', '', $metabox_class ) );
-							if ( function_exists( $hook ) )
+							if ( function_exists( $hook ) ) {
 								add_filter( "postbox_classes_{$object_type}_{$id}", $hook );
-							else
+							} else {
+								krumo( $metabox );
 								throw new Exception( "$hook does not exist when linking classes" );
+							}
 						}
 					}
 				} // on_request

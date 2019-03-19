@@ -48,19 +48,20 @@ class CMB2_Field_Post_Link {
 
         // Post_Links
         $attributes = $field->args();
-        $name       = ( isset( $attributes['name'] ) ? $attributes['name'] : 'no name' );
-        $ID         = ( isset( $attributes['ID'] ) ? $attributes['ID'] : $field_escaped_value );
+        $id         = $attributes['id'];
+        $name       = ( isset( $attributes['name'] )    ? $attributes['name']    : 'no name' );
+        $post_id    = ( isset( $attributes['post_id'] ) ? $attributes['post_id'] : $field_escaped_value );
         $post_type  = ( isset( $attributes['post_type'] ) ? $attributes['post_type'] : 'post' );
-				$target     = ( isset( $attributes['target'] ) ? $attributes['target'] : NULL );
-				$action     = ( isset( $attributes['action'] ) ? $attributes['action'] : 'edit' );
-				$title      = ( isset( $attributes['title'] )  ? $attributes['title']  : NULL );
+				$target     = ( isset( $attributes['target'] )  ? $attributes['target']  : NULL );
+				$action     = ( isset( $attributes['action'] )  ? $attributes['action']  : 'edit' );
+				$title      = ( isset( $attributes['title'] )   ? $attributes['title']   : NULL );
 
-				$this->ID        = $ID;
+				$this->ID        = $post_id;
 				$this->post_type = $post_type;
 
-        if ( $ID ) {
+        if ( $post_id ) {
 					$query = new WP_Query( array(
-						'p'         => $ID,
+						'p'         => $post_id,
 						'post_type' => $post_type,
 					) );
 					if ( is_array( $query->posts ) && count( $query->posts ) ) {
@@ -68,16 +69,19 @@ class CMB2_Field_Post_Link {
 						$title         = ( $title ? $title : $post->post_title );
 						switch ( $action ) {
 							case 'edit':
-								$url = $this->get_edit_post_link( $ID, $post_type );
+								$url = $this->get_edit_post_link( $post_id, $post_type );
 								break;
 							default:
 								$url = get_the_permalink( $post );
 						}
 						$target_string = ( $target ? "target='$target'" : '' );
 						$link_html     = "<a $target_string href='$url'>$title</a>";
-						print( "<div><span class='post_type hidden'>$post_type<span class='colon'>: </span></span>$link_html</div>");
+						print( "<div>
+							<span class='post_type hidden'>$post_type<span class='colon'>: </span></span>$link_html
+							<input type='hidden' name='$id' value='$post_id' />
+						</div>");
 					} else {
-						print( '<div class="error">' . __( 'Post not found' ) . ": $name / $post_type / $ID</div>" );
+						print( '<div class="error">' . __( 'Post not found' ) . ": $name / $post_type / $post_id</div>" );
 					}
 				} else {
 					print( '<div class="error">' . __( 'No ID' ) . ": $name</div>" );

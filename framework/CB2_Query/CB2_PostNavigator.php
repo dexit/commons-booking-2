@@ -51,14 +51,14 @@ abstract class CB2_PostNavigator extends stdClass {
 		//
 		// CB2_MAX_CB2_POSTS:
 		// More CB2 posts than this will overlap with the next quota of post_type
-		// this needs to be high because periodinst-* also has a $CB2_MAX_DAYS
+		// this needs to be high because periodinst-* also has a CB2_MAX_DAYS
 		//
 		// CB2_MAX_PERIODS:
 		// Period_IDs can be the same for different PeriodEntities: global, location, timeframe, etc.
 		// they cannot overlap:
 		//   `global_period_group_id` * `pt_pi`.`ID_multiplier`) + (`po`.`period_id` * 10000)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`
 		//
-		// $CB2_MAX_DAYS:
+		// CB2_MAX_DAYS:
 		// This is the maximum number of recurrences
 		// For example: 10000 would mean 10000 repeating entries for a given period definition
 		// in the case of daily repetition, this would indicate 10 x 365 = ~10 years maximum
@@ -68,8 +68,7 @@ abstract class CB2_PostNavigator extends stdClass {
 		// The largest integer supported in this build of PHP.
 		// Usually int(2,147,483,647) in 32 bit systems
 		// and int(9223372036854775807) in 64 bit systems. Available since PHP 5.0.5'
-		$CB2_MAX_DAYS     = CB2_TimePostNavigator::max_days();
-		$periodinst_quota = CB2_MAX_CB2_POSTS * $CB2_MAX_DAYS * CB2_MAX_PERIODS;
+		$periodinst_quota = CB2_MAX_CB2_POSTS * CB2_MAX_DAYS * CB2_MAX_PERIODS;
 		if ( 4 * $periodinst_quota + CB2_ID_BASE > PHP_INT_MAX )
 			throw new Exception( 'Fake CB2 post IDs are above PHP_INT_MAX [' . PHP_INT_MAX . ']' );
 
@@ -85,10 +84,10 @@ abstract class CB2_PostNavigator extends stdClass {
 			// several of these post_types may be requested at the SAME TIME
 			// thus requireing one view for all types
 			// recurrence causes many periodinsts
-			array( '4',  'periodinst-global',    0 * $periodinst_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
-			array( '5',  'periodinst-location',  1 * $periodinst_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
-			array( '6',  'periodinst-timeframe', 2 * $periodinst_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
-			array( '7',  'periodinst-user',      3 * $periodinst_quota + CB2_ID_BASE, $CB2_MAX_DAYS ),
+			array( '4',  'periodinst-global',    0 * $periodinst_quota + CB2_ID_BASE, CB2_MAX_DAYS ),
+			array( '5',  'periodinst-location',  1 * $periodinst_quota + CB2_ID_BASE, CB2_MAX_DAYS ),
+			array( '6',  'periodinst-timeframe', 2 * $periodinst_quota + CB2_ID_BASE, CB2_MAX_DAYS ),
+			array( '7',  'periodinst-user',      3 * $periodinst_quota + CB2_ID_BASE, CB2_MAX_DAYS ),
 
 			// 1 Shared view
 			// several of these post_types may be requested at the SAME TIME

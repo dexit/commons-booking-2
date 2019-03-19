@@ -487,6 +487,8 @@ body .cb2-table-not-exist {
 }
 
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000317}}
+.cb2-database-stored-procedures li,
+.cb2-database-stored-procedures,
 .cb2-database-views li,
 .cb2-database-views {
   display: inline;
@@ -494,42 +496,42 @@ body .cb2-table-not-exist {
   font-weight: bold;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000324}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000326}}
 .cb2-database-table th {
   border: 1px solid #d7d7d7;
   padding: 4px 4px;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000329}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000331}}
 .cb2-database-table td {
   border: 1px solid #d7d7d7;
   padding: 0px 4px;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000334}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000336}}
 .cb2-database-prefix {
   font-weight: normal;
   color: #555;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000339}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000341}}
 .cb2-depth-0 {
   list-style: none;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000343}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000345}}
 .cb2-depth-1 {
   list-style: disc;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000347}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000349}}
 .cb2-classname {
   font-style: italic;
   background-color: #f7f7f7;
   padding: 0px 4px;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000353}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_reflection\.scss}line{font-family:\0000355}}
 li.cb2-classname {
   list-style: none;
   margin-left: -4px;

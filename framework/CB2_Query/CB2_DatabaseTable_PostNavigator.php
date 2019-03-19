@@ -1,5 +1,14 @@
 <?php
 class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
+	static function database_stored_procedures() {
+		return array(
+			'saves_finished' => "delete from wp_cb2_view_periodinstmeta_cache;
+					insert into wp_cb2_view_periodinstmeta_cache
+					select * from wp_cb2_view_periodinstmeta;
+				# select @@rows_affected;",
+		);
+	}
+
 	protected function __construct( &$posts = NULL ) {
 		global $wpdb;
 
@@ -310,10 +319,19 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		// One cb2_data_change per entire top level change
 		// rather than every row
 		if ( $top ) {
+			$this->saves_finished();
 			do_action( 'save_post_top', $this->ID, $this, $update );
 		}
 
 		return $this->ID;
+	}
+
+	function saves_finished() {
+		global $wpdb;
+		$Class = get_class( $this );
+		if ( CB2_DEBUG_SAVE )
+			print( "<div class='cb2-WP_DEBUG-small'>saves_finished($Class $this->ID)</div>" );
+		$wpdb->query( "call cb2_saves_finished()" );
 	}
 
   protected function post_post_update() {
