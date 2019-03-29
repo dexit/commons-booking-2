@@ -49,17 +49,18 @@ abstract class CB2_PostNavigator extends stdClass {
 		// CB2_ID_BASE:
 		// Setting CB2_ID_BASE = 0 is good for testing clashes with WP posts
 		//
-		// CB2_MAX_CB2_POSTS:
+		// CB2_MAX_CB2_POSTS (10,000):
+		// A "post" in this context is a entity_period_group like a timeframe
 		// More CB2 posts than this will overlap with the next quota of post_type
 		// this needs to be high because periodinst-* also has a CB2_MAX_DAYS
 		//
-		// CB2_MAX_PERIODS:
+		// CB2_MAX_PERIODS (1000):
 		// Period_IDs can be the same for different PeriodEntities: global, location, timeframe, etc.
 		// they cannot overlap:
 		//   `global_period_group_id` * `pt_pi`.`ID_multiplier`) + (`po`.`period_id` * 10000)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`
 		//
-		// CB2_MAX_DAYS:
-		// This is the maximum number of recurrences
+		// CB2_MAX_DAYS (10,000):
+		// This is the maximum number of recurrences (recurrence_index)
 		// For example: 10000 would mean 10000 repeating entries for a given period definition
 		// in the case of daily repetition, this would indicate 10 x 365 = ~10 years maximum
 		// the view wp_cb2_view_sequence_date limits this maximum also
@@ -68,64 +69,133 @@ abstract class CB2_PostNavigator extends stdClass {
 		// The largest integer supported in this build of PHP.
 		// Usually int(2,147,483,647) in 32 bit systems
 		// and int(9223372036854775807) in 64 bit systems. Available since PHP 5.0.5'
-		$periodinst_quota = CB2_MAX_CB2_POSTS * CB2_MAX_DAYS * CB2_MAX_PERIODS;
-		if ( 4 * $periodinst_quota + CB2_ID_BASE > PHP_INT_MAX )
-			throw new Exception( 'Fake CB2 post IDs are above PHP_INT_MAX [' . PHP_INT_MAX . ']' );
+		$PERIODINST_MULTIPLIER = CB2_MAX_DAYS * CB2_MAX_PERIODS;
+		$PERIODINST_QUOTA      = $PERIODINST_MULTIPLIER * CB2_MAX_CB2_POSTS;
+		if ( 4 * $PERIODINST_QUOTA + CB2_ID_BASE > PHP_INT_MAX )
+			throw new Exception( 'Fake CB2 post IDs are above PHP_INT_MAX [' . PHP_INT_MAX . ']. 64-bit server required' );
 
 		return array(
 			// Separate views
 			// these post_types cannot be requested mixed together in 1 WP_Query
 			// redirect to 1 view is possible only
-			array( '1',  'period',               0, '1' ),
-			array( '2',  'periodgroup',          0, '1' ),
-			array( '8',  'periodstatustype',     0, '1' ),
+			array( '1',  'period',               0, 1 ),
+			array( '2',  'periodgroup',          0, 1 ),
+			array( '8',  'periodstatustype',     0, 1 ),
 
 			// 1 Shared view
-			// several of these post_types may be requested at the SAME TIME
+			// Several of these post_types may be requested at the SAME TIME
 			// thus requireing one view for all types
 			// recurrence causes many periodinsts
-			array( '4',  'periodinst-global',    0 * $periodinst_quota + CB2_ID_BASE, CB2_MAX_DAYS ),
-			array( '5',  'periodinst-location',  1 * $periodinst_quota + CB2_ID_BASE, CB2_MAX_DAYS ),
-			array( '6',  'periodinst-timeframe', 2 * $periodinst_quota + CB2_ID_BASE, CB2_MAX_DAYS ),
-			array( '7',  'periodinst-user',      3 * $periodinst_quota + CB2_ID_BASE, CB2_MAX_DAYS ),
+			array( '4',  'periodinst-global',    0 * $PERIODINST_QUOTA + CB2_ID_BASE, $PERIODINST_MULTIPLIER ),
+			array( '5',  'periodinst-location',  1 * $PERIODINST_QUOTA + CB2_ID_BASE, $PERIODINST_MULTIPLIER ),
+			array( '6',  'periodinst-timeframe', 2 * $PERIODINST_QUOTA + CB2_ID_BASE, $PERIODINST_MULTIPLIER ),
+			array( '7',  'periodinst-user',      3 * $PERIODINST_QUOTA + CB2_ID_BASE, $PERIODINST_MULTIPLIER ),
 
 			// 1 Shared view
 			// several of these post_types may be requested at the SAME TIME
 			// thus requireing one view for all types
-			array( '12', 'periodent-global',     0 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, '1' ),
-			array( '13', 'periodent-location',   1 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, '1' ),
-			array( '14', 'periodent-timeframe',  2 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, '1' ),
-			array( '15', 'periodent-user',       3 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, '1' ),
+			array( '12', 'periodent-global',     0 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, 1 ),
+			array( '13', 'periodent-location',   1 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, 1 ),
+			array( '14', 'periodent-timeframe',  2 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, 1 ),
+			array( '15', 'periodent-user',       3 * CB2_MAX_CB2_POSTS + CB2_ID_BASE, 1 ),
+
+			// Not post types, but stores the vars for reference
+			array( '100',  'post[]',             0, CB2_MAX_CB2_POSTS ), // 10,000
+			array( '101',  'day[]',              0, CB2_MAX_DAYS ),      // 10,000 (recurrence_index)
+			array( '102',  'period[]',           0, CB2_MAX_PERIODS ),   // 1000
 		);
 	}
 
-  protected function __construct( &$posts = NULL ) {
+  protected static function createInstance( String $Class, Array $args = array(), Int $ID = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+		// So derived factories can call
+		//   protected function __constructors(...)
+		// with variable $args
+		// Multition
+		$has_multition = property_exists( $Class, 'all' ) && is_array( $Class::$all );
+
+		if ( $has_multition
+			&& $ID != CB2_CREATE_NEW
+			&& ! $force_properties
+			&& isset( $Class::$all[$ID] ) // Ignore NULLs
+		) {
+			$object = $Class::$all[$ID];
+			//if ( WP_DEBUG ) print( "<div class='cb2-WP_DEBUG-small'><b>cache hit</b> [$Class/$ID]</div>" );
+		} else {
+			$reflection = new ReflectionClass( $Class );
+			$ctor       = $reflection->getConstructor();
+			$ctor->setAccessible( TRUE );
+			$object     = $reflection->newInstanceWithoutConstructor();
+			$ctor->invokeArgs( $object, $args );
+
+			// $set_create_new_post_properties is often set
+			// when ->save()ing from incomplete <form> fields
+			if ( $properties ) self::copy_all_wp_post_properties( $object, $properties );
+			self::set_create_new_post_properties( $object );
+			if ( WP_DEBUG ) self::check_wp_post_properties( $object );
+
+			if ( $has_multition && $ID != CB2_CREATE_NEW )
+				$Class::$all[$ID] = &$object; // Maintain subsequent values by reference
+			//if ( WP_DEBUG ) print( "<div class='cb2-WP_DEBUG-small'>cache miss [$Class/$ID]</div>" );
+		}
+
+		return $object;
+	}
+
+  protected function __construct( Int $ID = CB2_CREATE_NEW, Array &$posts = NULL, $filter = 'edit' ) {
     $this->zeros = array(); // TODO: re-evaluate this: does it collect stuff?
     if ( is_null( $posts ) ) $this->posts = &$this->zeros;
     else                     $this->posts = &$posts;
 
-    // WP_Post default values
-    if ( ! property_exists( $this, 'post_status' ) )   $this->post_status   = CB2_Post::$PUBLISH;
-    if ( ! property_exists( $this, 'post_type' ) )     $this->post_type     = $this->post_type();
-    if ( ! property_exists( $this, 'post_name' ) )     $this->post_name     = '';
-    if ( ! property_exists( $this, 'post_password' ) ) $this->post_password = '';
-    if ( ! property_exists( $this, 'post_author' ) )   $this->post_author   = 1;
-    if ( ! property_exists( $this, 'post_date' ) )     $this->post_date     = date( CB2_Query::$datetime_format );
-    if ( ! property_exists( $this, 'post_modified' ) ) $this->post_modified = date( CB2_Query::$datetime_format );
-    if ( ! property_exists( $this, 'post_date_gmt' ) ) $this->post_date_gmt = $this->post_date;
-    if ( ! property_exists( $this, 'post_modified_gmt' ) ) $this->post_modified_gmt = $this->post_modified;
-		if ( ! property_exists( $this, 'filter' ) )        $this->filter = 'suppress'; // Prevent WP_Query from converting objects to WP_Post
-		// We do not populate these here,
-		// they would be called explicitly
-		// populating them can cause loops
-		// because get_the_content() can also __contruct() this
-		// indirectly through contruct things that has-a
-    if ( ! property_exists( $this, 'post_excerpt' ) )  $this->post_excerpt  = NULL; //$this->get_the_excerpt();
-    if ( ! property_exists( $this, 'post_content' ) )  $this->post_content  = NULL; //$this->get_the_content();
+    // Default to a new object created by the current user if not specified
+    // ID, post_type and filter are not copy_all_wp_post_properties()
+    $this->ID        = $ID;
+    $this->post_type = $this->post_type();
 
     // This will cause subsequent WP_Post::get_instance() calls to return $this
     // rather than attempting to access the wp_posts table
-    if ( property_exists( $this, 'ID' ) ) wp_cache_add( $this->ID, $this, 'posts' );
+    // From post.php get_post(...)
+		//   @param string        $filter Optional. Type of filter to apply. Accepts
+		//                        'raw', 'edit', 'db', or 'display'.
+		//                        Default 'raw'.
+		// 'raw'  prevents sanitize_post() which fails on the ->posts Array
+		// 'edit' is requested by post.php get_post()
+		// WP_Query does something else...?
+		$this->filter = $filter; // 'edit'
+    if ( $this->ID != CB2_CREATE_NEW )
+			wp_cache_add( $this->ID, $this, 'posts' );
+	}
+
+	protected static function set_create_new_post_properties( $object ) {
+    // Significant
+    if ( ! property_exists( $object, 'post_status' ) )    $object->post_status    = CB2_Post::$AUTODRAFT;
+    if ( ! property_exists( $object, 'post_author' ) )    $object->post_author    = get_current_user_id();
+    if ( ! property_exists( $object, 'post_name' ) )      $object->post_name      = 'new post';
+		if ( ! property_exists( $object, 'post_title' ) )     $object->post_title     = '';
+		// We do not populate these here,
+		//   $this->get_the_excerpt();
+		// they would be called explicitly
+		// populating them can cause loops
+		// because get_the_content() can also __contruct() this
+		// indirectly through construct things that has-a
+    if ( ! property_exists( $object, 'post_excerpt' ) )   $object->post_excerpt   = '';
+    if ( ! property_exists( $object, 'post_content' ) )   $object->post_content   = '';
+		if ( ! property_exists( $object, 'post_content_filtered' ) ) $object->post_content_filtered   = '';
+
+		// Not significant
+		if ( ! property_exists( $object, 'comment_status' ) ) $object->comment_status = '';
+		if ( ! property_exists( $object, 'ping_status' ) )    $object->ping_status    = '';
+		if ( ! property_exists( $object, 'to_ping'     ) )    $object->to_ping        = '';
+		if ( ! property_exists( $object, 'pinged'      ) )    $object->pinged         = '';
+		if ( ! property_exists( $object, 'post_parent' ) )    $object->post_parent    = NULL;
+		if ( ! property_exists( $object, 'guid'        ) )    $object->guid           = '';
+		if ( ! property_exists( $object, 'menu_order'  ) )    $object->menu_order     = 0;
+		if ( ! property_exists( $object, 'post_mime_type' ) ) $object->post_mime_type = '';
+		if ( ! property_exists( $object, 'comment_count' ) )  $object->comment_count  = 0;
+    if ( ! property_exists( $object, 'post_password' ) )  $object->post_password  = '';
+    if ( ! property_exists( $object, 'post_date' ) )      $object->post_date      = date( CB2_Query::$datetime_format );
+    if ( ! property_exists( $object, 'post_modified' ) )  $object->post_modified  = date( CB2_Query::$datetime_format );
+    if ( ! property_exists( $object, 'post_date_gmt' ) )  $object->post_date_gmt  = $object->post_date;
+    if ( ! property_exists( $object, 'post_modified_gmt' ) ) $object->post_modified_gmt = $object->post_modified;
   }
 
   function is( CB2_PostNavigator $post_navigator ) {
@@ -216,7 +286,7 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $Class;
   }
 
-  protected static function get_or_create_new( Array &$properties, $force_properties, $ID_property_name, &$instance_container = NULL, $Class = FALSE, $required = TRUE ) {
+  protected static function get_or_create_new( Array &$properties, Bool $force_properties, String $ID_property_name, &$instance_container = NULL, $Class = FALSE, $required = TRUE, Bool $set_create_new_post_properties = FALSE ) {
 		// "get":    the database record(s) exist already and we have their ID
 		// "create": create a placeholder object that will be saved to the database later, ID = 0
 		// If $ID_property_name is plural, an array will be returned
@@ -278,8 +348,7 @@ abstract class CB2_PostNavigator extends stdClass {
 						$ID_property_name_singular,
 						$array_ID_value,
 						$TargetClass,
-						$properties,
-						$force_properties,
+						$properties, $force_properties, $set_create_new_post_properties,
 						$instance_container
 					);
 					array_push( $object, $subobject );
@@ -290,8 +359,7 @@ abstract class CB2_PostNavigator extends stdClass {
 					$ID_property_name,
 					$property_ID_value,
 					$TargetClass,
-					$properties,
-					$force_properties,
+					$properties, $force_properties, $set_create_new_post_properties,
 					$instance_container
 				);
 			}
@@ -304,7 +372,7 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $object;
 	}
 
-	private static function get_or_create_new_internal( String $ID_property_name, $property_ID_value, String $TargetClass, Array $properties, Bool $force_properties, Object $instance_container = NULL ) {
+	private static function get_or_create_new_internal( String $ID_property_name, $property_ID_value, String $TargetClass, Array $properties, Bool $force_properties, Bool $set_create_new_post_properties = FALSE, Object $instance_container = NULL ) {
 		if ( is_array( $property_ID_value ) ) {
 			// Sub-properties defined in sub-associative array
 			$properties = $property_ID_value;
@@ -329,7 +397,7 @@ abstract class CB2_PostNavigator extends stdClass {
 		$properties['ID']  = $property_ID_value;
 		$object            = NULL;
 		if ( $property_ID_value == CB2_CREATE_NEW || $force_properties )
-			$object = $TargetClass::factory_from_properties( $properties, $instance_container, $force_properties );
+			$object = $TargetClass::factory_from_properties( $properties, $instance_container, $force_properties, $set_create_new_post_properties );
 		else
 			$object = CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container );
 		$properties['ID']  = $original_ID;
@@ -384,39 +452,70 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $this->saveable || $this->ID == CB2_CREATE_NEW;
 	}
 
-	static function copy_all_wp_post_properties( Array $properties, stdClass $object, Bool $overwrite = TRUE ) {
-		// Important to overwrite
-		// because these objects are CACHED
-		if ( is_null( $properties ) )    throw new Exception( 'copy_all_wp_post_properties( $properties null )' );
-		if ( is_object( $properties ) )  throw new Exception( 'copy_all_wp_post_properties( $properties is an object )' );
-		if ( ! is_array( $properties ) ) throw new Exception( 'copy_all_wp_post_properties( $properties is not an array )' );
+	private static function check_wp_post_properties( stdClass $object ) {
+		// Check that the source WP_Post has all that it should have
+		foreach ( CB2_Post::$POST_PROPERTIES as $name => $native_relevant )
+			if ( ! property_exists( $object, $name ) ) {
+				$debug_post_type = ( property_exists( $object, 'post_type' ) ? $object->post_type : 'no post_type' );
+				$debug_ID_field  = "{$debug_post_type}_ID";
+				$debug_post_ID   = ( property_exists( $object, $debug_ID_field ) ? $object->$debug_ID_field : 'no ID' );
+				$debug           = "WP_Post($debug_post_type/$debug_post_ID)->[$name] does not exist on source properties";
+				print( "<div class='cb2-WP_DEBUG'>$debug</div>" );
+				var_dump($object); // For AJAX print out
+				throw new Exception( $debug );
+			}
+	}
 
-		if ( WP_DEBUG ) {
-			foreach ( CB2_Post::$POST_PROPERTIES as $name => $native_relevant )
-				if ( ! isset( $properties, $name ) )
-					throw new Exception( "WP_Post->[$name] does not exist on source post" );
-		}
+	private static function copy_all_wp_post_properties( stdClass $object, Array $properties, Bool $overwrite = FALSE ) {
+		// Important to overwrite when saving
+		// because these objects are CACHED
+		if ( is_null( $properties ) ) throw new Exception( 'copy_all_wp_post_properties( $properties null )' );
 
 		foreach ( $properties as $name => $from_value ) {
-			$wp_is_post_property = isset( CB2_Post::$POST_PROPERTIES[$name] );
-			if ( $wp_is_post_property ) {
+			// post_type, ID === FALSE
+			// other WP_Post properties === NULL or TRUE
+			if ( array_key_exists( $name, CB2_Post::$POST_PROPERTIES )
+				&& CB2_Post::$POST_PROPERTIES[$name] !== FALSE
+			) {
 				try {
 					$new_value = CB2_Query::to_object( $name, $from_value, FALSE ); // Do not convert dates
 				} catch ( Exception $ex ) {
 					krumo( $properties );
 					throw $ex;
 				}
+				$old_value = ( property_exists( $object, $name ) ? $object->$name : NULL );
+				$is_set    = ! is_null( $old_value );
+				$is_same   = ( property_exists( $object, $name ) && $old_value === $new_value );
 
-				if ( $overwrite || ! property_exists( $object, $name ) ) {
-					if ( WP_DEBUG && FALSE ) {
-						if ( property_exists( $object, $name ) ) {
-							$old_value = $object->$name;
-							if ( ! is_null( $old_value ) && $old_value != $new_value )
-								print( "copy_all_wp_post_properties( [$old_value] => [$new_value] )" );
+				if ( WP_DEBUG ) {
+					if ( ! $is_same ) {
+						// Needs to set it
+						$old_value_string = ( is_null( $old_value ) ? 'NULL' : $old_value );
+						$new_value_string = ( is_null( $new_value ) ? 'NULL' : $new_value );
+						$overwrite_string = ( $overwrite ? 'with overwrite' : 'without overwrite' );
+						$debug_string     = "copy_all_wp_post_properties($name [$old_value_string] => [$new_value_string] ) $overwrite_string";
+						if ( $is_set && ! $overwrite ) {
+							// Cannot set it
+							krumo( $object, $properties );
+							throw new Exception( $debug_string );
+						} else {
+							//throw new Exception( $debug_string );
+							//if ( WP_DEBUG ) print( "<br/><div class='cb2-WP_DEBUG-small'>✔ $debug_string</div>" );
 						}
 					}
-					$object->$name = $new_value;
 				}
+
+				if ( ! $is_same && ( $overwrite || ! $is_set ) )
+					$object->$name = $new_value;
+			}
+		}
+
+    if ( WP_DEBUG ) {
+			$object_Class     = get_class( $object );
+			$overwrite_string = ( $overwrite ? 'overwrite mode' : 'no overwrite' );
+    	if ( $object->post_type != $object_Class::$static_post_type ) {
+				krumo( $properties );
+				throw new Exception( "$object_Class has wrong post type [$object->post_type], $overwrite_string" );
 			}
 		}
 	}
@@ -447,7 +546,7 @@ abstract class CB2_PostNavigator extends stdClass {
 			foreach ( $this as $name => $value ) {
 				if ( $name
 					&& ( ! isset( CB2_Post::$POST_PROPERTIES[$name] ) || CB2_Post::$POST_PROPERTIES[$name] )
-					&& ( ! in_array( $name, array( 'zeros', 'post_type' ) ) )
+					&& ( ! in_array( $name, array( 'zeros' ) ) )
 				) {
 					if      ( is_null( $value ) ) $value = '<i>NULL</i>';
 					else if ( method_exists( $value, 'format' ) ) $value = $value->format( CB2_Query::$datetime_format );
@@ -702,9 +801,10 @@ abstract class CB2_PostNavigator extends stdClass {
 			wp_cache_set( $previous->ID, $previous, 'posts' );
   }
 
-  protected function cache_set() {
-		$previous = wp_cache_get( $this->ID, 'posts' );
-		wp_cache_set( $this->ID, $this, 'posts' );
+  protected function cache_set( $post = NULL ) {
+		if ( is_null( $post ) ) $post = $this;
+		$previous = wp_cache_get( $post->ID, 'posts' );
+		wp_cache_set( $post->ID, $post, 'posts' );
 		return $previous;
   }
 
@@ -733,16 +833,16 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $url;
   }
 
-  function current_user_can( $cap ) {
+  function current_user_can( String $cap, Bool $current_user_can = NULL ) {
 		// Caches may have been flushed
 		// current_user_can() will attempt a get_post(ID)
 		// and this might not be in the current loop, i.e. $post->sub_object->try_something()
 		// and the DB is not redirected for this call get_post() SQL
 		// so we enable get_instance(ID) to work
-		$previous = $this->cache_set();
-		$can = current_user_can( $cap, $this->ID );
+		$previous         = $this->cache_set();
+		$current_user_can = current_user_can( $cap, $this->ID );
 		$this->cache_set_previous( $previous );
-		return $can;
+		return $current_user_can;
   }
 
   function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {

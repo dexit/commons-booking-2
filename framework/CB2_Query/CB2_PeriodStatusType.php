@@ -181,29 +181,25 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     $this->use       = $flags & CB2_USE;     // 2
     $this->return    = $flags & CB2_RETURN;  // 4
 
-    parent::__construct();
-		if ( $ID ) self::$all[$ID] = $this;
-
-		parent::__construct();
+		parent::__construct( $ID );
 	}
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['period_status_type_ID'] ) ? $properties['period_status_type_ID'] : $properties['ID'] ),
+			(int) ( isset( $properties['period_status_type_ID'] ) ? $properties['period_status_type_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] ) ? $properties['post_title'] : $properties['name'] ),
 			( isset( $properties['colour'] )     ? $properties['colour']   : NULL ),
 			( isset( $properties['opacity'] )    ? $properties['opacity']  : NULL ),
 			( isset( $properties['priority'] )   ? $properties['priority'] : NULL ),
 			( isset( $properties['flags'] )      ? $properties['flags']    : NULL ),
-			( isset( $properties['system'] )     ? $properties['system']   : NULL )
+			( isset( $properties['system'] )     ? $properties['system']   : NULL ),
+			$properties, $force_properties, $set_create_new_post_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
 
-  static function &factory(
+  static function factory(
 		// With PeriodStatusTypes we also want to
 		// assume the existing ones, by id
 		// rather than load them completely from the Database
@@ -213,34 +209,25 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     $colour    = NULL,
     $opacity   = NULL,
     $priority  = NULL,
-    $return    = NULL,
-    $collect   = NULL,
-    $use       = NULL,
-    $system    = NULL
+    $flags     = NULL,
+    $system    = NULL,
+    Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
     // Design Patterns: Factory Singleton with Multiton
-    $object = NULL;
-    if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) )
-			$object = self::$all[$ID];
-    else {
-      $Class = 'CB2_UserPeriodStatusType';
-      if ( $ID != CB2_CREATE_NEW ) {
-				$id = CB2_PostNavigator::id_from_ID_with_post_type( $ID, CB2_PeriodStatusType::$static_post_type );
-				// Hardcoded system status types
-				switch ( $id ) {
-					case CB2_PeriodStatusType_PickupReturn::$id: $Class = 'CB2_PeriodStatusType_PickupReturn'; break;
-					case CB2_PeriodStatusType_Booked::$id:    $Class = 'CB2_PeriodStatusType_Booked';    break;
-					case CB2_PeriodStatusType_Closed::$id:    $Class = 'CB2_PeriodStatusType_Closed';    break;
-					case CB2_PeriodStatusType_Open::$id:      $Class = 'CB2_PeriodStatusType_Open';      break;
-					case CB2_PeriodStatusType_Repair::$id:    $Class = 'CB2_PeriodStatusType_Repair';    break;
-					case CB2_PeriodStatusType_Holiday::$id:   $Class = 'CB2_PeriodStatusType_Holiday';   break;
-				}
+		$Class = 'CB2_UserPeriodStatusType';
+		if ( $ID != CB2_CREATE_NEW ) {
+			$id = CB2_PostNavigator::id_from_ID_with_post_type( $ID, CB2_PeriodStatusType::$static_post_type );
+			// Hardcoded system status types
+			switch ( $id ) {
+				case CB2_PeriodStatusType_PickupReturn::$id: $Class = 'CB2_PeriodStatusType_PickupReturn'; break;
+				case CB2_PeriodStatusType_Booked::$id:    $Class = 'CB2_PeriodStatusType_Booked';    break;
+				case CB2_PeriodStatusType_Closed::$id:    $Class = 'CB2_PeriodStatusType_Closed';    break;
+				case CB2_PeriodStatusType_Open::$id:      $Class = 'CB2_PeriodStatusType_Open';      break;
+				case CB2_PeriodStatusType_Repair::$id:    $Class = 'CB2_PeriodStatusType_Repair';    break;
+				case CB2_PeriodStatusType_Holiday::$id:   $Class = 'CB2_PeriodStatusType_Holiday';   break;
 			}
-			$reflection = new ReflectionClass( $Class );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		}
+		return CB2_PostNavigator::createInstance( $Class, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
   }
 
   function metabox_calendar_options_object_cb( $field, $periodentity ) {

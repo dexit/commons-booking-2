@@ -67,6 +67,31 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 		);
 	}
 
+	static function post_view_metabox( String $context = 'normal', Array $classes = array(), $none = TRUE ) {
+		$ID_field  = 'item_ID';
+		$type_name = 'Item';
+
+		return array(
+			'title'      => __( "$type_name View", 'commons-booking-2' ),
+			'context'    => 'normal',
+			'show_on_cb' => array( 'CB2', 'is_published' ),
+			'classes'    => array( 'cb2-object-summary-bar' ),
+			'show_names' => FALSE,
+			'fields'     => array(
+				array(
+					'name'      => __( $type_name, 'commons-booking-2' ),
+					'id'        => $ID_field,
+					'action'    => 'view',
+					'title'     => __( 'view on website', 'commons-booking-2' ),
+					'type'      => 'post_link',
+					'default'   => ( isset( $_GET[$ID_field] ) ? $_GET[$ID_field] : NULL ),
+					'post_type' => CB2_Item::$static_post_type,
+				),
+				CB2_Query::metabox_nosave_indicator( $ID_field ),
+			),
+		);
+	}
+
 	static function metaboxes() {
 		$metaboxes = array(
 			array(
@@ -100,41 +125,25 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         return self::$static_post_type;
     }
 
-    public function __construct($ID)
+    protected function __construct($ID)
     {
 				CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 				parent::__construct($ID);
-				self::$all[$ID] = $this;
-
-        // WP_Post values
-        $this->post_type = self::$static_post_type;
     }
 
-    public static function &factory_from_properties(&$properties, &$instance_container = null, $force_properties = false)
+    public static function factory_from_properties(&$properties, &$instance_container = null, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE)
     {
         $object = self::factory(
-            (isset($properties['item_ID']) ? $properties['item_ID'] : $properties['ID'])
+            (int) (isset($properties['item_ID']) ? $properties['item_ID'] : $properties['ID']),
+            $properties, $force_properties
         );
-
-        self::copy_all_wp_post_properties($properties, $object);
 
         return $object;
     }
 
-    public static function &factory( Int $ID )
+    public static function factory( Int $ID, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE )
     {
-        // Design Patterns: Factory Singleton with Multiton
-        $object = null;
-        $key    = $ID;
-
-        if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) {
-					$object = self::$all[$ID];
-				} else {
-					$reflection = new ReflectionClass( __class__ );
-					$object     = $reflection->newInstanceArgs( func_get_args() );
-				}
-
-        return $object;
+			return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
     }
 
     public function get_the_after_content() {
@@ -246,11 +255,11 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 					) );
 					if ( $period_group_ID ) {
 						$pickup_return_text = __( 'Pickup/Return' );
-						$period_group       = new CB2_PeriodGroup( $period_group_ID );
+						$period_group       = CB2_PeriodGroup::factory( $period_group_ID );
 						// We did not load the Periods so let us not wipe them
 						$period_group->set_saveable( FALSE );
-						$location           = new CB2_Location( $location_ID );
-						$item_pickup_return = new CB2_PeriodEntity_Timeframe(
+						$location           = CB2_Location::factory( $location_ID );
+						$item_pickup_return = CB2_PeriodEntity_Timeframe::factory(
 							CB2_CREATE_NEW,
 							"$this->ID $pickup_return_text",
 							$period_group,
@@ -310,17 +319,21 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 } else {
                     print('<div>' . __('No Item Availability') . '</div>');
                 }
-                print("<div class='cb2-column-actions'>");
-                $page         = 'cb2-post-new';
-                $add_new_text = ('add new pickup return times');
-                $post_title   = __('Pickup/Return for') . " $this->post_title";
-                $add_link     = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
-                if ($has_locations) {
-                    print("<a href='$add_link'>$add_new_text</a>");
-                } else {
-                    print('<span class="cb2-no-data-notice">' . __('Add a Location first') . '</span>');
-                }
-                print('</div>');
+
+                if ( current_user_can( 'edit_post', $this->ID ) ) {
+									print("<div class='cb2-column-actions'>");
+									$page         = 'cb2-post-new';
+									$add_new_text = ('add new pickup return times');
+									$post_title   = __('Pickup/Return for') . " $this->post_title";
+									$add_link     = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-timeframe&period_status_type_id=1&post_title=$post_title";
+									if ($has_locations) {
+											print("<a href='$add_link'>$add_new_text</a>");
+									} else {
+											print('<span class="cb2-no-data-notice">' . __('Add a Location first') . '</span>');
+									}
+									print('</div>');
+								}
+
                 break;
 
             case 'bookings':
@@ -350,24 +363,28 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 } else {
                     print('<div>' . __('No Bookings') . '</div>');
                 }
-                print("<div class='cb2-column-actions'>");
-                $page       = 'cb2-post-new';
-                $post_title = __('Booking of') . " $this->post_title";
-								$booked_ID  = CB2_PeriodStatusType_Booked::bigID();
-                $add_new_booking_text = __('add new booking');
-                if ( $has_locations ) {
-                    $add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
-                    print(" <a href='$add_link'>$add_new_booking_text</a>");
-                    if ( $wp_query->post_count ) {
-											$page       = 'cb2-menu';
-											$view_booking_text = __('view in calendar');
-											$view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
-											print(" | <a href='$view_link'>$view_booking_text</a>");
-										}
-                } else {
-                    print('<span class="cb2-no-data-notice">' . __('Add a Location first') . '</span>');
-                }
-                print('</div>');
+
+                if ( current_user_can( 'edit_post', $this->ID ) ) {
+									print("<div class='cb2-column-actions'>");
+									$page       = 'cb2-post-new';
+									$post_title = __('Booking of') . " $this->post_title";
+									$booked_ID  = CB2_PeriodStatusType_Booked::bigID();
+									$add_new_booking_text = __('add new booking');
+									if ( $has_locations ) {
+											$add_link   = "admin.php?page=$page&item_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
+											print(" <a href='$add_link'>$add_new_booking_text</a>");
+											if ( $wp_query->post_count ) {
+												$page       = 'cb2-menu';
+												$view_booking_text = __('view in calendar');
+												$view_link  = "admin.php?page=$page&item_ID=$this->ID&period_status_type_ID=$booked_ID";
+												print(" | <a href='$view_link'>$view_booking_text</a>");
+											}
+									} else {
+											print('<span class="cb2-no-data-notice">' . __('Add a Location first') . '</span>');
+									}
+									print('</div>');
+								}
+
                 break;
         }
 

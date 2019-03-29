@@ -84,6 +84,10 @@ class CB2_Query {
 		}
 
 		// TODO: get_post() will populate ALL fields from the post table: take advantage of this
+    // From post.php get_post(...)
+		//   @param string        $filter Optional. Type of filter to apply. Accepts
+		//                        'raw', 'edit', 'db', or 'display'.
+		//                        Default 'raw'.
 		$post = get_post( $post_id, $output, $filter );
 		if ( is_null( $post ) )
 			throw new Exception( "[$Class/$post_type] not found in [$wpdb->posts] for [$post_id]" );
@@ -99,7 +103,6 @@ class CB2_Query {
 			if ( $post->post_type != $post_type )
 				throw new Exception( "[$Class/$post_id] fetched a [$post->post_type] post_type from [$posts_table], not a [$post_type]" );
 		}
-
 
 		// Reset and Annotate
 		// This will make a get_metadata_assign() call

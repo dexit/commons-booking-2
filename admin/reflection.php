@@ -10,7 +10,7 @@ $testdata          = isset( $_GET['testdata'] );  // Checkbox
 $testdata_checked  = ( $testdata ? 'checked="1"' : '' );
 $disabled          = ( isset( $_GET['reset_data'] ) ? 'disabled="1"' : '' );
 print( '<div class="cb2-actions">' );
-print( '<a href="?page=cb2-reflection">show install schema</a>' );
+print( '<a href="?page=cb2-reflection">show schema</a>' );
 $processing = 'var self = this;
 	setTimeout(function(){
 		self.setAttribute("value", "Processing...");

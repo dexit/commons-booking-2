@@ -32,7 +32,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	 */
 	private $wp_query;
 
-	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = NULL, Array $query = NULL ) {
+	protected function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = NULL, Array $query = NULL ) {
 		// Defaults
 		if ( is_null( $startdate ) )   $startdate   = ( isset( $_REQUEST['startdate'] )   ? new CB2_DateTime( $_REQUEST['startdate'] ) : new CB2_DateTime() );
 		if ( is_null( $enddate ) )     $enddate     = ( isset( $_REQUEST['enddate'] )     ? new CB2_DateTime( $_REQUEST['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );

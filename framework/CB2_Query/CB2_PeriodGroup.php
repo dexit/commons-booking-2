@@ -85,9 +85,9 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		return $metaboxes;
 	}
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['period_group_ID'] ) ? $properties['period_group_ID'] : $properties['ID'] ),
+			(int) ( isset( $properties['period_group_ID'] ) ? $properties['period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name'] : '' )
@@ -95,40 +95,29 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			( isset( $properties['period_IDs'] ) // Empty groups are allowed
 				? CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_IDs', $instance_container )
 				: array()
-			)
+			),
+			$properties, $force_properties, $set_create_new_post_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
 
-  static function &factory(
-		$ID,
-		$name,
-		$periods = array()
+  static function factory(
+		Int $ID           = CB2_CREATE_NEW,
+		String $name      = 'period group',
+		Array $periods    = array(),
+		Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
-    // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
-			$object = self::$all[$ID];
-    } else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
   }
 
-  public function __construct(
-		$ID,
-		$name = 'period group',
+  protected function __construct(
+		$ID      = CB2_CREATE_NEW,
+		$name    = 'period group',
 		$periods = array()
   ) {
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
-		parent::__construct( $this->periods );
-		if ( $ID ) self::$all[$ID] = $this;
-
-    parent::__construct();
+		parent::__construct( $ID, $this->periods );
   }
 
   function add_period( $period ) {
@@ -263,7 +252,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 				$edit_link   = $period->get_the_edit_post_link( 'edit' );
 
 				$detach_link = '';
-				if ( $count > 1 ) {
+				if ( $count > 1 && $edit_link ) {
 					$detach_text = 'detach';
 					$detach_url  = "?page=cb2-period-groups&period_ID=$period->ID&period_group_IDs=$this->ID&do_action=CB2_PeriodGroup::detach";
 					$detach_link = " | <a href='$detach_url'>$detach_text</a></li>";

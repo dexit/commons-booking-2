@@ -63,17 +63,26 @@ $menu_interface = array(
 	),
 
 	// --------------------------------------------------- Advanced
+	'cb2-roles' => array(
+		'page_title'    => 'Roles and Capabilities',
+		'function'      => 'cb2_roles',
+		'first'         => TRUE,
+		'advanced'      => TRUE,
+		'capability'    => 'manage_options',
+	),
 	'cb2-reflection' => array(
 		'page_title'    => 'Reflection',
 		'function'      => 'cb2_reflection',
-		'first'         => TRUE,
 		'advanced'      => TRUE,
+		'capability'    => 'manage_options',
 	),
 	'cb2-gui-setup' => array(
 		'page_title'    => 'GUI setup',
 		'function'      => 'cb2_gui_setup',
 		'advanced'      => TRUE,
+		'capability'    => 'manage_options',
 	),
+
 	'cb2-periods' => array(
 		'page_title'    => 'Periods',
 		'wp_query_args' => 'post_type=period',
@@ -134,10 +143,12 @@ $menu_interface = array(
 		'page_title'    => 'Add New',
 		'function'      => 'cb2_settings_post_new',
 		'advanced'      => TRUE,
+		'capability'    => 'edit_posts',
 	),
 	'cb2-post-edit' => array(
 		'page_title'    => 'Edit Post',
 		'function'      => 'cb2_settings_post_edit',
 		'advanced'      => TRUE,
+		'capability'    => 'edit_posts',
 	),
 );

@@ -117,23 +117,14 @@ class CB2_ActDeact {
 		// set admin message
 		set_transient('CB2_message_ActDeact', $sql, 0);
 
-		// add_role( 'advanced', __( 'Advanced' ) ); //Add a custom roles
-		add_role(
-			'cb2_contributor',
-			__( 'CB2 Contributor' ),
-			array(
-				'read'         => true,  // true allows this capability
-				'edit_posts'   => true,
-				'delete_posts' => false, // Use false to explicitly deny
-			)
-		);
+		self::add_roles();
 		self::add_capabilities();
 		self::upgrade_procedure();
-		self::add_bookingpage();
+
 		// Clear the permalinks
 		flush_rewrite_rules();
-
 	}
+
 	/**
 	 * Fired for each blog when the plugin is deactivated.
 	 *
@@ -146,97 +137,28 @@ class CB2_ActDeact {
 		// Clear the permalinks
 		flush_rewrite_rules();
 	}
-		/**
-	 * Add admin capabilities
-	 *
-	 * @todo
-	 *
-	 * @return void
-	 */
-	public static function add_bookingpage() {
-		if (!CB2_Settings::get('pages_page-booking')) { // page set
 
-    global $wpdb;
-    // Create post object
-    $booking_page = array(
-        'post_title' => __('Booking', 'commmons-booking-2'),
-        'post_content' => 'Bookings page',
-        'post_status' => 'publish',
-        'post_author' => 1,
-        'post_type' => 'page',
-    );
-
-    // Insert the post into the database
-    wp_insert_post($booking_page);
-}
-
-
-
+	public static function add_roles() {
+		add_role( 'cb2_contributor', __( 'CB2 Contributor' ) );
+		add_role( 'cb2_subscriber',  __( 'CB2 Subscriber' ) );
 	}
-		/**
-	 * Add admin capabilities
-	 *
-	 * @todo
-	 *
-	 * @return void
-	 */
+
 	public static function add_capabilities() {
 		// Add the capabilites to all the roles
 		$caps = array(
-			'create_plugins',
-			'read_demo',
-			'read_private_demoes',
-			'edit_demo',
-			'edit_demoes',
-			'edit_private_demoes',
-			'edit_published_demoes',
-			'edit_others_demoes',
-			'publish_demoes',
-			'delete_demo',
-			'delete_demoes',
-			'delete_private_demoes',
-			'delete_published_demoes',
-			'delete_others_demoes',
-			'manage_demoes',
+			'cb2_view_others_posts_in_backend' => TRUE,
+			'cb2_view_linked_posts'            => TRUE,
+			'cb2_edit_linked_posts'            => TRUE,
 		);
 		$roles = array(
-			get_role( 'administrator' ),
-			get_role( 'editor' ),
-			get_role( 'author' ),
-			get_role( 'contributor' ),
-			get_role( 'subscriber' ),
+			'administrator',
+			'editor',
+			'cb2_contributor',
 		);
-		foreach ( $roles as $role ) {
-			foreach ( $caps as $cap ) {
-				$role->add_cap( $cap );
-			}
-		}
-		// Remove capabilities to specific roles
-		$bad_caps = array(
-			'create_demoes',
-			'read_private_demoes',
-			'edit_demo',
-			'edit_demoes',
-			'edit_private_demoes',
-			'edit_published_demoes',
-			'edit_others_demoes',
-			'publish_demoes',
-			'delete_demo',
-			'delete_demoes',
-			'delete_private_demoes',
-			'delete_published_demoes',
-			'delete_others_demoes',
-			'manage_demoes',
-		);
-		$roles = array(
-			get_role( 'author' ),
-			get_role( 'contributor' ),
-			get_role( 'subscriber' ),
-		);
-		foreach ( $roles as $role ) {
-			foreach ( $bad_caps as $cap ) {
-				$role->remove_cap( $cap );
-			}
+		foreach ( $roles as $role_name ) {
+			$role = get_role( $role_name );
+			foreach ( $caps as $cap_name => $default )
+				$role->add_cap( $cap_name );
 		}
 	}
 
@@ -254,6 +176,7 @@ class CB2_ActDeact {
 			}
 		}
 	}
+
   /**
   * Display admin message
   *
@@ -272,7 +195,6 @@ class CB2_ActDeact {
         delete_transient('CB2_message_ActDeact');
     }
 	}
-
 }
 
 

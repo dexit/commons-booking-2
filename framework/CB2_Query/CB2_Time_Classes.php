@@ -47,29 +47,20 @@ class CB2_Year extends CB2_TimePostNavigator {
   public function __toString() {return $this->post_title;}
 
   protected function __construct( $day ) {
-    $this->days = array();
     $this->year = (int) $day->date->format( 'Y' ); // e.g. 2017
+    $ID         = $this->year;
+    $this->days = array();
     $this->first_day_num = 365;
     $this->add_day( $day );
 
-    // WP_Post values
-    $this->post_title    = $this->year;
-    $this->ID            = $this->year;
-    $this->post_type     = self::$static_post_type;
-    parent::__construct( $this->days );
+    parent::__construct( $ID, $this->days );
   }
 
   static function factory( $day ) {
     // Design Patterns: Factory Singleton with Multiton
-    $key = $day->date->format( 'Y' );
-    if ( isset( self::$all[$key] ) ) {
-      $object = self::$all[$key];
-      $object->add_day( $day );
-    } else {
-      $object = new self( $day );
-      self::$all[$key] = $object;
-    }
-
+    $ID     = (int) $day->date->format( 'Y' );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID );
+    $object->add_day( $day );
     return $object;
   }
 
@@ -106,8 +97,10 @@ class CB2_Month extends CB2_TimePostNavigator {
   public function __toString() {return $this->post_title;}
 
   protected function __construct( $day ) {
-    $this->days          = array();
+		// This will repeat across years, but that is not important
     $this->monthinyear   = (int) $day->date->format( 'n' );  // 1-12
+    $ID                  = $this->monthinyear;
+    $this->days          = array();
     $this->monthname     = $day->date->format( 'F' );        // January - December;
     $this->first_day_num = 31;
     $this->add_day( $day );
@@ -115,22 +108,15 @@ class CB2_Month extends CB2_TimePostNavigator {
 
     // WP_Post values
     $this->post_title    = __( $this->monthname );
-    $this->ID            = $this->monthinyear; // This will repeat across years, but that is not important
-    $this->post_type     = self::$static_post_type;
-    parent::__construct( $this->days );
+
+    parent::__construct( $ID, $this->days );
   }
 
   static function factory( $day ) {
     // Design Patterns: Factory Singleton with Multiton
-    $key = $day->date->format( 'Y-n' );
-    if ( isset( self::$all[$key] ) ) {
-      $object = self::$all[$key];
-      $object->add_day( $day );
-    } else {
-      $object = new self( $day );
-      self::$all[$key] = $object;
-    }
-
+    $ID = (int) $day->date->format( 'Y-n' );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID );
+		$object->add_day( $day );
     return $object;
   }
 
@@ -167,20 +153,42 @@ class CB2_Week extends CB2_TimePostNavigator {
   function post_type() {return self::$static_post_type;}
   public function __toString() {return $this->post_title;}
 
-  protected function __construct( $day ) {
-    $this->days          = array();
+	protected static function generate_ID( CB2_Day $day ) {
+    $year       = (int) $day->date->format( 'Y' );
+    $weekinyear = self::weekinyear( $day );
+    $ID         = $year * 53 + $weekinyear;
+
+    // Year Boundaries will create 2 weeks over the boundary...
+    // a partial 53 and a partial 1
+    // if we already have days in the previous end-of-year week then continue with that one
+    if ( $weekinyear == 1 ) {
+			$last_year    = $year - 1;
+			$last_year_ID = $last_year * 53 + 53;
+			if ( isset( self::$all[$last_year_ID] ) )
+				$ID = $last_year_ID;
+		}
+
+    return $ID;
+  }
+
+  protected function __construct( CB2_Day $day ) {
+		// This will repeat across years, but that is not important
+    $ID                  = self::generate_ID( $day );
     $this->weekinyear    = self::weekinyear( $day );
+    $this->days          = array();
     $this->first_day_num = 7;
     $this->first         = ( $this->weekinyear == 1 );
 
-    $this->add_day( $day );
-
     // WP_Post values
     $this->post_title    = __( 'Week' ) . " $this->weekinyear";
-    $this->ID            = $this->weekinyear; // This will repeat across years, but that is not important
-    $this->post_type     = self::$static_post_type;
 
-    parent::__construct( $this->days );
+    parent::__construct( $ID, $this->days );
+  }
+
+  static function factory( CB2_Day $day ) {
+		$week = CB2_PostNavigator::createInstance( __class__, func_get_args(), self::generate_ID( $day ) );
+		$week->add_day( $day );
+		return $week;
   }
 
   public static function days_of_week() {
@@ -211,43 +219,17 @@ class CB2_Week extends CB2_TimePostNavigator {
 				array_push( $days, FALSE );
 		$start_of_week = get_option( 'start_of_week' );
 		for ( $i = 1; $i < $start_of_week; $i++ ) array_push( $days, array_shift( $days ) );
-		krumo( $days );
 		for ( $i = 0; $i < count( $days ); $i++ ) {
 			if ( $days[$i] ) array_push( $mask, pow( 2, $i ) );
 		}
-		krumo( $mask );
 		return array_sum( $mask );
 	}
-
-  static function factory( $day ) {
-    // Design Patterns: Factory Singleton with Multiton
-    $year       = $day->date->format( 'Y' );
-    $last_year  = $year - 1;
-    $weekinyear = self::weekinyear( $day );
-    $key        = "$year-$weekinyear";
-
-    // Year Boundaries will create 2 weeks over the boundary...
-    // a partial 53 and a partial 1
-    // if we already have days in the previous end-of-year week then continue with that one
-    if ( $weekinyear == 1 && isset( self::$all["$last_year-53"] ) )
-			$key = "$last_year-53";
-
-    if ( isset( self::$all[$key] ) ) {
-      $object = self::$all[$key];
-      $object->add_day( $day );
-    } else {
-      $object = new self( $day );
-      self::$all[$key] = $object;
-    }
-
-    return $object;
-  }
 
   function pre_days() {
     return $this->first_day_num;
   }
 
-  function add_day( $day ) {
+  function add_day( CB2_Day $day ) {
     $this->days[ $day->dayofweek ] = $day;
     if ( $day->dayofweek < $this->first_day_num ) $this->first_day_num = $day->dayofweek;
     if ( $day->is_current ) $this->is_current = TRUE;
@@ -275,21 +257,27 @@ class CB2_Day extends CB2_TimePostNavigator {
   function post_type() {return self::$static_post_type;}
   public function __toString() {return $this->post_title;}
 
+  protected static function generate_ID( CB2_DateTime $date ) {
+		return $date->format( 'Y' ) * 365 + $date->format( 'z' );
+  }
+
   protected function __construct( CB2_DateTime $date = NULL, String $title_format = NULL ) {
 		if ( is_null( $date ) ) $date = new CB2_DateTime();
 		else $date = $date->clone();
 		$date->clearTime();
     $this->periodinsts  = array();
 
+
     // http://php.net/manual/en/function.date.php
+    $ID                 = self::generate_ID( $date );
+    $this->dayofyear    = (int) $date->format( 'z' );        // 0-364
     $this->date         = $date;
     $this->dayinmonth   = (int) $date->format( 'j' );        // 1-31 day in month
     $this->dayofweek    = self::dayofweek_adjusted( $date ); // 0-6 WordPress start_of_week start day
-    $this->dayofyear    = (int) $date->format( 'z' );        // 0-364
     $this->today        = $date->is( (new CB2_DateTime())->clearTime() );
     $this->is_current   = $this->today;
     $this->title        = $date->format( $title_format ? $title_format : get_option( 'date_format' ) );
-    $this->first        = ($this->dayinmonth == 1);
+    $this->first        = ( $this->dayinmonth == 1 );
 
     $this->week         = CB2_Week::factory(  $this );
     $this->month        = CB2_Month::factory( $this );
@@ -297,14 +285,12 @@ class CB2_Day extends CB2_TimePostNavigator {
 
     // WP_Post values
     $this->post_title   = $date->format( $title_format ? $title_format : self::no_year_date_format() );
-    $this->ID           = $this->dayofyear + 1;
-    $this->post_type    = self::$static_post_type;
     $this->post_date    = $date->format( CB2_Query::$date_format );
 
-    parent::__construct( $this->periodinsts );
+    parent::__construct( $ID, $this->periodinsts );
   }
 
-  static function &factory_from_properties( Array $properties ) {
+  static function factory_from_properties( Array $properties ) {
 		if ( ! isset( $properties[ 'date' ] ) )
 			throw new Exception( "date required when CB2_Day::factory_from_properties()" );
 
@@ -313,21 +299,12 @@ class CB2_Day extends CB2_TimePostNavigator {
 		return self::factory( $date, $title_format );
   }
 
-  static function day_exists( CB2_DateTime $date ) {
-    $key = $date->format( 'Y-z' ); // year-dayofyear: 2019-364
-    return isset( self::$all[$key] );
+  static function factory( CB2_DateTime $date, String $title_format = NULL ) {
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), self::generate_ID( $date ) );
   }
 
-  static function &factory( CB2_DateTime $date, String $title_format = NULL ) {
-    // Design Patterns: Factory Singleton with Multiton
-    $key = $date->format( 'Y-z' ); // year-dayofyear: 2019-364
-    if ( isset( self::$all[$key] ) ) $object = self::$all[$key];
-    else {
-      $object = new self( $date, $title_format );
-      self::$all[$key] = $object;
-    }
-
-    return $object;
+  static function day_exists( CB2_DateTime $date ) {
+    return isset( self::$all[ self::generate_ID( $date ) ] );
   }
 
   static function with_year_date_format( $append_format = NULL ) {
@@ -341,7 +318,7 @@ class CB2_Day extends CB2_TimePostNavigator {
 		return $format . ( $append_format ? " $append_format" : '' );
   }
 
-  static function dayofweek_adjusted( $date ) {
+  static function dayofweek_adjusted( CB2_DateTime $date ) {
 		// 0-6 with WordPress start_of_week start day
 		// e.g. if Tuesday is the WordPress start of the week, then Tuesday is 0, Monday is 6
     $dayofweek          = (int) $date->format( 'w' ); // 0-6 Sunday start day (see below)
@@ -369,12 +346,12 @@ class CB2_Day extends CB2_TimePostNavigator {
     return $classes;
   }
 
-  function add_periodinst( $periodinst ) {
+  function add_periodinst( CB2_PeriodInst $periodinst ) {
     array_push( $this->periodinsts, $periodinst );
     return $periodinst;
   }
 
-  function tabs( $edit_form_advanced = FALSE ) {
+  function tabs( Bool $edit_form_advanced = FALSE ) {
 		return array(
 			"cb2-tab-status"  => 'Type of Thing',
 			"cb2-tab-objects" => 'Real Stuff',

@@ -135,15 +135,11 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		// Recurrence Type options
 		$recurrence_types = array(
 			CB2_Database::$NULL_indicator => __( 'None', 'commons-booking-2' ),
-		);
-		if ( WP_DEBUG )
-			$recurrence_types['H'] = '<span class="cb2-todo">' . __( 'Hourly', 'commons-booking-2' ) . '</span>';
-		$recurrence_types = array_merge( $recurrence_types, array(
 			'D' => __( 'Daily', 'commons-booking-2' ),
 			'W' => __( 'Weekly', 'commons-booking-2' ),
 			'M' => __( 'Monthly', 'commons-booking-2' ),
 			'Y' => __( 'Yearly', 'commons-booking-2' ),
-		) );
+		);
 
 		// ------------------------------------------ Full advanced interface for period definition
 		array_push( $metaboxes,
@@ -316,7 +312,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		);
 	}
 
-	static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		// This may not exist in post creation
 		// We do not create the CB2_PeriodGroup objects here
 		// because it could create a infinite circular creation
@@ -333,7 +329,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		$datetime_from = CB2_Query::isset( $properties, 'datetime_from', $datetime_part_period_start );
 
 		$object = self::factory(
-			( isset( $properties['period_ID'] )  ? $properties['period_ID']            : $properties['ID']   ),
+			(int) ( isset( $properties['period_ID'] )  ? $properties['period_ID']            : $properties['ID']   ),
 			( isset( $properties['post_title'] )
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name'] : '' )
@@ -346,40 +342,31 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			( isset( $properties['recurrence_frequency'] ) ? $properties['recurrence_frequency'] : NULL ),
 			( isset( $properties['recurrence_sequence'] )  ? $properties['recurrence_sequence']  : NULL ),
 			$period_group_IDs,
-			$force_properties
+			$properties, $force_properties, $set_create_new_post_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
 
-  static function &factory(
+  static function factory(
 		Int $ID,
     $name,
 		$datetime_part_period_start,
 		$datetime_part_period_end,
-		$datetime_from,
-		$datetime_to,
-		$recurrence_type,
-		$recurrence_frequency,
-		$recurrence_sequence,
+		$datetime_from        = NULL,
+		$datetime_to          = NULL,
+		$recurrence_type      = NULL,
+		$recurrence_frequency = NULL,
+		$recurrence_sequence  = NULL,
 		$period_group_IDs = array(),
-		$force_properties = FALSE
+		Array $properties = NULL,
+		Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
-    // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) && ! $force_properties ) {
-			$object = self::$all[$ID];
-    } else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
   }
 
-  public function __construct(
-		$ID,
+  protected function __construct(
+		Int $ID,
     $name,
     $datetime_part_period_start,  // DateTime
     $datetime_part_period_end,    // DateTime
@@ -408,9 +395,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 					&& $this->datetime_part_period_end->format(   'H:i:s' ) == $day_end->format( 'H:i:s' )
 				 );
 
-    if ( $ID ) self::$all[$ID] = $this;
-
-    parent::__construct();
+    parent::__construct( $ID );
   }
 
   function not_used() {
@@ -506,7 +491,6 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 			// No recurrence_sequence, so type needed
 			$recurrence_type_string = NULL;
 			switch ( $this->recurrence_type ) {
-				case 'H': $recurrence_type_string = 'Hourly';  break;
 				case 'D': $recurrence_type_string = 'Daily';   break;
 				case 'W': $recurrence_type_string = 'Weekly';  break;
 				case 'M': $recurrence_type_string = 'Monthly'; break;
@@ -524,7 +508,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		if ( is_null( $format_time ) ) $format_time = get_option( 'time_format' );
 
 		if ( $this->datetime_part_period_start->format( CB2_Query::$date_format ) == $this->datetime_part_period_end->format( CB2_Query::$date_format ) ) {
-			if ( $this->recurrence_type != 'D' && $this->recurrence_type != 'H') {
+			if ( $this->recurrence_type != 'D') {
 				if ( $now->format( CB2_Query::$date_format ) == $this->datetime_part_period_start->format( CB2_Query::$date_format ) )
 					$summary .= __( 'Today' );
 				else

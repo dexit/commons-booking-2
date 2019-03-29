@@ -1,96 +1,156 @@
 (function($) {
-  "use strict";
+	"use strict";
 
-  $(document).ready(function(){
-    var locationsMap, vcards, markers, group, padding;
-    var mapDIV = $('#geo-hcard-map');
+	var locationsMap, markers = [];
 
-    if (!window.geo_hcard_map_settings) window.geo_hcard_map_settings = {geo_hcard_map_type:'osm'};
+	function geo_hcard_map_refresh(){
+		var jVCards, vcards, vcard, group, padding;
+		var marker, Icon;
 
-    if (mapDIV.length) {
-      switch (window.geo_hcard_map_settings.geo_hcard_map_type) {
-        case 'osm': {
-          if (window.L) {
-            locationsMap = L.map(mapDIV[0]).setView([51.505, -0.09], 13);
-            markers      = [];
+		if (locationsMap) {
+			// ------------------------------------------------ Find hCard's
+			if (window.console) console.info('geo-hcard-map: setting up map');
+			jVCards = $('.vcard');
+			vcards  = [];
+			if (!jVCards.length && window.console)
+				console.warn('geo-hcard-map: no .vcard elements found in document');
 
-            // OSM streets
-            L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="https://opendatacommons.org/licenses/odbl/1.0/">ODbL</a>',
-                maxZoom: 18
-            }).addTo(locationsMap);
+			jVCards.each(function() {
+				var jThis = $(this);
+				var jAdr  = jThis.find('.adr:first');
+				vcards.push({
+					oOptions:      {},
+					oIconOptions:  {},
+					adr:           jAdr,
+					lat:           jAdr.find('.geo .latitude').text(),
+					lng:           jAdr.find('.geo .longitude').text(),
+					iconUrl:       jAdr.find('.geo .icon').text(),
+					iconShadowUrl: jAdr.find('.geo .icon-shadow').text(),
+					title:         jThis.find('.fn:first').text(),
+					href:          jThis.find('.fn:first').attr("href"),
+					desc:          '',
+					css_class:     jThis.find('.fn:first').attr("class").replace(/^fn | fn | fn$/, ''),
+					jPopup:        jThis.find('.cb-popup')
+				});
+			});
 
-            // Add hCard's
-            vcards = $('.vcard');
-            if (!vcards.length && window.console) console.warn('no .vcard found for the map');
-            vcards.each(function() {
-              var marker, Icon, icon;
-              var oOptions  = {};
-              var oIconOptions = {};
-              var adr       = $(this).find('.adr:first');
-              var lat       = adr.find('.geo .latitude').text();
-              var lng       = adr.find('.geo .longitude').text();
-              var iconUrl   = adr.find('.geo .icon').text();
-              var iconShadowUrl = adr.find('.geo .icon-shadow').text();
-              var title     = $(this).find('.fn:first').text();
-              var href      = $(this).find('.fn:first').attr("href");
-							var css_class = $(this).find('.fn:first').attr("class").replace(/^fn | fn | fn$/, '');
-							var desc      = '';
+			// ------------------------------------------------ Add to Map
+			switch (window.geo_hcard_map_settings.geo_hcard_map_type) {
+				case 'osm': {
+					if (window.L) {
+						for (var i=0; i<markers.length; i++) locationsMap.removeLayer(markers[i]);
+						markers = [];
 
-              $(this).find('.cb-popup').each(function() {
-                desc += $("<div/>").append($(this).clone()).html();
-              });
+						for (var i=0; i<vcards.length; i++) {
+							vcard = vcards[i];
 
-              // Warnings
-              if (window.console) {
-                if (!adr.length) console.warn('.vcard found but has no .adr');
-                if (!title)      console.warn('.vcard found but has no .fn title');
-                if (!href)       console.warn('.vcard found with .fn but has no @href');
-                if (lat === '')  console.warn('.vcard found but has no .adr .geo .latitude');
-                if (lng === '')  console.warn('.vcard found but has no .adr .geo .longitude');
-              }
+							vcard.jPopup.each(function() {
+								vcard.desc += $("<div/>").append($(this).clone()).html();
+							});
 
-              if (lat && lng) {
-                // Give some defaults for best chances of working
-                if (!title) title = '(no title)';
-                if (!href)  href  = '#' + title;  // Should not happen
+							// Warnings
+							if (window.console) {
+								if (!vcard.adr.length) console.warn('geo-hcard-map: .vcard found but has no .adr');
+								if (!vcard.title)      console.warn('geo-hcard-map: .vcard found but has no .fn title');
+								if (!vcard.href)       console.warn('geo-hcard-map: .vcard found with .fn but has no @href');
+								if (vcard.lat === '')  console.warn('geo-hcard-map: .vcard found but has no .adr .geo .latitude');
+								if (vcard.lng === '')  console.warn('geo-hcard-map: .vcard found but has no .adr .geo .longitude');
+							}
 
-                if (iconUrl) {
-                  oIconOptions = {
-                      iconUrl:      iconUrl,
-                      title:        title,
-                      alt:          title,
-                      iconSize:     [48, 48], // size of the icon
-                      shadowSize:   [48, 48], // size of the shadow
-                      iconAnchor:   [24, 24], // point of the icon which will correspond to marker's location
-                      shadowAnchor: [20, 20], // the same for the shadow
-                      popupAnchor:  [0, -8]   // point from which the popup should open relative to the iconAnchor
-                  };
-                  if (iconShadowUrl) oIconOptions.shadowUrl = iconShadowUrl;
-                  Icon = L.Icon.extend({options:oIconOptions});
-                  oOptions.icon = new Icon();
-                }
+							if (vcard.lat && vcard.lng) {
+								// Give some defaults for best chances of working
+								if (!vcard.title) vcard.title = '(no title)';
+								if (!vcard.href)  vcard.href  = '#' + vcard.title;  // Should not happen
 
-                if (window.console) console.info('adding [' + title + '] at [' + lat + ',' + lng + ']');
-                marker = L.marker([lat, lng], oOptions).addTo(locationsMap);
-                marker.bindPopup('<h2><a class="' + css_class + '" href="' + href + '">' + title + '</a></h2>' + desc);
-                markers.push(marker);
-              }
-            });
+								if (vcard.iconUrl) {
+									vcard.oIconOptions = {
+										iconUrl:      vcard.iconUrl,
+										title:        vcard.title,
+										alt:          vcard.title,
+										iconSize:     [48, 48], // size of the icon
+										shadowSize:   [48, 48], // size of the shadow
+										iconAnchor:   [24, 24], // point of the icon which will correspond to marker's location
+										shadowAnchor: [20, 20], // the same for the shadow
+										popupAnchor:  [0, -8]   // point from which the popup should open relative to the iconAnchor
+									};
+									if (vcard.iconShadowUrl) vcard.oIconOptions.shadowUrl = vcard.iconShadowUrl;
+									Icon = L.Icon.extend({options:vcard.oIconOptions});
+									vcard.oOptions.icon = new Icon();
+								}
 
-            // Fit to all markers
-            if (markers.length) {
-              padding = (markers.length == 1 ? 2 : 0.5);
-              group   = new L.featureGroup(markers);
-              locationsMap.fitBounds(group.getBounds().pad(padding));
-              if (window.console) console.log(group.getBounds());
-            }
+								if (window.console) console.info('adding [' + vcard.title + '] at [' + vcard.lat + ',' + vcard.lng + ']');
+								marker = L.marker([vcard.lat, vcard.lng], vcard.oOptions).addTo(locationsMap);
+								marker.bindPopup('<h2><a class="' + vcard.css_class + '" href="' + vcard.href + '">' + vcard.title + '</a></h2>' + vcard.desc);
+								markers.push(marker);
+							}
+						}
 
-            if (window.console) console.log(locationsMap);
-          } else if (window.console) console.error('Leaflet library not loaded, get here: http://leafletjs.com/');
-          break;
-        }
-      }
-    } else if (window.console) console.warn('#geo-hcard-map not found in the page');
-  });
+						// Fit to all markers
+						if (markers.length) {
+							padding = (markers.length == 1 ? 2 : 0.5);
+							group   = new L.featureGroup(markers);
+							locationsMap.fitBounds(group.getBounds().pad(padding));
+							if (window.console) console.log(group.getBounds());
+						}
+
+						if (window.console) console.log(locationsMap);
+					} else if (window.console) console.error('geo-hcard-map: Leaflet library not loaded, get here: http://leafletjs.com/');
+					break;
+				}
+			}
+
+			// --------------------------------- MutationObserver
+			if (window.MutationObserver) {
+				var delay, observer, options;
+
+				function mutationObserver_callback(mutationsList, observer) {
+					if (window.console) console.log(mutationsList);
+					if (!delay) delay = setTimeout(geo_hcard_map_refresh, 0);
+				}
+
+				observer = new MutationObserver(mutationObserver_callback);
+				options  = {
+					attributes:    true,
+					childList:     true,
+					subtree:       true,
+					characterData: true
+				};
+				// We observe the parents because direct deletion is not detecable
+				// usually the parent will of course be the single UL
+				// without other changeable data relating to other areas
+				jVCards.each(function(){
+					observer.observe(this.parentNode, options);
+				});
+				if (window.console)
+					console.info('geo-hcard-map: listening to ' + jVCards.length + ' vcard...');
+			}
+		} else if (window.console) console.warn('geo-hcard-map: not found in the page');
+	}
+
+	$(document).ready(function(){
+		// ------------------------------------------------ Init Map
+		var mapDIV = $('#geo-hcard-map');
+		if (!window.geo_hcard_map_settings)
+			window.geo_hcard_map_settings = {geo_hcard_map_type:'osm'};
+
+		if (mapDIV.length) {
+			switch (window.geo_hcard_map_settings.geo_hcard_map_type) {
+				case 'osm': {
+					if (window.L) {
+						// OSM streets
+						locationsMap = L.map(mapDIV[0]).setView([51.505, -0.09], 13);
+						L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+							attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="https://opendatacommons.org/licenses/odbl/1.0/">ODbL</a>',
+							maxZoom: 18
+						}).addTo(locationsMap);
+					}
+					break;
+				}
+				default:
+					if (window.console) console.error('geo-hcard-map: map type [' + window.geo_hcard_map_settings.geo_hcard_map_type + '] unknown');
+			}
+		}
+
+		geo_hcard_map_refresh();
+	});
 }(jQuery));

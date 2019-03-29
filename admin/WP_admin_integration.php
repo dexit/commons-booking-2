@@ -30,6 +30,9 @@ add_filter( 'cmb2_group_wrap_attributes', 'cb2_cmb2_group_wrap_attributes', 10, 
 function cb2_wp_redirect( $location, $status, $javascript = FALSE ) {
 	$is_cb2_page = ( isset( $_GET['page'] ) && preg_match( '/^cb2-.*/', $_GET['page'] ) );
 
+	if ( substr( $location, 0, 1 ) == '?' )
+		throw new Exception( "cb2_wp_redirect($location) seems invalid" );
+
 	if ( CB2_DEBUG_SAVE ) {
 		print( '<hr/><h2>CB2_DEBUG_SAVE wp_redirect() caught</h2>' );
 		krumo( $_POST );
@@ -84,17 +87,19 @@ function cb2_metaboxes() {
 
 				$id               = $metabox['id'];
 				$object_types     = $metabox['object_types'];
-				$metabox_classes  = ( isset( $metabox[ 'classes' ] ) ? ( is_array( $metabox[ 'classes' ] ) ? $metabox[ 'classes' ] : explode( ',', $metabox[ 'classes' ] ) ) : array() );
+				$metabox_classes  = ( isset( $metabox['classes'] )    ? ( is_array( $metabox['classes'] ) ? $metabox[ 'classes' ] : explode( ',', $metabox[ 'classes' ] ) ) : array() );
 				$on_request       = ( isset( $metabox['on_request'] ) ? $metabox['on_request'] : FALSE );
 				$requested        = in_array( $id, $metabox_wizard_ids );
 				$include_metabox  = ( ! $requests_only && ! $on_request ) || ( $requests_only && $requested );
 
 				if ( $include_metabox ) {
 					// Meta-box level visibility by query-string
-					$query_name = "{$id}_show";
-					$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
-					$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
-					if ( $query_hide )
+					$query_name  = "{$id}_show";
+					$show_value  = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
+					$query_hide  = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
+					$direct_hide = ( isset( $metabox['visible'] )    && $metabox['visible'] === FALSE );
+					$cb_hide     = ( isset( $metabox['visible_cb'] ) && is_callable( $metabox['visible_cb'] ) && $metabox['visible_cb']( $metabox ) === FALSE );
+					if ( $query_hide || $direct_hide || $cb_hide )
 						array_push( $metabox_classes, $hidden_class );
 
 					foreach ( $metabox['fields'] as &$field ) {
@@ -106,7 +111,9 @@ function cb2_metaboxes() {
 						$query_name = "{$field_id}_show";
 						$show_value = ( isset( $_GET[$query_name] ) ? $_GET[$query_name] : '' );
 						$query_hide = ( $show_value === FALSE || $show_value == 'no' || $show_value == '0' || $show_value == 'hide' );
-						if ( $query_hide ) {
+						$direct_hide = ( isset( $field['visible'] )    && $field['visible'] === FALSE );
+						$cb_hide     = ( isset( $field['visible_cb'] ) && is_callable( $field['visible_cb'] ) && $field['visible_cb']( $metabox ) === FALSE );
+						if ( $query_hide || $direct_hide || $cb_hide ) {
 							$optional_text     = __( 'optional' );
 							$field['classes']  = ( isset( $field['classes'] ) ? $field['classes'] . " $hidden_class" : $hidden_class );
 							$field['name']     = ( isset( $field['name'] ) ? $field['name'] . " ($optional_text)" : '' );
@@ -241,6 +248,71 @@ add_filter( 'views_period',              'cb2_admin_views_remove' );
 add_filter( 'views_periodgroup',         'cb2_admin_views_remove' );
 add_filter( 'views_periodstatustype',    'cb2_admin_views_remove' );
 
+function cb2_user_has_cap( $allcaps, $cap, $args ) {
+	global $post;
+	static $depth = 0, $last_cap = '';
+	$depth++;
+
+	$required_cap   = $cap[0];  // edit_published_posts (in $allcaps)
+	$requested_cap  = $args[0]; // edit_post            (not in $allcaps)
+	$user_ID        = $args[1];
+	$user_can       = ( isset( $allcaps[$required_cap] ) ? $allcaps[$required_cap] : NULL );
+	$current_user   = wp_get_current_user();
+	$object_ID      = ( count( $args ) > 2 ? $args[2] : NULL );
+	$is_global_post = ( $post && ( ! $object_ID || $post->ID == $object_ID ) );
+	$builtin        = ( $post && in_array( $post->post_type, array('post', 'page') ) );
+
+	if ( WP_DEBUG ) {
+		if ( $depth > 1 )
+			print( "<div class='cb2-WP_DEBUG-small cb2-warning'>recursive [$depth] user_has_cap([$requested_cap/$last_cap =&gt; $required_cap] on [$object_ID])</div>" );
+		if ( $current_user->ID != $user_ID )
+			print( "<div class='cb2-WP_DEBUG-small cb2-warning'>cap request for non-current user</div>" );
+		if ( FALSE )
+			print( "<div class='cb2-WP_DEBUG-small'>[$requested_cap/$required_cap] on [$object_ID]</div>" );
+	}
+	$last_cap = $required_cap;
+
+	// Currently denied on this object_ID
+	// Let us react only if we are talking about the current user
+	// Check to see if we are talking about the global post
+	// TODO: major problem: cb2_user_has_cap() does not know if the post_ID is ours...
+	// this logic is flawed because it is possible that
+	// the global post may have the same ID but be a different post_type
+	if ( $is_global_post && ! $builtin ) {
+		CB2_Query::ensure_correct_class( $post );
+
+		if ( method_exists( $post, 'user_has_cap' ) ) {
+			// Prevent recursive capability checking
+			// because objects all have sub-posts that self-reference
+			remove_filter( 'user_has_cap', 'cb2_user_has_cap', 10 );
+			$user_can_new = $post->user_has_cap( $required_cap, $user_can );
+			add_filter( 'user_has_cap', 'cb2_user_has_cap', 10, 3 );
+
+			// Set and report result
+			if ( $user_can_new !== $user_can ) {
+				$user_can_new_string = 'no opinion';
+				$class               = '';
+				if ( $user_can_new === TRUE  ) {
+					$allcaps[$required_cap] = TRUE;
+					$user_can_new_string = 'granted';
+				} else if ( $user_can_new === FALSE ) {
+					$allcaps[$required_cap] = FALSE;
+					$user_can_new_string = 'explicitly denied';
+					$class               = 'cb2-warning';
+				} else {
+					if ( isset( $allcaps[$required_cap] ) )
+						unset( $allcaps[$required_cap] );
+				}
+				if ( WP_DEBUG )
+					print( "<div class='cb2-WP_DEBUG-small $class'>user [$user_ID] $user_can_new_string [$required_cap] on [$post->post_type]</div>" );
+			}
+		}
+	}
+	$depth--;
+
+	return $allcaps;
+}
+add_filter( 'user_has_cap', 'cb2_user_has_cap', 10, 3 );
 
 function cb2_notification_bubble_in_admin_menu() {
   global $menu, $submenu;
@@ -314,16 +386,19 @@ function cb2_manage_columns( $columns ) {
 
 function cb2_admin_init_menus() {
 	global $wpdb;
+	static $i = 1;
+	if ( $i == 2 ) throw new Exception();
+	$i++;
 
 	$cb2_menu_icon = 'data:image/svg+xml;base64,' . base64_encode('<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg width="100%" height="100%" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/"><path fill="black" d="M12.94,5.68l0,-5.158l6.132,1.352l0,5.641c0.856,-0.207 1.787,-0.31 2.792,-0.31c3.233,0 5.731,1.017 7.493,3.05c1.762,2.034 2.643,4.661 2.643,7.88l0,0.458c0,3.232 -0.884,5.862 -2.653,7.89c-1.769,2.027 -4.283,3.04 -7.542,3.04c-1.566,0 -2.965,-0.268 -4.196,-0.806c1.449,-1.329 2.491,-2.998 3.015,-4.546c0.335,0.123 0.729,0.185 1.181,0.185c1.311,0 2.222,-0.51 2.732,-1.53c0.51,-1.021 0.765,-2.432 0.765,-4.233l0,-0.458c0,-1.749 -0.255,-3.146 -0.765,-4.193c-0.51,-1.047 -1.401,-1.57 -2.673,-1.57c-0.527,0 -0.978,0.107 -1.351,0.321c-1.051,-3.59 -4.047,-6.125 -7.573,-7.013Zm6.06,15.774c0.05,0.153 0.042,0.325 0.042,0.338c-0.001,2.138 -0.918,4.209 -2.516,5.584c-0.172,0.148 -0.346,0.288 -0.523,0.42c-0.209,-0.153 -0.411,-0.316 -0.608,-0.489c-1.676,-1.477 -2.487,-3.388 -2.434,-5.733l0.039,-0.12l6,0Zm-6.06,-13.799c3.351,1.058 5.949,3.88 6.092,7.332c0.011,0.254 0.11,0.416 -0.032,0.843l-6,0l-0.036,-0.108l-0.024,0l0,-8.067Z" /><path fill="black" d="M21.805,24.356c-0.901,0 -1.57,-0.245 -2.008,-0.735c-0.437,-0.491 -0.656,-1.213 -0.656,-2.167l-6.141,0l-0.039,0.12c-0.053,2.345 0.758,4.256 2.434,5.733c1.676,1.478 3.813,2.216 6.41,2.216c3.259,0 5.773,-1.013 7.542,-3.04c1.769,-2.028 2.653,-4.658 2.653,-7.89l0,-0.458c0,-3.219 -6.698,-1.749 -6.698,0l0,0.458c0,1.801 -0.255,3.212 -0.765,4.233c-0.51,1.02 -1.421,1.53 -2.732,1.53Z" /><path fill="black" d="M14.244,28.78c-1.195,0.495 -2.545,0.743 -4.049,0.743c-3.259,0 -5.773,-1.013 -7.542,-3.04c-1.769,-2.028 -2.653,-4.658 -2.653,-7.89l0,-0.458c0,-3.219 0.881,-5.846 2.643,-7.88c1.762,-2.033 4.26,-3.05 7.493,-3.05c0.917,0 1.773,0.086 2.566,0.258c1.566,0.34 2.891,1.016 3.972,2.027c1.63,1.524 2.418,3.597 2.365,6.221l-0.039,0.119l-6.141,0c0,-1.02 -0.226,-1.852 -0.676,-2.494c-0.451,-0.643 -1.133,-0.964 -2.047,-0.964c-1.272,0 -2.163,0.523 -2.673,1.57c-0.51,1.047 -0.765,2.444 -0.765,4.193l0,0.458c0,1.801 0.255,3.212 0.765,4.233c0.51,1.02 1.421,1.53 2.732,1.53c0.32,0 0.61,-0.031 0.871,-0.093c0.517,1.648 1.73,3.281 3.178,4.517Zm-1.244,-7.326l6,0l0.039,0.12c0.053,2.345 -0.758,4.256 -2.434,5.733c-0.134,0.118 -0.27,0.231 -0.409,0.339c-1.85,-1.327 -3.122,-3.233 -3.227,-5.424c-0.011,-0.228 -0.105,-0.357 0.031,-0.768Z" /></svg>');
 
-	$capability_default   = 'manage_options';
-	$sql                  = "select count(*) from {$wpdb->prefix}cb2_view_periodinst_posts `po` where ((`po`.`datetime_period_inst_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`";
-	$bookings_count       = ( CB2_Database::query_ok( $sql ) ? $wpdb->get_var( $sql ) : '!' );
+	$capability_default   = 'read';
+	$bookings_sql         = "select count(*) from {$wpdb->prefix}cb2_view_periodinst_posts `po` where ((`po`.`datetime_period_inst_start` > now()) and (`po`.`post_type_id` = 15) and (`po`.`period_status_type_native_id` = 2) and (`po`.`enabled` = 1) and (`po`.`blocked` = 0)) GROUP BY `po`.`timeframe_id` , `po`.`period_native_id`";
+	$bookings_count       = ( CB2_Database::query_ok( $bookings_sql ) ? $wpdb->get_var( $bookings_sql ) : '!' );
 	// notifications_string cancelled because too long with "CommonsBooking" title
 	$notifications_string = ''; //( $bookings_count ? " ($bookings_count)" : '' );
 	add_menu_page( 'CB2', "CommonsBooking$notifications_string", $capability_default, CB2_MENU_SLUG, 'cb2_dashboard_page', $cb2_menu_icon );
-	add_submenu_page( CB2_MENU_SLUG, 'Dashboard', 'Dashboard', 'manage_options', CB2_MENU_SLUG, 'cb2_dashboard_page' );
+	add_submenu_page( CB2_MENU_SLUG, 'Dashboard', 'Dashboard', $capability_default, CB2_MENU_SLUG, 'cb2_dashboard_page' );
 	if ( WP_DEBUG )
 		add_options_page( 'CommonsBooking', 'CommonsBooking WP_DEBUG', 'manage_options', 'cb2-options', 'cb2_options_page' );
 
@@ -331,16 +406,20 @@ function cb2_admin_init_menus() {
 		$parent_slug  = ( isset( $details['parent_slug'] )  ? $details['parent_slug']  : CB2_MENU_SLUG );
 		$page_title   = ( isset( $details['page_title'] )   ? preg_replace( '/\%.+\%/', '', $details['page_title'] ) : '' );
 		$menu_title   = ( isset( $details['menu_title'] )   ? $details['menu_title']   : $page_title );
-		$capability   = ( isset( $details['capability'] )   ? $details['capability']   : $capability_default );
-		$function     = ( isset( $details['function'] )     ? $details['function']     : 'cb2_settings_list_page' );
 		$advanced     = ( isset( $details['advanced'] )     ? $details['advanced']     : FALSE );
+		$function     = ( isset( $details['function'] )     ? $details['function']     : 'cb2_settings_list_page' );
 		$first        = ( isset( $details['first'] )        ? $details['first']        : FALSE );
 		$menu_visible = ( isset( $details['menu_visible'] ) ? $details['menu_visible'] : ! $advanced );
+		$capability   = ( isset( $details['capability'] )   ? $details['capability']   : $capability_default );
 
 		// Menu adornments
 		if ( $menu_visible && isset( $details['count'] ) ) {
-			$can_count   = CB2_Database::query_ok( $details['count'] );
-			$count       = ( $can_count ? $wpdb->get_var( $details['count'] ) : '!' );
+			$count_sql   = $details['count'];
+			if ( $count_sql == $bookings_sql ) $count = $bookings_count;
+			else {
+				$can_count   = CB2_Database::query_ok( $count_sql );
+				$count       = ( $can_count ? $wpdb->get_var( $count_sql ) : '!' );
+			}
 			$count_class = ( isset( $details['count_class'] ) ? "cb2-usage-count-$details[count_class]" : 'cb2-usage-count-info' );
 			if ( $count ) $menu_title .= " <span class='$count_class'>$count</span>";
 		}
@@ -477,6 +556,10 @@ function cb2_calendar() {
 
 function cb2_reflection() {
 	require_once( 'reflection.php' );
+}
+
+function cb2_roles() {
+	require_once( 'roles.php' );
 }
 
 function cb2_gui_setup() {
@@ -679,6 +762,13 @@ function cb2_settings_post_edit() {
 	// This is a COPY of the normal wp-admin file will:
 	//   $post_id = edit_post() from the $_POST
 	// creating meta_data as well
+
+	// This also happens in /wp-admin/post.php below
+	//   get_post() with filter = 'edit'
+	//$post_id = $_GET['post'];
+	//$post    = get_post( $post_id, OBJECT, 'edit' );
+	//CB2_Query::ensure_correct_class( $post );
+	//krumo($post); exit();
 
 	$screen = WP_Screen::get( $typenow );
 	set_current_screen( $screen );

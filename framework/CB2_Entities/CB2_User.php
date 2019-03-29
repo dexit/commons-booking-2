@@ -110,21 +110,17 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         // other values
 				$this->periodinsts  = array();
         $this->post_title   = $user_login;
-        $this->post_type    = self::$static_post_type;
 
-        parent::__construct($this->periodinsts);
-
-        self::$all[$ID] = $this;
+        parent::__construct($ID, $this->periodinsts);
     }
 
-    public static function &factory_from_properties(&$properties, &$instance_container = null, $force_properties = false)
+    public static function factory_from_properties(&$properties, &$instance_container = null, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE)
     {
         $object = self::factory(
-            ( isset( $properties['user_ID'] )    ? $properties['user_ID']    : $properties['ID'] ),
-            ( isset( $properties['user_login'] ) ? $properties['user_login'] : NULL )
+            (int) ( isset( $properties['user_ID'] )    ? $properties['user_ID']    : $properties['ID'] ),
+            ( isset( $properties['user_login'] ) ? $properties['user_login'] : NULL ),
+            $properties, $force_properties, $set_create_new_post_properties
         );
-
-        self::copy_all_wp_post_properties($properties, $object);
 
         return $object;
     }
@@ -139,17 +135,14 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         return $cb_user;
     }
 
-    public static function factory( Int $ID, String $user_login = NULL )
+    public static function factory( Int $ID, String $user_login = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE )
     {
-        // Design Patterns: Factory Singleton with Multiton
-        $object = NULL;
-				$key    = $ID;
-
-        if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) $object = self::$all[$key];
-				else $object = new self($ID, $user_login);
-
-        return $object;
+				return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
     }
+
+		public function current_user_can( String $cap, Bool $current_user_can = NULL ) {
+			return FALSE;
+		}
 
     public function can($capability)
     {

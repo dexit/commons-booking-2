@@ -9,7 +9,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		);
 	}
 
-	protected function __construct( &$posts = NULL ) {
+	protected function __construct( Int $ID = CB2_CREATE_NEW, Array &$posts = NULL ) {
 		global $wpdb;
 
 		if ( WP_DEBUG ) {
@@ -34,7 +34,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			}
 		}
 
-		parent::__construct( $posts );
+		parent::__construct( $ID, $posts );
 	}
 
 	// ------------------------------------------------------------------ Trashing

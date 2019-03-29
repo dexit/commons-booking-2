@@ -127,41 +127,25 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 
   function post_type() {return self::$static_post_type;}
 
-  public function __construct( $ID, $geo_address = NULL, $geo_latitude = NULL, $geo_longitude = NULL ) {
+  protected function __construct( $ID, $geo_address = NULL, $geo_latitude = NULL, $geo_longitude = NULL ) {
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
     parent::__construct( $ID );
-		self::$all[$ID] = $this;
-
-    // WP_Post values
-    $this->post_type = self::$static_post_type;
   }
 
-  static function &factory_from_properties( &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['location_ID'] )     ? $properties['location_ID'] : $properties['ID'] ),
+			(int) ( isset( $properties['location_ID'] )     ? $properties['location_ID'] : $properties['ID'] ),
 			( isset( $properties['geo_address'] )   && $properties['geo_address']    ? $properties['geo_address'][0]     : NULL ),
 			( isset( $properties['geo_latitude'] )  && $properties['geo_latitude']   ? $properties['geo_latitude'][0]    : NULL ),
-			( isset( $properties['geo_longitude'] ) && $properties['geo_longitude']  ? $properties['geo_longitude'][0]   : NULL )
+			( isset( $properties['geo_longitude'] ) && $properties['geo_longitude']  ? $properties['geo_longitude'][0]   : NULL ),
+			$properties, $force_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
   }
 
-  static function factory( Int $ID, $geo_address = NULL, $geo_latitude = NULL, $geo_longitude = NULL ) {
-    // Design Patterns: Factory Singleton with Multiton
-    $object = NULL;
-    $key    = $ID;
-
-    if ( $key && $ID != CB2_CREATE_NEW && isset( self::$all[$key] ) ) {
-			$object = self::$all[$key];
-		} else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-		}
-
-    return $object;
+  static function factory( Int $ID, $geo_address = NULL, $geo_latitude = NULL, $geo_longitude = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
   }
 
 	function get_the_after_content() {
@@ -259,21 +243,26 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				} else {
 					print( '<div>' . __( 'No Bookings' ) . '</div>' );
 				}
+
 				print( "<div class='cb2-column-actions'>" );
-				$page       = 'cb2-post-new';
-				$booked_ID  = CB2_PeriodStatusType_Booked::bigID();
-				$add_new_text = __( 'add new booking' );
-				$post_title = __( 'Booking at' ) . " $this->post_title";
-				$add_link   = "admin.php?page=$page&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
-				print( " <a href='$add_link'>$add_new_text</a>" );
+				if ( current_user_can( 'edit_post', $this->ID ) ) {
+					$page       = 'cb2-post-new';
+					$booked_ID  = CB2_PeriodStatusType_Booked::bigID();
+					$add_new_text = __( 'add new booking' );
+					$post_title = __( 'Booking at' ) . " $this->post_title";
+					$add_link   = "admin.php?page=$page&location_ID=$this->ID&post_type=periodent-user&period_status_type_ID=$booked_ID&post_title=$post_title";
+					print( " <a href='$add_link'>$add_new_text</a>" );
+					if ( $wp_query->post_count ) print( ' | ' );
+				}
 
 				if ( $wp_query->post_count ) {
 					$page       = 'cb2-menu';
 					$view_text  = __( 'view in calendar' );
 					$view_link  = "admin.php?page=$page&location_ID=$this->ID&period_status_type_ID=$booked_ID";
-					print( " | <a href='$view_link'>$view_text</a>" );
+					print( "<a href='$view_link'>$view_text</a>" );
 				}
 				print( '</div>' );
+
 				break;
 
 			case 'opening_hours':
@@ -357,7 +346,8 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				$action .= " <span class='cb2-usage-count-$count_class' title='$help_text'>$period_group_count</span> ";
 				$action .= '</a></span>';
 
-				print( $action );
+				if ( current_user_can( 'edit_post', $this->ID ) )
+					print( $action );
 				break;
 
 			case 'address':
@@ -430,16 +420,16 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 			$recurrence_sequence = ( $with_weekend_break ? CB2_Week::day_mask( array( 1, 1, 1, 1, 1 ) ) : 0 );
 
 			$opening_hours_text = __( 'Opening Hours' );
-			$period_group       = new CB2_PeriodGroup( CB2_CREATE_NEW, $opening_hours_text );
+			$period_group       = CB2_PeriodGroup::factory( CB2_CREATE_NEW, $opening_hours_text );
 			if ( $with_lunch_break ) {
 				// Add 2 slots
-				$period_group->add_period( new CB2_Period(
+				$period_group->add_period( CB2_Period::factory(
 					CB2_CREATE_NEW, __( 'Morning Opening Hours' ),
 					CB2_DateTime::day_start(), CB2_DateTime::lunch_start(),
 					CB2_DateTime::today(),
 					NULL, 'D', NULL, $recurrence_sequence
 				) );
-				$period_group->add_period( new CB2_Period(
+				$period_group->add_period( CB2_Period::factory(
 					CB2_CREATE_NEW, __( 'Afternoon Opening Hours' ),
 					CB2_DateTime::lunch_end(), CB2_DateTime::day_end(),
 					CB2_DateTime::today(),
@@ -447,7 +437,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				) );
 			} else {
 				// Add 1 slot
-				$period_group->add_period( new CB2_Period(
+				$period_group->add_period( CB2_Period::factory(
 					CB2_CREATE_NEW, $opening_hours_text,
 					CB2_DateTime::day_start(), CB2_DateTime::day_end(),
 					CB2_DateTime::today(),
@@ -455,7 +445,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				) );
 			}
 
-			$location_opening_hours = new CB2_PeriodEntity_Location(
+			$location_opening_hours = CB2_PeriodEntity_Location::factory(
 				CB2_CREATE_NEW,
 				"$this->ID $opening_hours_text",
 				$period_group,

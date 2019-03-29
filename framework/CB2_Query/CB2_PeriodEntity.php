@@ -84,26 +84,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			),
 		) );
 
-		array_push( $metaboxes, array(
-			'title'      => __( 'Item View', 'commons-booking-2' ),
-			'context'    => 'normal',
-			'show_on_cb' => array( 'CB2', 'is_published' ),
-			'classes'    => array( 'cb2-object-summary-bar' ),
-			'show_names' => FALSE,
-			'fields'     => array(
-				array(
-					'name'      => __( 'Item', 'commons-booking-2' ),
-					'id'        => 'item_ID',
-					'action'    => 'view',
-					'title'     => __( 'view on website', 'commons-booking-2' ),
-					'type'      => 'post_link',
-					'default'   => ( isset( $_GET['item_ID'] ) ? $_GET['item_ID'] : NULL ),
-					'post_type' => CB2_Item::$static_post_type,
-				),
-				CB2_Query::metabox_nosave_indicator( 'item_ID' ),
-			),
-		) );
-
 		array_push( $metaboxes,
 			array(
 				'title'      => __( 'Calendar view', 'commons-booking-2' ),
@@ -273,13 +253,13 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		if ( $copy_period_group ) {
 			// We do not want to clone the period_group
 			// only the period *instance*
-			$period = new CB2_Period(
+			$period = CB2_Period::factory(
 				CB2_CREATE_NEW,
 				( $name ? $name : $periodinst_from->post_title ),
 				$periodinst_from->datetime_period_inst_start, // datetime_part_period_start
 				$periodinst_to->datetime_period_inst_end      // datetime_part_period_end
 			);
-			$period_group = new CB2_PeriodGroup(
+			$period_group = CB2_PeriodGroup::factory(
 				CB2_CREATE_NEW,
 				( $name ? $name : $periodinst_from->post_title ),
 				array( $period ) // periods
@@ -326,14 +306,14 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			// We do not want to clone the period_group
 			// only the period *instance*
 			$datetime_now = new CB2_DateTime();
-			$period = new CB2_Period(
+			$period = CB2_Period::factory(
 				CB2_CREATE_NEW,
 				( $name ? $name : $periodinst->post_title ),
 				$periodinst->datetime_period_inst_start, // datetime_part_period_start
 				$periodinst->datetime_period_inst_end,   // datetime_part_period_end
 				$datetime_now                            // datetime_from
 			);
-			$period_group = new CB2_PeriodGroup(
+			$period_group = CB2_PeriodGroup::factory(
 				CB2_CREATE_NEW,
 				( $name ? $name : $periodinst->post_title ),
 				array( $period ) // periods
@@ -361,7 +341,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $new_period_entity;
   }
 
-  static function &factory(
+  static function factory(
 		$ID,
     $name,
 		$period_group,       // Can be NULL, indicating <create new>
@@ -373,22 +353,15 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		//here to prevent static inheritance warning
 		$location = NULL,
 		$item     = NULL,
-		$user     = NULL
+		$user     = NULL,
+		Array $properties = NULL, Bool $force_properties = FALSE
 	) {
-    // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
-			$object = self::$all[$ID];
-    } else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
   }
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory_subclass(
-			$properties['ID'], // Required. Set to CB2_CREATE_NEW if creating
+			(int) $properties['ID'], // Required. Set to CB2_CREATE_NEW if creating
 			( isset( $properties['post_title'] )
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
@@ -401,10 +374,9 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID', $instance_container, FALSE, CB2_NOT_REQUIRED ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'item_ID',     $instance_container, FALSE, CB2_NOT_REQUIRED ),
-			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'cb2_user_ID', $instance_container, FALSE, CB2_NOT_REQUIRED )
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'cb2_user_ID', $instance_container, FALSE, CB2_NOT_REQUIRED ),
+			$properties, $force_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
@@ -476,7 +448,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $object;
   }
 
-  public function __construct(
+  protected function __construct(
 		$ID,
     $name,
 		$period_group,                // CB2_PeriodGroup {[CB2_Period, ...]}
@@ -485,7 +457,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
     $entity_datetime_from = NULL, // CB2_DateTime
     $entity_datetime_to   = NULL  // CB2_DateTime
   ) {
-		parent::__construct();
+		parent::__construct( $ID );
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
 		$this->period_count = count( $this->period_group->periods );
@@ -515,6 +487,43 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		);
 		$this->approved_user_id = $user_id;
 		return $this;
+  }
+
+  function user_has_cap( String $required_cap, Bool $current_user_can = NULL ) {
+		$debug = WP_DEBUG && TRUE;
+
+		switch ( $required_cap ) {
+			case 'edit_others_posts':
+				// Loop Location, Item and User to check privileges
+				// if the current user can edit these parent posts
+				// then they can edit the associated CB2_PeriodEntity also
+				$count = count( $this->posts );
+				if ( $debug ) print( '[' );
+				foreach ( $this->posts as $linked_post ) {
+					if ( $linked_post != $this && method_exists( $linked_post, 'current_user_can' ) ) {
+						// Recursive user_has_cap is prevented here by the cb2_user_has_cap()
+						$new_current_user_can = $linked_post->current_user_can( 'edit_post', $current_user_can );
+						$new_current_user_can_string = ( $new_current_user_can === TRUE ? 'TRUE' : ( $new_current_user_can === FALSE ? 'FALSE' : 'NULL' ) );
+						$current_user_can_string     = ( $current_user_can     === TRUE ? 'TRUE' : ( $current_user_can     === FALSE ? 'FALSE' : 'NULL' ) );
+
+						if ( $debug )
+							print("(Σ$count) $linked_post->post_type(ID:$linked_post->ID/author:$linked_post->post_author) =&gt; $new_current_user_can_string, ");
+
+						// Positive grants on any linked objects override any explicit denys
+						// i.e. a deny on the Location is overridden by a grant on the Item
+						// and vice versa
+						if ( $new_current_user_can === TRUE ) {
+							$current_user_can = $new_current_user_can;
+							if ( $debug ) print( 'break' );
+							break;
+						}
+					}
+				}
+				if ( $debug ) print( ']' );
+				break;
+		}
+
+		return $current_user_can;
   }
 
   function save( $update = FALSE, $fire_wordpress_events = TRUE, $depth = 0, $debug = NULL ) {
@@ -627,7 +636,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 	function summary() {
 		$classes = $this->classes();
 		$html  = "<div class='$classes'>";
-		$html .= '<b>' . $this->post_title . '</b>';
+		$html .= '<b>' . $this->post_title . '</b> ';
 		$html .= $this->summary_actions();
 		$html .= '<br/>';
 		$html .= $this->period_group->summary_periods();
@@ -653,11 +662,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 	}
 
 	function summary_actions() {
-		$post_type = $this->post_type();
-		$page      = 'cb2-post-edit';
-		$action    = 'edit';
-		$edit_link = "?page=$page&post=$this->ID&post_type=$post_type&action=$action";
-		return " <a href='$edit_link'>edit</a>";
+		return $this->get_the_edit_post_link( __( 'edit' ) );
 	}
 
 	function jsonSerialize() {
@@ -693,23 +698,26 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['global_period_group_ID'] ) ? $properties['global_period_group_ID'] : $properties['ID'] ),
+			(int) ( isset( $properties['global_period_group_ID'] ) ? $properties['global_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
 			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
 			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
-			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL )
-		);
+			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
-		self::copy_all_wp_post_properties( $properties, $object );
+			NULL,
+			NULL,
+			NULL,
+			$properties, $force_properties
+		);
 
 		return $object;
 	}
 
-  static function &factory(
+  static function factory(
 		$ID,
     $name,
 		$period_group,
@@ -721,20 +729,13 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 		//here to prevent static inheritance warning
 		$location = NULL,
 		$item     = NULL,
-		$user     = NULL
+		$user     = NULL,
+		Array $properties = NULL, Bool $force_properties = FALSE
 	) {
-    // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
-			$object = self::$all[$ID];
-    } else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
   }
 
-  public function __construct(
+  protected function __construct(
 		$ID,
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
@@ -971,9 +972,9 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['location_period_group_ID'] ) ? $properties['location_period_group_ID'] : $properties['ID'] ),
+			(int) ( isset( $properties['location_period_group_ID'] ) ? $properties['location_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
@@ -984,15 +985,16 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
-			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID',           $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID',           $instance_container ),
+			NULL,
+			NULL,
+			$properties, $force_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
 
-  static function &factory(
+  static function factory(
 		$ID,
 		$name,
 		$period_group,
@@ -1003,20 +1005,13 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 
 		$location = NULL,
 		$item     = NULL,
-		$user     = NULL
+		$user     = NULL,
+		Array $properties = NULL, Bool $force_properties = FALSE
   ) {
-    // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
-			$object = self::$all[$ID];
-    } else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
   }
 
-  public function __construct(
+  protected function __construct(
 		$ID,
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
@@ -1053,7 +1048,8 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
   static function metaboxes() {
 		$metaboxes = parent::metaboxes();
-		array_unshift( $metaboxes, CB2_Item::post_link_metabox(     'normal', array( 'cb2-object-summary-bar' ) ) );
+		array_unshift( $metaboxes, CB2_Item::post_view_metabox() );
+		array_unshift( $metaboxes, CB2_Item::post_link_metabox(    'normal', array( 'cb2-object-summary-bar' ) ) );
 		array_unshift( $metaboxes, CB2_Location::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
 		return $metaboxes;
 	}
@@ -1082,9 +1078,9 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['timeframe_period_group_ID'] ) ? $properties['timeframe_period_group_ID'] : $properties['ID'] ),
+			(int) ( isset( $properties['timeframe_period_group_ID'] ) ? $properties['timeframe_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
@@ -1096,15 +1092,15 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID',           $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'item_ID',               $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'item_ID',               $instance_container ),
+			NULL,
+			$properties, $force_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
 
-  static function &factory(
+  static function factory(
 		$ID,
 		$name,
 		$period_group,
@@ -1115,20 +1111,13 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
 		$location = NULL,
 		$item     = NULL,
-		$user     = NULL
+		$user     = NULL,
+		Array $properties = NULL, Bool $force_properties = FALSE
   ) {
-    // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
-			$object = self::$all[$ID];
-    } else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
   }
 
-  public function __construct(
+  protected function __construct(
 		$ID,
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
@@ -1199,9 +1188,9 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['location_user_period_group_ID'] ) ? $properties['location_user_period_group_ID'] : $properties['ID'] ),
+			(int) ( isset( $properties['location_user_period_group_ID'] ) ? $properties['location_user_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
@@ -1213,15 +1202,15 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID', $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'cb2_user_ID', $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'cb2_user_ID', $instance_container ),
+			NULL,
+			$properties, $force_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
 
-  static function &factory(
+  static function factory(
 		$ID,
 		$name,
 		$period_group,
@@ -1232,20 +1221,14 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 
 		$location = NULL,
 		$item     = NULL,
-		$user     = NULL
+		$user     = NULL,
+		Array $properties = NULL,
+		Bool $force_properties = FALSE
   ) {
-    // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
-			$object = self::$all[$ID];
-    } else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
   }
 
-  public function __construct(
+  protected function __construct(
 		$ID,
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
@@ -1321,9 +1304,9 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, $force_properties = FALSE ) {
+	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
-			( isset( $properties['timeframe_user_period_group_ID'] ) ? $properties['timeframe_user_period_group_ID'] : $properties['ID'] ),
+			(int) ( isset( $properties['timeframe_user_period_group_ID'] ) ? $properties['timeframe_user_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
 				? $properties['post_title']
 				: ( isset( $properties['name'] ) ? $properties['name']  : '' )
@@ -1336,15 +1319,14 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'location_ID', $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'item_ID',     $instance_container ),
-			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'cb2_user_ID', $instance_container )
+			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'cb2_user_ID', $instance_container ),
+			$properties, $force_properties
 		);
-
-		self::copy_all_wp_post_properties( $properties, $object );
 
 		return $object;
 	}
 
-  static function &factory(
+  static function factory(
 		$ID,
 		$name,
 		$period_group,
@@ -1355,17 +1337,11 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
 		$location = NULL,
 		$item     = NULL,
-		$user     = NULL
+		$user     = NULL,
+		Array $properties = NULL,
+		Bool $force_properties = FALSE
   ) {
-    // Design Patterns: Factory Singleton with Multiton
-		if ( $ID && $ID != CB2_CREATE_NEW && isset( self::$all[$ID] ) ) {
-			$object = self::$all[$ID];
-    } else {
-			$reflection = new ReflectionClass( __class__ );
-			$object     = $reflection->newInstanceArgs( func_get_args() );
-    }
-
-    return $object;
+		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
   }
 
   static function factory_booked_from_available_timeframe_item_from_to( CB2_PeriodInst_Timeframe $periodinst_available_from, CB2_PeriodInst_Timeframe $periodinst_available_to, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
@@ -1409,7 +1385,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 		);
   }
 
-  public function __construct(
+  protected function __construct(
 		$ID,
 		$name,
 		$period_group,              // CB2_PeriodGroup {[CB2_Period, ...]}
@@ -1449,9 +1425,10 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
   }
 
 	function summary_actions() {
-		$actions = parent::summary_actions();
+		$actions   = parent::summary_actions();
 		$view_link = get_permalink( $this->ID );
-		$actions  .= " | <a href='$view_link'>view</a>";
+		if ( $actions ) $actions  .= ' | ';
+		$actions  .= "<a href='$view_link'>view</a>";
 		return $actions;
 	}
 }

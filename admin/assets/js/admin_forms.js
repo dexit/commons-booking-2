@@ -263,16 +263,6 @@ function cb2_process(){
 				recurrence_inputs.attr('disabled', '1');
 				break;
 			}
-			case 'H': {
-				explanation.html('Only the times are relevant now because the period repeats hourly.');
-				var options = '';
-				for (var h = 0; h <= 23; h++) {
-					options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence' + h + '" value="' + h + '">';
-					options += '<label for="recurrence_sequence' + h + '">' + h + '-' + (h+1) + '</label></li>';
-				}
-				sequence_checks.html(options);
-				break;
-			}
 			case 'D': {
 				explanation.html('Only the times are relevant now because the period repeats every day.');
 				sequence_checks.html(daily_html);

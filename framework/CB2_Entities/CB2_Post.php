@@ -12,9 +12,17 @@
  */
 
 class CB2_WordPress_Entity extends CB2_PostNavigator {
+	protected function __construct( Int $ID, Array &$posts = NULL ) {
+		// We never create CB2_WordPress_Entity
+		// so $ID and $author_ID must always be valid
+		parent::__construct( $ID, $posts );
+	}
 }
+
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
+define( 'CB2_POST_PROPERTY_RELEVANT', TRUE );
+
 class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
   public static $PUBLISH        = 'publish';
   public static $AUTODRAFT      = 'auto-draft';
@@ -32,30 +40,36 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
 		'custom-fields',
 	);
 	static $POST_PROPERTIES = array(
-		'ID' => FALSE,
-		'post_author' => TRUE,     // TRUE == Relevant to native records
-		'post_date' => TRUE,
-		'post_date_gmt' => FALSE,
-		'post_content' => TRUE,
-		'post_title' => TRUE,
-		'post_excerpt' => TRUE,
-		'post_status' => FALSE,
-		'comment_status' => FALSE,
-		'ping_status' => FALSE,
-		'post_password' => FALSE,
-		'post_name' => TRUE,
-		'to_ping' => FALSE,
-		'pinged' => FALSE,
-		'post_modified' => TRUE,
-		'post_modified_gmt' => FALSE,
-		'post_content_filtered' => FALSE,
-		'post_parent' => FALSE,
-		'guid' => FALSE,
-		'menu_order' => FALSE,
-		'post_type' => TRUE,
-		'post_mime_type' => FALSE,
-		'comment_count' => FALSE,
-		'filter' => FALSE,
+		'post_author'    => CB2_POST_PROPERTY_RELEVANT, // i.e. show in debug
+		'post_date'      => CB2_POST_PROPERTY_RELEVANT,
+		'post_content'   => CB2_POST_PROPERTY_RELEVANT,
+		'post_title'     => CB2_POST_PROPERTY_RELEVANT,
+		'post_excerpt'   => CB2_POST_PROPERTY_RELEVANT,
+		'post_name'      => CB2_POST_PROPERTY_RELEVANT,
+		'post_modified'  => CB2_POST_PROPERTY_RELEVANT,
+
+		// Do not show these in debug, but copy them on to objects
+		'post_date_gmt'  => NULL,
+		'post_status'    => NULL,
+		'comment_status' => NULL,
+		'ping_status'    => NULL,
+		'post_password'  => NULL,
+		'to_ping'        => NULL,
+		'pinged'         => NULL,
+		'post_modified_gmt'     => NULL,
+		'post_content_filtered' => NULL,
+		'post_parent'    => NULL,
+		'guid'           => NULL,
+		'menu_order'     => NULL,
+		'post_mime_type' => NULL,
+		'comment_count'  => NULL,
+		'filter'         => NULL,
+
+		// Never overwrite these on objects, never show them in debug
+		// CB2_PostNavigator::__construct() sets these
+		'ID'             => FALSE,
+		'post_type'      => FALSE,
+		'filter'         => FALSE, // CB2_PostNavigator sets this to suppress
 	);
 
   public function __toStringFor( $column_data_type, $column_name ) {
@@ -139,12 +153,12 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
 
   function id( $why = '' ) {return $this->ID;}
 
-  protected function __construct( $ID ) {
+  protected function __construct( Int $ID, Array &$posts = NULL ) {
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 
 		$this->periodinsts = array();
 
-    parent::__construct( $this->periodinsts );
+    parent::__construct( $ID, $this->periodinsts );
   }
 
   function add_periodinst( &$periodinst ) {
