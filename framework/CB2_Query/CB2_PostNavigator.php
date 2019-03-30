@@ -272,8 +272,8 @@ abstract class CB2_PostNavigator extends stdClass {
 			$property_name = $property_type . ( $is_plural ? 's' : '' ); // period_group(s)
 
 			if ( $Class === FALSE ) {
-				$post_type     = str_replace( '_', '', $property_type );     // periodgroup
-				$Class         = self::post_type_Class( $post_type );   // CB2_PeriodGroup
+				$post_type     = str_replace( '_', '', $property_type );   // periodgroup
+				$Class         = self::post_type_Class( $post_type );      // CB2_PeriodGroup
 			}
 			if ( ! $Class && ! $no_excpeption )
 				throw new Exception( "[$ID_property_name/$post_type] has no direct Class" );
@@ -396,10 +396,20 @@ abstract class CB2_PostNavigator extends stdClass {
 		$original_ID       = $properties['ID'];
 		$properties['ID']  = $property_ID_value;
 		$object            = NULL;
-		if ( $property_ID_value == CB2_CREATE_NEW || $force_properties )
-			$object = $TargetClass::factory_from_properties( $properties, $instance_container, $force_properties, $set_create_new_post_properties );
-		else
-			$object = CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container );
+		if ( $property_ID_value == CB2_CREATE_NEW || $force_properties ) {
+			// Have properties already: create it
+			if ( method_exists( $TargetClass, 'factory_from_properties' ) )
+				$object = $TargetClass::factory_from_properties( $properties, $instance_container, $force_properties, $set_create_new_post_properties );
+			else
+				throw new Exception( "$TargetClass has no factory()" );
+		} else {
+			// Have ID, get properties from DB
+			if ( property_exists( $TargetClass, 'static_post_type' ) ) {
+				$object = CB2_Query::get_post_with_type( $TargetClass::$static_post_type, $property_ID_value, $instance_container );
+			} else {
+				$object = CB2_Query::get_subpost_with_basetype( $TargetClass, $property_ID_value, $instance_container );
+			}
+		}
 		$properties['ID']  = $original_ID;
 
 		// Is this object created with intention to save?
@@ -439,6 +449,33 @@ abstract class CB2_PostNavigator extends stdClass {
 		}
 		$this->saveable = $saveable;
 	}
+
+	protected function usage_count() {
+		$Class = get_class( $this );
+		throw new Exception( "Not implemented: {$Class}->usage_count()" );
+	}
+
+  function not_used( $throw = FALSE, $not_from = NULL ) {
+		return $this->usage_count() == 0;
+  }
+
+  function used( $throw = FALSE, $not_from = NULL ) {
+		$usage_count = $this->usage_count() > 0;
+		if ( $usage_count && $throw ) {
+			$Class = get_class( $this );
+			$ID    = $this->ID;
+			throw new Exception( "Cannot directly delete the $Class($ID) because it still has references" );
+		}
+		return $usage_count;
+  }
+
+  function used_once( $throw = FALSE, $not_from = NULL ) {
+		return $this->usage_count() == 1;
+  }
+
+  function usage_multiple( $throw = FALSE, $not_from = NULL ) {
+		return $this->usage_count() > 1;
+  }
 
 	function is_auto_draft() {
 		return property_exists( $this, 'post_status' ) && $this->post_status == CB2_Post::$AUTODRAFT;
@@ -796,16 +833,27 @@ abstract class CB2_PostNavigator extends stdClass {
     echo $content;
   }
 
-  protected function cache_set_previous( $previous ) {
-		if ( $previous )
-			wp_cache_set( $previous->ID, $previous, 'posts' );
+  protected function cache_set( Bool $set_global = FALSE, $new_post = NULL ) {
+		global $post;
+		if ( is_null( $new_post ) ) $new_post = $this;
+
+		$previous = wp_cache_get( $new_post->ID, 'posts' );
+		wp_cache_set( $new_post->ID, $new_post, 'posts' );
+
+		if ( $set_global ) {
+			$previous = $post;
+			$post     = $new_post;
+		}
+
+		return $previous;
   }
 
-  protected function cache_set( $post = NULL ) {
-		if ( is_null( $post ) ) $post = $this;
-		$previous = wp_cache_get( $post->ID, 'posts' );
-		wp_cache_set( $post->ID, $post, 'posts' );
-		return $previous;
+  protected function cache_set_previous( $previous, Bool $set_global = FALSE ) {
+		global $post;
+		if ( $previous ) {
+			wp_cache_set( $previous->ID, $previous, 'posts' );
+			if ( $set_global ) $post = $previous;
+		}
   }
 
   function get_the_edit_post_url( $context = 'display' ) {
@@ -839,9 +887,13 @@ abstract class CB2_PostNavigator extends stdClass {
 		// and this might not be in the current loop, i.e. $post->sub_object->try_something()
 		// and the DB is not redirected for this call get_post() SQL
 		// so we enable get_instance(ID) to work
-		$previous         = $this->cache_set();
+		$debug            = WP_DEBUG && FALSE;
+		$Class            = get_class( $this );
+		$previous         = $this->cache_set( TRUE ); // Set global $post also
+		if ( $debug ) print( "<div class='cb2-WP_DEBUG'>{$Class}->current_user_can($cap) [" );
 		$current_user_can = current_user_can( $cap, $this->ID );
-		$this->cache_set_previous( $previous );
+		if ( $debug ) print( "]</div>" );
+		$this->cache_set_previous( $previous, TRUE );
 		return $current_user_can;
   }
 

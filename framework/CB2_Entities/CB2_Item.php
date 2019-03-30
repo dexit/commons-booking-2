@@ -415,13 +415,15 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         $period_count = $wp_query->post_count;
 
         $action = "<span style='white-space:nowrap;'><a href='admin.php?page=cb2-repairs&item_ID=$this->ID'>Repairs";
-        if ($period_count) {
+        if ($period_count)
             $action .= " <span class='cb2-usage-count-warning' title='Number of registered repair periods'>$period_count</span> ";
-        }
         $action .= '</a></span>';
+
+				if ( WP_DEBUG ) $action .= " <span class='cb2-WP_DEBUG-small'>$this->post_author</span>";
 
         $actions[ 'manage_repairs' ] = $action;
     }
+
     function get_api_data(string $version){
         $data = array(
             'uid' => get_the_guid($this),

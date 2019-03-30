@@ -398,25 +398,58 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
     parent::__construct( $ID );
   }
 
-  function not_used() {
-		return $this->usage_count() == 0;
-  }
-
-  function used() {
-		return $this->usage_count() > 0;
-  }
-
-  function usage_once() {
-		return $this->usage_count() == 1;
-  }
-
-  function usage_multiple() {
-		return $this->usage_count() > 1;
-  }
-
   function usage_count() {
 		return count( $this->period_group_IDs );
 	}
+
+  function user_has_cap( String $required_cap, Bool $current_user_can = NULL ) {
+		$new_current_user_can = NULL;
+		$Class                = get_class( $this );
+		$debug_string         = '';
+
+		if ( $current_user_can !== TRUE ) {
+			switch ( $required_cap ) {
+				case 'edit_others_posts':
+					// If this period is linked to 1 entity-period_group
+					// and the user has edit_post on any of the posts in that entity-period_group
+					// then grant editing rights
+					// e.g. Allow an Item owner to edit periods in bookings
+					if ( $this->used_once() ) {
+						$first_period_group_ID = $this->period_group_IDs[0];
+						$first_period_group    = CB2_Query::get_post_with_type( CB2_PeriodGroup::$static_post_type, $first_period_group_ID );
+						if ( $first_period_group->used_once() ) {
+							$first_period_entity = $first_period_group->period_entities()[0];
+
+							$count = count( $first_period_entity->posts );
+							foreach ( $first_period_entity->posts as $linked_post ) {
+								if ( $linked_post != $first_period_entity && method_exists( $linked_post, 'current_user_can' ) ) {
+									// Recursive user_has_cap is prevented here by the cb2_user_has_cap()
+									$new_current_user_can        = $linked_post->current_user_can( 'edit_post', $current_user_can );
+									$new_current_user_can_string = ( $new_current_user_can === TRUE ? 'TRUE' : ( $new_current_user_can === FALSE ? 'FALSE' : 'NULL' ) );
+									$current_user_can_string     = ( $current_user_can     === TRUE ? 'TRUE' : ( $current_user_can     === FALSE ? 'FALSE' : 'NULL' ) );
+									$debug_string .= ("(Σ$count) $linked_post->post_type(ID:$linked_post->ID/author:$linked_post->post_author) =&gt; $new_current_user_can_string, ");
+
+									// Positive grants on any linked objects override any explicit denys
+									// i.e. a deny on the Location is overridden by a grant on the Item
+									// and vice versa
+									if ( $new_current_user_can === TRUE ) {
+										$current_user_can = $new_current_user_can;
+										$debug_string .= ( 'break' );
+										break;
+									}
+								}
+							}
+						} else $debug_string .= ( "(Σ) multiple use period_group, no permission" );
+					} else $debug_string .= ( "(Σ) multiple use period, no permission" );
+
+					if ( WP_DEBUG )
+						print( "<div class='cb2-WP_DEBUG-security' title='$debug_string'>$Class</div>" );
+					break;
+			}
+		}
+
+		return $current_user_can;
+  }
 
   // ------------------------------------- Output
   function summary( $format = NULL ) {
@@ -443,6 +476,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 					$this->usage_count() .
 					"</span>";
 		}
+    if ( WP_DEBUG ) $summary .= " <span class='cb2-WP_DEBUG-small'>$this->post_author</span>";
     $summary .= '</span>';
 
 		return $summary;
@@ -607,18 +641,6 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		if ( $this->is_future() )  $classes .= ' cb2-future cb2-invalid';
 		return $classes;
   }
-
-	protected function reference_count( $not_from = NULL ) {
-		global $wpdb;
-		$reference_count = (int) $wpdb->get_var(
-			$sql = $wpdb->prepare( "SELECT count(*)
-				from {$wpdb->prefix}cb2_period_group_period
-				where period_id = %d",
-				$this->id()
-			)
-		);
-		return $reference_count;
-	}
 
 	function jsonSerialize() {
 		return $this;

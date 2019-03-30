@@ -140,27 +140,13 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 				}
 			}
 		} else if ( CB2_DEBUG_SAVE ) {
-			$reference_count = $this->reference_count();
+			$usage_count = $this->usage_count();
 			print( "<div class='cb2-WP_DEBUG$class'>" );
-			print( "$indent$Class::delete() <span class='cb2-warning'>DENIED ($reference_count)</span>" );
+			print( "$indent$Class::delete() <span class='cb2-warning'>DENIED ($usage_count)</span>" );
 			print( "</div>" );
 		}
 
 		$this->post_post_delete( $from, $direct );
-	}
-
-	protected function reference_count( $not_from = NULL ) {
-		return 0;
-	}
-
-	protected function has_references( $throw = FALSE, $not_from = NULL ) {
-		$reference_count = $this->reference_count( $not_from );
-		if ( $reference_count && $throw ) {
-			$Class = get_class( $this );
-			$ID    = $this->ID;
-			throw new Exception( "Cannot directly delete the $Class($ID) because it still has references" );
-		}
-		return ( $reference_count != 0 );
 	}
 
 	protected function post_post_delete( $from = NULL, $direct = TRUE ) {
@@ -173,15 +159,15 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		//   A PeriodGroup deleting a Period will silently not delete the Period if it is referenced
 		//   A direct Period deletion will throw an error if it has references
 		$throw          = $direct;
-		$has_references = $this->has_references( $throw );
+		$used = $this->used( $throw );
 
-		if ( CB2_DEBUG_SAVE && $has_references ) {
+		if ( CB2_DEBUG_SAVE && $used ) {
 			$Class = get_class( $this );
 			$ID    = $this->ID;
 			print( "<div class='cb2-WP_DEBUG-small'>$Class($ID) has references</div>" );
 		}
 
-		$continue_with_delete = ! $has_references;
+		$continue_with_delete = ! $used;
 		return $continue_with_delete;
 	}
 
@@ -357,6 +343,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 	protected function update_row( $update_data, $formats = NULL, $fire_wordpress_events = TRUE ) {
 		global $wpdb;
 
+		// TODO: check current_user_can()
+
 		// TODO: post_updated WordPress event $post_before parameter not supported currently
 		$post_before = $this; //( $fire_wordpress_events ? CB2_Query::get_post_with_type( $this->post_type, $this->ID ) : NULL );
 		$Class       = get_class( $this );
@@ -436,6 +424,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 
 	protected function create_row( $insert_data, $formats = NULL, $fire_wordpress_events = TRUE ) {
 		global $wpdb;
+
+		// TODO: check current_user_can()
 
 		$result               = NULL;
 		$Class                = get_class( $this );

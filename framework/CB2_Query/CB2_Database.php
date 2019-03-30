@@ -852,13 +852,13 @@ class CB2_Database {
   static function posts_table( $Class ) {
 		$posts_table = FALSE;
 
-		if ( property_exists( $Class, 'static_post_type' ) ) {
-			if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
+		if ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE ) {
+			if ( property_exists( $Class, 'static_post_type' ) ) {
 				$post_type_stub = CB2_Query::substring_before( $Class::$static_post_type );
 				$posts_table    = "cb2_view_{$post_type_stub}_posts";
-				if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
-					$posts_table = $Class::$posts_table;
 			}
+			if ( property_exists( $Class, 'posts_table' ) && is_string( $Class::$posts_table ) )
+				$posts_table = $Class::$posts_table;
 		}
 		return $posts_table;
 	}

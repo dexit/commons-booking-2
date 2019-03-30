@@ -306,7 +306,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
     return $flags;
   }
 
-	protected function reference_count( $not_from = NULL ) {
+	protected function usage_count() {
 		global $wpdb;
 		return (int) $wpdb->get_var(
 			$wpdb->prepare( "SELECT count(*)
@@ -327,7 +327,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 				throw new Exception( 'Cannot delete system CB2_PeriodStatusType' );
 
 			// Will throw if there are outstanding references
-			$this->reference_count( $direct );
+			$this->usage_count( $direct );
 		}
 
 		// Continue with sub-object deletion (there are none)

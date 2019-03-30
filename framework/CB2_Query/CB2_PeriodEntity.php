@@ -1,8 +1,9 @@
 <?php
 abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implements JsonSerializable {
 	public static $all = array();
+  public static $posts_table = 'cb2_view_periodent_posts';
 
-  protected static function database_table_schema_root(
+	protected static function database_table_schema_root(
 		String $prefix,
 		String $table_name,
 		String $primary_id_column,
@@ -490,37 +491,45 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
   }
 
   function user_has_cap( String $required_cap, Bool $current_user_can = NULL ) {
-		$debug = WP_DEBUG && TRUE;
+		$new_current_user_can = NULL;
+		$Class                = get_class( $this );
+		$debug_string         = '';
 
-		switch ( $required_cap ) {
-			case 'edit_others_posts':
-				// Loop Location, Item and User to check privileges
-				// if the current user can edit these parent posts
-				// then they can edit the associated CB2_PeriodEntity also
-				$count = count( $this->posts );
-				if ( $debug ) print( '[' );
-				foreach ( $this->posts as $linked_post ) {
-					if ( $linked_post != $this && method_exists( $linked_post, 'current_user_can' ) ) {
-						// Recursive user_has_cap is prevented here by the cb2_user_has_cap()
-						$new_current_user_can = $linked_post->current_user_can( 'edit_post', $current_user_can );
-						$new_current_user_can_string = ( $new_current_user_can === TRUE ? 'TRUE' : ( $new_current_user_can === FALSE ? 'FALSE' : 'NULL' ) );
-						$current_user_can_string     = ( $current_user_can     === TRUE ? 'TRUE' : ( $current_user_can     === FALSE ? 'FALSE' : 'NULL' ) );
+		if ( $current_user_can !== TRUE ) {
+			switch ( $required_cap ) {
+				case 'edit_others_posts':
+					// Loop Location, Item and User to check privileges
+					// if the current user can edit one of these associated posts
+					// then they can edit the associated CB2_PeriodEntity also
+					$count = count( $this->posts );
+					foreach ( $this->posts as $linked_post ) {
+						if ( $linked_post != $this && method_exists( $linked_post, 'current_user_can' ) ) {
+							// Recursive user_has_cap is prevented here by the cb2_user_has_cap()
+							$new_current_user_can        = $linked_post->current_user_can( 'edit_post', $current_user_can );
+							$new_current_user_can_string = ( $new_current_user_can === TRUE ? 'TRUE' : ( $new_current_user_can === FALSE ? 'FALSE' : 'NULL' ) );
+							$current_user_can_string     = ( $current_user_can     === TRUE ? 'TRUE' : ( $current_user_can     === FALSE ? 'FALSE' : 'NULL' ) );
+							$debug_string .= ("(Σ$count) $linked_post->post_type(ID:$linked_post->ID/author:$linked_post->post_author) =&gt; $new_current_user_can_string, ");
 
-						if ( $debug )
-							print("(Σ$count) $linked_post->post_type(ID:$linked_post->ID/author:$linked_post->post_author) =&gt; $new_current_user_can_string, ");
-
-						// Positive grants on any linked objects override any explicit denys
-						// i.e. a deny on the Location is overridden by a grant on the Item
-						// and vice versa
-						if ( $new_current_user_can === TRUE ) {
-							$current_user_can = $new_current_user_can;
-							if ( $debug ) print( 'break' );
-							break;
+							// Positive grants on any linked objects override any explicit denys
+							// i.e. a deny on the Location is overridden by a grant on the Item
+							// and vice versa
+							if ( $new_current_user_can === TRUE ) {
+								$current_user_can = $new_current_user_can;
+								$debug_string .= ( 'break' );
+								break;
+							}
 						}
 					}
-				}
-				if ( $debug ) print( ']' );
-				break;
+
+					if ( $this->period_group->usage_multiple() && $new_current_user_can === TRUE ) {
+						$current_user_can = NULL;
+						$debug_string .= ( " (Σ$count) multiple use period_group, no permission" );
+					}
+
+					if ( WP_DEBUG )
+						print( "<div class='cb2-WP_DEBUG-security' title='$debug_string'>$Class</div>" );
+					break;
+			}
 		}
 
 		return $current_user_can;
@@ -638,6 +647,19 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$html  = "<div class='$classes'>";
 		$html .= '<b>' . $this->post_title . '</b> ';
 		$html .= $this->summary_actions();
+
+		$usage_count = $this->period_group->usage_count();
+		switch ( $usage_count ) {
+			case 0:
+				$html .= " <span class='cb2-usage-count-warning' title='Used in several Period Groups'>0</span>";
+				break;
+			case 1:
+				break;
+			default:
+				$html .= " <span class='cb2-usage-count-ok' title='Used in several Period Groups'>$usage_count</span>";
+		}
+    if ( WP_DEBUG ) $html .= " <span class='cb2-WP_DEBUG-small'>$this->post_author</span>";
+
 		$html .= '<br/>';
 		$html .= $this->period_group->summary_periods();
 		$html .= "</div>";

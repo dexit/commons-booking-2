@@ -43,18 +43,13 @@ class CB2_Query {
   //   wp_posts                ID = 1000000001 normal wordpress post
   //   wp_cb2_view_period_post ID = 1000000001 fake wordpress post
   // we set the post_type to indicate which post we are talking about
-	static function get_post_with_type( $post_type, $post_id, $output = OBJECT, $filter = 'raw', $instance_container = NULL ) {
+	static function get_post_with_type( String $post_type, Int $post_id, $output = OBJECT, $filter = 'raw', $instance_container = NULL ) {
 		// ALWAYS gets data from native tables
 		// get_post() wrapper
 		// loads metadata from native tables only
 		// This will use standard WP cacheing
 		global $wpdb;
 		$redirected_post_request = FALSE;
-
-		if ( ! is_string( $post_type ) )
-			throw new Exception( "get_post_with_type() \$post_type not a string" );
-		if ( ! is_numeric( $post_id ) )
-			throw new Exception( "get_post_with_type()[$post_type] \$post_id not numeric" );
 
 		// We divert here to make callig code simpler
 		if ( $post_type == CB2_User::$static_post_type ) {
@@ -103,6 +98,51 @@ class CB2_Query {
 			if ( $post->post_type != $post_type )
 				throw new Exception( "[$Class/$post_id] fetched a [$post->post_type] post_type from [$posts_table], not a [$post_type]" );
 		}
+
+		// Reset and Annotate
+		// This will make a get_metadata_assign() call
+		$post->cb2_redirected_post_request = $redirected_post_request;
+		$wpdb->posts = $old_wpdb_posts;
+		$cb2_post    = self::ensure_correct_class( $post, $instance_container, TRUE ); // TRUE = prevent_auto_draft_publish_transition
+
+		return $cb2_post;
+	}
+
+	static function get_subpost_with_basetype( String $Class, Int $post_id, $output = OBJECT, String $filter = 'raw', $instance_container = NULL ) {
+		// We do not know the post_type
+		// we have a base class with one DB table to request from though
+		// ALWAYS gets data from native tables
+		//   get_post() wrapper
+		// loads metadata from native tables only
+		// This will use standard WP cacheing
+		global $wpdb;
+		$redirected_post_request = FALSE;
+
+		$posts_table = CB2_Database::posts_table( $Class );
+		if ( ! $posts_table )
+			throw new Exception( "[$Class] is pseudo" );
+
+		// Redirect
+		$old_wpdb_posts = $wpdb->posts;
+		$wpdb->posts    = "$wpdb->prefix$posts_table";
+		$redirected_post_request = TRUE;
+
+		if ( CB2_DEBUG_SAVE && TRUE
+			&& ( ! property_exists( $Class, 'posts_table' ) || $Class::$posts_table !== FALSE )
+			&& ! ( property_exists( $Class, 'posts_table' ) && $Class::$posts_table == 'posts' )
+			&& $wpdb->posts == "{$wpdb->prefix}posts"
+		) {
+			throw new Exception( "[$Class] get_post_with_type() using wp_posts table" );
+		}
+
+		// TODO: get_post() will populate ALL fields from the post table: take advantage of this
+    // From post.php get_post(...)
+		//   @param string        $filter Optional. Type of filter to apply. Accepts
+		//                        'raw', 'edit', 'db', or 'display'.
+		//                        Default 'raw'.
+		$post = get_post( $post_id, $output, $filter );
+		if ( is_null( $post ) )
+			throw new Exception( "[$Class] not found in [$wpdb->posts] for [$post_id]" );
 
 		// Reset and Annotate
 		// This will make a get_metadata_assign() call

@@ -72,7 +72,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 
   static function database_views( $prefix ) {
 		return array(
-			'cb2_view_periodgroup_posts' => "select (`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pg`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_group_id` AS `period_group_id`,ifnull((select group_concat((`{$prefix}cb2_period_group_period`.`period_id` + `pt2`.`ID_base`) separator ',') from (`{$prefix}cb2_period_group_period` join `{$prefix}cb2_post_types` `pt2` on((`pt2`.`post_type_id` = 1))) where (`{$prefix}cb2_period_group_period`.`period_group_id` = `p`.`period_group_id`) group by `{$prefix}cb2_period_group_period`.`period_group_id`),'') AS `period_IDs` from (`{$prefix}cb2_period_groups` `p` join `{$prefix}cb2_post_types` `pt_pg` on((`pt_pg`.`post_type_id` = 2)))",
+			'cb2_view_periodgroup_posts' => "select (`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `ID`,1 AS `post_author`,'2018-01-01' AS `post_date`,'2018-01-01' AS `post_date_gmt`,`p`.`description` AS `post_content`,`p`.`name` AS `post_title`,'' AS `post_excerpt`,'publish' AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,(`p`.`period_group_id` + `pt_pg`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,'2018-01-01' AS `post_modified`,'2018-01-01' AS `post_modified_gmt`,'' AS `post_content_filtered`,0 AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pg`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`p`.`period_group_id` AS `period_group_id`,ifnull((select group_concat((`{$prefix}cb2_period_group_period`.`period_id` + `pt2`.`ID_base`) separator ',') from (`{$prefix}cb2_period_group_period` join `{$prefix}cb2_post_types` `pt2` on((`pt2`.`post_type_id` = 1))) where (`{$prefix}cb2_period_group_period`.`period_group_id` = `p`.`period_group_id`) group by `{$prefix}cb2_period_group_period`.`period_group_id`),'') AS `period_IDs`,(select group_concat(`pgp`.`ID` separator ',') from `{$prefix}cb2_view_periodent_posts` `pgp` where (`pgp`.`period_group_ID` = `p`.`period_group_id`)) AS `period_entity_IDs` from (`{$prefix}cb2_period_groups` `p` join `{$prefix}cb2_post_types` `pt_pg` on((`pt_pg`.`post_type_id` = 2)))",
 			'cb2_view_periodgroupmeta'   => "select ((`po`.`period_group_id` * 10) + `pt`.`ID_base`) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodgroup_id`,'period_IDs' AS `meta_key`,`po`.`period_IDs` AS `meta_value` from (`{$prefix}cb2_view_periodgroup_posts` `po` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup'))) union all select (((`po`.`period_group_id` * 10) + `pt`.`ID_base`) + 1) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodgroup_id`,'period_group_id' AS `meta_key`,`po`.`period_group_id` AS `meta_value` from (`{$prefix}cb2_view_periodgroup_posts` `po` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup'))) union all select (((`po`.`period_group_id` * 10) + `pt`.`ID_base`) + 2) AS `meta_id`,`po`.`ID` AS `post_id`,`po`.`ID` AS `periodgroup_id`,'post_type' AS `meta_key`,`po`.`post_type` AS `meta_value` from (`{$prefix}cb2_view_periodgroup_posts` `po` join `{$prefix}cb2_post_types` `pt` on((`pt`.`post_type` = 'periodgroup')))",
 		);
 	}
@@ -86,6 +86,14 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 	}
 
   static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+		// This may not exist in post creation
+		// We do not create the CB2_PeriodGroup objects here
+		// because it could create a infinite circular creation
+		// as the CB2_PeriodGroups already create their associated CB2_Periods
+		$period_entity_IDs = array();
+		if ( isset( $properties['period_entity_IDs'] ) )
+			$period_entity_IDs = CB2_Query::ensure_ints( 'period_entity_IDs', $properties['period_entity_IDs'], TRUE );
+
 		$object = self::factory(
 			(int) ( isset( $properties['period_group_ID'] ) ? $properties['period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
@@ -96,6 +104,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 				? CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_IDs', $instance_container )
 				: array()
 			),
+			$period_entity_IDs,
 			$properties, $force_properties, $set_create_new_post_properties
 		);
 
@@ -106,15 +115,17 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		Int $ID           = CB2_CREATE_NEW,
 		String $name      = 'period group',
 		Array $periods    = array(),
+		Array $period_entity_IDs = array(),
 		Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
 		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
   }
 
   protected function __construct(
-		$ID      = CB2_CREATE_NEW,
-		$name    = 'period group',
-		$periods = array()
+		Int $ID           = CB2_CREATE_NEW,
+		String $name      = 'period group',
+		Array $periods    = array(),
+		Array $period_entity_IDs = array()
   ) {
 		CB2_Query::assign_all_parameters( $this, func_get_args(), __class__ );
 		parent::__construct( $ID, $this->periods );
@@ -209,18 +220,14 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 				print( "<a href='$add_link'>$add_new_text</a>" );
 				print( " | <a href='$attach_link'>$attach_text</a>" );
 				break;
+
 			case 'entities':
 				$wp_query_page_name = "paged-column-$column";
 				$current_page       = ( isset( $_GET[$wp_query_page_name] ) ? $_GET[$wp_query_page_name] : 1 );
 
 				$wp_query           = new WP_Query( array(
-					'post_type'   => array( 'periodent-global', 'periodent-location', 'periodent-timeframe', 'periodent-user' ),
-					'meta_query'  => array(
-						'period_group_ID_clause' => array(
-							'key'   => 'period_group_ID',
-							'value' => $this->ID,
-						),
-					),
+					'post_type'      => array( 'periodent-global', 'periodent-location', 'periodent-timeframe', 'periodent-user' ),
+					'post__in'       => $this->period_entity_IDs,
 					'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
 					'page'           => $current_page,
 				) );
@@ -241,6 +248,23 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 				) ) . '</div>' );
 				break;
 		}
+	}
+
+	function period_entities( Int $current_page = 0, Bool $force_refresh = FALSE ) {
+		static $period_entities = NULL;
+
+		if ( is_null( $period_entities ) || $force_refresh ) {
+			$wp_query           = new WP_Query( array(
+				'post_type'      => array( 'periodent-global', 'periodent-location', 'periodent-timeframe', 'periodent-user' ),
+				'post__in'       => $this->period_entity_IDs,
+				'posts_per_page' => CB2_ADMIN_COLUMN_POSTS_PER_PAGE,
+				'page'           => $current_page,
+			) );
+			$period_entities = $wp_query->posts;
+			CB2_Query::ensure_correct_classes( $period_entities );
+		}
+
+		return $period_entities;
 	}
 
 	function summary_periods() {
@@ -275,6 +299,20 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		if ( $period_count > 1 )
 			$html .= " <span class='cb2-usage-count-ok' title='Several Periods'>$period_count</span>";
 		$html .= ' ' . $this->get_the_edit_post_link( 'edit' );
+
+		switch ( $this->usage_count() ) {
+			case 0:
+				$html .= " <span class='cb2-usage-count-warning' title='Used in several Period Groups'>0</span>";
+				break;
+			case 1:
+				break;
+			default:
+				$html .= " <span class='cb2-usage-count-ok' title='Used in several Period Groups'>" .
+					$this->usage_count() .
+					"</span>";
+		}
+    if ( WP_DEBUG ) $html .= " <span class='cb2-WP_DEBUG-small'>$this->post_author</span>";
+
 		return $html;
 	}
 
@@ -282,23 +320,16 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		return '';
   }
 
-	protected function reference_count( $not_from = NULL ) {
-		global $wpdb;
-		return (int) $wpdb->get_var(
-			$wpdb->prepare( "SELECT count(*)
-				from {$wpdb->prefix}cb2_view_periodent_posts
-				where period_group_ID = %d",
-				$this->ID
-			)
-		);
+	protected function usage_count() {
+		return count( $this->period_entity_IDs );
 	}
 
 	function pre_post_delete( $from_periodentity = NULL, $direct = TRUE ) {
 		// $from_periodentity has already been deleted in the Database
 		global $wpdb;
 
-		$reference_count      = $this->reference_count( $direct );
-		$continue_with_delete = ! $reference_count;
+		$usage_count          = $this->usage_count( $direct );
+		$continue_with_delete = ! $usage_count;
 
 		if ( $continue_with_delete ) {
 			// We intend to delete it

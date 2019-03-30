@@ -44,6 +44,18 @@
 	text-align: center;
 }
 
+.cb2-WP_DEBUG-security {
+	float:right;
+	margin-left:2px;
+	background-color: #dd0000;
+	font-weight:bold;
+	padding:0px 3px;
+	color: white;
+	cursor:pointer;
+	font-size: 10px;
+	line-height: 10px;
+}
+
 .cb2-todo:before {
 	content: 'TODO: ';
 
