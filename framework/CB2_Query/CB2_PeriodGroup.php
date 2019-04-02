@@ -39,6 +39,64 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		);
 	}
 
+  static function selector_wizard_metabox( String $context = 'normal', Bool $closed = FALSE, Array $classes = array() ) {
+		// $period_group_options = CB2_Forms::period_group_options( TRUE );
+		// $period_groups_count  = count( $period_group_options ) - 1;
+
+		$p = '<p class="cb2-description">';
+		$none_selected_text  = __( 'not selected' );
+		$none_selected__span = "<span id='cb2-location-indicator'/>($none_selected_text)</span>";
+		return array(
+			'title'      => __( 'Booking Slots', 'commons-booking-2' ),
+			'show_names' => FALSE,
+			'context'    => $context,
+			'classes'    => $classes,
+			'closed'     => $closed,
+			'fields'     => array(
+				array(
+					'name'    => __( 'Booking Slots', 'commons-booking-2' ),
+					'id'      => 'period_group_ID',
+					'type'    => 'radio',
+					'sanitization_cb' => array( get_class(), 'selector_wizard_metabox_sanitization' ),
+					'default' => 'OPH',
+					'options' => array(
+						'OPH' => __( 'Opening Hours' ) . $p . __( 'Use the Opening Hours of the Location selected' ) . " $none_selected__span</p>",
+						CB2_CREATE_NEW => __( 'Custom' )        . $p . __( 'Start with a blank calendar and create your own slots' ) . '</p>',
+						'TMP' => __( '<span class="cb2-todo">Template</span>' )      . $p . __( 'Copy slots from other availabilities' ) . '</p>',
+					),
+				),
+			),
+		);
+	}
+
+	static function selector_wizard_metabox_sanitization( $value, $field_args, $field ) {
+		switch ( $value ) {
+			case 'OPH': {
+				// Adopt selected Opening Hours
+				if ( isset( $_REQUEST['location_ID'] ) ) {
+					$location = CB2_Query::get_post_with_type( CB2_Location::$static_post_type, $_REQUEST[ 'location_ID' ] );
+					$value    = $location->last_opening_hours_period_group_set();
+					if ( ! $value ) {
+						// TODO: selector_wizard_metabox_sanitization requires opening hours for location
+						print( __( 'location has no Opening Hours' ) );
+						$value = CB2_CREATE_NEW;
+						exit();
+					}
+				} else {
+					// TODO: selector_wizard_metabox_sanitization requires location error message
+					print( __( 'location required to adopt Opening Hours' ) );
+					exit();
+				}
+				break;
+			}
+			case 'TMP': {
+				throw new Exception( 'Templates not implemented yet' );
+				break;
+			}
+		}
+		return $value;
+	}
+
   static function database_table_name() { return self::$database_table; }
 
   static function database_table_schemas( $prefix ) {

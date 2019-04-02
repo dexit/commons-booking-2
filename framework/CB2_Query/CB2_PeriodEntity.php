@@ -103,30 +103,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			)
 		);
 
-		// Standard
-		array_push( $metaboxes,
-			array(
-				// TODO: link this Enabled in to the Publish meta-box status instead
-				'title' => __( 'Enabled', 'commons-booking-2' ),
-				'context' => 'side',
-				'show_names' => FALSE,
-				'fields' => array(
-					array(
-						'id'      => 'enabled_explanation',
-						'type'    => 'paragraph',
-						'classes' => 'cb2-cmb2-compact',
-						'html'    => 'If not enabled, the entity will be moved to the <span style="color:red;">Trash</span>.',
-					),
-					array(
-						'name'    => __( 'Enabled', 'commons-booking-2' ),
-						'id'      => 'enabled',
-						'type'    => 'checkbox',
-						'classes' => 'cb2-cmb2-compact',
-						'default' => 1,
-					),
-				),
-			)
-		);
 		array_push( $metaboxes,
 			array(
 				'title' => __( 'Period validity override (optional)', 'commons-booking-2' ),
@@ -146,6 +122,32 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 						'type' => 'text_datetime_timestamp',
 						'date_format' => CB2_Database::$database_date_format,
 						'default' => ( isset( $_GET['entity_datetime_to'] ) ? $_GET['entity_datetime_to'] : NULL ),
+					),
+				),
+			)
+		);
+
+		// Standard
+		array_push( $metaboxes,
+			array(
+				// TODO: link this Enabled in to the Publish meta-box status instead
+				'title'   => __( 'Enabled', 'commons-booking-2' ),
+				'context' => 'side',
+				'show_names' => FALSE,
+				'closed'  => TRUE,
+				'fields'  => array(
+					array(
+						'id'      => 'enabled_explanation',
+						'type'    => 'paragraph',
+						'classes' => 'cb2-cmb2-compact',
+						'html'    => 'If not enabled, the entity will be moved to the <span style="color:red;">Trash</span>.',
+					),
+					array(
+						'name'    => __( 'Enabled', 'commons-booking-2' ),
+						'id'      => 'enabled',
+						'type'    => 'checkbox',
+						'classes' => 'cb2-cmb2-compact',
+						'default' => 1,
 					),
 				),
 			)
@@ -175,7 +177,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
 		// Advanced
 		// array_push( $metaboxes, CB2_Period::selector_metabox( TRUE, 'advanced' ) ); // Multiple
-		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox( 'advanced' ) );
 		array_push( $metaboxes, CB2_PeriodStatusType::selector_metabox( 'side' ) );
 
 		return $metaboxes;
@@ -701,7 +702,9 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
   static $Class_PeriodInst      = 'CB2_PeriodInst_Global'; // Associated CB2_PeriodInst
 
 	static function metaboxes() {
-		return parent::metaboxes();
+		$metaboxes = parent::metaboxes();
+		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox( 'normal' ) );
+		return $metaboxes;
 	}
 
   static function database_table_name() { return self::$database_table; }
@@ -789,6 +792,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 	static function metaboxes() {
 		$metaboxes         = parent::metaboxes();
 		$Class             = get_class();
+		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox( 'normal' ) );
 		array_unshift( $metaboxes, CB2_Location::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
 
 		// Default period times
@@ -1070,9 +1074,12 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
   static function metaboxes() {
 		$metaboxes = parent::metaboxes();
+		array_push( $metaboxes, CB2_PeriodGroup::selector_wizard_metabox() );
+
 		array_unshift( $metaboxes, CB2_Item::post_view_metabox() );
 		array_unshift( $metaboxes, CB2_Item::post_link_metabox(    'normal', array( 'cb2-object-summary-bar' ) ) );
 		array_unshift( $metaboxes, CB2_Location::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
+
 		return $metaboxes;
 	}
 
@@ -1181,6 +1188,7 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 
   static function metaboxes() {
 		$metaboxes = parent::metaboxes();
+		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox( 'normal' ) );
 		array_unshift( $metaboxes, CB2_User::selector_metabox(     'normal', array( 'cb2-object-summary-bar' ) ) );
 		array_unshift( $metaboxes, CB2_Location::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
 		return $metaboxes;
@@ -1294,6 +1302,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
   static function metaboxes() {
 		$metaboxes = parent::metaboxes();
+		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox( 'normal' ) );
 		array_unshift( $metaboxes, CB2_User::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
 		array_unshift( $metaboxes, CB2_Item::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );
 		array_unshift( $metaboxes, CB2_Location::selector_metabox( 'normal', array( 'cb2-object-summary-bar' ) ) );

@@ -114,3 +114,20 @@ body .cmb2-postbox .cmb-th + .cmb-td {
 .metabox-holder .postbox h3 {
 	padding-left: 10px;
 }
+
+#cmb2-metabox-CB2_PeriodEntity_Timeframe_booking_slots {
+	li {
+		float:left;
+		width:33%;
+		border:1px solid #d7d7d7;
+		min-height:140px;
+		text-align:center;
+		margin-right:-1px;
+		padding: 20px;
+
+		input {
+			display:block;
+			margin:0px auto 10px auto;
+		}
+	}
+}

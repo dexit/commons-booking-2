@@ -326,6 +326,22 @@ body .cmb2-postbox .cmb-th + .cmb-td {
   padding-left: 10px;
 }
 
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\00003119}}
+#cmb2-metabox-CB2_PeriodEntity_Timeframe_booking_slots li {
+  float: left;
+  width: 33%;
+  border: 1px solid #d7d7d7;
+  min-height: 140px;
+  text-align: center;
+  margin-right: -1px;
+  padding: 20px;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\00003128}}
+#cmb2-metabox-CB2_PeriodEntity_Timeframe_booking_slots li input {
+  display: block;
+  margin: 0px auto 10px auto;
+}
+
 /* Debug */
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_debug\.scss}line{font-family:\000031}}
 .cb2-WP_DEBUG-small,

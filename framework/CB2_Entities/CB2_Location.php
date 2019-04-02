@@ -376,6 +376,17 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		}
 	}
 
+	function last_opening_hours_period_group_set() {
+		global $wpdb;
+		return $wpdb->get_var( $wpdb->prepare( "select period_group_ID
+				from {$wpdb->prefix}cb2_location_period_groups
+				where location_ID = %d and period_status_type_ID = %d
+				order by period_group_ID desc
+				limit 1",
+			array( $this->ID, CB2_PeriodStatusType_Open::bigID(), )
+		) );
+	}
+
   function get_api_data($version){
 		$location_data = array(
 			'type' => 'Feature',

@@ -246,13 +246,10 @@ class CB2_Item extends CB2_Post implements JsonSerializable
     function post_post_update() {
 			global $wpdb;
 
-			if ( isset( $_POST['use_opening_hours'] ) ) {
-				if ( $location_ID = $_POST['opening_hours_location_ID'] ) {
-					$period_group_ID = $wpdb->get_var( $wpdb->prepare( "select period_group_ID
-							from {$wpdb->prefix}cb2_location_period_groups
-							where location_ID = %d and period_status_type_ID = %d limit 1",
-						array( $location_ID, CB2_PeriodStatusType_Open::bigID(), )
-					) );
+			if ( isset( $_REQUEST['use_opening_hours'] ) ) {
+				if ( $location_ID = $_REQUEST['opening_hours_location_ID'] ) {
+					$location        = CB2_Query::get_post_with_type( 'location', $location_ID );
+					$period_group_ID = $location->last_opening_hours_period_group_set();
 					if ( $period_group_ID ) {
 						$pickup_return_text = __( 'Pickup/Return' );
 						$period_group       = CB2_PeriodGroup::factory( $period_group_ID );
