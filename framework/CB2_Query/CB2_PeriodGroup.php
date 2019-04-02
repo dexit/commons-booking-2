@@ -9,7 +9,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
   );
   public $periods  = array();
 
-  static function selector_metabox( Bool $multiple = FALSE, String $context = 'normal', Array $classes = array() ) {
+  static function selector_metabox( String $context = 'normal', Bool $multiple = FALSE, Bool $closed = FALSE, Array $classes = array() ) {
 		$period_group_options = CB2_Forms::period_group_options( TRUE );
 		$period_groups_count  = count( $period_group_options ) - 1;
 		$plural  = ( $multiple ? 's' : '' );
@@ -25,7 +25,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			'show_names' => FALSE,
 			'context'    => $context,
 			'classes'    => $classes,
-			'closed'     => TRUE,
+			'closed'     => $closed,
 			'fields'     => array(
 				array(
 					'name'    => __( $title, 'commons-booking-2' ),

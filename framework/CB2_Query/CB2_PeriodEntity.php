@@ -175,8 +175,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
 		// Advanced
 		// array_push( $metaboxes, CB2_Period::selector_metabox( TRUE, 'advanced' ) ); // Multiple
-		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox( FALSE, 'advanced' ) );
-		array_push( $metaboxes, CB2_PeriodStatusType::selector_metabox( 'advanced' ) );
+		array_push( $metaboxes, CB2_PeriodGroup::selector_metabox( 'advanced' ) );
+		array_push( $metaboxes, CB2_PeriodStatusType::selector_metabox( 'side' ) );
 
 		return $metaboxes;
 	}

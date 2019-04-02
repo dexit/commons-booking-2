@@ -16,6 +16,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		'menu_icon' => 'dashicons-admin-settings',
 		'label'     => 'Period Status Types',
   );
+
 	static function selector_metabox( String $context = 'normal', Array $classes = array() ) {
 		return array(
 			'title'      => __( 'Period Status Type', 'commons-booking-2' ),
