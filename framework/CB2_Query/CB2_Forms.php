@@ -29,7 +29,7 @@ class CB2_Forms {
   }
 
   static function get_options( String $table, String $post_type = NULL, String $id_field = 'ID', String $name_field = 'post_title', String $condition = '1=1', $none = FALSE, $none_id = CB2_CREATE_NEW ) {
-		global $wpdb;
+		global $wpdb, $post;
 
 		$cache_name = "self::get_options($table, $post_type, $id_field, $name_field, $condition, $none)";
 		$options    = wp_cache_get( $cache_name );
@@ -40,19 +40,33 @@ class CB2_Forms {
 				$options[$none_id] = htmlspecialchars( $none_string );
 			}
 
-			$sql = "select $id_field as ID, $name_field as name from $wpdb->prefix$table where $condition";
+			$author_field = 1;
+			// TODO: move to WP_Query for get_options()
+			switch ( CB2_Query::substring_before( str_replace( 'cb2_view_', 'cb2-view', $table ), '_' ) ) {
+				case 'users':    $author_field = 'ID'; break;
+				case 'posts':    $author_field = 'post_author'; break;
+				case 'cb2'  :    $author_field = 'author_ID'; break;
+				case 'cb2-view': $author_field = 'post_author'; break;
+			}
+			$sql          = "select $id_field as ID, $author_field as post_author, $name_field as name
+				from $wpdb->prefix$table
+				where $condition";
 			if ( $post_type ) {
-				$sql = "select $id_field * pt.ID_multiplier + pt.ID_base as ID, $name_field as name
+				$sql = "select $id_field * pt.ID_multiplier + pt.ID_base as ID, $author_field as post_author, $name_field as name
 					from $wpdb->prefix$table,
 					{$wpdb->prefix}cb2_post_types pt
 					where ($condition) and pt.post_type = '$post_type'";
 			}
-			$db_options = ( CB2_Database::query_ok( $sql ) ? $wpdb->get_results( $sql, OBJECT_K ) : array() );
+			$db_options      = ( CB2_Database::query_ok( $sql ) ? $wpdb->get_results( $sql, OBJECT_K ) : array() );
+			$current_user_id = get_current_user_id();
 			foreach ( $db_options as $id => &$db_option ) {
-				$name = $db_option->name;
-				if ( empty( $name ) ) $name = __( '(no title)' );
-				if ( WP_DEBUG )       $name .= " ($id)";
-				$options[$id] = htmlspecialchars( $name );
+				$name        = $db_option->name;
+				$post_author = $db_option->post_author;
+				//if ( current_user_can( 'edit_post' ) ) {
+					if ( empty( $name ) ) $name = __( '(no title)' );
+					if ( WP_DEBUG )       $name .= " ($id/$post_author)";
+					$options[$id] = htmlspecialchars( $name );
+				//}
 			}
 			wp_cache_set( $cache_name, $options ); // Cache the self select options
 		}

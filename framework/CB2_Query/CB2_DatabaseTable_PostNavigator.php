@@ -300,23 +300,37 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		}
 
 		$this->post_post_update();
-		CB2_Query::unredirect_wpdb();
 
 		// One cb2_data_change per entire top level change
 		// rather than every row
+		//
+		// This action will trigger the redundant CMB2 save process
+		// using a hook on $this CMB2_hookup :/
+		//   CMB2_hookup->save_post()
+		//   add_action( 'save_post', array( $this, 'save_post' ), 10, 2 );
+		// which uses:
+		//   CMB2_hookup->can_save()
+		//   current_user_can() => get_post(ID)
+		// action cmb2_can_save is hooked to return FALSE for CB2 objects
 		if ( $top ) {
+			$this->disable_cb2_hooks();
 			$this->saves_finished();
-			do_action( 'save_post_top', $this->ID, $this, $update );
+			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing final WordPress event save_post</div>" );
+			do_action( 'save_post', $this->ID, $this, $update );
+			$this->enable_cb2_hooks();
 		}
+
+		CB2_Query::unredirect_wpdb();
 
 		return $this->ID;
 	}
 
 	function saves_finished() {
 		global $wpdb;
-		$Class = get_class( $this );
-		if ( CB2_DEBUG_SAVE )
+		if ( CB2_DEBUG_SAVE ) {
+			$Class = get_class( $this );
 			print( "<div class='cb2-WP_DEBUG-small'>saves_finished($Class $this->ID)</div>" );
+		}
 		$wpdb->query( "call cb2_saves_finished()" );
 	}
 
@@ -403,16 +417,6 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			do_action( 'post_updated', $post_ID, $post_after, $post_before);
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event save_post_{$post->post_type}</div>" );
 			do_action( "save_post_{$post->post_type}", $post_ID, $post, $update );
-			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event save_post</div>" );
-			// This action will trigger the redundant CMB2 save process
-			// using a hook on $this CMB2_hookup :/
-			//   CMB2_hookup->save_post()
-			//   add_action( 'save_post', array( $this, 'save_post' ), 10, 2 );
-			// which uses:
-			//   CMB2_hookup->can_save()
-			//   current_user_can() => get_post(ID)
-			// action cmb2_can_save is hooked to return FALSE for CB2 objects
-			do_action( 'save_post', $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing WordPress event wp_insert_post</div>" );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
 
@@ -474,16 +478,6 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 			// Copied from post.php
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event save_post_{$post->post_type}</div>" );
 			do_action( "save_post_{$post->post_type}", $post_ID, $post, $update );
-			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event save_post</div>" );
-			// This action will trigger the redundant CMB2 save process
-			// using a hook on $this CMB2_hookup :/
-			//   CMB2_hookup->save_post()
-			//   add_action( 'save_post', array( $this, 'save_post' ), 10, 2 );
-			// which uses:
-			//   CMB2_hookup->can_save()
-			//   current_user_can() => get_post(ID)
-			// action cmb2_can_save is hooked to return FALSE for CB2 objects
-			do_action( 'save_post', $post_ID, $post, $update );
 			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class create fireing WordPress event wp_insert_post</div>" );
 			do_action( 'wp_insert_post', $post_ID, $post, $update );
 
