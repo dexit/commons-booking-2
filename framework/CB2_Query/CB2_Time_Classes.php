@@ -318,6 +318,28 @@ class CB2_Day extends CB2_TimePostNavigator {
 		return $format . ( $append_format ? " $append_format" : '' );
   }
 
+  static function seconds_in_day( CB2_DateTime $datetime ) {
+    $time_string = $datetime->format( 'H:i' );
+    $time_object = new DateTime( "1970-01-01 $time_string" );
+    return (int) $time_object->format('U');
+  }
+
+  static function day_percent_position( CB2_DateTime $datetime, String $from_time = NULL, String $to_time = NULL ) {
+		// TODO: from and to for day_percent_positions
+    // 0:00  = 0
+    // 9:00  = 32400
+    // 18:00 = 64800
+    // 24:00 = 86400
+    if ( is_null( $from_time ) ) $from_time = get_option( CB2_TEXTDOMAIN . '-day-start', '09:00' );
+    if ( is_null( $to_time ) )   $to_time   = get_option( CB2_TEXTDOMAIN . '-day-end',   '18:00' );
+    $from_date    = new CB2_DateTime( $from_time );
+    $to_date      = new CB2_DateTime( $to_time );
+    $from_seconds = self::seconds_in_day( $from_date );
+    $to_seconds   = self::seconds_in_day( $to_date );
+    $seconds      = self::seconds_in_day( $datetime );
+    return (int) ( ( $seconds - $from_seconds ) / ( $to_seconds - $from_seconds ) * 100 );
+  }
+
   static function dayofweek_adjusted( CB2_DateTime $date ) {
 		// 0-6 with WordPress start_of_week start day
 		// e.g. if Tuesday is the WordPress start of the week, then Tuesday is 0, Monday is 6

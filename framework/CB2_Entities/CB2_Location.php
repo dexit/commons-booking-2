@@ -69,6 +69,20 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 	}
 
 	static function metaboxes() {
+		$advanced   = isset( $_GET['advanced'] );
+		$startdate  = ( isset( $_GET['startdate'] ) ? $_GET['startdate'] : CB2_DateTime::next_week_start()->format( CB2_Query::$datetime_format ) );
+		$enddate    = ( isset( $_GET['enddate'] )   ? $_GET['enddate']   : CB2_DateTime::next_week_end()->format(   CB2_Query::$datetime_format ) );
+		$bare       = ( $advanced ? NULL : 'bare' );
+
+		$today      = CB2_DateTime::today();
+		$plus1month = $today->clone()->add( 'P1M' );
+		$advanced_url  = CB2_Query::pass_through_query_string( NULL, array(
+			'startdate' => $today,
+			'enddate'   => $plus1month,
+			'advanced'  => TRUE,
+		) );
+		$advanced_text = __( 'advanced' );
+		$advanced      = " <div class='dashicons-before dashicons-admin-tools cb2-advanced'><a href='$advanced_url'>$advanced_text</a></div>";
 
 		$metaboxes = array(
 			array(
@@ -99,6 +113,52 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 			),
 
 			array(
+				'title'      => __( 'Opening Hours', 'commons-booking-2' ) . $advanced,
+				'context'    => 'normal',
+				'priority' 	 => 'high',
+				'show_names' => FALSE,
+				'show_on_cb' => array( 'CB2', 'is_published' ),
+				'fields' => array(
+					array(
+						'name'    => __( 'Opening Hours', 'commons-booking-2' ),
+						'id'      => 'calendar',
+						'type'    => 'calendar',
+						'options' => array(
+							'style'    => $bare, // Day TDs only
+							'template' => 'overlaid',
+							'query'    => array(
+								'post_status' => 'any',
+								'date_query' => array(
+									array(
+										// post_modified_gmt is the end date of the period instance
+										'column' => 'post_modified_gmt',
+										'after'  => $startdate,
+									),
+									array(
+										// post_gmt is the start date of the period instance
+										'column' => 'post_date_gmt',
+										'before' => $enddate,
+									),
+									'compare' => CB2_Week::$static_post_type,
+								),
+								'meta_query' => array(
+									'location_ID_clause' => array(
+										'key'     => 'location_ID',
+										'value'   => '%ID%',
+										'compare' => 'IN',
+									),
+									'period_status_type_ID_clause' => array(
+										'key'     => 'period_status_type_ID',
+										'value'   => CB2_PeriodStatusType_Open::$id,
+									),
+								),
+							),
+						),
+					),
+				),
+			),
+
+			array(
 				'title'      => __( 'Geodata', 'commons-booking-2' ),
 				'context'    => 'normal',
 				'priority' 	 => 'high',
@@ -122,6 +182,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				),
 			),
 		);
+
 		return apply_filters('cb2_location_metaboxes', $metaboxes);
 	}
 

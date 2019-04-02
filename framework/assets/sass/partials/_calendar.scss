@@ -294,6 +294,23 @@
 		padding-bottom: 24px;
 		min-height:250px;
 
+		.cb2-overlaid-inner {
+			position:absolute;
+			top:45px;
+			bottom:45px;
+			width: 100%;
+
+			.cb2-time-period {
+				display:none;
+			}
+		}
+		.cb2-overlaid-inner:after {
+			content:' ';
+			display:table;
+			clear:both;
+		}
+
+
 		&.cb2-out-of-period-entity-scope {
 			opacity: 0.4;
 

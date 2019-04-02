@@ -257,29 +257,13 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 		return parent::templates_considered( $context, $type, $templates );
 	}
 
-  function seconds_in_day( $datetime ) {
-    $time_string = $datetime->format( 'H:i' );
-    $time_object = new DateTime( "1970-01-01 $time_string" );
-    return (int) $time_object->format('U');
-  }
-
-  function day_percent_position( $from = '00:00', $to = '00:00' ) {
-    // 0:00  = 0
-    // 9:00  = 32400
-    // 18:00 = 64800
-    // 24:00 = 86400
-    static $seconds_in_day = 24 * 60 * 60; // 86400
-
-    $seconds_start = $this->seconds_in_day( $this->datetime_period_inst_start );
-    $seconds_end   = $this->seconds_in_day( $this->datetime_period_inst_end );
-    $seconds_start_percent = (int) ( $seconds_start / $seconds_in_day * 100 );
-    $seconds_end_percent   = (int) ( $seconds_end   / $seconds_in_day * 100 );
-    $seconds_diff_percent  = $seconds_end_percent - $seconds_start_percent;
-
+  function day_percent_positions( String $from_time = NULL, String $to_time = NULL ) {
+    $seconds_start_percent = CB2_Day::day_percent_position( $this->datetime_period_inst_start, $from_time, $to_time );
+    $seconds_end_percent   = CB2_Day::day_percent_position( $this->datetime_period_inst_end,   $from_time, $to_time );
     return array(
       'start_percent' => $seconds_start_percent,
       'end_percent'   => $seconds_end_percent,
-      'diff_percent'  => $seconds_diff_percent
+      'diff_percent'  => $seconds_end_percent - $seconds_start_percent
     );
   }
 
@@ -298,11 +282,11 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
   function styles( String $styles = '', Array $options = array() ) {
     if ( isset( $options['absolute-positioning'] ) && $options['absolute-positioning'] ) {
 			$zindex               = 10000 + $this->priority(); // Maybe overridden
-			$day_percent_position = $this->day_percent_position();
+			$day_percent_positions = $this->day_percent_positions();
 			$styles .= 'position:absolute;';
 			$styles .= "z-index:$zindex;";
-			$styles .= "top:$day_percent_position[start_percent]%;";
-			$styles .= "height:$day_percent_position[diff_percent]%;";
+			$styles .= "top:$day_percent_positions[start_percent]%;";
+			$styles .= "height:$day_percent_positions[diff_percent]%;";
 		}
 
 		// May call through to the period_status_type as well
@@ -388,7 +372,7 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
       'recurrence_type' => $this->period->recurrence_type,
       'recurrence_frequency' => $this->period->recurrence_frequency,
       'recurrence_sequence' => $this->period->recurrence_sequence,
-      'day_percent_position' => $this->day_percent_position(),
+      'day_percent_positions' => $this->day_percent_positions(),
       'classes' => $this->classes(),
       'styles'  => $this->styles(),
       'flag'    => $this->flags(),

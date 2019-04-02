@@ -50,6 +50,27 @@ body .cb2-calendar-grey .cb2-calendar > .entry-content > .cb2-subposts > li {
 	min-width: 50px;
 }
 
+.cb2-time-guide {
+	position:absolute;
+	z-index:20002;
+	height:100%;
+	top:0px;
+	left:0px;
+	color:#fff;
+
+	li {
+		position:absolute;
+		font-size:10px;
+		line-height: 11px;
+	}
+}
+
+.cmb-type-calendar {
+	> .cmb-td {
+		width: 100%;
+	}
+}
+
 body .cmb2-id-datetime-from .cmb2-timepicker,
 body .cmb2-id-datetime-to .cmb2-timepicker {
 	display: none;
