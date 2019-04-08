@@ -11,15 +11,80 @@
  * This class contains the shortcode for map and calendar
  */
 class CB2_Shortcodes {
-	public static function calendar_shortcode ( $atts ) {
+	function __construct() {
+		add_shortcode( 'cb2_calendar',          array( 'CB2_Shortcodes', 'calendar_shortcode' ) ) ;
+		add_shortcode( 'cb2_booking_calendar',  array( 'CB2_Shortcodes', 'booking_calendar_shortcode' ) ) ;
+		add_shortcode( 'cb2_booking_form',      array( 'CB2_Shortcodes', 'booking_form_shortcode' ) ) ;
+		add_shortcode( 'cb2_map',               array( 'CB2_Shortcodes', 'map_shortcode' ) ) ;
+	}
+
+	public static function booking_form_shortcode ( $atts = array() ) {
+		global $post;
+		$html = '';
+
+		// Get the single item ID
+		$itemID = NULL;
+		if ( isset( $atts['item-id'] ) )                $itemID = (int) $atts['item-id'];
+		else if ( $post && $post->post_type == 'item' ) $itemID = (int) $post->ID;
+		else $html .= __( 'item-id or global item post required' );
+
+		if ( $itemID ) {
+			$atts['item-id'] = $itemID;
+			$item            = CB2_Query::get_post_with_type( 'item', $itemID );
+			$title_text      = $item->post_title;
+			$form_title_text = __( 'Booking of' ) . " $title_text";
+			$do_action       = 'CB2_Item::book';
+			$button_text     = __('book the') . " $title_text";
+			$calendar        = CB2_Shortcodes::booking_calendar_shortcode( $atts );
+
+			$html .= <<<HTML
+				<form action='' method='POST'><div>
+					<input type='hidden' name='name' value='$title_text' />
+					<input type='hidden' name='do_action' value='$do_action' />
+					<input type='hidden' name='do_action_post_ID' value='$itemID' />
+					<input type='hidden' name='redirect' value='/periodent-user/%action_return_value%/' />
+					<input type='submit' name='submit' value='$button_text' />
+					$calendar
+					<input type='submit' name='submit' value='$button_text' />
+				</div></form>
+HTML;
+		}
+
+		return $html;
+	}
+
+	public static function booking_calendar_shortcode ( $atts = array() ) {
+		global $post;
+		$html   = '';
+
+		// Get the single item ID
+		$itemID = NULL;
+		if ( isset( $atts['item-id'] ) )                $itemID = (int) $atts['item-id'];
+		else if ( $post && $post->post_type == 'item' ) $itemID = (int) $post->ID;
+		else $html .= __( 'item-id or global item post required' );
+
+		// Generate Calendar
+		if ( $itemID )
+			$html .= self::calendar_shortcode( $atts, array(
+				'display-strategy' => 'CB2_SingleItemAvailability',
+				'item_ID'          => $itemID,
+				'context'          => 'list',
+				'template-type'    => 'available',
+				'selection-mode'   => 'range',
+			) );
+
+		return $html;
+	}
+
+	public static function calendar_shortcode ( $atts = array(), Array $passed_default_atts = array() ) {
 		global $post;
 
-		$default_atts = array(
+		$default_atts = array_merge( array(
 			'display-strategy' => 'CB2_AllItemAvailability',
 			'schema-type'      => CB2_Week::$static_post_type,
 			'context'          => 'list',
 			'template-type'    => 'available',
-		);
+		), $passed_default_atts );
 
 		// ------------------------------------- Query
 		$args = shortcode_atts( $default_atts, $atts, 'cb_calendar' );
@@ -64,7 +129,7 @@ class CB2_Shortcodes {
 		return $html;
 	}
 
-	public static function map_shortcode ( $atts ) {
+	public static function map_shortcode ( $atts = array() ) {
 		global $post;
 
 		$default_atts = array(
@@ -108,3 +173,4 @@ class CB2_Shortcodes {
 		return $html;
 	}
 }
+new CB2_Shortcodes();

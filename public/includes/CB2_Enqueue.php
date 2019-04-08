@@ -23,10 +23,6 @@ class CB2_Enqueue {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 
-		add_shortcode( 'cb2_calendar',  array( 'CB2_Shortcodes', 'calendar_shortcode' ) ) ;
-		add_shortcode( 'cb2_timeframe', array( 'CB2_Shortcodes', 'timeframe_shortcode' ) ) ;
-		add_shortcode( 'cb2_map',       array( 'CB2_Shortcodes', 'map_shortcode' ) ) ;
-
 		// create an API end point
 		require_once(CB2_PLUGIN_ROOT . 'public/includes/CB2_API.php');
 		$API = new CB2_API;
