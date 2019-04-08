@@ -70,18 +70,23 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			$new_period->datetime_from = $when;
 			$period->datetime_to       = $when->justBefore();
 		} else {
+			// TODO: Single event instance splitting will not work at the moment
+			// because it will use the start date of the single instance,
+			// not the clicked CB2_Day part of that multi-day instance
+
 			// Single event instance, probably covering multiple days
 			// can still be split in 1 day, as long as the when is between start and end
 			if ( $when->lessThanOrEqual( $period->datetime_part_period_start )
 				|| $when->moreThanOrEqual( $period->datetime_part_period_end )
 			) throw new Exception( $limits_error_text );
 
-			$period->datetime_part_period_start  = $when;
-			$new_period->datetime_part_period_to = $when;
+			$new_period->datetime_part_period_start = $when;
+			$period->datetime_part_period_end       = $when->justBefore();
 		}
 
-		// Add and save
+		// Add and annotate
 		$this->add_period( $new_period );
+		$new_period->linkTo( $period, CB2_LINK_SPLIT_FROM );
 
 		return $new_period;
 	}

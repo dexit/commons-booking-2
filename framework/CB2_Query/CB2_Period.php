@@ -2,13 +2,17 @@
 require_once( 'CB2_PeriodStatusType.php' );
 require_once( 'CB2_PeriodGroup.php' );
 
+define( 'CB2_LINK_SPLIT_FROM', 'S' );
+define( 'CB2_LINK_BASED_ON',   'B' );
+
 //------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
 class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializable {
   public static $database_table = 'cb2_periods';
-  public static $all = array();
-  static $static_post_type = 'period';
+  public static $all            = array();
+  private $linked_periods       = array();
+  static $static_post_type      = 'period';
   public static $post_type_args = array(
 		'menu_icon' => 'dashicons-admin-settings',
   );
@@ -90,6 +94,20 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 					'AFTER UPDATE'  => array( $refresh_cache ),
 					'AFTER DELETE'  => array( $refresh_cache ),
 					'AFTER INSERT'  => array( $refresh_cache ),
+				),
+			),
+
+			array(
+				'name'    => 'cb2_period_linked_period',
+				'columns' => array(
+					'period_id'        => array( CB2_INT,     (11), CB2_UNSIGNED, CB2_NOT_NULL, ),
+					'period_linked_id' => array( CB2_INT,     (11), CB2_UNSIGNED, CB2_NOT_NULL, ),
+					'reason'           => array( CB2_CHAR,    (1),  NULL, CB2_NOT_NULL, FALSE, 'B' ),
+				),
+				'primary key'  => array( 'period_id', 'period_linked_id' ),
+				'foreign keys' => array(
+					'period_id'        => array( 'cb2_periods', 'period_id' ),
+					'period_linked_id' => array( 'cb2_periods', 'period_id' ),
 				),
 			),
 
@@ -640,6 +658,35 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		if ( $this->is_expired() ) $classes .= ' cb2-expired cb2-invalid';
 		if ( $this->is_future() )  $classes .= ' cb2-future cb2-invalid';
 		return $classes;
+  }
+
+  function linkTo( CB2_Period $linked_period, String $reason = 'B' ) {
+		if ( ! isset( $this->linked_periods[$reason] ) ) $this->linked_periods[$reason] = array();
+		array_push( $this->linked_periods[$reason], $linked_period );
+  }
+
+  function post_post_update() {
+		global $wpdb;
+
+		if ( CB2_DEBUG_SAVE ) {
+			$Class = get_class( $this );
+			print( "<div class='cb2-WP_DEBUG'>$Class::post_post_update($this->ID) dependencies</div>" );
+		}
+
+		$table = "{$wpdb->prefix}cb2_period_linked_period";
+		foreach ( $this->linked_periods as $reason => $periods ) {
+			foreach ( $periods as $period ) {
+				$wpdb->delete( $table, array(
+					'period_id'        => $this->id(),
+					'period_linked_id' => $period->id(),
+				) );
+				$wpdb->insert( $table, array(
+					'period_id'        => $this->id(),
+					'period_linked_id' => $period->id(),
+					'reason'           => $reason,
+				) );
+			}
+		}
   }
 
   function period_instance( Int $recurrence_index ) {

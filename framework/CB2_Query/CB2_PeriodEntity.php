@@ -266,6 +266,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				( $name ? $name : $periodinst_from->post_title ),
 				array( $period ) // periods
 			);
+			$period->linkTo( $periodinst_from->period, CB2_LINK_BASED_ON );
+			$period->linkTo( $periodinst_to->period,   CB2_LINK_BASED_ON );
 		} else {
 			// Linking means that:
 			// changing the original availability period will change the booking as well!

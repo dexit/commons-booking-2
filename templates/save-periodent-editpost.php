@@ -22,7 +22,6 @@ switch ( $save_type ) {
 		// essentially spliting the input period
 		// This is useful when wanting to change the future but not the past
 		$new_period = $period_group->split_period_at_instance( $post, $properties, $instance_container );
-		var_dump($period_group);
 		$period_group->save( TRUE ); // Update changed source period
 		break;
 	}
