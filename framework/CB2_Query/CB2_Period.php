@@ -642,6 +642,26 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $classes;
   }
 
+  function period_instance( Int $recurrence_index ) {
+		$query = new WP_Query( array(
+			'post_type'   => CB2_PeriodInst::$all_post_types,
+			'meta_query'  => array(
+				'period_ID_clause' => array(
+					'key'   => 'period_ID',
+					'value' => $this->ID,
+				),
+				'relation' => 'AND',
+				'recurrence_index_clause' => array(
+					'key'   => 'recurrence_index',
+					'value' => $recurrence_index,
+				),
+			),
+			'posts_per_page' => 1,
+			'page'           => 0,
+		) );
+		return $query->post;
+  }
+
 	function jsonSerialize() {
 		return $this;
 	}

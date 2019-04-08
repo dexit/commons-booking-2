@@ -12,6 +12,7 @@
 	}
 	.cb2-with-template-post .cb2-tabs {
 		display:none;
+
 	}
 	.postbox > h2,
 	.postbox > .inside,
@@ -39,6 +40,14 @@
 	}
 	.cb2-popup-form-delete {
 		color:red;
+	}
+
+	.cb2-save-types {
+		font-weight:bold;
+		padding:5px 10px;
+		border-top:1px solid #e7e7e7;
+		background-color:#f7f7f7;
+		width:100%;
 	}
 
 	.cmb2-metabox .cmb2-id-exceptions,

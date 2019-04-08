@@ -199,7 +199,8 @@ function cb2_process(){
 				$(self).removeAttr('disabled');
 				$(self).parents('.cb2-popup, body').removeClass('cb2-saving');
 				// TODO: callback based refresh => calendar ajax refresh
-				document.location = document.location;
+				if (!$(document.body).hasClass('cb2-CB2_DEBUG_SAVE-on'))
+					document.location = document.location;
 				$(self).parents('.cb2-popup, body').addClass('cb2-refreshing');
 			},
 			error: function() {
@@ -271,7 +272,7 @@ function cb2_process(){
 			case 'W': {
 				explanation.html('The date indicates the day-of-the-week that repeats.');
 				var options = '';
-				for (var h = 0; h <= 53; h++) {
+				for (var h = 0; h <= 10; h++) {
 					options += '<li><input type="checkbox" class="cmb2-option" name="recurrence_sequence[]" id="recurrence_sequence' + h + '" value="' + h + '">';
 					options += '<label for="recurrence_sequence' + h + '">' + h + '</label></li>';
 				}

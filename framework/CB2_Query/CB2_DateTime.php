@@ -123,6 +123,10 @@ class CB2_DateTime {
 		return $this;
 	}
 
+	function justBefore( $interval = 'PT1S' ) {
+		return $this->sub( $interval );
+	}
+
 	function sub( $interval ) {
 		if      ( is_numeric( $interval ) ) $interval = new DateInterval( "P{$interval}D" );
 		else if ( is_string( $interval ) )  $interval = new DateInterval( $interval );

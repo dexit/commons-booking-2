@@ -82,6 +82,11 @@ function cb2_body_class_WP_DEBUG( $classes ) {
 		if ( is_string( $classes ) ) $classes .= ' cb2-WP_DEBUG-on';
 		else if ( is_array( $classes ) ) array_push( $classes, 'cb2-WP_DEBUG-on' );
 	}
+	if ( CB2_DEBUG_SAVE ) {
+		// admin_body_class sends a string, body_class sends an array!
+		if ( is_string( $classes ) ) $classes .= ' cb2-CB2_DEBUG_SAVE-on';
+		else if ( is_array( $classes ) ) array_push( $classes, 'cb2-CB2_DEBUG_SAVE-on' );
+	}
 	return $classes;
 }
 add_filter( 'body_class',       'cb2_body_class_WP_DEBUG' );

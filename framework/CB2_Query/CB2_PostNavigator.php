@@ -650,6 +650,7 @@ abstract class CB2_PostNavigator extends stdClass {
   function clone_with_create_new( $name = NULL, $deep = TRUE, Array $args = NULL ) {
 		// Set all IDs to CB2_CREATE_NEW so the whole object is re-created
 		// ready for saving
+		// TODO: include $instance_container in clone_with_create_new()
 		$copy = clone $this;
 		$copy->ID = CB2_CREATE_NEW;
 		if ( $name ) $copy->name = $name;

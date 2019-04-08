@@ -39,6 +39,53 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		);
 	}
 
+	function split_period_at_instance( CB2_PeriodInst $period_inst, Array $new_period_properties = NULL, &$instance_container = NULL ) {
+		return $this->split_period_from_date( $period_inst->period, $period_inst->datetime_period_inst_start, $new_period_properties, $instance_container );
+	}
+
+	function split_period_from_date( CB2_Period $period, CB2_Datetime $when, Array $new_period_properties = NULL, &$instance_container = NULL ) {
+		$copy_text         = __( 'copy' );
+		$limits_error_text = __( 'Cannot split period outside period limits' );
+		$new_name          = "$period->name $copy_text";
+
+		// $new_period_properties allows us to create the new period from the save $_POST directly
+		$new_period = NULL;
+		if ( $new_period_properties ) {
+			$new_period_properties['ID'] = CB2_CREATE_NEW; // properties are not to be trusted!
+			if ( ! isset( $new_period_properties['post_title'] ) )
+				$new_period_properties['post_title'] = $new_name;
+			$new_period = CB2_Period::factory_from_properties( $new_period_properties, $instance_container );
+		} else {
+			$new_period = $period->clone_with_create_new( $new_name ); // CB2_CREATE_NEW
+		}
+
+		// Split
+		if ( $period->recurrence_type ) {
+			// Repeating period instances, curtail them with datetime_to
+			// TODO: this should probably be a refusal, rather than an Exception. Maybe catch it?
+			if ( $when->lessThanOrEqual( $period->datetime_from )
+				|| ( $period->datetime_to && $when->moreThanOrEqual( $period->datetime_to ) )
+			) throw new Exception( $limits_error_text );
+
+			$new_period->datetime_from = $when;
+			$period->datetime_to       = $when->justBefore();
+		} else {
+			// Single event instance, probably covering multiple days
+			// can still be split in 1 day, as long as the when is between start and end
+			if ( $when->lessThanOrEqual( $period->datetime_part_period_start )
+				|| $when->moreThanOrEqual( $period->datetime_part_period_end )
+			) throw new Exception( $limits_error_text );
+
+			$period->datetime_part_period_start  = $when;
+			$new_period->datetime_part_period_to = $when;
+		}
+
+		// Add and save
+		$this->add_period( $new_period );
+
+		return $new_period;
+	}
+
   static function selector_wizard_metabox( String $context = 'normal', Bool $closed = FALSE, Array $classes = array() ) {
 		// $period_group_options = CB2_Forms::period_group_options( TRUE );
 		// $period_groups_count  = count( $period_group_options ) - 1;
