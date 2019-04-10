@@ -30,7 +30,7 @@ CB2::the_tabs( array(
 
 // ------------------------------------ Period Group
 print( "<div id='cb2-tab-periodgroup'>" );
-CB2::the_meta_box( "{$Class_target}_period_group", $target_post );
+CB2::the_meta_box( "CB2_PeriodEntity_Timeframe_User_period_group", $target_post );
 print( '</div>' );
 
 // ------------------------------------ Periods

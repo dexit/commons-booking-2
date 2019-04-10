@@ -124,6 +124,7 @@ class CB2_Forms {
 			self::truncate_table( 'cb2_timeframe_user_period_groups', 'period_group_id' );
 			self::truncate_table( 'cb2_location_period_groups', 'period_group_id' );
 			self::truncate_table( 'cb2_period_group_period', 'period_group_id' );
+			self::truncate_table( 'cb2_period_linked_period', 'period_id' );
 			self::truncate_table( 'cb2_periods', 'period_id' );
 			self::truncate_table( 'cb2_period_groups', 'period_group_id' );
 
