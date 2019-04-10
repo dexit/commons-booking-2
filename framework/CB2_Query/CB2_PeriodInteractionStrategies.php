@@ -542,6 +542,13 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 		) {
 			$periodinst->no_select = TRUE;
 		}
+
+		// Prevent any no-use periodinsts being used over
+		if ( ! $periodinst instanceof CB2_PeriodInst_Timeframe
+			|| ! $period_status_type->can( CB2_USE )
+		) {
+			$periodinst->no_include = TRUE;
+		}
 	}
 
 	function dynamic_priority( CB2_PeriodInst &$periodinst, Array $overlaps ) {

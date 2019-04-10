@@ -1,9 +1,14 @@
 <?php
 	// Range selection on the front end
-	if ( CB2::is_top_priority() ) { ?>
-	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( 'cb2-template-available cb2-selectable' ); ?> style="background-color:<?php CB2::the_colour(); ?>">
+	if ( CB2::is_top_priority() ) {
+		$can_select  = CB2::can_select();
+		$can_include = CB2::can_include();
+		$selectable  = ( $can_select  ? 'cb2-selectable' : 'cb2-not-selectable' );
+		$includable  = ( $can_include ? 'cb2-includable' : 'cb2-not-includable' );
+	?>
+	<li id="post-<?php the_ID(); ?>" <?php CB2::post_class( "cb2-template-available $selectable $includable" ); ?> style="background-color:<?php CB2::the_colour(); ?>">
 		<div class="cb2-details">
-			<?php if ( CB2::can_select() ) { ?>
+			<?php if ( $can_select ) { ?>
 				<input class="cb2-periodinst-selector" type="checkbox" id="periodinst-<?php the_ID(); ?>" name="<?php CB2::the_post_type(); ?>s[]" value="<?php the_ID(); ?>"/>
 				<span class="cb2-time-period"><?php CB2::the_time_period(); ?></span>
 			<?php } ?>

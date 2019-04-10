@@ -35,7 +35,7 @@
 					var selection_container_class = selection_container.attr('class');
 					var selection_mode_matches    = selection_container_class.match(/cb2-selection-mode-([^ ]+)/);
 					selections  = selection_container.find('.cb2-selected');
-					selectables = selection_container.find('.cb2-selectable' );
+					selectables = selection_container.find('.cb2-template-available' );
 					earliest    = selections.first();
 					latest      = selections.last();
 					if (selection_mode_matches) selection_mode = selection_mode_matches[1];
@@ -53,12 +53,21 @@
 								var past_earliest = false;
 								selectables.each(function(){
 									var bcontinue = true;
-									if ($(this).is(earliest))
+									var jThis     = $(this);
+									if (jThis.is(earliest))
 										past_earliest = true;
-									if ($(this).is(latest))
+									if (jThis.is(latest))
 										bcontinue     = false;
-									if (past_earliest)
-										$(this).addClass('cb2-range-selected');
+
+									if (past_earliest) {
+										jThis.addClass('cb2-range-selected');
+										if (jThis.hasClass('cb2-not-includable')) {
+											bcontinue     = false;
+											selectables.removeClass('cb2-range-selected');
+											// Some better translateable warning
+											alert('cannot select accross non-inclusions');
+										}
+									}
 									return bcontinue;
 								});
 								break;

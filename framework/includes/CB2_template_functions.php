@@ -416,6 +416,11 @@ class CB2 {
 		return $post && ! property_exists( $post, 'no_select' );
 	}
 
+	public static function can_include() {
+		global $post;
+		return $post && ! property_exists( $post, 'no_include' );
+	}
+
 	public static function the_class_actions() {
 		echo self::get_the_class_actions();
 	}
