@@ -5,37 +5,35 @@
 		// console.log(pn_js_vars.alert);
 
 		$(document).ready(function(){
-			$('.cb2-template-available > .cb2-details').click(function(e){
+			$('.cb2-selectable > .cb2-details').click(function(e){
 				var selection_container = $(this).closest('.cb2-selection-container');
 				var container      = $(this).parent();
 				var checkbox       = $(this).children('.cb2-periodinst-selector');
-				var cssClass       = container.attr('class').trim();
 				var target         = $(e.target);
 				var clicked_input  = (target.is(checkbox));
 				var is_checked     = checkbox.attr('checked');
 				var selection_mode = 'none';
 				var selections     = $();
 				var selectables    = $();
-				var earliest, latest;
+				var earliest, latest, range;
 
 				// The default checkbox event will check the checkbox
 				// AFTER this action
 				if (clicked_input) is_checked = !is_checked;
-
 				if (is_checked) {
 					if (!clicked_input) checkbox.removeAttr('checked');
-					container.attr( 'class', cssClass.replace(/cb2-selected/, '') );
+					container.removeClass( 'cb2-selected' );
 				} else {
 					if (!clicked_input) checkbox.attr('checked', '1');
-					container.attr( 'class', cssClass + ' cb2-selected' );
+					container.addClass( 'cb2-selected' );
 				}
 
 				// See if we have a selection mode
 				if (selection_container.length) {
 					var selection_container_class = selection_container.attr('class');
 					var selection_mode_matches    = selection_container_class.match(/cb2-selection-mode-([^ ]+)/);
+					selectables = selection_container.find('.cb2-selectable, .cb2-not-includable');
 					selections  = selection_container.find('.cb2-selected');
-					selectables = selection_container.find('.cb2-template-available' );
 					earliest    = selections.first();
 					latest      = selections.last();
 					if (selection_mode_matches) selection_mode = selection_mode_matches[1];
@@ -44,56 +42,76 @@
 				// Selection styles
 				switch (selection_mode) {
 					case 'range':
-						selectables.removeClass('cb2-range-selected');
 						switch (selections.length) {
-							case 1:
+							case 0:
+								selectables.removeClass('cb2-range-selected');
 								break;
+							case 1:
+								selectables.removeClass('cb2-range-selected');
+								break;
+							case 3:
+								if (container.hasClass('cb2-range-selected')) {
+									// Start again from 1 select
+									selectables
+										.removeClass('cb2-range-selected')
+										.removeClass('cb2-selected')
+										.find(':input').removeAttr('checked');
+									if (!clicked_input) checkbox.attr('checked', '1');
+									container.addClass('cb2-selected')
+									break;
+								}
 							case 2:
 								// TODO: Should we go full OO on this and create a JS class for each PHP class?
-								var past_earliest = false;
+								var at_earliest = false, at_latest = false, inbetween = false,
+									bcontinue = true, range_selected = 0;
+								// We loop here because the cb2-selectable are NOT siblings
+								selectables.removeClass('cb2-range-selected');
 								selectables.each(function(){
-									var bcontinue = true;
 									var jThis     = $(this);
 									if (jThis.is(earliest))
-										past_earliest = true;
-									if (jThis.is(latest))
-										bcontinue     = false;
+										at_earliest = true;
+									if (jThis.is(latest)) {
+										at_latest = true;
+										inbetween = false;
+									}
+									var inrange = (at_earliest || inbetween || at_latest);
 
-									if (past_earliest) {
-										jThis.addClass('cb2-range-selected');
-										if (jThis.hasClass('cb2-not-includable')) {
-											bcontinue     = false;
-											selectables.removeClass('cb2-range-selected');
-											// Some better translateable warning
+									if (inbetween) {
+										// Others that are checked in the middle
+										jThis
+											.removeClass('cb2-selected')
+											.find(':input').removeAttr('checked');
+									}
+
+									if (inrange) {
+										if (range_selected == 3) {
+											selectables
+												.removeClass('cb2-range-selected')
+												.removeClass('cb2-selected')
+												.find(':input').removeAttr('checked');
+											// TODO: Some better translateable warning
+											alert('cannot select more than 3 periods');
+											bcontinue = false;
+										} else if (jThis.hasClass('cb2-not-includable')) {
+											selectables
+												.removeClass('cb2-range-selected')
+												.removeClass('cb2-selected')
+												.find(':input').removeAttr('checked');
+											// TODO: Some better translateable warning
 											alert('cannot select accross non-inclusions');
+											bcontinue = false;
+										} else {
+											jThis.addClass('cb2-range-selected');
+											range_selected++;
 										}
 									}
-									return bcontinue;
+
+									if (at_earliest) inbetween = true;
+									return bcontinue && !at_latest;
 								});
 								break;
 							default:
-								// TODO: move the selections to change the range
-								// WARN: this does not work because we do not actually want the preceding axis...
-								if (earliest.parents().prevAll().find('.cb2-selectable').is($(this))) {
-									// TODO: New selection < the earliest
-									// move the earliest
-									earliest.removeAttr('checked');
-									earliest.attr( 'class', cssClass.replace(/cb2-selected/, '') );
-								}
-								else if (latest.parents().nextAll().find('.cb2-selectable').is($(this))) {
-									// TODO: New selection > the latest
-									// move the latest
-									latest.removeAttr('checked');
-									latest.attr( 'class', cssClass.replace(/cb2-selected/, '') );
-								}
-								else {
-									// TODO: It is between the 2 selections
-									// cancel the selection
-									earliest.removeAttr('checked');
-									earliest.attr( 'class', cssClass.replace(/cb2-selected/, '') );
-									latest.removeAttr('checked');
-									latest.attr( 'class', cssClass.replace(/cb2-selected/, '') );
-								}
+								if (window.console) console.error('too many selections: ' + selections.length);
 						}
 						break;
 				}

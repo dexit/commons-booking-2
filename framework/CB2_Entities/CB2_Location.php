@@ -126,6 +126,9 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 						'options' => array(
 							'style'    => $bare, // Day TDs only
 							'template' => 'overlaid',
+							'template-args' => array(
+								'action' => '<span class="cb2-todo">addto</span>',
+							),
 							'query'    => array(
 								'post_status' => 'any',
 								'date_query' => array(

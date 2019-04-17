@@ -72,7 +72,7 @@
 
 	<?php if ( $action ) { ?>
 		<div class="cb2-add-period">
-			<a class="cb2-details cb2-bald <?php print( $href_class ); ?>" title="<?php print( $href_title_text ); ?>" href="<?php print( $href_click ); ?>">
+			<a class="cb2-details cb2-bald <?php print( $href_class ); ?>" title="<?php print( htmlentities( $href_title_text ) ); ?>" href="<?php print( $href_click ); ?>">
 				<?php print( $href_title_text ); ?>
 			</a>
 		</div>

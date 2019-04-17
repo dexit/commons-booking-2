@@ -691,7 +691,7 @@ li.cb2-classname {
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_popup\.scss}line{font-family:\0000379}}
 #TB_ajaxContent {
   height: auto !important;
-  max-width: 600px !important;
+  max-width: 600px;
 }
 
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_popup\.scss}line{font-family:\0000383}}

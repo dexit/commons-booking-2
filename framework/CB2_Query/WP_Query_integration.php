@@ -227,64 +227,66 @@ function cb2_pre_delete_post( $delete, $post, $force_delete ) {
 	return $delete;
 }
 
-function cb2_user_has_cap( $allcaps, $cap, $args ) {
+function cb2_user_has_cap( Array $allcaps, Array $cap, Array $args ) {
 	global $post;
 	static $depth = 0, $last_cap = '';
 	$depth++;
 
-	$required_cap   = $cap[0];  // edit_published_posts (in $allcaps)
-	$requested_cap  = $args[0]; // edit_post            (not in $allcaps)
-	$user_ID        = $args[1];
-	$user_can       = ( isset( $allcaps[$required_cap] ) ? $allcaps[$required_cap] : NULL );
-	$current_user   = wp_get_current_user();
-	$object_ID      = ( count( $args ) > 2 ? $args[2] : NULL );
-	$is_global_post = ( $post && ( ! $object_ID || $post->ID == $object_ID ) );
-	$post_type      = ( $post && property_exists( $post, 'post_type' ) ? $post->post_type : '' );
-	$builtin        = ( $post && in_array( $post_type, array( 'post', 'page' ) ) );
+	if ( count( $cap ) && count( $args ) > 1 ) {
+		$required_cap   = $cap[0];  // edit_published_posts (in $allcaps)
+		$requested_cap  = $args[0]; // edit_post            (not in $allcaps)
+		$user_ID        = $args[1];
+		$user_can       = ( isset( $allcaps[$required_cap] ) ? $allcaps[$required_cap] : NULL );
+		$current_user   = wp_get_current_user();
+		$object_ID      = ( count( $args ) > 2 ? $args[2] : NULL );
+		$is_global_post = ( $post && ( ! $object_ID || $post->ID == $object_ID ) );
+		$post_type      = ( $post && property_exists( $post, 'post_type' ) ? $post->post_type : '' );
+		$builtin        = ( $post && in_array( $post_type, array( 'post', 'page' ) ) );
 
-	if ( WP_DEBUG ) {
-		if ( $depth > 1 )
-			print( "<div class='cb2-WP_DEBUG-small cb2-warning'>recursive [$depth] user_has_cap([$requested_cap/$last_cap =&gt; $required_cap] on [$object_ID])</div>" );
-		if ( $current_user->ID != $user_ID )
-			print( "<div class='cb2-WP_DEBUG-small cb2-warning'>cap request for non-current user</div>" );
-		if ( FALSE )
-			print( "<div class='cb2-WP_DEBUG-small'>[$requested_cap/$required_cap] on [$post_type/$object_ID]</div>" );
-	}
-	$last_cap = $required_cap;
+		if ( WP_DEBUG ) {
+			if ( $depth > 1 )
+				print( "<div class='cb2-WP_DEBUG-small cb2-warning'>recursive [$depth] user_has_cap([$requested_cap/$last_cap =&gt; $required_cap] on [$object_ID])</div>" );
+			if ( $current_user->ID != $user_ID )
+				print( "<div class='cb2-WP_DEBUG-small cb2-warning'>cap request for non-current user</div>" );
+			if ( FALSE )
+				print( "<div class='cb2-WP_DEBUG-small'>[$requested_cap/$required_cap] on [$post_type/$object_ID]</div>" );
+		}
+		$last_cap = $required_cap;
 
-	// Currently denied on this object_ID
-	// Let us react only if we are talking about the current user
-	// Check to see if we are talking about the global post
-	// TODO: SECURITY: major problem: cb2_user_has_cap() does not know if the post_ID is ours...
-	// this logic is flawed because it is possible that
-	// the global post may have the same ID but be a different post_type
-	if ( $is_global_post && ! $builtin ) {
-		CB2_Query::ensure_correct_class( $post );
+		// Currently denied on this object_ID
+		// Let us react only if we are talking about the current user
+		// Check to see if we are talking about the global post
+		// TODO: SECURITY: major problem: cb2_user_has_cap() does not know if the post_ID is ours...
+		// this logic is flawed because it is possible that
+		// the global post may have the same ID but be a different post_type
+		if ( $is_global_post && ! $builtin ) {
+			CB2_Query::ensure_correct_class( $post );
 
-		if ( method_exists( $post, 'user_has_cap' ) ) {
-			// Prevent recursive capability checking
-			// because objects all have sub-posts that self-reference
-			remove_filter( 'user_has_cap', 'cb2_user_has_cap', 10 );
-			$user_can_new = $post->user_has_cap( $required_cap, $user_can );
-			add_filter( 'user_has_cap', 'cb2_user_has_cap', 10, 3 );
+			if ( method_exists( $post, 'user_has_cap' ) ) {
+				// Prevent recursive capability checking
+				// because objects all have sub-posts that self-reference
+				remove_filter( 'user_has_cap', 'cb2_user_has_cap', 10 );
+				$user_can_new = $post->user_has_cap( $required_cap, $user_can );
+				add_filter( 'user_has_cap', 'cb2_user_has_cap', 10, 3 );
 
-			// Set and report result
-			if ( $user_can_new !== $user_can ) {
-				$user_can_new_string = 'no opinion';
-				$class               = '';
-				if ( $user_can_new === TRUE  ) {
-					$allcaps[$required_cap] = TRUE;
-					$user_can_new_string = 'granted';
-				} else if ( $user_can_new === FALSE ) {
-					$allcaps[$required_cap] = FALSE;
-					$user_can_new_string = 'explicitly denied';
-					$class               = 'cb2-warning';
-				} else {
-					if ( isset( $allcaps[$required_cap] ) )
-						unset( $allcaps[$required_cap] );
+				// Set and report result
+				if ( $user_can_new !== $user_can ) {
+					$user_can_new_string = 'no opinion';
+					$class               = '';
+					if ( $user_can_new === TRUE  ) {
+						$allcaps[$required_cap] = TRUE;
+						$user_can_new_string = 'granted';
+					} else if ( $user_can_new === FALSE ) {
+						$allcaps[$required_cap] = FALSE;
+						$user_can_new_string = 'explicitly denied';
+						$class               = 'cb2-warning';
+					} else {
+						if ( isset( $allcaps[$required_cap] ) )
+							unset( $allcaps[$required_cap] );
+					}
+					if ( WP_DEBUG && FALSE )
+						print( "<div class='cb2-WP_DEBUG-small $class'>user [$user_ID] $user_can_new_string [$required_cap] on [$post->post_type]</div>" );
 				}
-				if ( WP_DEBUG && FALSE )
-					print( "<div class='cb2-WP_DEBUG-small $class'>user [$user_ID] $user_can_new_string [$required_cap] on [$post->post_type]</div>" );
 			}
 		}
 	}

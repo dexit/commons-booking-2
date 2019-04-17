@@ -714,12 +714,13 @@ function cb2_load_template() {
 
 	if ( isset( $_REQUEST['cb2_load_template'] ) && ! $_POST ) {
 		// ------------------------------------------- Inputs
-		$ID              = ( isset( $_REQUEST['ID'] )              ? $_REQUEST['ID']        : NULL );
-		$post_type       = ( isset( $_REQUEST['post_type'] )       ? $_REQUEST['post_type'] : NULL );
-		$context         = ( isset( $_REQUEST['context'] )         ? $_REQUEST['context']   : 'popup' );
-		$template_type   = ( isset( $_REQUEST['template_type'] )   ? $_REQUEST['template_type']    : 'edit' );
-		$context_post_ID = ( isset( $_REQUEST['context_post_ID'] ) ? $_REQUEST['context_post_ID'] : NULL );
-		$template_args   = $_REQUEST;
+		$ID                = ( isset( $_REQUEST['ID'] )                ? $_REQUEST['ID']        : NULL );
+		$post_type         = ( isset( $_REQUEST['post_type'] )         ? $_REQUEST['post_type'] : NULL );
+		$context           = ( isset( $_REQUEST['context'] )           ? $_REQUEST['context']   : 'popup' );
+		$template_type     = ( isset( $_REQUEST['template_type'] )     ? $_REQUEST['template_type']     : 'edit' );
+		$context_post_ID   = ( isset( $_REQUEST['context_post_ID'] )   ? $_REQUEST['context_post_ID']   : NULL );
+		$context_post_type = ( isset( $_REQUEST['context_post_type'] ) ? $_REQUEST['context_post_type'] : NULL );
+		$template_args     = $_REQUEST;
 
 		// ------------------------------------------- Main post
 		// works without a post
@@ -728,17 +729,17 @@ function cb2_load_template() {
 		if ( $Class = CB2_PostNavigator::post_type_Class( $post_type ) ) {
 			if ( CB2_Database::posts_table( $Class ) )
 				$post = CB2_Query::get_post_with_type( $post_type, $ID );
-			else if ( method_exists($Class, 'factory_from_properties' ) )
+			else if ( method_exists( $Class, 'factory_from_properties' ) )
 				$post = $Class::factory_from_properties( $_REQUEST ); // e.g. CB2_Day(date)
 			else
 				throw new Exception( "Cannot instantiate / get [$Class]" );
-		}
+		} else if ( WP_DEBUG ) print( "<div class='cb2-WP_DEBUG-small'>load template without post</div>" );
 		$templates = CB2::templates( $context, $template_type, FALSE, $templates_considered );
 
 		// ------------------------------------------- extra template_args
 		// The outer post displaying a calendar with days in it
 		if ( $context_post_ID )
-			$template_args[ 'context_post' ] = CB2_Query::get_post_with_type( $_REQUEST[ 'context_post_type' ], $_REQUEST[ 'context_post_ID' ] );
+			$template_args[ 'context_post' ] = CB2_Query::get_post_with_type( $context_post_type, $context_post_ID );
 
 		// ------------------------------------------- DEBUG
 		if ( WP_DEBUG ) {
@@ -771,12 +772,13 @@ function cb2_template_save() {
 	$html = '';
 
 	// ------------------------------------------- Inputs
-	$ID              = ( isset( $_REQUEST['ID'] )              ? $_REQUEST['ID']              : NULL );
-	$post_type       = ( isset( $_REQUEST['post_type'] )       ? $_REQUEST['post_type']       : NULL );
-	$context         = ( isset( $_REQUEST['context'] )         ? $_REQUEST['context']         : 'save' );
-	$template_type   = ( isset( $_REQUEST['template_type'] )   ? $_REQUEST['template_type']   : 'edit' );
-	$context_post_ID = ( isset( $_REQUEST['context_post_ID'] ) ? $_REQUEST['context_post_ID'] : NULL );
-	$template_args   = $_REQUEST;
+	$ID                = ( isset( $_REQUEST['ID'] )                ? $_REQUEST['ID']              : NULL );
+	$post_type         = ( isset( $_REQUEST['post_type'] )         ? $_REQUEST['post_type']       : NULL );
+	$context           = ( isset( $_REQUEST['context'] )           ? $_REQUEST['context']         : 'save' );
+	$template_type     = ( isset( $_REQUEST['template_type'] )     ? $_REQUEST['template_type']   : 'edit' );
+	$context_post_ID   = ( isset( $_REQUEST['context_post_ID'] )   ? $_REQUEST['context_post_ID'] : NULL );
+	$context_post_type = ( isset( $_REQUEST['context_post_type'] ) ? $_REQUEST['context_post_type'] : NULL );
+	$template_args     = $_REQUEST;
 
 	// ------------------------------------------- Main post
 	// works without a post
@@ -797,7 +799,7 @@ function cb2_template_save() {
 	// ------------------------------------------- extra template_args
 	// The outer post displaying a calendar with days in it
 	if ( $context_post_ID )
-		$template_args[ 'context_post' ] = CB2_Query::get_post_with_type( $_REQUEST[ 'context_post_type' ], $_REQUEST[ 'context_post_ID' ] );
+		$template_args[ 'context_post' ] = CB2_Query::get_post_with_type( $context_post_type, $context_post_ID );
 
 	// ------------------------------------------- DEBUG
 	if ( WP_DEBUG ) {

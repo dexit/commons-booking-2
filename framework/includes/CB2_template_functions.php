@@ -745,9 +745,10 @@ class CB2 {
 		}
 
 		// Texts
-		$cancel_text   = __( 'Cancel' );
-		$save_text     = __( 'Save' );
-		$advanced_text = __( 'advanced' );
+		$cancel_text     = __( 'Cancel' );
+		$save_text       = __( 'Save' );
+		$advanced_text   = __( 'advanced' );
+		$fullscreen_text = __( 'full screen' );
 
 		// Form start
 		$classes_string = implode( ' ', $classes );
@@ -784,6 +785,7 @@ class CB2 {
 
 		// ----------------------------- buttons
 		print( "<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
+		print( "<div class='dashicons-before dashicons-admin-page cb2-advanced'><a id='cb2-fullscreen' href='#'>$fullscreen_text</a></div>" );
 		if ( WP_DEBUG )
 			print( "<div class='dashicons-before dashicons-admin-tools cb2-advanced'><a href='#'>$advanced_text</a></div>" );
 	}
@@ -795,7 +797,9 @@ class CB2 {
 			<a class='cb2-popup-form-cancel' onclick='tb_remove();' href='#'>$cancel_text</a>
 			<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
 		foreach ( $extra_buttons as $id => $value ) {
-			print( "<button class='cb2-popup-form-$id'>$value</button>" );
+			$class = ( substr( $value, 0, 5 ) == 'TODO:' ? 'cb2-todo' : '' );
+			$value = preg_replace( '/^[A-Z]+:\s*/', '', $value );
+			print( "<button class='$class cb2-popup-form-$id'>$value</button>" );
 		}
 		print( '</div>
 			</div>' );
@@ -822,11 +826,16 @@ class CB2 {
 				throw new Exception( "Failed to load meta boxes for [$post_type]" );
 		}
 
+		// In case the cache is for another post
+		wp_cache_delete( $post->ID, 'post_meta' );
+
 		// If the post is a CB2_CREATE_NEW
 		// then the meta-box will get_metadata(), fail, and present the defaults instead
 		// cache it under post 1 as the get_metadata() will abs(ID)
 		$old_metadata = NULL;
 		if ( $post->ID == CB2_CREATE_NEW) {
+			if ( WP_DEBUG )
+				print( "<div class='cb2-WP_DEBUG-small'>CB2_CREATE_NEW: setting post_meta cache ID 1</div>" );
 			$metadata = array();
 			foreach ( (array) $post as $name => $value )
 				if ( ! is_array( $value ) )
@@ -866,6 +875,9 @@ class CB2 {
 			$post = $the_post;
 			setup_postdata( $post );
 		}
+
+		// In case the cache is for another post
+		wp_cache_delete( $post->ID, 'post_meta' );
 
 		// Populate the $wp_meta_boxes array
 		$post_type = $post->post_type;

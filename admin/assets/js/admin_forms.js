@@ -220,6 +220,24 @@ function cb2_process(){
 		$(this).parent().find('.cb2-calendar-krumo').show();
 	});
 
+	$('#TB_window #cb2-fullscreen').click(function() {
+		$('#TB_ajaxContent')
+			.css('max-width', 'none')
+			.css('width',     'auto')
+			.css('height',    'auto');
+		$("#TB_window")
+			.css('overflow-y', 'scroll')
+			.addClass('cb2-fullscreen')
+			.animate({
+				width:  '100%',
+				height: '100%',
+				top: '0%',
+				left: '0%',
+				marginTop: '0px',
+				marginLeft: '0px',
+			});
+	});
+
 	$(document).on('cmb_init_pickers', function(e, pickers) {
 		if (pickers) {
 			for (picker in pickers) {

@@ -40,5 +40,5 @@ print( '</div>' );
 
 // ------------------------------------ Bottom actions
 CB2::the_form_bottom( array(
-	'delete' => 'Delete whole definition'
+	'delete' => 'TODO: Delete whole definition'
 ) );

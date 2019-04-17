@@ -5,13 +5,13 @@
 global $post; // CB2_Day
 
 // ---------------------------------- template post
-$target_post   = ( isset( $template_args[ 'context_post' ] ) ? $template_args[ 'context_post' ] : NULL );
-$Class_target  = ( $target_post ? get_class( $target_post ) : NULL );
-if ( ! $target_post )
+$context_post   = ( isset( $template_args[ 'context_post' ] ) ? $template_args[ 'context_post' ] : NULL );
+$Class_target  = ( $context_post ? get_class( $context_post ) : NULL );
+if ( ! $context_post )
 	throw new Exception( "addto needs a target CB2_PeriodEntity." );
-if ( ! $target_post instanceof CB2_PeriodEntity )
+if ( ! $context_post instanceof CB2_PeriodEntity )
 	throw new Exception( "addto can only add to CB2_PeriodEntity. [$Class_target] sent through." );
-$period_group  = $target_post->period_group;
+$period_group  = $context_post->period_group;
 
 // <div form...
 CB2::the_hidden_form( $period_group->post_type(), array(), $period_group, 'addto' );
@@ -27,7 +27,7 @@ CB2::the_tabs( array(
 
 // ------------------------------------ Period Group
 print( "<div id='cb2-tab-periodgroup'>" );
-CB2::the_meta_box( "CB2_PeriodEntity_Timeframe_User_period_group", $target_post );
+CB2::the_meta_box( "CB2_PeriodEntity_Timeframe_User_period_group", $context_post );
 print( '</div>' );
 
 // ------------------------------------ Periods
