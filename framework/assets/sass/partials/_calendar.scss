@@ -39,18 +39,21 @@
 }
 
 .cb2-calendar-pager {
+
 	.button {
 		/* remove default text from view */
-		@extend %icon-hide-text;
+		// @extend %icon-hide-text;
 
-		&.next-page {
-			@extend %icon-page-next; // admin only
-		}
+		// &.next-page {
+		// 	@extend %icon-page-next; // admin only
+		// }
 
-		&.prev-page {
-			@extend %icon-page-prev; // admin only
-		}
-
+		// &.prev-page {
+		// 	@extend %icon-page-prev; // admin only
+		// }
+	}
+	.pagination-current-view {
+		line-height: 30px;
 	}
 }
 
