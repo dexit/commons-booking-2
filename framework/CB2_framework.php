@@ -21,14 +21,15 @@ require_once( CB2_PLUGIN_ROOT . 'framework/includes/lib/cmb2-metatabs-options/co
 
 /**
  * Includes - CB2_Query period framework
+ * Order is important here because it governs the installation order
  */
 require_once('CB2_Query/CB2_DateTime.php');
 require_once('CB2_Query/CB2_Query.php');
 require_once('CB2_Query/CB2_Database.php');
 require_once('CB2_Query/CB2_PostNavigator.php');
 require_once('CB2_Query/CB2_DatabaseTable_PostNavigator.php');
-require_once('CB2_Query/CB2_PeriodInst.php');
 require_once('CB2_Query/CB2_PeriodEntity.php');
+require_once('CB2_Query/CB2_PeriodInst.php');
 require_once('CB2_Query/CB2_PeriodInteractionStrategies.php');
 require_once('CB2_Query/CB2_Time_Classes.php');
 require_once('CB2_Query/WP_Query_integration.php');

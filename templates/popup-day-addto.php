@@ -4,9 +4,6 @@
 // using the context post as its target
 global $post; // CB2_Day
 
-if ( ! $post instanceof CB2_Day )
-	throw new Exception( 'CB2_Day required for popup' );
-
 // ---------------------------------- template post
 $target_post   = ( isset( $template_args[ 'context_post' ] ) ? $template_args[ 'context_post' ] : NULL );
 $Class_target  = ( $target_post ? get_class( $target_post ) : NULL );

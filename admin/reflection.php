@@ -60,13 +60,13 @@ if ( isset( $_GET['section'] ) ) {
 			break;
 		case 'un-install':
 			if ( $_GET['password'] == 'fryace4' ) {
-				CB2_Database::uninstall();
+				CB2_Database::uninstall( TRUE );
 				print( '<div>Finished UnInstallation.</div>' );
 			} else throw new Exception( 'Invalid password' );
 			break;
 		case 'install':
 			if ( $_GET['password'] == 'fryace4' ) {
-				CB2_Database::install();
+				CB2_Database::install( TRUE );
 				print( '<div>Finished Installation.</div>' );
 			} else throw new Exception( 'Invalid password' );
 			break;
@@ -130,23 +130,12 @@ if ( isset( $_GET['section'] ) ) {
 	print( '<div>Database [' . DB_NAME . "] DB_CHARSET: <b>$db_charset</b></div>" );
 	print( '<div>Database [' . DB_NAME . "] DB_COLLATE: <b>$db_collate</b></div>" );
 
-	// ---------------------------------------------------- WordPress
-	print( "<h2>WordPress ({$wpdb->prefix}postmeta)</h2>" );
-	$row_count = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}postmeta" );
-	$class = ( $row_count >= 1000 ? 'cb2-warning' : '' );
-	print( "<div class='$class'>row count: $row_count</div>" );
-
-	print( "<h2>WordPress ({$wpdb->prefix}posts)</h2>" );
-	$row_count = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}posts" );
-	$class = ( $row_count >= 1000 ? 'cb2-warning' : '' );
-	print( "<div class='$class'>row count: $row_count</div>" );
-
 	// ---------------------------------------------------- CB2
 	foreach ( $schema_array as $Class => $object_types ) {
 		$post_type         = ( property_exists( $Class, 'static_post_type' ) ? $Class::$static_post_type : '' );
-		$table_definitions = ( isset( $object_types['table'] ) ? $object_types['table'] : NULL );
-		$views             = ( isset( $object_types['views'] ) ? $object_types['views'] : NULL );
-		$stored_procedures = ( isset( $object_types['stored procedures'] ) ? $object_types['stored procedures'] : NULL );
+		$table_definitions = ( isset( $object_types['table'] ) ? $object_types['table'] : array() );
+		$views             = ( isset( $object_types['views'] ) ? $object_types['views'] : array() );
+		$stored_procedures = ( isset( $object_types['stored procedures'] ) ? $object_types['stored procedures'] : array() );
 
 		print( "<h2>$Class</h2>" );
 		// ----------------------------------------------- Infrastructure
@@ -165,10 +154,10 @@ if ( isset( $_GET['section'] ) ) {
 				$table_exists  = CB2_Database::has_table( $table_name );
 				$pseudo        = ( isset( $table_definition['pseudo'] )  ? $table_definition['pseudo']  : FALSE );
 				$pseudo_class  = ( $pseudo ? 'cb2-pseudo' : 'cb2-real' );
-				$pseudo_title  = ( $pseudo ? ' <b style="color:red">(pseudo)</b>' : '' );
+				$pseudo_title  = ( $pseudo ? ' <span style="color:green">(pseudo)</span>' : '' );
 				$managed       = ( isset( $table_definition['managed'] ) ? $table_definition['managed'] : TRUE );
 				$managed_class = ( $managed ? '' : 'cb2-unmanaged' );
-				$managed_title = ( $managed ? '' : ' <b style="color:red">(unmanaged)</b>' );
+				$managed_title = ( $managed ? '' : ' <span style="color:green">(unmanaged)</span>' );
 				$table_exists_class = ( $pseudo || $table_exists ? '' : 'cb2-table-not-exist' );
 
 				// ----------------------------------------------- TABLE
@@ -219,8 +208,7 @@ if ( isset( $_GET['section'] ) ) {
 				if ( ! $pseudo ) {
 					if ( CB2_Database::has_table( $table_name ) ) {
 						$row_count  = $wpdb->get_var( "SELECT count(*) from {$wpdb->prefix}$table_name" );
-						$class      = ( $row_count >= 1000 ? 'cb2-warning' : '' );
-						print( "<div class='$class'>row count: $row_count</div>" );
+						print( "<div>row count: $row_count</div>" );
 					}
 				}
 
@@ -264,8 +252,7 @@ if ( isset( $_GET['section'] ) ) {
 					print( " <span class='cb2-warning'>has different body</span>" );
 				} else {
 					$row_count = $wpdb->get_var( "SELECT count(*) from $full_name" );
-					$class     = ( $row_count >= 1000 ? 'cb2-warning' : '' );
-					print( "&nbsp;<span class='$class'>($row_count)</span>" );
+					print( "&nbsp;<span>($row_count)</span>" );
 				}
 				print( '</li>' );
 				$first = ', ';

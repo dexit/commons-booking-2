@@ -1,8 +1,6 @@
 <?php
-global $post;
+global $post; // CB2_PeriodInst
 
-if ( ! $post instanceof CB2_PeriodInst )
-	throw new Exception( 'CB2_PeriodInst required for popup' );
 if ( ! $post->period )
 	throw new Exception( 'CB2_PeriodInst has no specific period (CB2_Period)' );
 

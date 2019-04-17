@@ -1,8 +1,5 @@
 <?php
-global $post;
-
-if ( ! $post instanceof CB2_Location )
-	throw new Exception( 'CB2_Location required for popup' );
+global $post; // CB2_Location
 
 // <div form...
 CB2::the_hidden_form( $post->post_type(), array(), $post );

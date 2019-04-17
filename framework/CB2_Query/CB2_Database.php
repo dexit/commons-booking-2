@@ -121,19 +121,22 @@ class CB2_Database {
 		return implode( ";\n", $sqls );
 	}
 
-	public static function install() {
+	public static function install( Bool $display = FALSE ) {
 		global $wpdb;
 
 		$install_SQLs = self::get_install_sqls();
+		if ( $display ) print( '<ul>' );
 		foreach ( $install_SQLs as $sql ) {
 			// In this scenario we do not need DELIMITERs
 			// because the SQL statement is singular
 			$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
 			$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
 			if ( ! $is_comment && ! $is_delimiter ) {
+				if ( $display ) print( '<li><input type="checkbox" checked="1"/> ' . substr( htmlentities( $sql ), 0, 300 ) . '</li>' );
 				$wpdb->query( $sql );
 			}
 		}
+		if ( $display ) print( '</ul>' );
 	}
 
 	public static function get_install_sqls() {
@@ -190,6 +193,17 @@ class CB2_Database {
 		return $install_SQLs;
 	}
 
+	private static function database_constraint_exists( String $prefix, String $table_name, String $fk_name ) {
+		global $wpdb;
+		$exists = $wpdb->get_var( "SELECT 1 FROM information_schema.TABLE_CONSTRAINTS WHERE
+			CONSTRAINT_SCHEMA = DATABASE() AND
+			TABLE_NAME        = '$prefix$table_name' AND
+			CONSTRAINT_NAME   = '$fk_name' AND
+			CONSTRAINT_TYPE   = 'FOREIGN KEY'" );
+		if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>$table_name::$fk_name " . ( $exists ? 'exists' : 'does not exist' ) . '</span> ' );
+		return $exists;
+	}
+
 	private static function database_constraint_drops_SQL( $prefix, $definition ) {
 		// DROP all the constraints, not just the registered ones
 		// because the DB might have changed
@@ -206,16 +220,19 @@ class CB2_Database {
 			foreach ( $definition['many to many'] as $m2m_table => $m2m_definition ) {
 				$full_m2m_table = "$prefix$m2m_table";
 				$fk_name_base   = "fk_$full_m2m_table";
-				array_push( $sqls, "ALTER TABLE `$full_m2m_table` $mysql_constraint_drop `fk_$i`" );
+				if ( self::database_constraint_exists( $prefix, $m2m_table, "fk_$i" ) )
+					array_push( $sqls, "ALTER TABLE `$full_m2m_table` $mysql_constraint_drop `fk_$i`" );
 				$i++;
-				array_push( $sqls, "ALTER TABLE `$full_m2m_table` $mysql_constraint_drop `fk_$i`" );
+				if ( self::database_constraint_exists( $prefix, $m2m_table, "fk_$i" ) )
+					array_push( $sqls, "ALTER TABLE `$full_m2m_table` $mysql_constraint_drop `fk_$i`" );
 				$i++;
 			}
 		}
 
 		if ( isset( $definition['foreign keys'] ) ) {
 			foreach ( $definition['foreign keys'] as $column => $constraint ) {
-				array_push( $sqls, "ALTER TABLE `$full_table` $mysql_constraint_drop `fk_$i`" );
+				if ( self::database_constraint_exists( $prefix, $table_name, "fk_$i" ) )
+					array_push( $sqls, "ALTER TABLE `$full_table` $mysql_constraint_drop `fk_$i`" );
 				$i++;
 			}
 		}
@@ -238,6 +255,13 @@ class CB2_Database {
 		$managed    = ( isset( $definition['managed'] ) ? $definition['managed'] : TRUE );
 		if ( $pseudo || ! $managed ) throw new Exception( "$table_name is not managed. Why is drop SQL being requested?" );
 		array_push( $sqls, "DROP TABLE IF EXISTS `$prefix$table_name` CASCADE" );
+
+		if ( isset( $definition['many to many'] ) ) {
+			foreach ( $definition['many to many'] as $m2m_table => $details ) {
+				array_push( $sqls, "DROP TABLE IF EXISTS `$prefix$m2m_table` CASCADE" );
+			}
+		}
+
 		return $sqls;
 	}
 
@@ -436,15 +460,17 @@ class CB2_Database {
 		return $sqls;
   }
 
-  static function uninstall() {
+  static function uninstall( Bool $display = FALSE ) {
 		global $wpdb;
 
 		$install_SQLs = self::get_uninstall_sqls();
+		if ( $display ) print( '<ul>' );
 		foreach ( $install_SQLs as $sql ) {
 			$is_comment   = ( $sql && strstr( '#/', $sql[0] ) !== FALSE );
 			$is_delimiter = ( $sql && substr( $sql, 0, 10 ) == 'DELIMITER ' );
 			if ( ! $is_comment && ! $is_delimiter ) {
 				try {
+					if ( $display ) print( '<li><input type="checkbox" checked="1"/> ' . htmlentities( $sql ) . '</li>' );
 					$wpdb->query( $sql );
 				}
 				catch ( Exception $ex ) {
@@ -452,6 +478,7 @@ class CB2_Database {
 				}
 			}
 		}
+		if ( $display ) print( '</ul>' );
   }
 
   static function get_uninstall_sqls() {

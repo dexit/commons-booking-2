@@ -1,8 +1,5 @@
 <?php
-global $post;
-
-if ( ! $post instanceof CB2_Day )
-	throw new Exception( 'CB2_Day required for add' );
+global $post; // CB2_Day
 
 $properties       = $_POST;
 $properties['ID'] = CB2_CREATE_NEW;

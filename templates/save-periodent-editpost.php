@@ -1,8 +1,5 @@
 <?php
-global $post;
-
-if ( ! $post instanceof CB2_PeriodInst )
-	throw new Exception( 'CB2_PeriodInst required for popup' );
+global $post; // CB2_PeriodInst
 
 $periodinst    = &$post;
 $ID            = $periodinst->ID;
