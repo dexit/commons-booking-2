@@ -293,11 +293,15 @@ class CB2 {
 		$prevpage_start_string = $prevpage_start->format( CB2_Query::$datetime_format );
 		$prevpage_end_string   = $prevpage_end->format(   CB2_Query::$datetime_format );
 
+		$current_view_string = date('m/y', strtotime($startdate_string)) . ' – ' . date('m/y', strtotime($enddate_string));
+
+
 		return "<div class='entry-footer'>
 				<div class='cb2-calendar-pager'>
 					<span class='pagination-links'>
-					<a href='$timeless_url&startdate=$prevpage_start_string&enddate=$prevpage_end_string' class='prev-page button'>&lt;&lt; previous page</a>
-					<a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string' class='next-page button'>next page &gt;&gt;</a>
+					<a href='$timeless_url&startdate=$prevpage_start_string&enddate=$prevpage_end_string' class='prev-page button'>&lt;&lt;</a>
+					<span class='pagination-current-view'>$current_view_string</span>
+					<a href='$timeless_url&startdate=$nextpage_start_string&enddate=$nextpage_end_string' class='next-page button'>&gt;&gt;</a>
 					</span>
 				</div>
 			</div>";
