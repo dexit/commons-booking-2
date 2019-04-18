@@ -368,7 +368,7 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
       'datetime_period_inst_start' => $this->datetime_period_inst_start->format( CB2_Query::$json_date_format ),
       'datetime_period_inst_end' => $this->datetime_period_inst_start->format( CB2_Query::$json_date_format ),
       'datetime_from' => $this->period->datetime_from->format( CB2_Query::$json_date_format ),
-      'datetime_to' => ( $this->period->datetime_to ? $this->datetime_to->format( CB2_Query::$json_date_format ) : '' ),
+      'datetime_to' => ( $this->period->datetime_to ? $this->period->datetime_to->format( CB2_Query::$json_date_format ) : '' ),
       'period_status_type' => $this->period_entity->period_status_type,
       'recurrence_type' => $this->period->recurrence_type,
       'recurrence_frequency' => $this->period->recurrence_frequency,

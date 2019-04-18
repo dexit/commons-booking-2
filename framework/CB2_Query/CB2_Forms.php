@@ -76,7 +76,8 @@ class CB2_Forms {
   static function select_options( $records, $current_value = NULL, $add_none = TRUE, $by_name = FALSE ) {
     $html = '';
     if ( $add_none ) {
-			if ( $add_none === TRUE ) $add_none = '--none--';
+			if ( $add_none === TRUE ) $add_none = 'select';
+			$add_none = '-- ' . __( $add_none ) . ' --';
 			$html .= "<option value=''>$add_none</option>";
 		}
     foreach ( $records as $value => $name ) {
@@ -165,24 +166,48 @@ class CB2_Forms {
 		$selections       = array_merge( $defaults, $selections );
 
 		// --------------------------------------- Defaults
-		if ( ! isset( $selections['interval_to_show'] ) )  $selections['interval_to_show'] = 'P1M';
+		if ( ! isset( $selections['interval_to_show'] ) )  $selections['interval_to_show']  = 'P1M';
 		if ( ! isset( $selections['interaction_style'] ) ) $selections['interaction_style'] = NULL;
-		if ( ! isset( $selections['output_type'] ) )       $selections['output_type']      = 'Calendar';
-		if ( ! isset( $selections['context'] ) )           $selections['context']          = 'list';
-		if ( ! isset( $selections['template_part'] ) )     $selections['template_part']    = NULL;
-		if ( ! isset( $selections['selection_mode'] ) )    $selections['selection_mode']   = NULL;
-		if ( ! isset( $selections['schema_type'] ) )       $selections['schema_type']      = CB2_Week::$static_post_type;
+		if ( ! isset( $selections['output_type'] ) )       $selections['output_type']       = 'Calendar';
+		if ( ! isset( $selections['context'] ) )           $selections['context']           = NULL;
+		if ( ! isset( $selections['template_part'] ) )     $selections['template_part']     = NULL;
+		if ( ! isset( $selections['selection_mode'] ) )    $selections['selection_mode']    = NULL;
+		if ( ! isset( $selections['schema_type'] ) )       $selections['schema_type']       = NULL;
 		$today            = CB2_DateTime::today();
 		$plusXmonths      = $today->clone()->add( $selections['interval_to_show'] )->endTime();
 
-		// --------------------------------------- Checks
+		// --------------------------------------- Defaults
 		$output_type      = $selections['output_type'];
 		$schema_type      = $selections['schema_type'];
+		$schema_type_sent = $schema_type;
+		if ( ! $schema_type ) {
+			// automatic
+			switch ( $output_type ) {
+				case 'Calendar': $schema_type = CB2_Week::$static_post_type; break;
+				case 'Map':      $schema_type = CB2_Location::$static_post_type; break;
+				case 'List':     $schema_type = NULL; break;
+				case 'API/JSON': $schema_type = CB2_Item::$static_post_type; break;
+			}
+			$selections['schema_type'] = $schema_type;
+		}
+		$template_context = $selections['context'];
+		$template_context_sent = $template_context;
+		if ( ! $template_context ) {
+			// automatic
+			switch ( $output_type ) {
+				case 'Calendar': $template_context = 'list';  break;
+				case 'Map':      $template_context = 'hcard'; break;
+				case 'List':     $template_context = 'list';  break;
+				case 'API/JSON': $template_context = 'list';  break;
+			}
+			$selections['context'] = $template_context;
+		}
+
+		// --------------------------------------- Checks
 		if ( $output_type == 'Calendar' && (
 				 $schema_type == CB2_Location::$static_post_type
 			|| $schema_type == CB2_Item::$static_post_type
 			|| $schema_type == CB2_User::$static_post_type
-			|| $schema_type == 'form' // TODO: Legacy?
 		) )
 			print( '<div class="cb2-help">Calendar rendering of locations / items / users / forms maybe better in JSON output type</div>' );
 		if ( $output_type == 'Map'      && ( $schema_type != CB2_Location::$static_post_type ) )
@@ -199,80 +224,125 @@ class CB2_Forms {
 		$period_entity_options = self::select_options( self::period_entity_options(), CB2_Query::isset( $selections, 'period_entity_ID' ), TRUE );
 		$show_overridden_periods_checked = ( CB2_Query::isset( $selections, 'show_overridden_periods' ) ? 'checked="1"' : '' );
 		$show_blocked_periods_checked    = ( CB2_Query::isset( $selections, 'show_blocked_periods' )    ? 'checked="1"' : '' );
-		$period_status_type_options_html = self::count_options( self::period_status_type_options() );
-		$period_entity_options_html      = self::count_options( self::period_entity_options() );
 
 		$interaction_style    = self::select_options( array(
 			'cb2-one-row-scroll' => 'One Row Scroll',
 		), CB2_Query::isset( $selections, 'interaction_style' ) );
-		$output_options    = self::select_options( array(
+		$output_options_array = array(
 			'Calendar' => 'Calendar',
+			'List'     => 'List',
 			'Map'      => 'Map',
-			'API/JSON' => 'API/JSON'
-		), CB2_Query::isset( $selections, 'output_type' ) );
-		$schema_options    = self::select_options( self::schema_options(), CB2_Query::isset( $selections, 'schema_type' ) );
+		);
+		if ( WP_DEBUG ) $output_options_array['API/JSON'] = 'API/JSON (WP_DEBUG)';
+		$output_options    = self::select_options(
+			$output_options_array,
+			CB2_Query::isset( $selections, 'output_type' ), FALSE
+		);
+		$schema_options    = self::select_options(
+			self::schema_options(),
+			$schema_type_sent, "automatic ($schema_type)"
+		);
 		$context_options   = self::select_options( array(
 			'list'   => 'list',
 			'popup'  => 'popup',
 			'hcard'  => 'hcard',
 			'single' => 'single',
-		), CB2_Query::isset( $selections, 'context' ) );
+		), $template_context_sent, "automatic ($template_context)"  );
 		$template_options  = self::select_options( array(
 			'available'  => 'available',
 			'items'      => 'items',
 			'indicators' => 'indicators',
 			'overlaid'   => 'overlaid',
-		), CB2_Query::isset( $selections, 'template_part' ) );
+		), CB2_Query::isset( $selections, 'template_part' ), 'none' );
 		$selection_mode_options   = self::select_options( array(
 			'range'   => 'range',
-		), CB2_Query::isset( $selections, 'selection_mode' ), TRUE );
+		), CB2_Query::isset( $selections, 'selection_mode' ), 'single' );
 		$display_strategys = self::select_options(
 			CB2_Query::subclasses( 'CB2_PeriodInteractionStrategy' ),
 			CB2_Query::isset( $selections, 'display_strategy', 'WP_Query' ),
-			TRUE, TRUE
+			'raw', TRUE
 		);
-		$class_WP_DEBUG    = ( WP_DEBUG ? '' : 'hidden' );
-		$extended_class    = ( isset( $selections['extended'] )    ? '' : 'none' );
 
-		$extended_url  = CB2_Query::pass_through_query_string( NULL, array( 'extended' => 1 ) );
-		$location_text = __( 'Location' );
-		$item_text     = __( 'Item' );
-		$user_text     = __( 'User' );
-		$author_text   = __( 'Author' );
-		$advanced_text = __( 'advanced' );
+		$class_WP_DEBUG    = ( WP_DEBUG ? '' : 'hidden' );
+		$advanced_class    = ( isset( $selections['advanced'] ) ? 'block' : 'none' );
+		$advanced_checked  = ( isset( $selections['advanced'] ) ? 'checked="1"' : '' );
+		$dates_text        = __( 'Time Period' );
+		$location_text     = __( 'Location' );
+		$item_text         = __( 'Item' );
+		$output_type_text  = __( 'Display as' );
+		$period_status_type_options_html = self::count_options( self::period_status_type_options() );
+		$period_status_type_text = __( 'Status' ) . $period_status_type_options_html;
+		$user_text         = __( 'User' );
+		$author_text       = __( 'Author' );
+		$advanced_text     = __( 'advanced' );
+		$period_entity_options_html = self::count_options( self::period_entity_options() );
+		$period_entity_text      = __( 'Period Entity' ) . $period_entity_options_html;
+		$interaction_style_text  = __( 'Interaction Style' );
+		$schema_hierarchy_text   = __( 'Schema Hierarchy' );
+		$template_context_text   = __( 'Template Context' );
+		$template_part_text      = __( 'Template Part' );
+		$display_strategy_text   = __( 'Display Strategy' );
+		$selection_mode_text     = __( 'Selection Mode' );
 
 		print( <<<HTML
-			<form class='$form_class'>
+			<form class='$form_class cb2-form'><div>
 				<input name='page' type='hidden' value='cb2-calendar'/>
-				<input type='text' name='startdate' value='$startdate_string'/> to
-				<input type='text' name='enddate' value='$enddate_string'/>
-				$location_text:<select name="location_ID">$location_options</select>
-				$item_text:<select name="item_ID">$item_options</select>
-				<span class="cb2-todo">$user_text</span>:<select name="user_ID">$user_options</select>
-				<div style='display:$extended_class'>
-					<input type="hidden" name="extended$extended_class" value="1"/>
-					Period Status Type:
-						$period_status_type_options_html
-						<select name="period_status_type_ID">$period_status_type_options</select>
-					Period Entity:
-						$period_entity_options_html
-						<select name="period_entity_ID">$period_entity_options</select>
-					<span class="cb2-todo">$author_text</span>:<select name="author_ID">$author_options</select>
-					<br/>
-					Interaction Style: <select name="interaction_style">$interaction_style</select>
-					Output Type:       <select name="output_type">$output_options</select>
-					Schema Hierarchy:  <select name="schema_type">$schema_options</select>
-					Template Context:  <select name="context">$context_options</select>
-					Template Part:     <select name="template_part">$template_options</select>
-					<br/>
-					Display Strategy:  <select name="display_strategy">$display_strategys</select>
-					Selection Mode:    <select name="selection_mode">$selection_mode_options</select>
-					<input id='show_overridden_periods' type='checkbox' $show_overridden_periods_checked name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
-					<input id='show_blocked_periods'    type='checkbox' $show_blocked_periods_checked    name='show_blocked_periods'/>    <label for='show_blocked_periods'>show blocked periods</label>
+				<div class="cb2-form-wrapper">
+					$dates_text: <input type='text' name='startdate' value='$startdate_string'/> to
+					<input type='text' name='enddate' value='$enddate_string'/>
 				</div>
-				<input class="cb2-submit button" type="submit" value="Filter"/>
-				<a class='cb2-WP_DEBUG $class_WP_DEBUG' href='$extended_url'>+ $advanced_text</a>
-			</form>
+				<div class="cb2-form-wrapper">
+					$location_text: <select name="location_ID">$location_options</select>
+				</div>
+				<div class="cb2-form-wrapper">
+					$item_text: <select name="item_ID">$item_options</select>
+				</div>
+				<div class="cb2-form-wrapper cb2-todo">
+					$user_text: <select name="user_ID">$user_options</select>
+				</div>
+				<div class="cb2-form-wrapper">
+					$period_status_type_text: <select name="period_status_type_ID">$period_status_type_options</select>
+				</div>
+				<div class="cb2-form-wrapper">
+					$output_type_text: <select name="output_type">$output_options</select>
+				</div>
+				<div style='display:$advanced_class'>
+					<div class="cb2-form-wrapper">
+						$period_entity_text: <select name="period_entity_ID">$period_entity_options</select>
+					</div>
+					<div class="cb2-form-wrapper cb2-todo">
+						$author_text:<select name="author_ID">$author_options</select>
+					</div>
+					<div class="cb2-form-wrapper">
+						$interaction_style_text: <select name="interaction_style">$interaction_style</select>
+					</div>
+					<div class="cb2-form-wrapper">
+						$schema_hierarchy_text:  <select name="schema_type">$schema_options</select>
+					</div>
+					<div class="cb2-form-wrapper">
+						$template_context_text:  <select name="context">$context_options</select>
+					</div>
+					<div class="cb2-form-wrapper">
+						$template_part_text:     <select name="template_part">$template_options</select>
+					</div>
+					<div class="cb2-form-wrapper">
+						$display_strategy_text:  <select name="display_strategy">$display_strategys</select>
+					</div>
+					<div class="cb2-form-wrapper">
+						$selection_mode_text:    <select name="selection_mode">$selection_mode_options</select>
+					</div>
+					<div class="cb2-form-wrapper">
+						<input id='show_overridden_periods' type='checkbox' $show_overridden_periods_checked name='show_overridden_periods'/> <label for='show_overridden_periods'>show overridden periods</label>
+					</div>
+					<div class="cb2-form-wrapper">
+						<input id='show_blocked_periods'    type='checkbox' $show_blocked_periods_checked    name='show_blocked_periods'/>    <label for='show_blocked_periods'>show blocked periods</label>
+					</div>
+				</div>
+				<div class="cb2-form-wrapper">
+					<input class="cb2-submit button" type="submit" value="Filter"/>
+					<input id="cb2-advanced" onclick="jQuery(this.form).submit()" $advanced_checked type="checkbox" name="advanced" /> <label for="cb2-advanced">$advanced_text</label>
+				</div>
+			</div></form>
 HTML
 		);
 	}

@@ -50,6 +50,16 @@ body .cb2-calendar-grey .cb2-calendar > .entry-content > .cb2-subposts > li {
 	min-width: 50px;
 }
 
+.cb2-form-wrapper {
+	float:left;
+	margin-right:5px;
+}
+.cb2-form:after {
+	content:' ';
+	display:table;
+	clear:both;
+}
+
 .cb2-time-guide {
 	position:absolute;
 	z-index:20002;

@@ -3,17 +3,18 @@
 global $wp_query;
 
 // We set the global $wp_query so that all template functions will work
+// --------------------------------------- Form
+// Can change inputs
+$title_text = __( 'Calendar' );
+print( "<h1>$title_text</h1>" );
+CB2_Forms::the_form( $_REQUEST );
+
+// --------------------------------------- Query
 // And also so pre_get_posts will not bulk with no global $wp_query
 wp_reset_query();
 $wp_query = CB2_PeriodInteractionStrategy::factory_from_args($_REQUEST, array(
     'display-strategy' => 'CB2_AllItemAvailability',
 ));
-
-
-// --------------------------------------- Page
-$title_text = __( 'Calendar' );
-print( "<h1>$title_text</h1>" );
-CB2_Forms::the_form( $_REQUEST );
 
 // --------------------------------------- Debug
 if ( WP_DEBUG ) {
@@ -27,6 +28,7 @@ if ( WP_DEBUG ) {
 		print( "<div class='cb2-WP_DEBUG' style='display:$extended_class;border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
 		print( "<b>$wp_query->post_count</b> posts returned" );
 		print( ' containing only <b>[' . implode( ', ', $post_types ) . "]</b> post_types" );
+		print( " to show in schema type [$_REQUEST[schema_type]]" );
 		print( ' <span class="dashicons-before dashicons-admin-tools" style="color:#aaa;"></span><a class="cb2-calendar-krumo-show">more...</a>' );
 		print( '<div class="cb2-calendar-krumo" style="display:none;">' );
 		print( "<div style='border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>
@@ -89,6 +91,14 @@ switch ( $_REQUEST['output_type'] ) {
 		CB2::the_inner_loop( $template_args, $wp_query, $_REQUEST['context'], $_REQUEST['template_part'] );
 		print( '</ul>' );
 		print( geo_hcard_map_shortcode_handler( NULL ) );
+		break;
+
+	case 'List':
+		?>
+		<ul class="cb2-subposts">
+			<?php CB2::the_inner_loop( $template_args, $wp_query, $_REQUEST['context'], $_REQUEST['template_part'] ); ?>
+		</ul>
+		<?php
 		break;
 
 	case 'Calendar':

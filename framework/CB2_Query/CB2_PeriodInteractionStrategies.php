@@ -36,11 +36,8 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		// Defaults
 		if ( is_null( $startdate ) )   $startdate   = ( isset( $_REQUEST['startdate'] )   ? new CB2_DateTime( $_REQUEST['startdate'] ) : new CB2_DateTime() );
 		if ( is_null( $enddate ) )     $enddate     = ( isset( $_REQUEST['enddate'] )     ? new CB2_DateTime( $_REQUEST['enddate'] )   : (clone $startdate)->add( new DateInterval('P1M') ) );
-		if ( is_null( $schema_type ) ) $schema_type = ( isset( $_REQUEST['schema_type'] )
-			? $_REQUEST['schema_type']
-			: CB2_Week::$static_post_type
-		);
-		if ( is_null( $query ) )     $query         = array();
+		if ( is_null( $schema_type ) ) $schema_type = CB2_Query::isset( $_REQUEST, 'schema_type' );
+		if ( is_null( $query ) )       $query       = array();
 
 		// Properties
 		$this->startdate   = $startdate;
@@ -130,7 +127,7 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		if ( ! isset( $inputs['period_group_id'] ) )  $inputs['period_group_id'] = NULL;
 		if ( ! isset( $inputs['period_status_type_ID'] ) ) $inputs['period_status_type_ID'] = NULL;
 		if ( ! isset( $inputs['period_entity_ID'] ) ) $inputs['period_entity_ID'] = NULL;
-		if ( ! isset( $inputs['schema_type'] ) )      $inputs['schema_type'] = CB2_Week::$static_post_type;
+		if ( ! isset( $inputs['schema_type'] ) )      $inputs['schema_type'] = NULL;
 		if ( ! isset( $inputs['show_blocked_periods'] ) ) $inputs['show_blocked_periods'] = FALSE;
 		if ( ! isset( $inputs['show_overridden_periods'] ) ) $inputs['show_overridden_periods'] = FALSE;
 
@@ -529,7 +526,7 @@ class CB2_AllItemAvailability extends CB2_PeriodInteractionStrategy {
 		return new self( $startdate, $enddate, $schema_type, $args );
 	}
 
-	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = 'week', Array $query = array() ) {
+	function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = NULL, Array $query = array() ) {
 		parent::__construct( $startdate, $enddate, $schema_type, $query );
 	}
 
@@ -622,7 +619,7 @@ class CB2_SingleItemAvailability extends CB2_AllItemAvailability {
 		return new self( $item, $startdate, $enddate, $schema_type, $show_overridden_periods, $args );
 	}
 
-	function __construct( CB2_Item $item = NULL, CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = 'week', Bool $show_overridden_periods = FALSE, Array $query = array() ) {
+	function __construct( CB2_Item $item = NULL, CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = NULL, Bool $show_overridden_periods = FALSE, Array $query = array() ) {
 		global $post;
 		$this->item = ( $item ? $item : $post );
 		if ( ! $this->item instanceof CB2_Item )

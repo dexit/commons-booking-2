@@ -2,6 +2,18 @@ function cb2_process(){
 	var $ = jQuery;
 	var WP_DEBUG = $('body.cb2-WP_DEBUG-on').length;
 
+	$('form').on('submit', function(){
+		var self = this;
+		setTimeout(function(){
+			var jSubmit = $(self).find(':input[type=submit]');
+			jSubmit.val(jSubmit.val() + ' ...');
+			jSubmit.after(' <progress></progress> ');
+			$(self).find(':input')
+				.attr('disabled', '1')
+				.addClass('cb2-disabled');
+		}, 0);
+	});
+
 	$('.type-day').click(function(){
 		// Day selected, lets check for listeners
 		// e.g. a map which needs to re-adjust its view
