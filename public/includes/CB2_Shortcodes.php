@@ -18,24 +18,25 @@ class CB2_Shortcodes {
 		add_shortcode( 'cb2_map',               array( 'CB2_Shortcodes', 'map_shortcode' ) ) ;
 	}
 
-	public static function booking_form_shortcode( $atts = '' ) {
+	public static function booking_form_shortcode( $atts = '', $content = '', $tag = '', Array $passed_default_atts = array()   ) {
 		global $post;
 		$html = '';
+		$args = shortcode_atts( array(), $atts, 'cb2_booking_form_shortcode' );
 
 		// Get the single item ID
 		$itemID = NULL;
-		if ( isset( $atts['item-id'] ) )                $itemID = (int) $atts['item-id'];
+		if ( isset( $args['item-id'] ) )                $itemID = (int) $args['item-id'];
 		else if ( $post && $post->post_type == 'item' ) $itemID = (int) $post->ID;
 		else $html .= __( 'item-id or global item post required' );
 
 		if ( $itemID ) {
-			$atts['item-id'] = $itemID;
+			$args['item-id'] = $itemID;
 			$item            = CB2_Query::get_post_with_type( 'item', $itemID );
 			$title_text      = $item->post_title;
 			$form_title_text = __( 'Booking of' ) . " $title_text";
 			$do_action       = 'CB2_Item::book';
 			$button_text     = __('book the') . " $title_text";
-			$calendar        = CB2_Shortcodes::booking_calendar_shortcode( $atts );
+			$calendar        = CB2_Shortcodes::booking_calendar_shortcode( $atts, $content, $tag, $args );
 
 			$html .= <<<HTML
 				<form action='' method='POST'><div>
@@ -53,19 +54,20 @@ HTML;
 		return $html;
 	}
 
-	public static function booking_calendar_shortcode( $atts = '' ) {
+	public static function booking_calendar_shortcode( $atts = '', $content = '', $tag = '', Array $passed_default_atts = array() ) {
 		global $post;
 		$html   = '';
+		$args = shortcode_atts( array(), $atts, 'cb2_booking_form_shortcode' );
 
 		// Get the single item ID
 		$itemID = NULL;
-		if ( isset( $atts['item-id'] ) )                $itemID = (int) $atts['item-id'];
+		if ( isset( $args['item-id'] ) )                $itemID = (int) $args['item-id'];
 		else if ( $post && $post->post_type == 'item' ) $itemID = (int) $post->ID;
 		else $html .= __( 'item-id or global item post required' );
 
 		// Generate Calendar
 		if ( $itemID )
-			$html .= self::calendar_shortcode( $atts, array(
+			$html .= self::calendar_shortcode( $atts, $content, $tag, array(
 				'display-strategy' => 'CB2_SingleItemAvailability',
 				'item_ID'          => $itemID,
 				'context'          => 'list',
@@ -87,7 +89,7 @@ HTML;
 		), $passed_default_atts );
 
 		// ------------------------------------- Query
-		$args = shortcode_atts( $default_atts, $atts, 'cb_calendar' );
+		$args = shortcode_atts( $default_atts, $atts, 'cb2_calendar' );
 		if ( ! is_array( $atts ) ) $atts = array( $atts );
 		$args             = array_merge( $atts, $args, $_REQUEST );
 		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args );
