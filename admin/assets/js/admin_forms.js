@@ -2,7 +2,7 @@ function cb2_process(){
 	var $ = jQuery;
 	var WP_DEBUG = $('body.cb2-WP_DEBUG-on').length;
 
-	$('form').on('submit', function(){
+	$('.cb2-form').on('submit', function(){
 		var self = this;
 		setTimeout(function(){
 			var jSubmit = $(self).find(':input[type=submit]');

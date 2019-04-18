@@ -18,7 +18,7 @@ class CB2_Shortcodes {
 		add_shortcode( 'cb2_map',               array( 'CB2_Shortcodes', 'map_shortcode' ) ) ;
 	}
 
-	public static function booking_form_shortcode ( $atts = array() ) {
+	public static function booking_form_shortcode( $atts = '' ) {
 		global $post;
 		$html = '';
 
@@ -53,7 +53,7 @@ HTML;
 		return $html;
 	}
 
-	public static function booking_calendar_shortcode ( $atts = array() ) {
+	public static function booking_calendar_shortcode( $atts = '' ) {
 		global $post;
 		$html   = '';
 
@@ -76,7 +76,7 @@ HTML;
 		return $html;
 	}
 
-	public static function calendar_shortcode ( $atts = array(), Array $passed_default_atts = array() ) {
+	public static function calendar_shortcode( $atts = '', $content = '', $tag = '', Array $passed_default_atts = array() ) {
 		global $post;
 
 		$default_atts = array_merge( array(
@@ -129,7 +129,7 @@ HTML;
 		return $html;
 	}
 
-	public static function map_shortcode ( $atts = array() ) {
+	public static function map_shortcode ( $atts = '' ) {
 		global $post;
 
 		$default_atts = array(
