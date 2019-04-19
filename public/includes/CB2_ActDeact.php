@@ -120,6 +120,7 @@ class CB2_ActDeact {
 		self::add_roles();
 		self::add_capabilities();
 		self::upgrade_procedure();
+		CB2_Settings::set_default_options();
 
 		// Clear the permalinks
 		flush_rewrite_rules();

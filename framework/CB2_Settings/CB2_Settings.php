@@ -90,13 +90,6 @@ class CB2_Settings {
         }
         return self::$instance;
     }
-    /**
-     * Initialize
-     *
-     * @since 2.0.0
-     *
-     * @return void
-     */
 
     public static function localize( Array $options_mask = array() ) {
 			$option_array     = get_option( self::$settings_prefix );
@@ -118,6 +111,13 @@ class CB2_Settings {
 			return $new_option_array;
 		}
 
+		/**
+     * Initialize
+     *
+     * @since 2.0.0
+     *
+     * @return void
+     */
     public static function initialize()
     {
     	require_once(CB2_PLUGIN_ROOT . 'framework/CB2_Settings/includes/settings_metaboxes.php');
@@ -162,6 +162,26 @@ class CB2_Settings {
 			}
     }
 
+    public static function set( String $option_id, Int $post_id = NULL, $value = '' ) {
+			$option_array = get_option( self::$settings_prefix ); // the unserialised plugin settings array
+
+			// first, check if the settings is overwritten in post meta
+			if ( ( $post_id ) && cb2_post_exists ( $post_id ) ) { // post exists
+
+				$meta_key = '_' . self::$settings_prefix . '_' . $option_id; // the name
+				$post_type = get_post_type ( $post_id );
+
+				if ( in_array( $meta_key, (array) get_post_custom_keys( $post_id) )) { // check if set in post meta
+					return set_post_meta( $post_id, $meta_key , true);
+				}
+
+			} // otherwise return global plugin settings
+			else {
+				$option_array[$option_id] = $value;
+				update_option( self::$settings_prefix, $option_array );
+			}
+    }
+
     /**
      * Get settings group
      *
@@ -188,8 +208,27 @@ class CB2_Settings {
 	 * @TODO
 	 *
 	 */
-	public function set_default_options() {
+	public static function set_default_options() {
+		array_walk( self::$plugin_settings_metaboxes, array( get_class(), 'set_default_options_recursive' ) );
+	}
 
+	private static function set_default_options_recursive( $value, String $key ) {
+		if ( is_array( $value ) ) {
+			if ( $key == 'fields' ) {
+				foreach ( $value as $key => $field ) {
+					if ( isset( $field['default'] ) && isset( $field['id'] ) ) {
+						$id      = $field['id'];
+						$default = $field['default'];
+						if ( $id && $default ) {
+							if ( is_array( $default ) ) $default = implode( ',', $default );
+							CB2_Settings::set( $id, NULL, $default );
+						}
+					}
+				}
+			} else {
+				array_walk( $value, array( get_class(), 'set_default_options_recursive' ) );
+			}
+		}
 	}
 
 	/**

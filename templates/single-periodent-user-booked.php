@@ -6,16 +6,16 @@ $message_class  = 'cb2-notice';
 $fdisplay_order = 'cb2_item_location_summary';
 
 if ( CB2::is_confirmed() ) {
-	$message_default = 'Your booking of {{item-name}} at {{location-name}} has been confirmed!';
-	$message_booking_confirmed = CB2_Settings::get( 'messagetemplates_booking-confirmed', NULL, __( $message_default ) );
+	CB2_Settings::set_default_options();
+
+	$message_booking_confirmed = CB2_Settings::get( 'messagetemplates_booking-confirmed' );
 	CB2::the_message( $message_booking_confirmed, array( $message_class ) );
 
 	CB2::the_inner_loop( NULL, NULL, 'summary', NULL, '', '', $fdisplay_order );
 } else {
 	$do_action    = 'confirm';
 	$confirm_text = __( 'Confirm', 'commons-booking-2' );
-	$message_default = 'Please confirm your booking of {{item-name}} at {{location-name}}';
-	$message_please_confirm = CB2_Settings::get( 'messagetemplates_please-confirm', NULL, __( $message_default ) );
+	$message_please_confirm = CB2_Settings::get( 'messagetemplates_please-confirm' );
 	CB2::the_message( $message_please_confirm, array( $message_class ) );
 
 	CB2::the_inner_loop( NULL, NULL, 'summary', NULL, '', '', $fdisplay_order );

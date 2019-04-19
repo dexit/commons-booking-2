@@ -80,21 +80,21 @@ array(
 		'desc' => '@todo',
 		'fields' => array(
 			array(
-				'name' => __('Minimum usage time', 'commons-booking-2'),
+				'name' => '<span class="cb2-todo">' . __('Minimum usage time', 'commons-booking-2') . '</span>',
 				'id' => 'bookingoptions_min-usage',
 				'desc' => __('hh:mm', 'commons-booking-2'),
 				'type' => 'text_time',
 				'time_format' => 'H:i',
 			),
 			array(
-				'name' => __('Maximum usage time', 'commons-booking-2'),
+				'name' => '<span class="cb2-todo">' . __('Maximum usage time', 'commons-booking-2') . '</span>',
 				'id' => 'bookingoptions_max-usage',
 				'desc' => __('hh:mm', 'commons-booking-2'),
 				'type' => 'text_time',
 				'time_format' => 'H:i',
 			),
 			array(
-				'name' => __('Minimum usage slots', 'commons-booking-2'),
+				'name' => '<span class="cb2-todo">' . __('Minimum usage slots', 'commons-booking-2') . '</span>',
 				'id' => 'bookingoptions_min-period-usage',
 				'type' => 'text',
 				'attributes' => array(
