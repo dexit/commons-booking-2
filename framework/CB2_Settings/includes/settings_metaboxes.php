@@ -94,6 +94,24 @@ array(
 				'time_format' => 'H:i',
 			),
 			array(
+				'name' => __('Minimum usage slots', 'commons-booking-2'),
+				'id' => 'bookingoptions_min-period-usage',
+				'type' => 'text',
+				'attributes' => array(
+					'type'    => 'number',
+					'pattern' => '\d*',
+				),
+			),
+			array(
+				'name' => __('Maximum usage periods', 'commons-booking-2'),
+				'id'   => 'bookingoptions_max-period-usage',
+				'type' => 'text',
+				'attributes' => array(
+					'type'    => 'number',
+					'pattern' => '\d*',
+				),
+			),
+			array(
 				'name' => __('Approval needed', 'commons-booking-2'),
 				'desc' => __('Bookings need to be approved by an admin', 'commons-booking-2'),
 				'id' => 'bookingoptions_approval-needed',
@@ -105,8 +123,8 @@ array(
 				'desc'    => __( 'Field Description', 'cmb2' ),
 				'id'      => 'your_switch_button',
 				'type'    => 'switch',
-				'default'    => 0,
-				'label'    => array('on'=> 'On', 'off'=> 'Off')
+				'default' => 0,
+				'label'   => array('on'=> 'On', 'off'=> 'Off')
 			),
 			array(
 				'name' => __( 'Field Name', 'cmb2' ),

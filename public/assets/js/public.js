@@ -15,6 +15,7 @@
 				var selection_mode = 'none';
 				var selections     = $();
 				var selectables    = $();
+				var settings       = {};
 				var earliest, latest, range;
 
 				// The default checkbox event will check the checkbox
@@ -32,6 +33,13 @@
 				if (selection_container.length) {
 					var selection_container_class = selection_container.attr('class');
 					var selection_mode_matches    = selection_container_class.match(/cb2-selection-mode-([^ ]+)/);
+					var selection_container_js_m  = selection_container_class.match(/cb2_settings_([^ ]+)_([^ ]+)/);
+					var selection_container_js;
+					if ( selection_container_js_m ) {
+						selection_container_js = selection_container_js_m[0];
+						settings = ( window[selection_container_js] ? window[selection_container_js] : {} );
+						if (window.console) console.log(settings);
+					}
 					selectables = selection_container.find('.cb2-selectable, .cb2-not-includable');
 					selections  = selection_container.find('.cb2-selected');
 					earliest    = selections.first();
@@ -84,15 +92,16 @@
 									}
 
 									if (inrange) {
-										if (range_selected == 3) {
+										if (settings.selection_periods_max && range_selected >= settings.selection_periods_max) {
 											selectables
 												.removeClass('cb2-range-selected')
 												.removeClass('cb2-selected')
 												.find(':input').removeAttr('checked');
 											// TODO: Some better translateable warning
-											alert('cannot select more than 3 periods');
+											alert('cannot select more than ' + settings.selection_periods_max + ' periods');
 											bcontinue = false;
-										} else if (jThis.hasClass('cb2-not-includable')) {
+										}
+										else if (jThis.hasClass('cb2-not-includable')) {
 											selectables
 												.removeClass('cb2-range-selected')
 												.removeClass('cb2-selected')
@@ -100,7 +109,8 @@
 											// TODO: Some better translateable warning
 											alert('cannot select accross non-inclusions');
 											bcontinue = false;
-										} else {
+										}
+										else {
 											jThis.addClass('cb2-range-selected');
 											range_selected++;
 										}

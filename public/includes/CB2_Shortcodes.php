@@ -73,6 +73,8 @@ HTML;
 				'context'          => 'list',
 				'template-type'    => 'available',
 				'selection-mode'   => 'range',
+				'selection-periods-min' => CB2_Settings::get( 'bookingoptions_min-period-usage' ),
+				'selection-periods-max' => CB2_Settings::get( 'bookingoptions_max-period-usage' ),
 			) );
 
 		return $html;
@@ -95,13 +97,21 @@ HTML;
 		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args );
 		if ( WP_DEBUG && FALSE ) krumo( $display_strategy );
 
+		// ------------------------------------- localize all args
+		$calendar_name    = CB2_Query::isset( $args, 'name', 'main' );
+		$script_handle    = CB2_TEXTDOMAIN . "-calendar-settings-$calendar_name";
+		$calendar_name_js = 'cb2_settings_calendar_' . preg_replace( '/[^a-zA-Z0-9]/', '_', $calendar_name );
+		wp_register_script( $script_handle, plugins_url( "public/assets/js/settings.js", CB2_PLUGIN_ABSOLUTE ) );
+		wp_enqueue_script(  $script_handle );
+		wp_localize_script( $script_handle, $calendar_name_js, $args );
+
 		// ------------------------------------- CSS and INPUT all args
-		$css_classes = '';
+		$css_classes   = '';
 		foreach ( $args as $name => $value ) {
 			$name = str_replace( '_', '-', $name );
 			if ( $value ) $css_classes .= "cb2-$name-$value "; // cb2-selection-mode-range ...
 		}
-		$html = "<div class='cb2-selection-container cb2-content $css_classes'>";
+		$html = "<div class='cb2-selection-container cb2-content $css_classes $calendar_name_js'>";
 		// Send all input arguments through in the form
 		// this allows, for example, selection_mode to be understood by the submission PHP
 		// namespace these in case their are multiple calendars in 1 page?

@@ -97,6 +97,27 @@ class CB2_Settings {
      *
      * @return void
      */
+
+    public static function localize( Array $options_mask = array() ) {
+			$option_array     = get_option( self::$settings_prefix );
+			$new_option_array = array();
+			$keys             = array_keys( $option_array );
+			$has_mask         = count( $options_mask );
+			foreach ( $option_array as $key => $value ) {
+				if ( ! $has_mask || in_array( $key, $options_mask ) ) {
+					$new_key = preg_replace( '/[^a-zA-Z0-9]/', '_', $key );
+					$new_option_array[$new_key] = $option_array[$key];
+				}
+			}
+
+			$script_handle = CB2_TEXTDOMAIN . '-settings';
+			wp_register_script( $script_handle, plugins_url( "public/assets/js/settings.js", CB2_PLUGIN_ABSOLUTE ) );
+			wp_enqueue_script(  $script_handle );
+			wp_localize_script( $script_handle, 'cb2_settings', $new_option_array );
+
+			return $new_option_array;
+		}
+
     public static function initialize()
     {
     	require_once(CB2_PLUGIN_ROOT . 'framework/CB2_Settings/includes/settings_metaboxes.php');
