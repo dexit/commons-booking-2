@@ -1,32 +1,30 @@
 <?php
-$ID    = get_the_ID();
-$Class = CB2::get_the_Class(); // CB2_PeriodEntity_Timeframe_User
+$ID             = get_the_ID();
+$Class          = CB2::get_the_Class(); // CB2_PeriodEntity_Timeframe_User
+$post_type      = get_post_type();      // periodent-user
+$message_class  = 'cb2-notice';
+$fdisplay_order = 'cb2_item_location_summary';
 
 if ( CB2::is_confirmed() ) {
-	/* Notice */
-	cb2_tag( CB2_Settings::get('messagetemplates_booking-confirmed'), 'periodent-user', $ID, 'notice' );
+	$message_default = 'Your booking of {{item-name}} at {{location-name}} has been confirmed!';
+	$message_booking_confirmed = CB2_Settings::get( 'messagetemplates_booking-confirmed', NULL, __( $message_default ) );
+	CB2::the_message( $message_booking_confirmed, array( $message_class ) );
 
-	CB2::the_inner_loop( NULL, NULL, 'summary', NULL, '', '', 'cb2_item_location_summary' );
+	CB2::the_inner_loop( NULL, NULL, 'summary', NULL, '', '', $fdisplay_order );
 } else {
 	$do_action    = 'confirm';
 	$confirm_text = __( 'Confirm', 'commons-booking-2' );
+	$message_default = 'Please confirm your booking of {{item-name}} at {{location-name}}';
+	$message_please_confirm = CB2_Settings::get( 'messagetemplates_please-confirm', NULL, __( $message_default ) );
+	CB2::the_message( $message_please_confirm, array( $message_class ) );
 
-	// TODO: think about this cb2_tag( messagetemplates_please-confirm ) to CB2::*
-	// cb2_tag() envelopes the template system around customizeable messages
-	// post_type 'periodent-user' controls what tagging is available
-	// So:
-	//   CB2::the_template_message('messagetemplates_please-confirm', 'notice')
-	// which uses the global post, post_type and its ID
-	// TODO: and allow the relevant Class to decide its available template tags
-	cb2_tag( CB2_Settings::get('messagetemplates_please-confirm'), 'periodent-user', $ID, 'notice' );
-
-	CB2::the_inner_loop( NULL, NULL, 'summary', NULL, '', '', 'cb2_item_location_summary' );
+	CB2::the_inner_loop( NULL, NULL, 'summary', NULL, '', '', $fdisplay_order );
 
 	print( "<a href='?do_action=$Class::$do_action&do_action_post_ID=$ID' class='cb2-button'>$confirm_text</a>" );
 }
 
-// Manual sorting of the inner posts
 function cb2_item_location_summary( $post1, $post2 ) {
+	// Manual sorting of the inner posts
 	$order = array(
 		'item'     => 1,
 		'location' => 2,

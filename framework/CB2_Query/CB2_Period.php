@@ -626,7 +626,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						$html .= $period_group->summary();
 						break;
 					default:
-						$html .= '<ul>';
+						$html .= '<ul cb2-content>';
 						foreach ( $this->period_group_IDs as $period_group_ID ) {
 							$period_group = CB2_Query::get_post_with_type( CB2_PeriodGroup::$static_post_type, $period_group_ID );
 							$html .= '<li>' . $period_group->summary() . '</li>';

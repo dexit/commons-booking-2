@@ -39,7 +39,7 @@ class CB2_Shortcodes {
 			$calendar        = CB2_Shortcodes::booking_calendar_shortcode( $atts, $content, $tag, $args );
 
 			$html .= <<<HTML
-				<form action='' method='POST'><div>
+				<form class='cb2-form cb2-content' action='' method='POST'><div>
 					<input type='hidden' name='name' value='$title_text' />
 					<input type='hidden' name='do_action' value='$do_action' />
 					<input type='hidden' name='do_action_post_ID' value='$itemID' />
@@ -101,7 +101,7 @@ HTML;
 			$name = str_replace( '_', '-', $name );
 			if ( $value ) $css_classes .= "cb2-$name-$value "; // cb2-selection-mode-range ...
 		}
-		$html = "<div class='cb2-selection-container $css_classes'>";
+		$html = "<div class='cb2-selection-container cb2-content $css_classes'>";
 		// Send all input arguments through in the form
 		// this allows, for example, selection_mode to be understood by the submission PHP
 		// namespace these in case their are multiple calendars in 1 page?
@@ -154,7 +154,7 @@ HTML;
 			$name = str_replace( '_', '-', $name );
 			if ( $value ) $css_classes .= "cb2-$name-$value "; // cb2-selection-mode-range ...
 		}
-		$html = "<div class='cb2-selection-container $css_classes'>";
+		$html = "<div class='cb2-selection-container $css_classes cb2-content'>";
 		// Send all input arguments through in the form
 		// this allows, for example, selection_mode to be understood by the submission PHP
 		// namespace these in case their are multiple calendars in 1 page?

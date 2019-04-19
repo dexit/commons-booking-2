@@ -13,7 +13,7 @@ $wp_query = CB2_PeriodInteractionStrategy::factory_from_args( $_REQUEST, array(
 $title_text   = __( 'Dashboard' );
 ?>
 <h1>Commons Booking 2 <?php print( $title_text ); ?></h1>
-	<div class="cb2-calendar">
+	<div class="cb2-calendar cb2-content">
 		<div class="entry-content" style="width:100%;">
 			<?php CB2::the_calendar_header( $wp_query ); ?>
 			<ul class="cb2-subposts">

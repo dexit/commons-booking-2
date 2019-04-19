@@ -133,7 +133,6 @@ public function create_meta_boxes() {
 		$boxes[] = CB2_Settings::prepare_settings_metabox('bookingoptions', $args);
 		$boxes[] = CB2_Settings::prepare_settings_metabox('emailtemplates', $args);
 		$boxes[] = CB2_Settings::prepare_settings_metabox('messagetemplates', $args);
-		$boxes[] = CB2_Settings::prepare_settings_metabox('usertemplatetags', $args);
 		$boxes[] = CB2_Settings::prepare_settings_metabox('templatetaglisting', $args);
 
 		foreach ( $boxes as $box ) { // set the object type is necessary for options pages only
@@ -199,15 +198,6 @@ public function create_meta_boxes() {
 				'class' => 'optional',
 				'boxes' => array(
 					CB2_Settings::$settings_prefix .'_maps',
-				),
-			);
-			$this->tabs[] = array(
-				'id' => 'usertemplatetags',
-				'title' => __( 'Advanced', 'commons-booking-2'),
-				'desc' => '',
-				'class' => '',
-				'boxes' => array(
-					CB2_Settings::$settings_prefix .'_usertemplatetags',
 				),
 			);
 			return apply_filters( 'cb2_settings_tabs', $this->tabs );

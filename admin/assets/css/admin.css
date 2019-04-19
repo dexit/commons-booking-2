@@ -333,17 +333,17 @@ body .cmb2-postbox .cmb-th + .cmb-td {
   border-top: 1px solid #e9e9e9;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\00003121}}
-.cmb2-options-page dl.cb2_template_tags {
+.cmb2-options-page dl.cb2-template_tags {
   padding: 10px;
   display: block;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\00003125}}
-.cmb2-options-page dl.cb2_template_tags dt {
+.cmb2-options-page dl.cb2-template_tags dt {
   font-weight: bold;
   margin: 5px;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/admin\/assets\/sass\/partials\/_forms\.scss}line{font-family:\00003129}}
-.cmb2-options-page dl.cb2_template_tags dd {
+.cmb2-options-page dl.cb2-template_tags dd {
   font-weight: normal;
   display: inline-block;
   padding: 3px;

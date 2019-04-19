@@ -310,7 +310,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 ));
 
                 if ($wp_query->have_posts()) {
-                    print('<ul class="cb2-admin-column-ul">');
+                    print('<ul class="cb2-admin-column-ul cb2-content">');
                     CB2::the_inner_loop( NULL, $wp_query, 'admin', 'summary');
                     print('</ul>');
                 } else {
@@ -354,7 +354,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
                 ));
 
                 if ($wp_query->have_posts()) {
-                    print('<ul class="cb2-admin-column-ul">');
+                    print('<ul class="cb2-admin-column-ul cb2-content">');
                     CB2::the_inner_loop( NULL, $wp_query, 'admin', 'summary');
                     print('</ul>');
                 } else {

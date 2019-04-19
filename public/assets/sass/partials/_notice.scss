@@ -9,13 +9,13 @@
  * @copyright 2015 wielebenwir
  */
 
- .cb2_notice {
-	@extend .cb2_box;
+ .cb2-notice {
+	@extend .cb2-box;
 	background-color: $color-yellow-background;
  }
 
 .cb2-button {
-	@extend .cb2_box;
+	@extend .cb2-box;
 	margin: 0;
 	background-color: #67b32a;
 	color: $color-white;
@@ -28,7 +28,7 @@
 }
 
 .cb2-summary {
-		@extend .cb2_box;
+		@extend .cb2-box;
 		display: block;
 		dt {
 			margin: 0; padding: 0;

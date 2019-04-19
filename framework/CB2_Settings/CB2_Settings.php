@@ -119,7 +119,7 @@ class CB2_Settings {
      *
      * @return string/array $options
      */
-    public static function get( $option_id, $post_id = false, $default='' ) {
+    public static function get( String $option_id, Int $post_id = NULL, String $default = '' ) {
 			$option_array = get_option( self::$settings_prefix ); // the unserialised plugin settings array
 
 			// first, check if the settings is overwritten in post meta

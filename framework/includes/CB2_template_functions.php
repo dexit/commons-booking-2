@@ -252,6 +252,33 @@ class CB2 {
 		}
 	}
 
+	public static function get_the_message( String $tagged_message, Array $classes = array(), $the_post = NULL ) {
+		global $post;
+		if ( is_null( $the_post ) ) $the_post = $post;
+
+		$permalink = get_the_permalink( $the_post );
+		$tags = array(
+			'url'  => $permalink,
+			'link' => "<a href='$permalink'>$post->post_title</a>",
+		);
+		if ( method_exists( $the_post, 'message_tags' ) )
+			$tags = $the_post->message_tags();
+
+		$tagged_message = CB2_Query::array_walk_paths_string( $tagged_message, 'message', $the_post, '{{', '}}', '-' );
+		$tagged_message = apply_filters('cb2_template_tags_parsed', $tagged_message, 10, 3);
+
+		return $tagged_message;
+	}
+
+	public static function the_message( String $tagged_message, Array $classes = array(), $the_post = NULL ) {
+		array_push( $classes, 'cb2-content' );
+		array_push( $classes, 'cb2_template_tag' );
+		$class = implode ( ' ' , $classes );
+		echo "<div class='$class'>";
+		echo self::get_the_message( $tagged_message, $classes, $the_post );
+		echo '</div>';
+	}
+
 	public static function the_post_type() {
 		echo get_post_type();
 	}
@@ -475,7 +502,7 @@ class CB2 {
 		echo self::get_the_edit_post_url( $post, $context );
 	}
 
-	public static function get_the_edit_post_url( $this_post = NULL, $context = 'display' ) {
+	public static function get_the_edit_post_url( $this_post = NULL, String $context = 'display' ) {
 		// Returns URL
 		global $post;
 		if ( is_null( $this_post ) ) $this_post = $post;
@@ -506,12 +533,12 @@ class CB2 {
 		return $url;
 	}
 
-	public static function edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
+	public static function edit_post_link( String $text = NULL, String $before = '', String $after = '', Int $id = 0, String $class = 'post-edit-link' ) {
 		// Returns HTML!
 		echo self::get_the_edit_post_link( $text, $before, $after, $id, $class );
 	}
 
-	public static function get_the_edit_post_link( $text = null, $before = '', $after = '', $id = 0, $class = 'post-edit-link' ) {
+	public static function get_the_edit_post_link( String $text = NULL, String $before = '', String $after = '', Int $id = 0, String $class = 'post-edit-link' ) {
 		// Returns HTML!
 		// The WordPress function returns a URL
 		// but cannot be controlled in terms of its get_post();

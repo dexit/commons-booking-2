@@ -131,6 +131,7 @@ abstract class CB2_PostNavigator extends stdClass {
 			// when ->save()ing from incomplete <form> fields
 			if ( $properties ) self::copy_all_wp_post_properties( $object, $properties );
 			self::set_create_new_post_properties( $object );
+			self::set_create_extra_properties( $object );
 			if ( WP_DEBUG ) self::check_wp_post_properties( $object );
 
 			if ( $has_multition && $ID != CB2_CREATE_NEW )
@@ -165,7 +166,11 @@ abstract class CB2_PostNavigator extends stdClass {
 			wp_cache_add( $this->ID, $this, 'posts' );
 	}
 
-	protected static function set_create_new_post_properties( $object ) {
+	protected static function set_create_extra_properties( &$object ) {
+    if ( ! property_exists( $object, 'name' ) ) $object->name = $object->post_title;
+	}
+
+	protected static function set_create_new_post_properties( &$object ) {
     // Significant
     if ( ! property_exists( $object, 'post_status' ) )    $object->post_status    = CB2_Post::$AUTODRAFT;
     if ( ! property_exists( $object, 'post_author' ) )    $object->post_author    = get_current_user_id();

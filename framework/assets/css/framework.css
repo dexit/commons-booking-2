@@ -51,7 +51,7 @@
 /* -------------------- Round rect (periods) -------------------- */
 /* -------------------- @Extend Blocks -------------------- */
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/framework\/assets\/sass\/partials\/_mixins\.scss}line{font-family:\00003101}}
-.cb2_box {
+.cb2-box {
   padding: 0.5em 1em;
   overflow: hidden;
   border-radius: 5px;

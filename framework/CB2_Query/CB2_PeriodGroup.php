@@ -343,7 +343,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 				) );
 
 				if ( $wp_query->have_posts() ) {
-					print( '<ul class="cb2-admin-column-ul">' );
+					print( '<ul class="cb2-admin-column-ul cb2-content">' );
 					CB2::the_inner_loop( NULL, $wp_query, 'admin', 'summary' );
 					print( '</ul>' );
 				} else {

@@ -3,7 +3,7 @@
 global $wpdb;
 
 print( '<h1>Commons Booking 2 Settings <a href="admin.php?page=cb2-menu">dashboard</a></h1>' );
-print( '<ul>' );
+print( '<ul class="cb2-content">' );
 $capability_default = 'manage_options';
 
 foreach ( cb2_admin_pages() as $menu_slug => $details ) {

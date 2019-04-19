@@ -287,10 +287,10 @@ class CB2_Forms {
 		print( <<<HTML
 			<form class='$form_class cb2-form'><div>
 				<input name='page' type='hidden' value='cb2-calendar'/>
-				<div class="cb2-form-wrapper">
-					$dates_text: <input type='text' name='startdate' value='$startdate_string'/> to
-					<input type='text' name='enddate' value='$enddate_string'/>
-				</div>
+				<div class="cb2-form-wrapper cmb2-wrap"><div class="cmb2-metabox">
+					$dates_text: <input class='cmb2-datepicker' type='text' name='startdate' value='$startdate_string'/> to
+					<input class='cmb2-datepicker' type='text' name='enddate' value='$enddate_string'/>
+				</div></div>
 				<div class="cb2-form-wrapper">
 					$location_text: <select name="location_ID">$location_options</select>
 				</div>

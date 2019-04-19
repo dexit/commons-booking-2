@@ -110,23 +110,6 @@ function cb2_post_exists($id) {
     return is_string(get_post_status($id));
 }
 /**
- * Echo a template tag
- *
- * Wrapper for CB2_Template_Tags
- *
- * @uses CB2_Template_Tags
- *
- * @param string $template  	The template string with {{posttype_field}} tags
- * @param string $post_type		'item', 'location', 'periodent-user', 'user'
- * @param int 	 $post_id 		Post id
- * @param string $css_class 	Additional css class
- */
-function cb2_tag( $template, $post_type, $post_id, $css_class ) {
-		$tt = new CB2_Template_Tags( $template, $post_type, $post_id );
-		if ( ! empty ( $css_class )) { $tt->add_css_class( $css_class ); }
-		$tt->output();
-}
-/**
  * Checks to see if a given string exists at the start of another string.
  *
  * @param $haystack The string to search in.

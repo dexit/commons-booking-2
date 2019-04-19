@@ -105,7 +105,7 @@ switch ( $_REQUEST['output_type'] ) {
 		$the_calendar_pager = CB2::get_the_calendar_pager( $startdate, $enddate );
 		$interaction_style  = $_REQUEST['interaction_style'];
 		?>
-		<div class="cb2-calendar <?php echo $interaction_style; ?>">
+		<div class="cb2-calendar cb2-content <?php echo $interaction_style; ?>">
 			<?php echo $the_calendar_pager; ?>
 			<div class="entry-content">
 				<?php CB2::the_calendar_header( $wp_query ); ?>

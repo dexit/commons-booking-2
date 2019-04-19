@@ -9,47 +9,51 @@ $and_posts_checked = ( $and_posts ? 'checked="1"' : '' );
 $testdata          = isset( $_GET['testdata'] );  // Checkbox
 $testdata_checked  = ( $testdata ? 'checked="1"' : '' );
 $disabled          = ( isset( $_GET['reset_data'] ) ? 'disabled="1"' : '' );
-print( '<div class="cb2-actions">' );
-print( '<a href="?page=cb2-reflection">show schema</a>' );
-$processing = 'var self = this;
-	setTimeout(function(){
-		self.setAttribute("value", "Processing...");
-		self.setAttribute("disabled", "1");
-	}, 0);';
-if ( WP_DEBUG ) print( " | <form><div>
-		<input type='hidden' name='page' value='cb2-reflection'/>
-		<input type='hidden' name='section' value='reinstall_sql'>
-		<input onclick='$processing' class='cb2-submit' type='submit' value='generate re-install SQL'/>
-		<select name='character_set'>
-			<option value=''>-- explicit collation --</option>
-			<option value='latin1_swedish_ci'>latin1_swedish_ci (MySQL default)</option>
-			<option value='utf8mb4_unicode_ci'>utf8mb4_unicode_ci (advised)</option>
-			<option>utf8mb4_general_ci</option>
-			<option>utf8_unicode_ci</option>
-			<option>utf8_general_ci</option>
-		</select>
-	</div></form>" );
-if ( WP_DEBUG ) print( "<br/><form><div>
-		<input type='hidden' name='page' value='cb2-reflection'/>
-		<input type='hidden' name='section' value='un-install'>
-		<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='un-install'/>
-		<input name='password' placeholder='password (fryace4)' value=''>
-	</div></form>" );
-if ( WP_DEBUG ) print( " | <form><div>
-		<input type='hidden' name='page' value='cb2-reflection'/>
-		<input type='hidden' name='section' value='install'>
-		<input onclick='$processing' class='cb2-submit cb2-dangerous' type='submit' value='install'/>
-		<input name='password' placeholder='password (fryace4)' value=''>
-	</div></form>" );
-if ( WP_DEBUG ) print( "<br/><form><div>
-		<input type='hidden' name='page' value='cb2-reflection'/>
-		<input type='hidden' name='section' value='reset_data'/>
-		<input type='hidden' name='password' value='fryace4'/>
-		<input onclick='$processing' $disabled class='cb2-submit cb2-dangerous' type='submit' value='clear all data'/>
-		<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>Clear all <b>CB2</b> wp_post data</label>
-		<input id='testdata'  $testdata_checked  type='checkbox' name='testdata'/> <label for='testdata'><b>Overwrite</b> wp_posts with test data and geo</label>
-	</div></form>" );
-print( '</div><hr/>' );
+
+if ( WP_DEBUG ) {
+	print( <<<HTML
+		<div class="cb2-actions cb2-content">
+			<a href="?page=cb2-reflection">show schema</a> |
+			<form class='cb2-form'><div>
+				<input type='hidden' name='page' value='cb2-reflection'/>
+				<input type='hidden' name='section' value='reinstall_sql'>
+				<input class='cb2-submit' type='submit' value='generate re-install SQL'/>
+				<select name='character_set'>
+					<option value=''>-- explicit collation --</option>
+					<option value='latin1_swedish_ci'>latin1_swedish_ci (MySQL default)</option>
+					<option value='utf8mb4_unicode_ci'>utf8mb4_unicode_ci (advised)</option>
+					<option>utf8mb4_general_ci</option>
+					<option>utf8_unicode_ci</option>
+					<option>utf8_general_ci</option>
+				</select>
+			</div></form>
+
+			<form class='cb2-form'><div>
+				<input type='hidden' name='page' value='cb2-reflection'/>
+				<input type='hidden' name='section' value='un-install'>
+				<input class='cb2-submit cb2-dangerous' type='submit' value='un-install'/>
+				<input name='password' placeholder='password (fryace4)' value=''>
+			</div></form>
+
+			<form class='cb2-form'><div>
+				<input type='hidden' name='page' value='cb2-reflection'/>
+				<input type='hidden' name='section' value='install'>
+				<input class='cb2-submit cb2-dangerous' type='submit' value='install'/>
+				<input name='password' placeholder='password (fryace4)' value=''>
+			</div></form>
+
+			<form class='cb2-form'><div>
+				<input type='hidden' name='page' value='cb2-reflection'/>
+				<input type='hidden' name='section' value='reset_data'/>
+				<input type='hidden' name='password' value='fryace4'/>
+				<input $disabled class='cb2-submit cb2-dangerous' type='submit' value='clear all data'/>
+				<input id='and_posts' $and_posts_checked type='checkbox' name='and posts'/> <label for='and_posts'>Clear all <b>CB2</b> wp_post data</label>
+				<input id='testdata'  $testdata_checked  type='checkbox' name='testdata'/> <label for='testdata'><b>Overwrite</b> wp_posts with test data and geo</label>
+			</div></form>
+		</div><hr/>
+HTML
+	);
+}
 
 if ( isset( $_GET['section'] ) ) {
 	switch ( $_GET['section'] ) {
@@ -101,6 +105,7 @@ if ( isset( $_GET['section'] ) ) {
 	}
 
 	// ---------------------------------------------------- System setup
+	print( '<div class="cb2-content">' );
 	print( "<h2>PHP Objects =&gt; Database Tables</h2>" );
 	print( "<p>CB2 PHP Objects define their own database tables and views.
 		The database installation procedure simply asks each CB2 object for its database requirements.
@@ -304,5 +309,6 @@ HTML
 		The WordPress framework then, seamlessly, can view, list and edit them with all the usual functions an hooks.' );
 	print( '</p>');
 	print( "<img src='$assets_dir/posts and meta.png'/>" );
+	print( '</div>' );
 }
 

@@ -946,11 +946,12 @@ class CB2_Query {
 		array_walk_recursive( $array, array( 'CB2_Query', 'array_walk_paths_string' ), $object );
   }
 
-  static public function array_walk_paths_string( &$value, String $name, $object ) {
+  static public function array_walk_paths_string( &$value, String $name, $object, String $delimeter_start = '%', String $delimeter_end = '%', String $delimeter_object_reference = '->' ) {
 		if ( is_string( $value ) ) {
-			if ( preg_match_all( '/%[^%]+%/', $value, $matches ) ) {
+			$reg_ex = "/{$delimeter_start}([^$delimeter_end]+)$delimeter_end/";
+			if ( preg_match_all( $reg_ex, $value, $matches ) ) {
 				foreach ( $matches[0] as $match ) {
-					$replacement = self::object_value_path( $object, $match );
+					$replacement = self::object_value_path( $object, $match, $delimeter_start, $delimeter_end, $delimeter_object_reference );
 					$value       = str_replace( $match, $replacement, $value );
 				}
 			}
@@ -958,12 +959,13 @@ class CB2_Query {
 		return $value;
   }
 
-	static public function object_value_path( $object, $spec ) {
+	static public function object_value_path( $object, $spec, String $delimeter_start = '%', String $delimeter_end = '%', String $delimeter_object_reference = '->' ) {
 		// $spec = %object_property_name->object_property_name->...%
 		// e.g. date->time
-		$value = $spec;
-		if ( is_string( $spec ) && preg_match( '/%[^%]+%/', $spec ) ) {
-			$property_path = explode( '->', substr( $spec, 1, -1 ) );
+		$value  = $spec;
+		$reg_ex = "/{$delimeter_start}([^$delimeter_end]+)$delimeter_end/";
+		if ( is_string( $spec ) && preg_match( $reg_ex, $spec, $matches ) && count( $matches ) > 1 ) {
+			$property_path = explode( $delimeter_object_reference, $matches[1] );
 			$properties    = (array) $object;
 			foreach ( $property_path as $property_step ) {
 				if ( is_array( $properties ) && isset( $properties[$property_step] ) ) {
@@ -976,6 +978,13 @@ class CB2_Query {
 			}
 			// if ( WP_DEBUG ) print( "$spec = $value " );
 		}
+
+		if ( is_array( $value ) ) {
+			// Custom metadata
+			// sometimes is assigned in MULTIPLE form
+			$value = implode( ',', $value );
+		}
+
 		return $value;
 	}
 

@@ -48,7 +48,6 @@ require_once('CB2_Entities/CB2_User.php');
  * Includes - Classes @TODO: Clean up
  */
 require_once('includes/CB2_Strings.php');
-require_once('includes/CB2_Template_Tags.php');
 require_once('CB2_Settings/CB2_Settings.php');
 require_once('includes/CB2_Holidays.php');
 require_once('includes/CB2_Codes.php');

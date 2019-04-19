@@ -159,43 +159,6 @@ array(
 		),
 	),
 	/* templatetaglisting end */
-	/* usertemplatetags start */
-	'usertemplatetags' => array(
-		'title' => __('User template tags', 'commons-booking-2'),
-		'id' => 'usertemplatetags',
-		'desc' => 'If you set up additional meta fields for item, location, user or booking (for example: use another plugin to add registration fields).<br> Enter the field names here to make them available for use as template tags: {{mytemplatetag}}.',
-		'fields' => array(
-			array(
-				'name' => __('Item meta fields', 'commons-booking-2'),
-				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'usertemplatetags_item',
-				'type' => 'text',
-				'default' => '',
-			),
-			array(
-				'name' => __('Location meta fields', 'commons-booking-2'),
-				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'usertemplatetags_location',
-				'type' => 'text',
-				'default' => '',
-			),
-			array(
-				'name' => __('Booking meta fields', 'commons-booking-2'),
-				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'usertemplatetags_booking',
-				'type' => 'text',
-				'default' => '',
-			),
-			array(
-				'name' => __('User meta fields', 'commons-booking-2'),
-				'desc' => __('Comma separated, e.g.: fieldname_1,fieldname_2,fieldname_3', 'commons-booking-2'),
-				'id' => 'usertemplatetags_user',
-				'type' => 'text',
-				'default' => '',
-			),
-		)
-	),
-	/* usertemplatetags end */
 	/* email templates start */
 	'emailtemplates' => array(
 		'title' => __('Email templates', 'commons-booking-2'),
@@ -258,14 +221,14 @@ array(
 				'desc' => __('', 'commons-booking-2'),
 				'id' => 'messagetemplates_please-confirm',
 				'type' => 'textarea_small',
-				'default' => __('Please confirm your booking of {{item_name}} at {{location_name}}', 'commons-booking-2'),
+				'default' => __('Please confirm your booking of {{item-name}} at {{location-name}}', 'commons-booking-2'),
 			),
 			array(
-				'name' => __('Booking page confirm your booking', 'commons-booking-2'),
+				'name' => __('Booking confirmed', 'commons-booking-2'),
 				'desc' => __('', 'commons-booking-2'),
 				'id' => 'messagetemplates_booking-confirmed',
 				'type' => 'textarea_small',
-				'default' => __('Your booking of {{item_name}} at {{location_name}} has been confirmed!', 'commons-booking-2'),
+				'default' => __('Your booking of {{item-name}} at {{location-name}} has been confirmed!', 'commons-booking-2'),
 			),
 		)
 	),
