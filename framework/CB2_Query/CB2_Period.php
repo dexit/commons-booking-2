@@ -472,7 +472,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
   // ------------------------------------- Output
   function summary( $format = NULL ) {
     $now      = new CB2_DateTime();
-    $classes  = $this->classes();
+    $classes  = implode( ' ', $this->classes() );
     $summary  = "<span class='$classes'>";
     if      ( $this->is_expired() ) $summary .= '<span class="cb2-invalidity">Expired ' . $this->summary_date( $this->datetime_to   )   . ': </span>';
     else if ( $this->is_future() )  $summary .= '<span class="cb2-invalidity">Future '  . $this->summary_date( $this->datetime_from   ) . ': </span>';
@@ -654,13 +654,17 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 	}
 
 	function classes() {
-		$classes = '';
-		if ( $this->is_expired() ) $classes .= ' cb2-expired cb2-invalid';
-		if ( $this->is_future() )  $classes .= ' cb2-future cb2-invalid';
+		$classes = array();
+		if ( $this->recurrence_type ) array_push( $classes, "cb2-recurrence-type-$this->recurrence_type" );
+		array_push( $classes, ( $this->recurrence_type ? 'cb2-has-recurrence' : 'cb2-no-recurrence' ) );
+		if ( $this->is_expired() ) array_push( $classes, 'cb2-expired cb2-invalid' );
+		if ( $this->is_future() )  array_push( $classes, 'cb2-future cb2-invalid' );
 		return $classes;
   }
 
   function linkTo( CB2_Period $linked_period, String $reason = 'B' ) {
+		// B - based on
+		// I - instance of
 		if ( ! isset( $this->linked_periods[$reason] ) ) $this->linked_periods[$reason] = array();
 		array_push( $this->linked_periods[$reason], $linked_period );
   }

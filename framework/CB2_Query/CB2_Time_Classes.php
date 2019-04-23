@@ -24,9 +24,9 @@ class CB2_TimePostNavigator extends CB2_PostNavigator implements JsonSerializabl
 	}
 
   function classes() {
-    $classes = '';
-    if ( $this->is_current ) $classes .= ' cb2-current';
-    if ( $this->first )      $classes .= ' cb2-first';
+    $classes = array();
+    if ( $this->is_current ) array_push( $classes, 'cb2-current' );
+    if ( $this->first )      array_push( $classes, 'cb2-first' );
     return $classes;
 	}
 
@@ -362,7 +362,7 @@ class CB2_Day extends CB2_TimePostNavigator {
     $classes = parent::classes();
 
     foreach ( $this->periodinsts as $periodinst ) {
-      $classes .= $periodinst->classes_for_day( $this );
+      $classes = array_merge( $classes, $periodinst->classes_for_day( $this ) );
     }
 
     return $classes;

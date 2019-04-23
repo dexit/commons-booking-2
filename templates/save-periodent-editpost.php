@@ -15,8 +15,14 @@ $periodinst->block( $block );
 
 switch ( $save_type ) {
 	case 'SOT': {
-		// TODO: Save this instance only
-		throw new Exception( __( 'Save this instance only not implemented' ) );
+		print( "<!-- creating new CB2_Period -->\n" );
+		$new_period = CB2_Period::factory_from_properties( $properties, $instance_container, TRUE ); // force_properties
+		$new_period->ID              = CB2_CREATE_NEW;
+		$new_period->recurrence_type = NULL;
+		$new_period->linkTo( $period, CB2_LINK_SPLIT_FROM );
+		$periodinst->block();
+		$period_group->add_period( $new_period );
+		$period_group->save( TRUE );
 		break;
 	}
 	case 'SFH': {

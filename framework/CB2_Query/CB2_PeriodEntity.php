@@ -229,7 +229,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				'postdivrich'         => 'Content',
 				'postbox-container-2' => 'Management',
 				'postbox-container-1' => 'Options',
-				'cb2-tab-security'            => 'Security',
+				'cb2-tab-security'    => 'Security',
 			);
 			if ( WP_DEBUG ) $tabs[ 'debug' ] = 'Debug';
 		}
@@ -483,6 +483,11 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $this;
   }
 
+  function styles( Array $styles = array(), Array $options = array() ) {
+    $styles = $this->period_status_type->styles( $styles, $options );
+    return $styles;
+  }
+
   function user_has_cap( String $required_cap, Bool $current_user_can = NULL ) {
 		$new_current_user_can = NULL;
 		$Class                = get_class( $this );
@@ -624,19 +629,18 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 	}
 
   function classes() {
-    $classes  = '';
-    $classes .= $this->period_status_type->classes();
-    $classes .= ' cb2-' . $this->post_type();
-    if ( property_exists( $this, 'location' ) && $this->location ) $classes .= ' cb2-has-location';
-    if ( property_exists( $this, 'item' )     && $this->item )     $classes .= ' cb2-has-item';
-    if ( property_exists( $this, 'user' )     && $this->user )     $classes .= ' cb2-has-user';
-    if ( property_exists( $this, 'confirmed_user_id' ) && $this->confirmed_user_id ) $classes .= ' cb2-confirmed';
-    if ( property_exists( $this, 'approved_user_id' )  && $this->confirmed_user_id ) $classes .= ' cb2-approved';
+    $classes = $this->period_status_type->classes();
+    array_push( $classes, ' cb2-' . $this->post_type() );
+    if ( property_exists( $this, 'location' ) && $this->location ) array_push( $classes, 'cb2-has-location' );
+    if ( property_exists( $this, 'item' )     && $this->item )     array_push( $classes, 'cb2-has-item' );
+    if ( property_exists( $this, 'user' )     && $this->user )     array_push( $classes, 'cb2-has-user' );
+    if ( property_exists( $this, 'confirmed_user_id' ) && $this->confirmed_user_id ) array_push( $classes, 'cb2-confirmed' );
+    if ( property_exists( $this, 'approved_user_id' )  && $this->confirmed_user_id ) array_push( $classes, 'cb2-approved'  );
     return $classes;
   }
 
 	function summary() {
-		$classes = $this->classes();
+		$classes = implode( ' ', $this->classes() );
 		$html  = "<div class='$classes'>";
 		$html .= '<b>' . $this->post_title . '</b> ';
 		$html .= $this->summary_actions();
@@ -665,13 +669,13 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			$post_type = $entity->post_type;
 			if ( $HTML ) $title .= "<span class='cb2-$post_type-name'>";
 			$title .= $entity->post_title;
-			if ( $HTML ) $title .= "</span>";
+			if ( $HTML ) $title .= "</span>\n";
 			$title .= ' ';
 		}
 		$period_status_type_name = $this->period_status_type->get_the_title( $HTML, $parent );
 		if ( $HTML ) $title .= "<span class='cb2-periodstatustype-name'>";
 		$title .= $period_status_type_name;
-		if ( $HTML ) $title .= "</span>";
+		if ( $HTML ) $title .= "</span>\n";
 
 		return $title;
 	}

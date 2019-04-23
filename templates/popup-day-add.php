@@ -23,7 +23,6 @@ $name          = '';
 $next_text     = __( 'Next' ) . ' &gt;&gt;';
 $name_text     = 'Name';
 $name_placeholder_text = 'New period entity';
-$advanced_text = __( 'advanced' );
 
 // <div form...
 CB2::the_hidden_form( $post->post_type(), array(), $post, 'add' );

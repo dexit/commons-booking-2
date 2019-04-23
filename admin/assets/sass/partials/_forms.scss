@@ -134,6 +134,11 @@ body .cmb2-postbox .cmb-th + .cmb-td {
 	}
 }
 
+.TB_window_classes,
+.TB_window_styles {
+	display:none;
+}
+
 .right-column-settings-page {
 	max-width: 270px;
 	float: right;

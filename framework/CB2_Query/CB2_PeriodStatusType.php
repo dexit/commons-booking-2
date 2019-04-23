@@ -243,9 +243,11 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		return $this->flags & $actions;
   }
 
-  function styles( String $styles = '', Array $options = array() ) {
-    if ( $this->colour   ) $styles .= 'color:'   . $this->colour           . ';';
-    if ( $this->opacity && $this->opacity != 100 ) $styles .= 'opacity:' . ( $this->opacity / 100 ) . ';';
+  function styles( Array $styles = array(), Array $options = array() ) {
+    if ( $this->colour   )
+			array_push( $styles, 'background-color:'   . $this->colour );
+    if ( $this->opacity && $this->opacity != 100 )
+			array_push( $styles, 'opacity:' . ( $this->opacity / 100 ) );
     return $styles;
   }
 
@@ -295,7 +297,8 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 	}
 
 	function classes() {
-    return 'cb2-status-' . preg_replace( '/[^a-z0-9]/', '-', strtolower( $this->name ) );
+		$status_class = preg_replace( '/[^a-z0-9]/', '-', strtolower( $this->name ) );
+    return array( "cb2-status-$status_class" );
   }
 
   function flags() {
@@ -337,8 +340,8 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 
   function jsonSerialize() {
     return array_merge( (array) $this, array(
-      'styles'     => $this->styles(),
-      'classes'    => $this->classes(),
+      'styles'     => implode( ';', $this->styles() ),
+      'classes'    => implode( ' ', $this->classes() ),
       'flags'      => $this->flags(),
     ) );
   }

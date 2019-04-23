@@ -738,8 +738,11 @@ function cb2_load_template() {
 
 		// ------------------------------------------- extra template_args
 		// The outer post displaying a calendar with days in it
-		if ( $context_post_ID )
-			$template_args[ 'context_post' ] = CB2_Query::get_post_with_type( $context_post_type, $context_post_ID );
+		$context_post = NULL;
+		if ( $context_post_ID ) {
+			$context_post = CB2_Query::get_post_with_type( $context_post_type, $context_post_ID );
+			$template_args[ 'context_post' ] = $context_post;
+		}
 
 		// ------------------------------------------- DEBUG
 		if ( WP_DEBUG ) {
@@ -755,8 +758,22 @@ function cb2_load_template() {
 		}
 
 		// ------------------------------------------- Popup
+		// Container
 		print( "<div class='cb2-$context cb2-$context-$template_type cb2-$context-$template_type-$post_type'>" );
+		// Imposed #TB_window extra classes
+		$classes = array();
+		if ( $post && method_exists( $post, 'classes' ) ) $classes = $post->classes();
+		if ( $post_type ) array_push( $classes, "cb2-$post_type" );
+		$classes_string = implode( ' ', $classes );
+		print( "<div class='TB_window_classes'> $classes_string</div>" );
+		// Imposed #TB_window extra styles
+		$styles = array();
+		if ( $post && method_exists( $post, 'styles' ) ) $styles = $post->styles();
+		$styles_string = implode( ';', $styles );
+		print( "<div class='TB_window_styles'> $styles_string</div>" );
+		// Content
 		cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args );
+		// Custom event, used for document.ready needs
 		print( "<script>setTimeout(function(){
 					jQuery('#TB_window').trigger('cb2-popup-appeared');
 				}, 0);

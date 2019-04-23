@@ -129,7 +129,7 @@ class CMB2_Field_Calendar {
 					: array()
 				);
 				if ( method_exists( $post, 'classes' ) )
-					array_push( $classes, $post->classes() );
+					$classes = array_merge( $classes, $post->classes() );
 
         // Render
         $the_calendar_pager = CB2::get_the_calendar_pager( $startdate, $enddate );

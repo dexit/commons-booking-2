@@ -21,14 +21,14 @@ print( '</div>' );
 
 // ------------------------------------ Definition
 print( "<div id='cb2-tab-definition'>" );
-if ( WP_DEBUG ) print( "<div class='cb2-WP_DEBUG-small'>$post->period->ID</div>" );
+if ( WP_DEBUG ) print( "<div class='cb2-WP_DEBUG-small' style='float:right;'>$post->period->ID</div>" );
 CB2::the_meta_boxes( $post->period );
 
 // save_type can create new periods from this one, or just save this one, etc.
-print( '<div class="cb2-save-types">' );
+print( '<div id="cb2-save-types">' );
 print( "<input id='cb2-SFH' name='save_type' type='radio' value='SFH' checked='1'><label for='cb2-SFH'>$save_instances_from_here</label> " );
 print( "<input id='cb2-SAI' name='save_type' type='radio' value='SAI'><label for='cb2-SAI'>$save_all_instances</label> " );
-if ( WP_DEBUG ) print( "<input id='cb2-SOT' name='save_type' type='radio' value='SOT'><label class='cb2-todo' for='cb2-SOT'>$save_instance_only</label> " );
+print( "<input id='cb2-SOT' name='save_type' type='radio' value='SOT'><label for='cb2-SOT'>$save_instance_only</label> " );
 print( '</div>' );
 
 print( '</div>' );

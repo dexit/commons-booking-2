@@ -87,6 +87,16 @@ function cb2_process(){
 		if (!clicked_input) e.preventDefault();
 	});
 
+	$('#cb2-SOT').click(function(){
+		$('#recurrence_type1').click();
+		$('#datetime_part_period_start_date').val(
+			$('#datetime_period_inst_start_date').val()
+		);
+		$('#datetime_part_period_end_date').val(
+			$('#datetime_period_inst_end_date').val()
+		);
+	});
+
 	$('.cb2-nexts').each(function(){
 		var nexts  = $(this).find('li');
 		var ids    = '';
@@ -156,7 +166,7 @@ function cb2_process(){
 		tabs.click(function(e) {
 			var tab   = $(this);
 			var href  = tab.find('a').attr( 'href' );
-			var panel = $(href);
+			var panel = tab.parent().parent().parent().find(href);
 
 			// Close other tabs
 			tabs.removeClass('selected');
@@ -188,11 +198,6 @@ function cb2_process(){
 			tab.closest('.cb2-popup,body').addClass('cb2-tabs-' + href + '-selected');
 			panel.show();
 		}
-	});
-
-	$('.cb2-popup .cb2-advanced').click(function(e){
-		$(this).closest('.cb2-popup, .cb2-ajax-edit-form').toggleClass('cb2-with-template-post');
-		e.preventDefault();
 	});
 
 	$('.cb2-save-visible-ajax-form').click(function() {
@@ -345,6 +350,20 @@ function cb2_process(){
   $(document).ready(cb2_process);
 	$(window).on('cb2-popup-appeared', function(){
 		cb2_process();
+
+		var adopt_classes_from_content = $('#TB_window').find('.TB_window_classes').text();
+		if (adopt_classes_from_content) {
+			if (window.console) console.info('#TB_window adopted classes ' + adopt_classes_from_content);
+			$('#TB_window').addClass(adopt_classes_from_content);
+		}
+		var adopt_styles_from_content = $('#TB_window').find('.TB_window_styles').text();
+		if (adopt_styles_from_content) {
+			var style = $('#TB_window').attr('style');
+			if (window.console) console.info('#TB_window adopted styles ' + adopt_styles_from_content);
+			$('#TB_window').attr('style', style + ' ' + adopt_styles_from_content);
+		}
+
+		// TODO: is this CMB2::init() working?
 		if (window.CMB2) {
 			delete window.CMB2.$metabox;
 			window.CMB2.init();

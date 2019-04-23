@@ -194,16 +194,16 @@ class CB2 {
 		return $short_name;
 	}
 
-	public static function the_styles( String $styles = '', Array $options = array() ) {
+	public static function the_styles( Array $styles = array(), Array $options = array() ) {
 		print( self::get_the_styles( $styles, $options ) );
 	}
 
-	public static function get_the_styles( String $styles = '', Array $options = array() ) {
+	public static function get_the_styles( Array $styles = array(), Array $options = array() ) {
 		global $post;
 		if ( is_object( $post ) && method_exists( $post, 'styles' ) ) {
 			$styles = $post->styles( $styles, $options );
 		}
-		return $styles;
+		return implode( ';', $styles );
 	}
 
 	public static function the_colour( $the_post = NULL ) {
@@ -636,9 +636,7 @@ class CB2 {
 
 		// New: Object based classes
 		if ( is_object( $post ) && method_exists( $post, 'classes' ) ) {
-			if ( $post_classes = $post->classes() ) {
-				$classes = array_merge( $classes, preg_split( '#\s+#', $post_classes ) );
-			}
+			$classes = array_merge( $classes, $post->classes() );
 		}
 
 		$classes[] = 'post-' . $post->ID;
@@ -785,7 +783,7 @@ class CB2 {
 		$classes_string = implode( ' ', $classes );
 		print( "<div id='cb2-ajax-edit-form' action='$post_url' class='cb2-ajax-edit-form $classes_string'>" );
 
-		if ( WP_DEBUG )
+		if ( WP_DEBUG && FALSE )
 			print( "<div class='cb2-WP_DEBUG-small'>global post [$post_type/$post_ID]</div>" );
 
 		// TODO: move CB2 ID => post_ID ?
@@ -816,9 +814,8 @@ class CB2 {
 
 		// ----------------------------- buttons
 		print( "<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
-		print( "<div class='dashicons-before dashicons-admin-page cb2-advanced'><a id='cb2-fullscreen' href='#'>$fullscreen_text</a></div>" );
 		if ( WP_DEBUG )
-			print( "<div class='dashicons-before dashicons-admin-tools cb2-advanced'><a href='#'>$advanced_text</a></div>" );
+			print( "<div class='dashicons-before dashicons-admin-page cb2-advanced'><a class='cb2-WP_DEBUG-small' id='cb2-fullscreen' href='#'>$fullscreen_text</a></div>" );
 	}
 
 	static public function the_form_bottom( Array $extra_buttons = array() ) {
@@ -970,7 +967,7 @@ class CB2 {
 		}
 	}
 
-	public static function the_title( $before = '', $after = '', $HTML = TRUE ) {
+	public static function the_title( String $before = '', String $after = '', Bool $HTML = TRUE ) {
 		print( self::get_the_title( $before, $after, $HTML ) );
 	}
 
@@ -980,7 +977,7 @@ class CB2 {
 		print( "<a href='$url'>$title</a>" );
 	}
 
-	public static function get_the_title( $before, $after, $HTML = TRUE ) {
+	public static function get_the_title( String $before = '', String $after = '', Bool $HTML = TRUE ) {
 		global $post;
 
 		// Unlike the_content() above, this is not a filter call

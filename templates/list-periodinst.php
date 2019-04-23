@@ -26,9 +26,12 @@
 		}
 
 		// Direct navigation to normal WordPress page option
-		$href_title_text = __( 'View / Edit ' ) . CB2::get_the_title( '', '', FALSE );
-		$href_class      = '';
-		$href_click      = CB2::get_the_edit_post_url();
+		$action_text      = __( 'View / Edit ' );
+		$title_text       = CB2::get_the_title(); // HTML, includes period_status_type_name
+		$href_title_text  = "<span class='cb2-action'>$action_text</span>";
+		$href_title_text .= "<span class='cb2-title'>$title_text</span>";
+		$href_class       = '';
+		$href_click       = CB2::get_the_edit_post_url();
 
 		// AJAX Popup navigation
 		// https://codex.wordpress.org/AJAX_in_Plugins

@@ -943,7 +943,7 @@ abstract class CB2_PostNavigator extends stdClass {
 	}
 
   function classes() {
-		return '';
+		return array();
   }
 
 

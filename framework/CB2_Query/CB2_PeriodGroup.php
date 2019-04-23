@@ -426,10 +426,6 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		return $html;
 	}
 
-  function classes() {
-		return '';
-  }
-
 	protected function usage_count() {
 		return count( $this->period_entity_IDs );
 	}
