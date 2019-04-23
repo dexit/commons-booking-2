@@ -472,24 +472,14 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
   }
 
   function confirm( Int $user_id = 1 ) {
-		global $wpdb;
-		$Class = get_class( $this );
-		$wpdb->update( $wpdb->prefix . CB2_Database::database_table( $Class ),
-			array( 'confirmed_user_id' => $user_id ),
-			array( CB2_Database::id_field( $Class ) => $this->id() )
-		);
 		$this->confirmed_user_id = $user_id;
+		$this->save( TRUE );
 		return $this;
   }
 
   function approve( Int $user_id = 1 ) {
-		global $wpdb;
-		$Class = get_class( $this );
-		$wpdb->update( $wpdb->prefix . CB2_Database::database_table( $Class ),
-			array( 'approved_user_id' => $user_id ),
-			array( CB2_Database::id_field( $Class ) => $this->id() )
-		);
 		$this->approved_user_id = $user_id;
+		$this->save( TRUE );
 		return $this;
   }
 
