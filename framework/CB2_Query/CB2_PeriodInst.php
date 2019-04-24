@@ -109,7 +109,7 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 						'id'      => 'enabled_explanation',
 						'type'    => 'paragraph',
 						'classes' => 'cb2-cmb2-compact',
-						'html'    => 'If blocked, this instance will not appear in the calendars.',
+						'desc'    => 'If blocked, this instance will not appear in the calendars.',
 					),
 					array(
 						'name'    => __( 'Blocked', 'commons-booking-2' ),
@@ -285,7 +285,7 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 	function tabs( $edit_form_advanced = FALSE ) {
 		return array(
 			"cb2-tab-definition" => 'Definition',
-			"cb2-tab-security"   => 'Security',
+			"cb2-tab-status"   => 'Security',
 		);
 	}
 

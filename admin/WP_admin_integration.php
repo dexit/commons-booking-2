@@ -425,6 +425,7 @@ do_action( 'do_meta_boxes', $post_type, 'side', $post );
 </div><!-- /wrap -->
 */
 function cb2_edit_form_after_title_tab_switcher( $post ) {
+	print( '<input name="save" type="submit" class="button button-primary button-large cb2-submit" id="publish" value="Update">' );
 	CB2::the_tabs( NULL, NULL, TRUE );
 }
 add_action( 'edit_form_after_title', 'cb2_edit_form_after_title_tab_switcher' );

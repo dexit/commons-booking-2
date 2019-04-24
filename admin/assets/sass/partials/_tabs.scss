@@ -126,7 +126,7 @@
 	}
 }
 .cb2-with-tabs #submitdiv {
-	float:right;
+	display:none;
 }
 .cb2-tabs-postbox-container-2-selected #submitdiv {
 	display:none;
@@ -140,11 +140,11 @@
 body #post-body-content {
 	margin-bottom: 0px;
 }
-.cmb-td {
+.cb2-object-summary-bar .cmb-td {
 	float:left;
 }
 
-.cmb-row:before {
+.cb2-object-summary-bar .cmb-row:before {
 	float:left;
 	margin: 4px 0px 7px 2px;
 	color:#a7a7a7;

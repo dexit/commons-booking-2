@@ -40,7 +40,7 @@
 			'ID'           => $ID,
 			'post_type'    => $post_type,
 			'date'         => $date,
-			'title'        => $href_title_text,
+			'title'        => ucfirst( $href_title_text ),
 			'context_post_ID'   => ( $context_post ? $context_post->ID        : NULL ),
 			'context_post_type' => ( $context_post ? $context_post->post_type : NULL ),
 		) );

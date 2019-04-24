@@ -9,7 +9,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
   );
   public $periods  = array();
 
-  static function selector_metabox( String $context = 'normal', Bool $multiple = FALSE, Bool $closed = FALSE, Array $classes = array() ) {
+  static function selector_metabox( String $context = 'normal', Bool $multiple = FALSE, Bool $closed = TRUE, Array $classes = array() ) {
 		$period_group_options = CB2_Forms::period_group_options( TRUE );
 		$period_groups_count  = count( $period_group_options ) - 1;
 		$plural  = ( $multiple ? 's' : '' );

@@ -170,7 +170,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'type'    => 'paragraph',
 						'float'   => 'right',
 						'width'   => 300,
-						'html'    => 'To create separate repeating slots see <b>Recurrence</b> below.
+						'desc'    => 'To create separate repeating slots see <b>Recurrence</b> below.
 							For example: repeats Mon - Fri 8:00 - 18:00 should use Daily <b>Recurrence Type</b>
 							and Mon - Fri <b>Sequence</b>.',
 					),
@@ -248,7 +248,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 						'type'    => 'paragraph',
 						'float'   => 'right',
 						'width'   => 300,
-						'html'    => 'The recurrence will repeat indefinitely.
+						'desc'    => 'The recurrence will repeat indefinitely.
 							Here you can provide start and end dates for that recurrnce.',
 					),
 					array(

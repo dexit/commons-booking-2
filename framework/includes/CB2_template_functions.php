@@ -783,7 +783,7 @@ class CB2 {
 					$past_tense    = ( substr( $action_base, -1 ) == 'e' ? 'd' : 'ed' ); // ed
 					$fstate        = "is_$action_base$past_tense";             // is_blocked
 					$title         = preg_replace( '/_/',   ' ',   $faction ); // unblock
-					$title         = preg_replace( '/^un/', 'un-', $title );   // un-block
+					$title         = preg_replace( '/^un/', __( 'un-' ), __( $title ) );   // non-bloccare
 					$action_pair   = "{$Class}::$faction";                     // CB2...::unblock
 
 					$relevant = TRUE;

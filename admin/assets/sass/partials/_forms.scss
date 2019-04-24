@@ -106,6 +106,15 @@ body .cmb2-postbox .cmb-th + .cmb-td {
 	margin-left: 2px !important;
 }
 
+#poststuff .cb2-submit {
+	display:none;
+}
+.cb2-with-tabs #poststuff .cb2-submit {
+	float:right;
+	display:block;
+	margin-top: 20px;
+}
+
 .wrap #geo-hcard-map {
 	border:1px double #666;
 	padding:2px;

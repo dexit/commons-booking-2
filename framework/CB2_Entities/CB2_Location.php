@@ -422,7 +422,6 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 					print( "<a href='$edit_location_link'>$set_address_text</a>" );
 				} else if ( is_null( $this->geo_latitude ) || is_null( $this->geo_longitude ) ) {
 					print( $this->geo_address );
-					krumo($this);
 					print( "<br/><a href='$edit_location_link'>$set_geo_text</a>" );
 				} else {
 					print( $this->geo_address );

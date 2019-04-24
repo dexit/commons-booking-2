@@ -29,6 +29,9 @@
 	.cb2-actions {
 		margin-top:10px;
 	}
+	.cb2-submit {
+		display:none;
+	}
 	.cb2-popup-form-save,
 	.cb2-popup-form-next,
 	.cb2-popup-form-trash {
@@ -119,7 +122,7 @@ body #TB_title {
 	#TB_ajaxWindowTitle {
 		line-height:inherit;
 		padding:8px;
-
+		min-height: 86px;
 
 		.cb2-action {
 			display:none;

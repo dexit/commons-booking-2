@@ -17,12 +17,13 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		'label'     => 'Period Status Types',
   );
 
-	static function selector_metabox( String $context = 'normal', Array $classes = array() ) {
+	static function selector_metabox( String $context = 'normal', Array $classes = NULL, Bool $visible = TRUE ) {
 		return array(
 			'title'      => __( 'Period Status Type', 'commons-booking-2' ),
 			'show_names' => FALSE,
 			'context'    => $context,
 			'classes'    => $classes,
+			'visible'    => $visible,
 			'closed'     => TRUE,
 			'fields'     => array(
 				array(

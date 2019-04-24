@@ -130,17 +130,14 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		// Standard
 		array_push( $metaboxes,
 			array(
-				// TODO: link this Enabled in to the Publish meta-box status instead
-				'title'   => __( 'Enabled', 'commons-booking-2' ),
-				'context' => 'side',
-				'show_names' => FALSE,
-				'closed'  => TRUE,
-				'fields'  => array(
+				'title' => __( 'Status', 'commons-booking-2' ),
+				'context' => 'cb2-tab-status',
+				'fields' => array(
 					array(
 						'id'      => 'enabled_explanation',
 						'type'    => 'paragraph',
 						'classes' => 'cb2-cmb2-compact',
-						'html'    => 'If not enabled, the entity will be moved to the <span style="color:red;">Trash</span>.',
+						'desc'    => 'If not enabled, the entity will be moved to the <span style="color:red;">Trash</span>.',
 					),
 					array(
 						'name'    => __( 'Enabled', 'commons-booking-2' ),
@@ -149,16 +146,6 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 						'classes' => 'cb2-cmb2-compact',
 						'default' => 1,
 					),
-				),
-			)
-		);
-
-		// Security
-		array_push( $metaboxes,
-			array(
-				'title' => __( 'Security', 'commons-booking-2' ),
-				'context' => 'security',
-				'fields' => array(
 					array(
 						'name'    => __( 'Confirmed', 'commons-booking-2' ),
 						'id'      => 'confirmed_user_id',
@@ -166,7 +153,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 						'classes' => 'cb2-cmb2-compact',
 					),
 					array(
-						'name'    => __( 'Authorised', 'commons-booking-2' ),
+						'name'    => __( 'Approved', 'commons-booking-2' ),
 						'id'      => 'approved_user_id',
 						'type'    => 'checkbox',
 						'classes' => 'cb2-cmb2-compact',
@@ -229,9 +216,8 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 				'postdivrich'         => 'Content',
 				'postbox-container-2' => 'Management',
 				'postbox-container-1' => 'Options',
-				'cb2-tab-security'    => 'Security',
+				'cb2-tab-status'    => 'Status',
 			);
-			if ( WP_DEBUG ) $tabs[ 'debug' ] = 'Debug';
 		}
 		return $tabs;
 	}
@@ -372,7 +358,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
-			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
+			( ! isset( $properties['enabled'] ) || $properties['enabled'] ), // Can come from a checkbox
 			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
@@ -754,7 +740,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
-			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
+			( ! isset( $properties['enabled'] ) || $properties['enabled'] ), // Can come from a checkbox
 			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
@@ -1032,7 +1018,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 			),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
-			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
+			( ! isset( $properties['enabled'] ) || $properties['enabled'] ), // Can come from a checkbox
 			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
@@ -1141,7 +1127,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 			),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
-			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
+			( ! isset( $properties['enabled'] ) || $properties['enabled'] ), // Can come from a checkbox
 			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
@@ -1252,7 +1238,7 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 			),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
-			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
+			( ! isset( $properties['enabled'] ) || $properties['enabled'] ), // Can come from a checkbox
 			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
@@ -1369,7 +1355,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 			),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_group_ID',       $instance_container ),
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_status_type_ID', $instance_container ),
-			( isset( $properties['enabled'] ) && $properties['enabled'] ), // Can come from a checkbox
+			( ! isset( $properties['enabled'] ) || $properties['enabled'] ), // Can come from a checkbox
 			( isset( $properties['entity_datetime_from'] ) ? $properties['entity_datetime_from'] : NULL ),
 			( isset( $properties['entity_datetime_to'] )   ? $properties['entity_datetime_to'] : NULL ),
 
