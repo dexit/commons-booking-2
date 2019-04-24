@@ -682,20 +682,21 @@ class CB2_Database {
 
 		$new_data     = array();
 		$columns      = self::columns( $Class );
-		if ( CB2_DEBUG_SAVE ) krumo( $columns );
+		$data_keys    = array_keys( $data );
+		if ( CB2_DEBUG_SAVE ) krumo( $columns, $data );
 
 		foreach ( $columns as $column_name => $column_definition ) {
 			// Look through the data for a value for this column
 			$data_value_array = NULL;
 
 			// Direct value with same name
-			if ( isset( $data[$column_name] ) ) {
+			if ( in_array( $column_name, $data_keys ) ) {
 				$data_value_array = $data[$column_name];
 			}
 
 			// Namespaced value with same name
 			// e.g. cb2_user_ID => user_ID
-			if ( isset( $data["cb2_$column_name"] ) ) {
+			if ( in_array( "cb2_$column_name", $data_keys ) ) {
 				$data_value_array = $data["cb2_$column_name"];
 			}
 
@@ -703,10 +704,10 @@ class CB2_Database {
 			if ( is_null( $data_value_array ) ) {
 				switch ( $column_name ) {
 					case 'name':
-						if ( isset( $data['post_title'] ) )   $data_value_array = $data['post_title'];
+						if ( in_array( 'post_title', $data_keys ) )   $data_value_array = $data['post_title'];
 						break;
 					case 'description':
-						if ( isset( $data['post_content'] ) ) $data_value_array = $data['post_content'];
+						if ( in_array( 'post_content', $data_keys ) ) $data_value_array = $data['post_content'];
 						break;
 				}
 			}
@@ -714,7 +715,8 @@ class CB2_Database {
 			// object ID fields
 			if ( is_null( $data_value_array ) ) {
 				$object_column_name = preg_replace( '/_IDs?$|_ids?$/', '', $column_name);
-				if ( isset( $data[$object_column_name]) ) $data_value_array = $data[$object_column_name];
+				if ( in_array( $object_column_name, $data_keys ) )
+					$data_value_array = $data[$object_column_name];
 			}
 
 			// Normalise input from meta-data arrays to objects
@@ -722,14 +724,14 @@ class CB2_Database {
 				$data_value_array = array( $data_value_array );
 
 			// Allow the Database to set DEFAULT values by ignoring empty info
-			// A special string of Null will force a Null in the field
+			// A special string of __Null__ will force a Null in the field
 			$is_single_empty = (
 					 ( count( $data_value_array ) == 0 )
 				|| ( count( $data_value_array ) == 1 && is_null( $data_value_array[0] ) )
 				|| ( count( $data_value_array ) == 1 && is_string( $data_value_array[0] ) && empty( $data_value_array[0] ) )
 			);
 			if ( $is_single_empty ) {
-				// Is this mySQL specific?
+				// This is mySQL specific, but WordPress requires MySQL now
 				$field_required = ( $column_definition->Null == 'NO'
 					&& is_null( $column_definition->Default )
 					&& $column_definition->Extra != 'auto_increment'
@@ -749,115 +751,119 @@ class CB2_Database {
 		return $new_data;
 	}
 
-	static function convert_for_field( $column_name, $column_data_type, $data_value_array, &$format ) {
+	static function convert_for_field( String $column_name, String $column_data_type, Array $data_value_array, String &$format = NULL ) {
 		// Data conversion
 		$format           = '%s';
 		$data_value       = NULL;
 
-		switch ( $column_data_type ) {
-			case CB2_BIT:
-				// PostGRES and MySQL support the BIT type:
-				// https://www.postgresql.org/docs/7.1/static/datatype-bit.html
-				// with b'01010' syntax
-				//
-				// int works on input:
-				// 6 will successfully set bits 2 (2) and 3 (4)
-				// b'01010' bit syntax is tricky because WordPress does not provide a format for it
-				if ( CB2_DEBUG_SAVE ) krumo( $data_value_array );
-				if ( count( $data_value_array ) > 1 )
-					throw new Exception( "Multiple number array detected [$column_name]: bit arrays are set with a single unsigned" );
-				foreach ( $data_value_array as &$value ) {
-					if ( is_string( $value ) && $value == 'on' ) $value = 1;
-					if ( is_bool( $value ) ) $value = (int) $value;
-					if ( ! is_numeric( $value ) ) {
-						krumo( $value );
-						throw new Exception( "Non-numeric value for bit field [$column_name]" );
-					}
-				}
-				$data_value = CB2_Query::ensure_int( $column_name, $data_value_array[0] );
-				$format     = "%d";
-				if ( CB2_DEBUG_SAVE ) krumo( $data_value );
-				break;
-			case CB2_TINYINT:
-			case CB2_INT:
-			case CB2_BIGINT:
-				foreach ( $data_value_array as &$value ) {
-					if ( is_object( $value ) ) {
-						if ( method_exists( $value, '__toIntFor' ) ) {
-							// PHP only supports __toString() magic method
-							$value = $value->__toIntFor( $column_data_type, $column_name );
-						} else throw new Exception( '[' . get_class( $value ) . '] must implement __toInt()' );
-					}
-					if      ( is_numeric( $value ) ) $value = (int) $value;
-					else if ( is_bool( $value ) )    $value = (int) $value;
-
-					if ( ! is_numeric( $value ) ) {
-						krumo( $value );
-						throw new Exception( "Non-numeric value for int field [$column_name]" );
-					}
-				}
-				// In the normal case of just 1 value in the array
-				// we will simply sum just that value
-				$data_value = array_sum( $data_value_array );
-				$format     = "%d";
-				break;
-			case CB2_DATETIME:
-			case CB2_TIMESTAMP;
-				// PostGRES and MySQL support the TIMESTAMP type
-				// https://www.postgresql.org/docs/8.4/static/datatype-datetime.html
-				// TODO: PostGRES does not support DATETIME type
-				// TODO: PostGRES does support INTERVAL type, but it needs to be checked
-				//
-				// Multiple value dates ignored
-				if ( count( $data_value_array ) > 1 ) {
-					krumo($data_value_array);
-					throw new Exception( "Multiple datetime input is not understood currently for [$column_name]" );
-				}
-				foreach ( $data_value_array as &$value ) {
-					if ( is_object( $value ) && method_exists( $value, '__toDateTimeFor' ) ) {
-						// PHP only supports __toString() magic method
-						$value = $value->__toDateTimeFor( $column_data_type, $column_name );
-					} else {
-						$value = CB2_Query::ensure_datetime( $column_name, $value );
-						$value = $value->format( CB2_Database::$database_datetime_format );
-					}
-					// Check the value can be parsed
-					new CB2_DateTime( $value, "Failed to parse [$value] for datetime field [$column_name]" );
-				}
-				$data_value = $data_value_array[0];
-				break;
-			case CB2_CHAR:
-			case CB2_VARCHAR:
-			case CB2_LONGTEXT:
-			case CB2_TEXT:
-			default:
-				// PostGRES supports CHAR and VARCHAR
-				// TODO: PostGRES calls LONGTEXT TEXT
-				// https://www.postgresql.org/docs/7.1/static/datatype-character.html
-				//
-				// In the common single value array
-				// we will simply concatenate the first value
-				foreach ( $data_value_array as &$value ) {
-					if ( is_object( $value ) && method_exists( $value, '__toStringFor' ) ) {
-						// We want to send the column name for processing as well
-						// so we do not use the built in magic __toString()
-						// In the case of *_IDs columns,
-						// the object should return its (string) __toInt() instead
-						$value = $value->__toStringFor( $column_data_type, $column_name );
-					}
-					if ( is_numeric( $value ) ) $value = (string) $value;
-
-					if ( ! is_string( $value ) ) {
-						krumo( $value );
-						throw new Exception( "Non-string value for string field [$column_name]" );
-					}
-				}
-				$data_value = implode( ',', $data_value_array );
-		}
-
 		// Special cases
-		if ( is_string( $data_value ) && $data_value == CB2_Database::$NULL_indicator )
+		if ( count( $data_value_array ) == 1
+			&& is_string( $data_value_array[0] )
+			&& $data_value_array[0] == CB2_Database::$NULL_indicator
+		) {
 			$data_value = NULL;
+		} else {
+			switch ( $column_data_type ) {
+				case CB2_BIT:
+					// PostGRES and MySQL support the BIT type:
+					// https://www.postgresql.org/docs/7.1/static/datatype-bit.html
+					// with b'01010' syntax
+					//
+					// int works on input:
+					// 6 will successfully set bits 2 (2) and 3 (4)
+					// b'01010' bit syntax is tricky because WordPress does not provide a format for it
+					if ( CB2_DEBUG_SAVE ) krumo( $data_value_array );
+					if ( count( $data_value_array ) > 1 )
+						throw new Exception( "Multiple number array detected [$column_name]: bit arrays are set with a single unsigned" );
+					foreach ( $data_value_array as &$value ) {
+						if ( is_string( $value ) && $value == 'on' ) $value = 1;
+						if ( is_bool( $value ) ) $value = (int) $value;
+						if ( ! is_numeric( $value ) ) {
+							krumo( $value );
+							throw new Exception( "Non-numeric value for bit field [$column_name]" );
+						}
+					}
+					$data_value = CB2_Query::ensure_int( $column_name, $data_value_array[0] );
+					$format     = "%d";
+					if ( CB2_DEBUG_SAVE ) krumo( $data_value );
+					break;
+				case CB2_TINYINT:
+				case CB2_INT:
+				case CB2_BIGINT:
+					foreach ( $data_value_array as &$value ) {
+						if ( is_object( $value ) ) {
+							if ( method_exists( $value, '__toIntFor' ) ) {
+								// PHP only supports __toString() magic method
+								$value = $value->__toIntFor( $column_data_type, $column_name );
+							} else throw new Exception( '[' . get_class( $value ) . '] must implement __toInt()' );
+						}
+						if      ( is_numeric( $value ) ) $value = (int) $value;
+						else if ( is_bool( $value ) )    $value = (int) $value;
+
+						if ( ! is_numeric( $value ) ) {
+							krumo( $value );
+							throw new Exception( "Non-numeric value for int field [$column_name]" );
+						}
+					}
+					// In the normal case of just 1 value in the array
+					// we will simply sum just that value
+					$data_value = array_sum( $data_value_array );
+					$format     = "%d";
+					break;
+				case CB2_DATETIME:
+				case CB2_TIMESTAMP;
+					// PostGRES and MySQL support the TIMESTAMP type
+					// https://www.postgresql.org/docs/8.4/static/datatype-datetime.html
+					// TODO: PostGRES does not support DATETIME type
+					// TODO: PostGRES does support INTERVAL type, but it needs to be checked
+					//
+					// Multiple value dates ignored
+					if ( count( $data_value_array ) > 1 ) {
+						krumo($data_value_array);
+						throw new Exception( "Multiple datetime input is not understood currently for [$column_name]" );
+					}
+					foreach ( $data_value_array as &$value ) {
+						if ( is_object( $value ) && method_exists( $value, '__toDateTimeFor' ) ) {
+							// PHP only supports __toString() magic method
+							$value = $value->__toDateTimeFor( $column_data_type, $column_name );
+						} else {
+							$value = CB2_Query::ensure_datetime( $column_name, $value );
+							$value = $value->format( CB2_Database::$database_datetime_format );
+						}
+						// Check the value can be parsed
+						new CB2_DateTime( $value, "Failed to parse [$value] for datetime field [$column_name]" );
+					}
+					$data_value = $data_value_array[0];
+					break;
+				case CB2_CHAR:
+				case CB2_VARCHAR:
+				case CB2_LONGTEXT:
+				case CB2_TEXT:
+				default:
+					// PostGRES supports CHAR and VARCHAR
+					// TODO: PostGRES calls LONGTEXT TEXT
+					// https://www.postgresql.org/docs/7.1/static/datatype-character.html
+					//
+					// In the common single value array
+					// we will simply concatenate the first value
+					foreach ( $data_value_array as &$value ) {
+						if ( is_object( $value ) && method_exists( $value, '__toStringFor' ) ) {
+							// We want to send the column name for processing as well
+							// so we do not use the built in magic __toString()
+							// In the case of *_IDs columns,
+							// the object should return its (string) __toInt() instead
+							$value = $value->__toStringFor( $column_data_type, $column_name );
+						}
+						if ( is_numeric( $value ) ) $value = (string) $value;
+
+						if ( ! is_string( $value ) ) {
+							krumo( $value );
+							throw new Exception( "Non-string value for string field [$column_name]" );
+						}
+					}
+					$data_value = implode( ',', $data_value_array );
+			}
+		}
 
 		return $data_value;
 	}

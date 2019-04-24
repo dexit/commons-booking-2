@@ -492,14 +492,18 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
   }
 
   function confirm( Int $user_id = 1 ) {
-		$this->confirmed_user_id = ( $user_id ? $user_id : NULL );
+		// TODO: what if someone hooks in to the save_post and access the confirmed_user_id __Null__?
+		$this->confirmed_user_id = ( $user_id ? $user_id : '__Null__' );
 		$this->save( TRUE );
+		$this->confirmed_user_id = ( $user_id ? $user_id : NULL );
 		return $this;
   }
 
   function approve( Int $user_id = 1 ) {
-		$this->approved_user_id = ( $user_id ? $user_id : NULL );
+		// TODO: what if someone hooks in to the save_post and access the confirmed_user_id __Null__?
+		$this->approved_user_id = ( $user_id ? $user_id : '__Null__' );
 		$this->save( TRUE );
+		$this->approved_user_id = ( $user_id ? $user_id : NULL );
 		return $this;
   }
 

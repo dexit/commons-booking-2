@@ -12,6 +12,10 @@ $save_instance_only       = __( 'Save this instance only' );
 CB2::the_hidden_form( $post->post_type(), array(), $post );
 if ( WP_DEBUG && FALSE ) print( "<div class='cb2-WP_DEBUG-small' style='float:right;'>$post->period->ID</div>" );
 
+print( "<div class='hidden'>" );
+CB2::the_meta_boxes( $post );
+print( '</div>' );
+
 CB2::the_meta_boxes( $post->period );
 
 // save_type can create new periods from this one, or just save this one, etc.
