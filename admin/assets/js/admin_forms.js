@@ -200,7 +200,33 @@ function cb2_process(){
 		}
 	});
 
-	$('.cb2-save-visible-ajax-form').click(function() {
+	$('.cb2-popup-form-trash').click(function() {
+		var self   = this;
+		var form   = $(self).closest('.cb2-ajax-edit-form');
+		var data   = form.find(':input').serialize();
+		var action = form.attr('action-trash');
+
+		$(self).attr('disabled', '1');
+		$(self).parents('.cb2-popup, body').addClass('cb2-saving');
+		$.post({
+			url: action,
+			data: data,
+			success: function(){
+				$(self).removeAttr('disabled');
+				$(self).parents('.cb2-popup, body').removeClass('cb2-saving');
+				// TODO: callback based refresh => calendar ajax refresh
+				if (!$(document.body).hasClass('cb2-CB2_DEBUG_SAVE-on'))
+					document.location = document.location;
+				$(self).parents('.cb2-popup, body').addClass('cb2-refreshing');
+			},
+			error: function() {
+				$(self).addClass('cb2-ajax-failed');
+				$(self).parents('.cb2-popup, body').addClass('cb2-ajax-failed');
+			}
+		});
+	});
+
+	$('.cb2-popup-form-save').click(function() {
 		// TODO: Save all the forms, or just the visible one?
 		var self   = this;
 		var form   = $(self).closest('.cb2-ajax-edit-form');
@@ -349,19 +375,26 @@ function cb2_process(){
   'use strict';
   $(document).ready(cb2_process);
 	$(window).on('cb2-popup-appeared', function(){
-		cb2_process();
+		var adopt_classes_from_content = $('#TB_window .TB_window_classes');
+		if (adopt_classes_from_content.length) {
+			$('#TB_window').addClass(adopt_classes_from_content.text());
+			adopt_classes_from_content.remove();
+		}
 
-		var adopt_classes_from_content = $('#TB_window').find('.TB_window_classes').text();
-		if (adopt_classes_from_content) {
-			if (window.console) console.info('#TB_window adopted classes ' + adopt_classes_from_content);
-			$('#TB_window').addClass(adopt_classes_from_content);
-		}
-		var adopt_styles_from_content = $('#TB_window').find('.TB_window_styles').text();
-		if (adopt_styles_from_content) {
+		var adopt_styles_from_content = $('#TB_window .TB_window_styles');
+		if (adopt_styles_from_content.length) {
 			var style = $('#TB_window').attr('style');
-			if (window.console) console.info('#TB_window adopted styles ' + adopt_styles_from_content);
-			$('#TB_window').attr('style', style + ' ' + adopt_styles_from_content);
+			$('#TB_window').attr('style', style + ' ' + adopt_styles_from_content.text());
+			adopt_styles_from_content.remove();
 		}
+
+		var adopt_header = $('#TB_window .TB_title_actions');
+		if (adopt_header.length) {
+			$('#TB_title').append("<div class='TB_title_actions'>" + adopt_header.html() + '</div>');
+			adopt_header.remove();
+		}
+
+		cb2_process();
 
 		// TODO: is this CMB2::init() working?
 		if (window.CMB2) {

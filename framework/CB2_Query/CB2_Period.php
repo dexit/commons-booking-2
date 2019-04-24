@@ -658,7 +658,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		if ( $this->recurrence_type ) array_push( $classes, "cb2-recurrence-type-$this->recurrence_type" );
 		array_push( $classes, ( $this->recurrence_type ? 'cb2-has-recurrence' : 'cb2-no-recurrence' ) );
 		if ( $this->is_expired() ) array_push( $classes, 'cb2-expired cb2-invalid' );
-		if ( $this->is_future() )  array_push( $classes, 'cb2-future cb2-invalid' );
+		if ( $this->is_future() )  array_push( $classes, 'cb2-future' );
 		return $classes;
   }
 

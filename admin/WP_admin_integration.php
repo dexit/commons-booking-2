@@ -771,6 +771,13 @@ function cb2_load_template() {
 		if ( $post && method_exists( $post, 'styles' ) ) $styles = $post->styles();
 		$styles_string = implode( ';', $styles );
 		print( "<div class='TB_window_styles'> $styles_string</div>" );
+		// Header
+		$fullscreen_text = __( 'full screen' );
+		print( "<div class='TB_title_actions'>" );
+		CB2::the_do_actions( $_SERVER['HTTP_REFERER'], 'popup-header' );
+		if ( WP_DEBUG )
+			print( "<div class='dashicons-before dashicons-admin-page'><a class='cb2-WP_DEBUG-small' id='cb2-fullscreen' href='#'>$fullscreen_text</a></div>" );
+		print( '</div>' );
 		// Content
 		cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args );
 		// Custom event, used for document.ready needs

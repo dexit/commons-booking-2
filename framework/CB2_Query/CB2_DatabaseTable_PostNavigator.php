@@ -44,8 +44,12 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		$Class = get_class( $this );
 		if ( ! $this->can_trash() )
 			throw new Exception( "This $Class cannot be untrashed" );
+		if ( $this->enabled )
+			throw new Exception( "This $Class not in the trash" );
 
-		return $this->trash_row_set( 1 );
+		$this->enabled = TRUE;
+		$this->save( TRUE ); // Update
+		return $this;
 	}
 
 	function can_trash() {
@@ -58,30 +62,12 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		$Class = get_class( $this );
 		if ( ! $this->can_trash() )
 			throw new Exception( "This $Class cannot be trashed" );
+		if ( ! $this->enabled )
+			throw new Exception( "This $Class already trashed" );
 
-		return $this->trash_row_set( 0 );
-	}
-
-	protected function trash_row_set( $value ) {
-		global $wpdb;
-
-		$Class        = get_class( $this );
-		$class_database_table = CB2_Database::database_table( $Class );
-		$id_field     = CB2_Database::id_field( $Class );
-		$full_table   = "{$wpdb->prefix}$class_database_table";
-		$sql          = $wpdb->prepare( "UPDATE $full_table set enabled = b'$value' where $id_field = %d", $this->id() );
-		$result = $wpdb->query( $sql );
-		if ( $result === 0 ) {
-			if ( CB2_DEBUG_SAVE ) krumo( $result, $full_table, $sql );
-			// Various concurrency issues could happen here so let us ignore it
-			// krumo( $result, $full_table, $sql );
-			// throw new Exception( "Failed to Trash $Class row. Maybe already trashed" );
-		} else if ( is_wp_error( $result ) || $result === FALSE ) {
-			krumo( $result, $full_table, $sql );
-			throw new Exception( "Trash $Class Error: $wpdb->last_error" );
-		}
-
-		return TRUE;
+		$this->enabled = FALSE;
+		$this->save( TRUE ); // Update
+		return $this;
 	}
 
 	// ------------------------------------------------------------------ Deleting
@@ -89,7 +75,7 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 		return TRUE;
 	}
 
-	function delete( $from = NULL, $depth = 0 ) {
+	function delete( $from = NULL, Int $depth = 0 ) {
 		// Trash dependent leaf objects before trashing this
 		$Class                = get_class( $this );
 		$class_database_table = CB2_Database::database_table( $Class );

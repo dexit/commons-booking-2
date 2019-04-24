@@ -8,6 +8,7 @@
 		$post_type       = get_post_type();
 		$even_class      = ( isset( $template_args[ 'even_class' ] ) ? $template_args[ 'even_class' ] : '' );
 		$classes         = array( $even_class );
+		$permalink       = get_the_permalink();
 
 		// PeriodInst relationship to Day
 		if ( isset( $template_args[ 'day' ] ) ) {
@@ -27,7 +28,9 @@
 
 		// Direct navigation to normal WordPress page option
 		$action_text      = __( 'View / Edit ' );
+		$view_text        = __( 'view on website' );
 		$title_text       = CB2::get_the_title(); // HTML, includes period_status_type_name
+		$title_text      .= "<a target='_blank' href='$permalink'>$view_text</a>";
 		$href_title_text  = "<span class='cb2-action'>$action_text</span>";
 		$href_title_text .= "<span class='cb2-title'>$title_text</span>";
 		$href_class       = '';

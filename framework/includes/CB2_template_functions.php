@@ -746,7 +746,68 @@ class CB2 {
 		</div>" );
 	}
 
-	public static function the_hidden_form( String $post_type = '', Array $classes = array(), $post = NULL, String $template_type = 'editpost', String $post_url = NULL ) {
+	public static function the_do_actions( String $redirect = NULL, String $context = NULL ) {
+		print( self::get_the_do_actions( $redirect, $context ) );
+	}
+
+	public static function get_the_do_actions( String $redirect = NULL, String $context = NULL, $the_post = NULL ) {
+		global $post;
+		if ( is_null( $the_post ) ) $the_post = $post;
+		$do_actions = '';
+
+		if ( $the_post ) {
+			$Class      = get_class( $the_post );
+			$reflection = new ReflectionClass( $Class );
+			$methods    = $reflection->getMethods();
+			if ( is_null( $redirect ) ) $redirect = $_SERVER['REQUEST_URI'];
+
+			if ( method_exists( $the_post, 'extra_object_do_actions' ) ) {
+				$extra_object_do_actions = $the_post->extra_object_do_actions();
+				foreach ( $extra_object_do_actions as $object ) {
+					$do_actions .= self::get_the_do_actions( $redirect, $context, $object );
+				}
+			}
+
+			foreach ( $methods as $method ) {
+				// Generically look for
+				//   $the_post->do_action_*()
+				// methods and make them available
+				// their relevance to this object can be indicated through
+				//   $the_post->is_*ed()
+				// methods returning boolean states
+				if ( substr( $method->name, 0, 10 ) == 'do_action_' ) {
+					$fname         = $method->name;                            // do_action_unblock
+					$faction       = substr( $fname, 10 );                     // unblock
+					$action_base   = preg_replace( '/^un/', '', $faction );    // block
+					$state_to_true = ( $action_base == $faction );             // FALSE
+					$past_tense    = ( substr( $action_base, -1 ) == 'e' ? 'd' : 'ed' ); // ed
+					$fstate        = "is_$action_base$past_tense";             // is_blocked
+					$title         = preg_replace( '/_/',   ' ',   $faction ); // unblock
+					$title         = preg_replace( '/^un/', 'un-', $title );   // un-block
+					$action_pair   = "{$Class}::$faction";                     // CB2...::unblock
+
+					$relevant = TRUE;
+					if ( method_exists( $the_post, $fstate ) )
+						$relevant = ( $state_to_true != $the_post->$fstate() );    // FALSE == FALSE
+					if ( WP_DEBUG && FALSE ) print( "$fname/$faction/$action_base/$state_to_true/$fstate/$relevant<br/>" );
+					if ( $relevant ) {
+						$do_actions .= <<<HTML
+						<form>
+							<input type='hidden' name='do_action' value='$action_pair'/>
+							<input type='hidden' name='do_action_post_ID' value='$the_post->ID'/>
+							<input type='hidden' name='redirect' value='$redirect'/>
+							<input type='submit' class='cb2-do-action' value='$title'>
+						</form>
+HTML;
+					}
+				}
+			}
+		}
+
+		return $do_actions;
+	}
+
+	public static function the_hidden_form( String $post_type = '', Array $classes = array(), $post = NULL, String $template_type = 'editpost', String $post_url = NULL, String $trash_post_url = NULL ) {
 		$user_ID          = get_current_user_id();
 		$post_ID          = ( $post ? $post->ID : CB2_CREATE_NEW );
 		$nonce_action     = 'update-post_' . $post_ID;
@@ -772,16 +833,24 @@ class CB2 {
 				)
 			);
 		}
-
-		// Texts
-		$cancel_text     = __( 'Cancel' );
-		$save_text       = __( 'Save' );
-		$advanced_text   = __( 'advanced' );
-		$fullscreen_text = __( 'full screen' );
+		if ( is_null( $trash_post_url ) ) {
+			$trash_post_url = CB2_Query::pass_through_query_string( admin_url( 'admin-ajax.php' ),
+				array(
+					'context'       => 'trash',
+					'template_type' => $template_type,
+					'ID'            => $post_ID,
+					'post_type'     => $post_type,
+				),
+				array(
+					'cb2_load_template', // Used to load the template, would override the save
+					'page'
+				)
+			);
+		}
 
 		// Form start
 		$classes_string = implode( ' ', $classes );
-		print( "<div id='cb2-ajax-edit-form' action='$post_url' class='cb2-ajax-edit-form $classes_string'>" );
+		print( "<div id='cb2-ajax-edit-form' action='$post_url' action-trash='$trash_post_url' class='cb2-ajax-edit-form $classes_string'>" );
 
 		if ( WP_DEBUG && FALSE )
 			print( "<div class='cb2-WP_DEBUG-small'>global post [$post_type/$post_ID]</div>" );
@@ -811,11 +880,6 @@ class CB2 {
 		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
 		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 		// ------------------------------- /end edit-form-advanced.php
-
-		// ----------------------------- buttons
-		print( "<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
-		if ( WP_DEBUG )
-			print( "<div class='dashicons-before dashicons-admin-page cb2-advanced'><a class='cb2-WP_DEBUG-small' id='cb2-fullscreen' href='#'>$fullscreen_text</a></div>" );
 	}
 
 	static public function the_form_bottom( Array $extra_buttons = array() ) {
@@ -823,7 +887,7 @@ class CB2 {
 		$save_text     = __( 'Save' );
 		print( "<div class='cb2-actions'>
 			<a class='cb2-popup-form-cancel' onclick='tb_remove();' href='#'>$cancel_text</a>
-			<button class='cb2-popup-form-save cb2-save-visible-ajax-form'>$save_text</button>" );
+			<button class='cb2-popup-form-save'>$save_text</button>" );
 		foreach ( $extra_buttons as $id => $value ) {
 			$class = ( substr( $value, 0, 5 ) == 'TODO:' ? 'cb2-todo' : '' );
 			$value = preg_replace( '/^[A-Z]+:\s*/', '', $value );

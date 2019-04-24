@@ -8,11 +8,6 @@ $period        = $periodinst->period;
 $period_group  = $periodinst->period_entity->period_group;
 $save_type     = ( isset( $_REQUEST['save_type'] ) ? $_REQUEST['save_type'] : NULL );
 
-// ----------------------- blocking
-$block            = isset( $properties['blocked'] );
-print( "<!-- CB2_PeriodInst::block(" . ( $block ? 'TRUE' : 'FALSE' ) . ") -->\n" );
-$periodinst->block( $block );
-
 switch ( $save_type ) {
 	case 'SOT': {
 		print( "<!-- creating new CB2_Period -->\n" );

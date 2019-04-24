@@ -467,18 +467,38 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->period_count = count( $this->period_group->periods );
   }
 
+  function is_confirmed() {
+		return $this->confirmed_user_id;
+  }
+
   function do_action_confirm() {
 		$this->confirm( get_current_user_id() );
   }
 
+  function do_action_unconfirm() {
+		$this->confirm( 0 );
+  }
+
+  function is_approved() {
+		return $this->approved_user_id;
+  }
+
+  function do_action_approve() {
+		$this->approve( get_current_user_id() );
+  }
+
+  function do_action_unapprove() {
+		$this->approve( 0 );
+  }
+
   function confirm( Int $user_id = 1 ) {
-		$this->confirmed_user_id = $user_id;
+		$this->confirmed_user_id = ( $user_id ? $user_id : NULL );
 		$this->save( TRUE );
 		return $this;
   }
 
   function approve( Int $user_id = 1 ) {
-		$this->approved_user_id = $user_id;
+		$this->approved_user_id = ( $user_id ? $user_id : NULL );
 		$this->save( TRUE );
 		return $this;
   }
@@ -568,10 +588,12 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		else           do_action( "cb2_insert_post_$period_status_type_name", $this );
 	}
 
-  static function do_action_generic( CB2_User $user, $args ) {
-		$do_action_2 = $args['do_action'];                // <Class>::<action>
-		$details     = explode( '::', $do_action_2 );
-		$do_action   = $details[1];
+	/*
+	// TODO: generic_do_action() ot being used anymore?
+  static function generic_do_action( CB2_User $user, $args ) {
+		$do_action_pair = explode( '::', $args['do_action'] ); // <Class>::<action>
+		$do_action      = $do_action_pair[1];
+		$fdo_action     = "do_action_$do_action";
 
 		if ( ! $user->can( 'edit_posts' ) )
 			throw new Exception( "User does not have sufficient permissions to $do_action" );
@@ -586,17 +608,20 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			)
 				$periodinsts = array_merge( $periodinsts, $periodinst_array );
 
-		foreach ( $periodinsts as $periodinst )
-			$periodinst->$do_action();
+		// Execute
+		foreach ( $periodinsts as $periodinst ) {
+			if ( method_exists( $periodinst, $fdo_action ) ) $periodinst->$fdo_action();
+		}
   }
 
   static function do_action_block( CB2_User $user, $args ) {
-		return self::do_action_generic( $user, $args );
+		return self::generic_do_action( $user, $args );
   }
 
   static function do_action_unblock( CB2_User $user, $args ) {
-		return self::do_action_generic( $user, $args );
+		return self::generic_do_action( $user, $args );
   }
+  */
 
   function row_actions( &$actions, $post ) {
 		if ( isset( $actions['inline hide-if-no-js'] ) )

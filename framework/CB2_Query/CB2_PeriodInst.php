@@ -208,6 +208,18 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 		return $this->blocked;
   }
 
+  function extra_object_do_actions() {
+		return array( $this->period_entity );
+  }
+
+  function do_action_block() {
+		return $this->block();
+  }
+
+  function do_action_unblock() {
+		return $this->unblock();
+  }
+
   function block( $block = TRUE ) {
 		global $wpdb;
 
@@ -272,7 +284,6 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 
 	function tabs( $edit_form_advanced = FALSE ) {
 		return array(
-			"cb2-tab-instance"   => 'Instance',
 			"cb2-tab-definition" => 'Definition',
 			"cb2-tab-security"   => 'Security',
 		);

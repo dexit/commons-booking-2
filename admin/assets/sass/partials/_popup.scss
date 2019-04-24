@@ -2,6 +2,12 @@
 	padding:15px;
 	background-color:#fff;
 
+	.TB_window_classes,
+	.TB_window_styles,
+	.TB_title_actions {
+		display:none;
+	}
+
 	.postbox {
 		border:none;
 		box-shadow:none;
@@ -25,11 +31,11 @@
 	}
 	.cb2-popup-form-save,
 	.cb2-popup-form-next,
-	.cb2-popup-form-delete {
+	.cb2-popup-form-trash {
 		float:right;
 		margin-left:6px;
 	}
-	.cb2-popup-form-delete {
+	.cb2-popup-form-trash {
 		color:red;
 	}
 
@@ -38,6 +44,11 @@
 		padding:5px 10px;
 		border-top:1px solid #e7e7e7;
 		background-color:#f7f7f7;
+		text-align:right;
+
+		> * {
+			margin-left:4px;
+		}
 	}
 
 	.cmb2-metabox .cmb2-id-exceptions,
@@ -60,6 +71,10 @@
 	display:none;
 }
 
+#TB_window {
+	background-color: #555;
+}
+
 body #TB_ajaxContent {
 	height:auto!important;
 	width:auto!important;
@@ -70,6 +85,36 @@ body #TB_title {
 	color:#fff;
 	height:auto;
 	border-bottom:none;
+
+	a {
+		color:#fff;
+	}
+
+	.TB_title_actions {
+		float:right;
+		margin:8px;
+		margin-top: -20px;
+
+		> * {
+			float:right;
+		}
+	}
+
+	.cb2-do-action {
+		margin-left:4px;
+		/* TODO: remove .cb2-do-action ?
+		background-color: #fff;
+		border-radius: 16px;
+		border: 2px solid #fff;
+		color: #000088;
+		padding: 3px 14px;
+		cursor:pointer;
+
+		&:hover {
+			background-color: Transparent;
+		}
+		*/
+	}
 
 	#TB_ajaxWindowTitle {
 		line-height:inherit;
@@ -86,10 +131,10 @@ body #TB_title {
 
 		.cb2-periodstatustype-name {
 			position: absolute;
-			right: 28px;
+			right: 36px;
 			top: 8px;
-			border: 1px solid #fff;
-			padding: 1px 12px;
+			border: 2px solid #fff;
+			padding: 2px 12px;
 			line-height: 100%;
 			border-radius: 4px;
 		}

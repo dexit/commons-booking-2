@@ -26,7 +26,7 @@ $name_placeholder_text = 'New period entity';
 
 // <div form...
 CB2::the_hidden_form( $post->post_type(), array(), $post, 'add' );
-print( "<button class='cb2-popup-form-next cb2-save-visible-ajax-form'>$next_text</button>" );
+print( "<button class='cb2-popup-form-next'>$next_text</button>" );
 
 // ------------------------------------ Tab nav
 CB2::the_nexts( NULL, ( $template_post ? 'cb2-tab-period' : NULL ) );
