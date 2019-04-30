@@ -480,9 +480,16 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 
   function confirm( Int $user_id = 1 ) {
 		// TODO: what if someone hooks in to the save_post and access the confirmed_user_id __Null__?
+		$Class = get_class( $this );
 		$this->confirmed_user_id = ( $user_id ? $user_id : '__Null__' );
 		$this->save( TRUE );
 		$this->confirmed_user_id = ( $user_id ? $user_id : NULL );
+		if ( $this->confirmed_user_id ) {
+			$period_status_type = preg_replace( '/[^a-z0-9]/', '_', strtolower( $this->period_status_type->name ) );
+			$action_name        = "cb2_{$period_status_type}_confirmed";
+			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing custom event $action_name</div>" );
+			do_action( $action_name, $this);
+		}
 		return $this;
   }
 
@@ -491,6 +498,12 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->approved_user_id = ( $user_id ? $user_id : '__Null__' );
 		$this->save( TRUE );
 		$this->approved_user_id = ( $user_id ? $user_id : NULL );
+		if ( $this->approved_user_id ) {
+			$period_status_type = preg_replace( '/[^a-z0-9]/', '_', $this->period_status_type->name );
+			$action_name        = "cb2_{$period_status_type}_approved";
+			if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing custom event $action_name</div>" );
+			do_action( $action_name, $this->ID, $this);
+		}
 		return $this;
   }
 
@@ -572,11 +585,21 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
   }
 
 	protected function custom_events( $update ) {
-		$period_status_type_name = strtolower( $this->period_status_type->name );
+		$period_status_type = preg_replace( '/[^a-z0-9]/', '_', strtolower( $this->period_status_type->name ) );
+		$Class = get_class( $this );
+
 		// cb2_save_post_booked
-		do_action( "cb2_save_post_$period_status_type_name", $this, $update );
-		if ( $update ) do_action( "cb2_update_post_$period_status_type_name", $this );
-		else           do_action( "cb2_insert_post_$period_status_type_name", $this );
+		do_action( "cb2_save_post_$period_status_type", $this, $update );
+		if ( $update ) {
+			do_action( "cb2_update_post_$period_status_type", $this );
+		} else {
+			if ( ! property_exists( $this, 'confirmed_user_id' ) || ! $this->confirmed_user_id ) {
+				$action_name = "cb2_{$period_status_type}_pending";
+				if ( CB2_DEBUG_SAVE ) print( "<div class='cb2-WP_DEBUG-small'>$Class update fireing custom event $action_name</div>" );
+				do_action( $action_name, $this );
+			}
+			do_action( "cb2_insert_post_$period_status_type", $this );
+		}
 	}
 
 	/*
