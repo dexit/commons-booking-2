@@ -617,7 +617,7 @@ class CB2 {
 			$tabs = $post->tabs( $edit_form_advanced );
 		}
 
-		if ( count( $tabs ) ) {
+		if ( ! empty( $tabs ) && count( $tabs ) ) {
 			print ( "<ul class='cb2-$class'>" );
 			$tab_keys = array_keys( $tabs );
 			$last_tab = end( $tab_keys );
