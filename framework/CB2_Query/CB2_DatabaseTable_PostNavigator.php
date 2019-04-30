@@ -3,9 +3,8 @@ class CB2_DatabaseTable_PostNavigator extends CB2_PostNavigator {
 	static function database_stored_procedures() {
 		return array(
 			'saves_finished' => "delete from wp_cb2_view_periodinstmeta_cache;
-					insert into wp_cb2_view_periodinstmeta_cache
-					select * from wp_cb2_view_periodinstmeta;
-				# select @@rows_affected;",
+				insert into wp_cb2_view_periodinstmeta_cache
+					select * from wp_cb2_view_periodinstmeta;",
 		);
 	}
 

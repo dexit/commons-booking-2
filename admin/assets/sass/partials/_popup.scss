@@ -64,9 +64,17 @@
 
 	&.cb2-saving {
 		opacity:0.7;
+		.cb2-popup-form-save {
+			color:#aaa;
+			cursor:no-drop;
+		}
 	}
 	&.cb2-refreshing {
-		opacity:0.5;
+		opacity:0.3;
+		.cb2-popup-form-save {
+			color:#aaa;
+			cursor:no-drop;
+		}
 	}
 }
 

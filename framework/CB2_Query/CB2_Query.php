@@ -932,7 +932,7 @@ class CB2_Query {
 		return $Classes;
   }
 
-  static function subclasses( String $BaseClass ) {
+  static function subclasses( String $BaseClass = 'CB2_PostNavigator' ) {
     $subclasses = array();
     foreach ( get_declared_classes() as $Class ) { // PHP 4
 			$ReflectionClass = new ReflectionClass( $Class );
@@ -948,6 +948,7 @@ class CB2_Query {
 
   static public function array_walk_paths_string( &$value, String $name, $object, String $delimeter_start = '%', String $delimeter_end = '%', String $delimeter_object_reference = '->' ) {
 		if ( is_string( $value ) ) {
+			if ( WP_DEBUG && FALSE ) print( "$name::$value " );
 			$reg_ex = "/{$delimeter_start}([^$delimeter_end]+)$delimeter_end/";
 			if ( preg_match_all( $reg_ex, $value, $matches ) ) {
 				foreach ( $matches[0] as $match ) {

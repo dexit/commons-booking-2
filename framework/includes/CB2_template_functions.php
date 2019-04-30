@@ -108,18 +108,56 @@ class CB2 {
 		print( $post && property_exists( $post, 'geo_longitude' ) ? $post->geo_longitude : NULL );
 	}
 
-	public static function the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
+	public static function the_post_template( $the_post, Array $template_args = array(), String $context = 'list', String $template_type = NULL, String $before = '', String $after = '' ) {
+		echo self::get_the_post_template( $the_post, $template_args, $context, $template_type, $before, $after );
+	}
+
+	public static function get_the_post_template( $the_post, Array $template_args = NULL, String $context = 'list', String $template_type = NULL, String $before = '', String $after = '' ) {
+		global $post;
+		$html       = '';
+
+		if ( ! $context )        $context        = 'list';
+		if ( ! $template_args )  $template_args  = array();
+
+		$outer_post = $post;
+		$post       = $the_post;
+		setup_postdata( $post );
+
+
+		$post_type  = $post->post_type;
+		$html      .= $before;
+		CB2_Query::redirect_wpdb_for_post_type( $post_type );
+		$templates  = self::templates( $context, $template_type );
+		$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE, array(), $template_type );
+		CB2_Query::unredirect_wpdb();
+		$html      .= $li;
+		$html      .= $after;
+
+		wp_reset_postdata();
+		$post       = $outer_post;
+		wp_cache_flush();
+		// In templates we are still using the outer_post
+		// with get_post(ID) calls so let us keep that
+		if ( $post ) wp_cache_set( $post->ID, $post, 'posts' );
+
+		return $html;
+	}
+
+	public static function the_inner_loop( Array $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
 		echo self::get_the_inner_loop( $template_args, $post_navigator, $context, $template_type, $before, $after, $reorder_function );
 	}
 
-	public static function get_the_inner_loop( $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
+	public static function get_the_inner_loop( Array $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
 		global $post;
 		$html       = '';
 
 		if ( $context == 'single' )
 			throw new Exception( "the_inner_loop() should never be called with context [$context] because, by its very nature it is for listing stuffs" );
 
+		if ( ! $context )        $context        = 'list';
+		if ( ! $template_args )  $template_args  = array();
 		if ( ! $post_navigator ) $post_navigator = $post;
+
 		if ( $post_navigator instanceof CB2_PostNavigator || $post_navigator instanceof WP_Query ) {
 			$outer_post  = $post;
 			// CB2_Query::reorganise_posts_structure() to check that posts exist
@@ -134,16 +172,18 @@ class CB2 {
 				while ( $post_navigator->have_posts() ) : $post_navigator->the_post();
 					$even_class = ( $i % 2 ? 'cb2-row-odd' : 'cb2-row-even' );
 					$template_args[ 'even_class' ] = $even_class;
+
 					$post_type  = $post->post_type();
 					$html      .= $before;
 					CB2_Query::redirect_wpdb_for_post_type( $post_type );
 					$templates  = self::templates( $context, $template_type );
 					$li         = cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', $template_args, TRUE, array(), $template_type );
+					CB2_Query::unredirect_wpdb();
 					$html      .= $li;
+					$html      .= $after;
+
 					// Some periodinsts are suppressed but have debug output
 					if ( trim( preg_replace( '/<!--.*-->/', '', $li ) ) ) $i++;
-					CB2_Query::unredirect_wpdb();
-					$html      .= $after;
 				endwhile;
 			}
 
@@ -679,6 +719,7 @@ class CB2 {
 
 	// -------------------------------------------------------------------------------------
 	public static function the_content( $content ) {
+		// called by the_content filter
 		global $post;
 
 		if ( $post ) {
@@ -687,7 +728,7 @@ class CB2 {
 				$post_class = CB2_Query::ensure_correct_class( $post );
 				$post       = &$post_class;
 				if ( method_exists( $post, 'get_the_content' ) )
-					$content = $post->get_the_content();
+					$content = $post->get_the_content( $content, is_single() );
 			}
 		}
 
@@ -1035,9 +1076,23 @@ HTML;
 		print( self::get_the_title( $before, $after, $HTML ) );
 	}
 
-	public static function the_link() {
-		$url   = get_the_permalink();
-		$title = get_the_title();
+	public static function the_permalink( $the_post = NULL ) {
+		print( self::get_the_permalink( $the_post ) );
+	}
+
+	public static function get_the_permalink( $the_post = NULL ) {
+		global $post;
+		if ( is_null( $the_post ) ) $the_post = $post;
+		$permalink = ( $the_post && method_exists( $the_post, 'get_the_permalink' )
+			? $the_post->get_the_permalink()
+			: get_the_permalink()
+		);
+		return $permalink;
+	}
+
+	public static function the_html_permalink( String $before = '', String $after = '' ) {
+		$url   = CB2::get_the_permalink();
+		$title = CB2::get_the_title( $before, $after );
 		print( "<a href='$url'>$title</a>" );
 	}
 

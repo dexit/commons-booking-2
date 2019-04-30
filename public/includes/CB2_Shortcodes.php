@@ -12,16 +12,273 @@
  */
 class CB2_Shortcodes {
 	function __construct() {
-		add_shortcode( 'cb2_calendar',          array( 'CB2_Shortcodes', 'calendar_shortcode' ) ) ;
-		add_shortcode( 'cb2_booking_calendar',  array( 'CB2_Shortcodes', 'booking_calendar_shortcode' ) ) ;
-		add_shortcode( 'cb2_booking_form',      array( 'CB2_Shortcodes', 'booking_form_shortcode' ) ) ;
-		add_shortcode( 'cb2_map',               array( 'CB2_Shortcodes', 'map_shortcode' ) ) ;
+		// All public methods are shortcodes
+		$Class   = get_class();
+		$class   = new ReflectionClass( $Class );
+		$methods = $class->getMethods( ReflectionMethod::IS_PUBLIC );
+		foreach ( $methods as $method )
+			add_shortcode( "cb2_$method->name", array( $Class, $method->name ) );
 	}
 
-	public static function booking_form_shortcode( $atts = '', $content = '', $tag = '', Array $passed_default_atts = array()   ) {
+	// ------------------------------------------------------------------------------------
+	// Private helpers
+	// ------------------------------------------------------------------------------------
+	protected static function json_args( &$value, String $key ) {
+		if ( is_object( $value ) && ! method_exists( $value, '__toString' ) )
+			$value = get_class( $value );
+		else if ( is_array( $value ) )
+			array_walk( $value, array( get_class(), 'json_args' ) );
+		else
+			$value = strval( $value );
+	}
+
+	protected static function container_element( Array $args, String $element = 'div', Array $css_classes = array() ) {
+		// ------------------------------------- localize all args
+		$calendar_name    = CB2_Query::isset( $args, 'name', 'main' );
+		$script_handle    = CB2_TEXTDOMAIN . "-calendar-settings-$calendar_name";
+		$calendar_name_js = 'cb2_settings_calendar_' . preg_replace( '/[^a-zA-Z0-9]/', '_', $calendar_name );
+		array_walk( $args, array( get_class(), 'json_args' ) );
+		wp_register_script( $script_handle, plugins_url( "public/assets/js/settings.js", CB2_PLUGIN_ABSOLUTE ) );
+		wp_enqueue_script(  $script_handle );
+		wp_localize_script( $script_handle, $calendar_name_js, $args );
+
+		// ------------------------------------- CSS and INPUT all args
+		foreach ( $args as $name => $value ) {
+			$name = str_replace( '_', '-', $name );
+			if ( $value )
+				array_push( $css_classes, "cb2-$name-$value" ); // cb2-selection-mode-range ...
+		}
+		$css_classes_string = implode( ' ', $css_classes );
+		$html = "<$element class='cb2-selection-container cb2-content $css_classes_string $calendar_name_js'>";
+		// Send all input arguments through in the form
+		// this allows, for example, selection_mode to be understood by the submission PHP
+		// namespace these in case their are multiple calendars in 1 page?
+		$namespace_args   = CB2_Query::isset( $args, 'namespace_args' );
+		foreach ( $args as $name => $value ) {
+			$name = str_replace( '-', '_', $name );
+			if ( $namespace_args ) $name = "$namespace_args-$name";
+			$html .= "<input type='hidden' name='$name' value='$value'/>";
+		}
+		return $html;
+	}
+
+	// ------------------------------------------------------------------------------------
+	// General shortcodes
+	// ------------------------------------------------------------------------------------
+	public static function calendar( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
+		global $post;
+
+		$default_atts = array(
+			'display-strategy' => 'CB2_AllItemAvailability',
+			'schema-type'      => CB2_Week::$static_post_type,
+			'template-type'    => 'available',
+		);
+
+		// ------------------------------------- Query
+		$args = shortcode_atts( array_merge( $default_atts, $passed_default_atts ), $atts, 'cb2_calendar' );
+		if ( ! is_array( $atts ) ) $atts = array( $atts );
+		$args             = array_merge( $atts, $args, $_REQUEST );
+
+		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
+		$context          = CB2_Query::isset( $args, 'context' );
+		$template_type    = CB2_Query::isset( $args, 'template_type' );
+
+		// ------------------------------------- Output
+		$startdate = new CB2_DateTime( $args['startdate'] );
+		$enddate   = new CB2_DateTime( $args['enddate'] );
+		$the_calendar_pager = CB2::get_the_calendar_pager( $startdate, $enddate );
+		$html  = self::container_element( $args );
+		$html .= $the_calendar_pager;
+		$html .= '<div class="cb2-calendar">';
+		$html .= CB2::get_the_calendar_header( $display_strategy );
+		$html .= '<ul class="cb2-subposts">';
+		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
+		$html .= '</ul>';
+		$html .= CB2::get_the_calendar_footer( $display_strategy );
+		$html .= '</div>';
+		$html .= $the_calendar_pager;
+
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	public static function map( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
+		global $post;
+
+		$default_atts = array(
+			'display-strategy' => 'CB2_AllItemAvailability',
+			'schema-type'      => CB2_Location::$static_post_type,
+			'context'          => 'hcard',
+		);
+
+		// ------------------------------------- Query
+		$args = shortcode_atts( array_merge( $default_atts, $passed_default_atts ), $atts, 'cb2_map' );
+		if ( ! is_array( $atts ) ) $atts = array( $atts );
+		$args             = array_merge( $atts, $args, $_REQUEST );
+		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
+		$context          = CB2_Query::isset( $args, 'context' );
+		$template_type    = CB2_Query::isset( $args, 'template_type' );
+		if ( WP_DEBUG ) krumo( $display_strategy );
+
+		// Query and display the map
+		$html  = self::container_element( $args );
+		$html .= '<ul class="cb2-subposts">';
+		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
+		$html .= '</ul>';
+		$html .= geo_hcard_map_shortcode_handler( NULL );
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	public static function list( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
+		global $post;
+
+		$default_atts = array(
+			// Let us default to base on availability
+			// whatever is being listed
+			// e.g. Locations with no available items will not be shown
+			'display-strategy' => 'CB2_AllItemAvailability',
+		);
+
+		// ------------------------------------- Query
+		$args = shortcode_atts( array_merge( $default_atts, $passed_default_atts ), $atts, 'cb2_list' );
+		if ( ! is_array( $atts ) ) $atts = array( $atts );
+		$args             = array_merge( $atts, $args, $_REQUEST );
+		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
+		$context          = CB2_Query::isset( $args, 'context' );
+		$template_type    = CB2_Query::isset( $args, 'template_type' );
+
+		// Query and display the map
+		$html  = self::container_element( $args );
+		$html .= '<ul class="cb2-subposts">';
+		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
+		$html .= '</ul>';
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	// ------------------------------------------------------------------------------------
+	// Specific shortcode helpers
+	// ------------------------------------------------------------------------------------
+	public static function items( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
+		// Items archive
+		global $post;
+
+		$default_atts = array(
+			'display-strategy' => 'CB2_AllItemAvailability',
+			'schema-type'      => CB2_Item::$static_post_type,
+			'date'             => 'now',
+			'template-type'    => 'withlocation',
+		);
+
+		// ------------------------------------- Query
+		$args = shortcode_atts( array_merge( $default_atts, $passed_default_atts ), $atts, 'cb2_items' );
+		if ( ! is_array( $atts ) ) $atts = array( $atts );
+		$args             = array_merge( $atts, $args, $_REQUEST );
+		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
+		$context          = CB2_Query::isset( $args, 'context' );
+		$template_type    = CB2_Query::isset( $args, 'template_type' );
+
+		// Query and display the list
+		$html  = self::container_element( $args );
+		$html .= '<ul class="cb2-subposts">';
+		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
+		$html .= '</ul>';
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	public static function locations( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
+		// Items archive
+		global $post;
+
+		$default_atts = array(
+			'display-strategy' => 'CB2_AllItemAvailability',
+			'schema-type'      => CB2_Location::$static_post_type,
+			'date'             => 'now',
+			'template-type'    => 'withitems',
+		);
+
+		// ------------------------------------- Query
+		$args = shortcode_atts( array_merge( $default_atts, $passed_default_atts ), $atts, 'cb2_items' );
+		if ( ! is_array( $atts ) ) $atts = array( $atts );
+		$args             = array_merge( $atts, $args, $_REQUEST );
+		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
+		$context          = CB2_Query::isset( $args, 'context' );
+		$template_type    = CB2_Query::isset( $args, 'template_type' );
+
+		// Query and display the list
+		$html  = self::container_element( $args );
+		$html .= '<ul class="cb2-subposts">';
+		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
+		$html .= '</ul>';
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	public static function item_current_location( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
+		// For a given item, show its current location
+		// CB2_SingleItemLocationAvailability requires an item
+		global $post;
+
+		$default_atts = array(
+			'display-strategy' => 'CB2_SingleItemLocationAvailability',
+		);
+
+		// ------------------------------------- Query
+		$args = shortcode_atts( array_merge( $default_atts, $passed_default_atts ), $atts, 'cb2_current_location' );
+		if ( ! is_array( $atts ) ) $atts = array( $atts );
+		$args             = array_merge( $atts, $args, $_REQUEST );
+		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
+		$context          = CB2_Query::isset( $args, 'context' );
+		$template_type    = CB2_Query::isset( $args, 'template_type' );
+
+		// Query and display the list
+		$html  = self::container_element( $args );
+		$html .= '<ul class="cb2-subposts">';
+		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
+		$html .= '</ul>';
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	public static function location_current_items( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
+		// For a given location, show its current items
+		// CB2_LocationItemsAvailability requires a location
+		global $post;
+
+		$default_atts = array(
+			'display-strategy' => 'CB2_LocationItemsAvailability',
+		);
+
+		// ------------------------------------- Query
+		$args = shortcode_atts( array_merge( $default_atts, $passed_default_atts ), $atts, 'cb2_current_items' );
+		if ( ! is_array( $atts ) ) $atts = array( $atts );
+		$args             = array_merge( $atts, $args, $_REQUEST );
+		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
+		$context          = CB2_Query::isset( $args, 'context' );
+		$template_type    = CB2_Query::isset( $args, 'template_type' );
+
+		// Query and display the list
+		$html  = self::container_element( $args );
+		$html .= '<ul class="cb2-subposts">';
+		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
+		$html .= '</ul>';
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	public static function booking_form( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
 		global $post;
 		$html = '';
-		$args = shortcode_atts( array(), $atts, 'cb2_booking_form_shortcode' );
+		$args = shortcode_atts( $passed_default_atts, $atts, 'cb2_booking_form_shortcode' );
 
 		// Get the single item ID
 		$itemID = NULL;
@@ -36,7 +293,7 @@ class CB2_Shortcodes {
 			$form_title_text = __( 'Booking of' ) . " $title_text";
 			$do_action       = 'CB2_Item::book';
 			$button_text     = __('book the') . " $title_text";
-			$calendar        = CB2_Shortcodes::booking_calendar_shortcode( $atts, $content, $tag, $args );
+			$calendar        = self::booking_calendar( $atts, $content, $tag, $args );
 
 			$html .= <<<HTML
 				<form class='cb2-form cb2-content' action='' method='POST'><div>
@@ -54,9 +311,9 @@ HTML;
 		return $html;
 	}
 
-	public static function booking_calendar_shortcode( $atts = '', $content = '', $tag = '', Array $passed_default_atts = array() ) {
+	public static function booking_calendar( $atts = '', String $content = '', String $tag = '', Array $passed_default_atts = array() ) {
 		global $post;
-		$html   = '';
+		$html = '';
 		$args = shortcode_atts( array(), $atts, 'cb2_booking_form_shortcode' );
 
 		// Get the single item ID
@@ -67,7 +324,7 @@ HTML;
 
 		// Generate Calendar
 		if ( $itemID )
-			$html .= self::calendar_shortcode( $atts, $content, $tag, array(
+			$html .= self::calendar( $atts, $content, $tag, array(
 				'display-strategy' => 'CB2_SingleItemAvailability',
 				'item_ID'          => $itemID,
 				'context'          => 'list',
@@ -76,111 +333,6 @@ HTML;
 				'selection-periods-min' => CB2_Settings::get( 'bookingoptions_min-period-usage' ),
 				'selection-periods-max' => CB2_Settings::get( 'bookingoptions_max-period-usage' ),
 			) );
-
-		return $html;
-	}
-
-	public static function calendar_shortcode( $atts = '', $content = '', $tag = '', Array $passed_default_atts = array() ) {
-		global $post;
-
-		$default_atts = array_merge( array(
-			'display-strategy' => 'CB2_AllItemAvailability',
-			'schema-type'      => CB2_Week::$static_post_type,
-			'context'          => 'list',
-			'template-type'    => 'available',
-		), $passed_default_atts );
-
-		// ------------------------------------- Query
-		$args = shortcode_atts( $default_atts, $atts, 'cb2_calendar' );
-		if ( ! is_array( $atts ) ) $atts = array( $atts );
-		$args             = array_merge( $atts, $args, $_REQUEST );
-		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args );
-		if ( WP_DEBUG && FALSE ) krumo( $display_strategy );
-
-		// ------------------------------------- localize all args
-		$calendar_name    = CB2_Query::isset( $args, 'name', 'main' );
-		$script_handle    = CB2_TEXTDOMAIN . "-calendar-settings-$calendar_name";
-		$calendar_name_js = 'cb2_settings_calendar_' . preg_replace( '/[^a-zA-Z0-9]/', '_', $calendar_name );
-		wp_register_script( $script_handle, plugins_url( "public/assets/js/settings.js", CB2_PLUGIN_ABSOLUTE ) );
-		wp_enqueue_script(  $script_handle );
-		wp_localize_script( $script_handle, $calendar_name_js, $args );
-
-		// ------------------------------------- CSS and INPUT all args
-		$css_classes   = '';
-		foreach ( $args as $name => $value ) {
-			$name = str_replace( '_', '-', $name );
-			if ( $value ) $css_classes .= "cb2-$name-$value "; // cb2-selection-mode-range ...
-		}
-		$html = "<div class='cb2-selection-container cb2-content $css_classes $calendar_name_js'>";
-		// Send all input arguments through in the form
-		// this allows, for example, selection_mode to be understood by the submission PHP
-		// namespace these in case their are multiple calendars in 1 page?
-		$namespace_args   = CB2_Query::isset( $args, 'namespace_args' );
-		foreach ( $args as $name => $value ) {
-			$name = str_replace( '-', '_', $name );
-			if ( $namespace_args ) $name = "$namespace_args-$name";
-			$html .= "<input type='hidden' name='$name' value='$value'/>";
-		}
-
-		// ------------------------------------- Output
-		$startdate = new CB2_DateTime( $args['startdate'] );
-		$enddate   = new CB2_DateTime( $args['enddate'] );
-		$the_calendar_pager = CB2::get_the_calendar_pager( $startdate, $enddate );
-		$html .= $the_calendar_pager;
-		$html .= '<div class="cb2-calendar">';
-		$html .= CB2::get_the_calendar_header( $display_strategy );
-		$html .= '<ul class="cb2-subposts">';
-		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $args['context'], $args['template_type'] );
-		$html .= '</ul>';
-		$html .= CB2::get_the_calendar_footer( $display_strategy );
-		$html .= '</div>';
-		$html .= $the_calendar_pager;
-
-		$html .= '</div>';
-
-		return $html;
-	}
-
-	public static function map_shortcode ( $atts = '' ) {
-		global $post;
-
-		$default_atts = array(
-			'display-strategy' => 'CB2_AllItemAvailability',
-			'schema-type'      => CB2_Location::$static_post_type,
-			'context'          => 'hcard',
-			'template-type'    => '',
-		);
-
-		// ------------------------------------- Query
-		$args = shortcode_atts( $default_atts, $atts, 'cb_map' );
-		if ( ! is_array( $atts ) ) $atts = array( $atts );
-		$args             = array_merge( $atts, $args, $_REQUEST );
-		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args );
-		if ( WP_DEBUG ) krumo( $display_strategy );
-
-		// ------------------------------------- CSS and INPUT all args
-		$css_classes = '';
-		foreach ( $args as $name => $value ) {
-			$name = str_replace( '_', '-', $name );
-			if ( $value ) $css_classes .= "cb2-$name-$value "; // cb2-selection-mode-range ...
-		}
-		$html = "<div class='cb2-selection-container $css_classes cb2-content'>";
-		// Send all input arguments through in the form
-		// this allows, for example, selection_mode to be understood by the submission PHP
-		// namespace these in case their are multiple calendars in 1 page?
-		$namespace_args   = CB2_Query::isset( $args, 'namespace_args' );
-		foreach ( $args as $name => $value ) {
-			$name = str_replace( '-', '_', $name );
-			if ( $namespace_args ) $name = "$namespace_args-$name";
-			$html .= "<input type='hidden' name='$name' value='$value'/>";
-		}
-
-		// Query and display the map
-		$html .= '<ul class="cb2-subposts">';
-		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $args['context'], $args['template_type'] );
-		$html .= '</ul>';
-		$html .= geo_hcard_map_shortcode_handler( NULL );
-		$html .= '</div>';
 
 		return $html;
 	}

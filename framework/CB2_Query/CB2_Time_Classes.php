@@ -56,7 +56,7 @@ class CB2_Year extends CB2_TimePostNavigator {
     parent::__construct( $ID, $this->days );
   }
 
-  static function factory( $day ) {
+  static function &factory( $day ) {
     // Design Patterns: Factory Singleton with Multiton
     $ID     = (int) $day->date->format( 'Y' );
 		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID );
@@ -112,7 +112,7 @@ class CB2_Month extends CB2_TimePostNavigator {
     parent::__construct( $ID, $this->days );
   }
 
-  static function factory( $day ) {
+  static function &factory( $day ) {
     // Design Patterns: Factory Singleton with Multiton
     $ID = (int) $day->date->format( 'Y-n' );
 		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID );
@@ -185,7 +185,7 @@ class CB2_Week extends CB2_TimePostNavigator {
     parent::__construct( $ID, $this->days );
   }
 
-  static function factory( CB2_Day $day ) {
+  static function &factory( CB2_Day $day ) {
 		$week = CB2_PostNavigator::createInstance( __class__, func_get_args(), self::generate_ID( $day ) );
 		$week->add_day( $day );
 		return $week;
@@ -290,7 +290,7 @@ class CB2_Day extends CB2_TimePostNavigator {
     parent::__construct( $ID, $this->periodinsts );
   }
 
-  static function factory_from_properties( Array $properties ) {
+  static function &factory_from_properties( Array $properties ) {
 		if ( ! isset( $properties[ 'date' ] ) )
 			throw new Exception( "date required when CB2_Day::factory_from_properties()" );
 
@@ -299,8 +299,9 @@ class CB2_Day extends CB2_TimePostNavigator {
 		return self::factory( $date, $title_format );
   }
 
-  static function factory( CB2_DateTime $date, String $title_format = NULL ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), self::generate_ID( $date ) );
+  static function &factory( CB2_DateTime $date, String $title_format = NULL ) {
+		$day = CB2_PostNavigator::createInstance( __class__, func_get_args(), self::generate_ID( $date ) );
+		return $day;
   }
 
   static function day_exists( CB2_DateTime $date ) {
@@ -368,7 +369,7 @@ class CB2_Day extends CB2_TimePostNavigator {
     return $classes;
   }
 
-  function add_periodinst( CB2_PeriodInst $periodinst ) {
+  function add_periodinst( CB2_PeriodInst &$periodinst ) {
     array_push( $this->periodinsts, $periodinst );
     return $periodinst;
   }

@@ -30,7 +30,7 @@ $opening_hours_query = new WP_Query(array(
 ?>
 <div class="cb2-summary cb2-location-summary">
 	<h3><?php echo __('Pickup & Return at:', 'commons-booking-2'); ?>
-		 <?php CB2::the_link(); ?>
+		 <?php CB2::the_html_permalink(); ?>
 	</h3>
 	<div class="cb2-location-thumb cb2-summary-image"><?php the_post_thumbnail( 'thumbnail' ); ?></div>
 	<p class="cb2-location-excerpt"><!--?php the_excerpt(); ?--></p>

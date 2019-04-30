@@ -92,18 +92,15 @@ class CMB2_Field_Calendar {
 				if ( ! isset( $query_args['meta_query']['blocked_clause'] ) )
 					$query_args['meta_query']['blocked_clause'] = 0; // Prevent default
 
-        // Convert %...% values to values on the post
-        // TODO: move this in to the DisplayStrategy
-        if ( $post->post_status != CB2_Post::$AUTODRAFT ) {
-					CB2_Query::array_walk_paths( $query_args, $post );
-				}
-
 				// Request periodinsts
         $context        = ( isset( $options[ 'context' ] )       ? $options[ 'context' ]  : 'list' );
         $template       = ( isset( $options[ 'template' ] )      ? $options[ 'template' ] : NULL );
 				$template_args  = ( isset( $options[ 'template-args' ] ) ? $options[ 'template-args' ] : array() );
         $Class_display_strategy = ( isset( $options[ 'display-strategy' ] )  ? $options[ 'display-strategy' ]  : 'WP_Query' );
 				if ( $Class_display_strategy == 'WP_Query' ) {
+					// Convert %...% values to values on the post
+					if ( $post->post_status != CB2_Post::$AUTODRAFT )
+						CB2_Query::array_walk_paths( $query_args, $post );
 					$wp_query = new WP_Query( $query_args );
 				} else {
 					$wp_query = $Class_display_strategy::factory_from_query_args( $query_args );

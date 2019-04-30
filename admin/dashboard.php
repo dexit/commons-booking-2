@@ -5,7 +5,7 @@ global $wp_query;
 // We set the global $wp_query so that all template functions will work
 // And also so pre_get_posts will not bulk with no global $wp_query
 wp_reset_query();
-$wp_query = CB2_PeriodInteractionStrategy::factory_from_args( $_REQUEST, array(
+$wp_query = CB2_PeriodInteractionStrategy::factory_from_args( $_REQUEST, NULL, array(
 	'enddate'          => CB2_DateTime::next_week_end()->format( CB2_Query::$datetime_format ),
 	'display-strategy' => 'CB2_AllItemAvailability',
 	'schema-type'      => CB2_Week::$static_post_type,

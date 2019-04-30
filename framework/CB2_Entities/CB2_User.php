@@ -114,7 +114,7 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         parent::__construct($ID, $this->periodinsts);
     }
 
-    public static function factory_from_properties(&$properties, &$instance_container = null, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE)
+    public static function &factory_from_properties(&$properties, &$instance_container = null, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE)
     {
         $object = self::factory(
             (int) ( isset( $properties['user_ID'] )    ? $properties['user_ID']    : $properties['ID'] ),
@@ -125,7 +125,7 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         return $object;
     }
 
-    public static function factory_current()
+    public static function &factory_current()
     {
         $cb_user = NULL;
         $wp_user = wp_get_current_user();
@@ -135,9 +135,10 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         return $cb_user;
     }
 
-    public static function factory( Int $ID, String $user_login = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE )
+    public static function &factory( Int $ID, String $user_login = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE )
     {
-				return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+				$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+				return $object;
     }
 
 		public function current_user_can( String $cap, Bool $current_user_can = NULL ) {
@@ -149,7 +150,7 @@ class CB2_User extends CB2_WordPress_Entity implements JsonSerializable
         return user_can($this->ID, $capability);
     }
 
-    public function add_periodinst(&$periodinst)
+    public function add_periodinst( CB2_PeriodInst &$periodinst )
     {
         array_push($this->periodinsts, $periodinst);
     }

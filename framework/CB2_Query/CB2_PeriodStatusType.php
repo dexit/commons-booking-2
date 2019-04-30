@@ -186,7 +186,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		parent::__construct( $ID );
 	}
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
 			(int) ( isset( $properties['period_status_type_ID'] ) ? $properties['period_status_type_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] ) ? $properties['post_title'] : $properties['name'] ),
@@ -201,7 +201,7 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 		return $object;
 	}
 
-  static function factory(
+  static function &factory(
 		// With PeriodStatusTypes we also want to
 		// assume the existing ones, by id
 		// rather than load them completely from the Database
@@ -229,7 +229,8 @@ class CB2_PeriodStatusType extends CB2_DatabaseTable_PostNavigator implements Js
 				case CB2_PeriodStatusType_Holiday::$id:   $Class = 'CB2_PeriodStatusType_Holiday';   break;
 			}
 		}
-		return CB2_PostNavigator::createInstance( $Class, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		$object = CB2_PostNavigator::createInstance( $Class, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
 
   function metabox_calendar_options_object_cb( $field, $periodentity ) {
@@ -420,6 +421,10 @@ class CB2_PeriodStatusType_PickupReturn extends CB2_SystemPeriodStatusType {
 						'item_ID_clause' => array(
 							'key'   => 'item_ID',
 							'value' => array( $periodentity->item->ID, 0 ),
+						),
+						'location_ID_clause' => array(
+							'key'   => 'location_ID',
+							'value' => array( $periodentity->location->ID, 0 ),
 						),
 					),
 				),

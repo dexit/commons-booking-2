@@ -18,6 +18,10 @@ class CB2_DateTime {
 		return self::today()->sub( 'P1D' );
 	}
 
+	static function tomorrow() {
+		return self::today()->add( 'P1D' );
+	}
+
 	static function next_week_start() {
 		$today       = self::today();
 		$day_of_week = CB2_Day::dayofweek_adjusted( $today );

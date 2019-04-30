@@ -9,5 +9,5 @@ CB2::the_tabs();
 
 // ------------------------------------ Bottom actions
 CB2::the_form_bottom( array(
-	'delete' => 'TODO: Delete whole definition'
+	'trash' => 'Trash location'
 ) );

@@ -47,7 +47,8 @@ class CB2_Database {
 		global $wpdb;
 		$schema_array = array();
 
-		foreach ( get_declared_classes() as $Class ) { // PHP 4
+		$classes = CB2_Query::subclasses( 'CB2_PostNavigator' );
+		foreach ( $classes as $Class ) { // PHP 4
 			if ( CB2_Query::has_own_method( $Class, 'database_table_schemas' ) )
 				$schema_array[ $Class ][ 'table' ] = $Class::database_table_schemas( $wpdb->prefix );
 			if ( CB2_Query::has_own_method( $Class, 'database_views' ) )
@@ -200,7 +201,7 @@ class CB2_Database {
 			TABLE_NAME        = '$prefix$table_name' AND
 			CONSTRAINT_NAME   = '$fk_name' AND
 			CONSTRAINT_TYPE   = 'FOREIGN KEY'" );
-		if ( WP_DEBUG ) print( "<span class='cb2-WP_DEBUG-small'>$table_name::$fk_name " . ( $exists ? 'exists' : 'does not exist' ) . '</span> ' );
+		if ( WP_DEBUG && FALSE ) print( "<span class='cb2-WP_DEBUG-small'>$table_name::$fk_name " . ( $exists ? 'exists' : 'does not exist' ) . '</span> ' );
 		return $exists;
 	}
 

@@ -161,7 +161,7 @@ class CB2_Post extends CB2_WordPress_Entity implements JsonSerializable {
     parent::__construct( $ID, $this->periodinsts );
   }
 
-  function add_periodinst( &$periodinst ) {
+  function add_periodinst( CB2_PeriodInst &$periodinst ) {
     if ( ! in_array( $periodinst, $this->periodinsts ) ) array_push( $this->periodinsts, $periodinst );
   }
 

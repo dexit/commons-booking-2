@@ -12,7 +12,7 @@ CB2_Forms::the_form( $_REQUEST );
 // --------------------------------------- Query
 // And also so pre_get_posts will not bulk with no global $wp_query
 wp_reset_query();
-$wp_query = CB2_PeriodInteractionStrategy::factory_from_args($_REQUEST, array(
+$wp_query = CB2_PeriodInteractionStrategy::factory_from_args($_REQUEST, NULL, array(
     'display-strategy' => 'CB2_AllItemAvailability',
 ));
 
@@ -20,9 +20,10 @@ $wp_query = CB2_PeriodInteractionStrategy::factory_from_args($_REQUEST, array(
 if ( WP_DEBUG ) {
 	if ( $wp_query->post_count ) {
 		// Details
-		$post_types     = array();
-		$extended_class = ( isset( $_REQUEST['extended'] )    ? '' : 'none' );
-		$debug_wp_query = ( property_exists( $wp_query, 'debug_wp_query' ) ? $wp_query->debug_wp_query : $wp_query );
+		$post_types       = array();
+		$display_strategy = $_REQUEST['display_strategy'];
+		$extended_class   = ( isset( $_REQUEST['extended'] )    ? '' : 'none' );
+		$debug_wp_query   = ( property_exists( $wp_query, 'debug_wp_query' ) ? $wp_query->debug_wp_query : $wp_query );
 		foreach ( $debug_wp_query->posts as $post )
 			$post_types[$post->post_type] = $post->post_type;
 		print( "<div class='cb2-WP_DEBUG' style='display:$extended_class;border:1px solid #000;padding:3px;background-color:#fff;margin:1em 0em;'>" );
@@ -38,12 +39,12 @@ if ( WP_DEBUG ) {
 		// Code output
 		$template_part_code = "'$_REQUEST[template_part]'";
 		print( "<pre style='border:1px solid #000;padding:4px;'>\n" );
-		print( "// WP_Query arguments for query using $_REQUEST[display_strategy]\n" );
+		print( "// WP_Query arguments for query using $display_strategy\n" );
 		print( "// note that the [date_query][compare] value indicates the OO object reorganisation of the resultant posts array\n" );
-		if ( $_REQUEST['display_strategy'] == 'WP_Query' )
+		if ( $display_strategy == 'WP_Query' )
 			print( "\$wp_query = new WP_Query( array(\n" );
 		else
-			print( "\$wp_query = $_REQUEST[display_strategy]::factory_from_query_args( array(\n" );
+			print( "\$wp_query = $display_strategy::factory_from_query_args( array(\n" );
 		array_walk( $wp_query->query, array( 'CB2_Query', 'php_array' ) );
 		print( ") );\n" );
 		print( "\n// CB2::the_inner_loop() is a normal WordPress posts loop\n" );

@@ -196,7 +196,7 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
     parent::__construct( $ID );
   }
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
 			(int) ( isset( $properties['location_ID'] )     ? $properties['location_ID'] : $properties['ID'] ),
 			( isset( $properties['geo_address'] )   && $properties['geo_address']    ? $properties['geo_address'][0]     : NULL ),
@@ -208,16 +208,10 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 		return $object;
   }
 
-  static function factory( Int $ID, $geo_address = NULL, $geo_latitude = NULL, $geo_longitude = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+  static function &factory( Int $ID, $geo_address = NULL, $geo_latitude = NULL, $geo_longitude = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
-
-	function get_the_after_content() {
-		return CB2_Shortcodes::calendar_shortcode( array(
-				'location-ID'      => $this->ID,
-				'display-strategy' => 'CB2_AllItemAvailability',
-			) );
-	}
 
 	function tabs( $edit_form_advanced = FALSE ) {
 		$tabs = array();

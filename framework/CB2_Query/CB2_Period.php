@@ -34,12 +34,21 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		$id_field               = CB2_Database::id_field( __class__ );
 		$safe_updates_off       = CB2_Database::$safe_updates_off;
 		$safe_updates_restore   = CB2_Database::$safe_updates_restore;
+		$window_days_before_default = 8;
+		$window_days_after_default  = 180;
 
 		// period => periodinst cacheing
 		$cache_fields   = 'period_id, recurrence_index, datetime_period_inst_start, datetime_period_inst_end, blocked';
-		$refresh_cache  = "delete from $periodinst_cache_table;\n";
-		$refresh_cache .= "insert into $periodinst_cache_table($cache_fields)\n";
-		$refresh_cache .= "		select $cache_fields from {$prefix}cb2_view_periodinsts;";
+		$refresh_cache  = <<<SQL
+			set @window_days_before = ifnull((select option_value from wp_options where option_name = 'cb2_window_days_before'), $window_days_before_default);
+			set @window_days_after  = ifnull((select option_value from wp_options where option_name = 'cb2_window_days_after'),  $window_days_after_default);
+			set @window_from        = now() - INTERVAL @window_days_before DAY;
+			set @window_to          = now() + INTERVAL @window_days_after  DAY;
+			delete from $periodinst_cache_table;
+			insert into $periodinst_cache_table($cache_fields)
+				select $cache_fields from {$prefix}cb2_view_periodinsts
+				where datetime_period_inst_start between @window_from and @window_to;
+SQL;
 
 		$trigger_check_recurrence_type = "
 					if new.recurrence_type not in('Y', 'M', 'W', 'D') then
@@ -330,7 +339,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		);
 	}
 
-	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		// This may not exist in post creation
 		// We do not create the CB2_PeriodGroup objects here
 		// because it could create a infinite circular creation
@@ -366,7 +375,7 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		return $object;
 	}
 
-  static function factory(
+  static function &factory(
 		Int $ID,
     $name,
 		$datetime_part_period_start,
@@ -380,7 +389,8 @@ class CB2_Period extends CB2_DatabaseTable_PostNavigator implements JsonSerializ
 		Array $properties = NULL,
 		Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
 
   protected function __construct(

@@ -10,11 +10,12 @@
 
 		// Direct navigation to normal WordPress page option
 		$href_title_text = __( 'View / Edit ' ) . CB2::get_the_title( '', '', FALSE );
-		$ajax_url        = CB2::get_the_edit_post_url();
+		$href_click      = CB2::get_the_edit_post_url();
 		$href_class      = '';
 
 		// AJAX Popup navigation
-		if ( CB2_AJAX_POPUPS && is_admin() ) {
+		// TODO: the popup is not finished yet...
+		if ( CB2_AJAX_POPUPS && is_admin() && FALSE ) {
 			$query_string  = CB2_Query::implode_query_string( array(
 				'cb2_load_template' => 1,
 				'page'         => 'cb2-post-edit', // To force is_admin()
@@ -24,7 +25,7 @@
 				'post_type'    => $post_type,
 			) );
 			$href_click = admin_url( "admin.php?$query_string" );
-			$href_class = 'thickbox cb2-todo';
+			$href_class = 'thickbox';
 		}
 
 		$marker        = plugins_url( 'plugins/geo-hcard-map/images/spanner.png',       CB2_PLUGIN_ABSOLUTE );

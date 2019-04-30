@@ -58,7 +58,7 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 					'AFTER INSERT'  => array( $refresh_cache ),
 				),
 			),
-			// Note that static $postmeta_cached = TRUE
+			// Note that static $cached_postmeta = TRUE
 			array(
 				'name' => 'cb2_view_periodinstmeta_cache',
 				'columns' => array(
@@ -87,7 +87,7 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 
 		return array(
 			'cb2_view_sequence_num'        => "select 0 AS `num` union all select 1 AS `1` union all select 2 AS `2` union all select 3 AS `3` union all select 4 AS `4` union all select 5 AS `5` union all select 6 AS `6` union all select 7 AS `7` union all select 8 AS `8` union all select 9 AS `9`",
-			'cb2_view_sequence_date'       => "select ((`t4`.`num` * 1000) + ((`t3`.`num` * 100) + ((`t2`.`num` * 10) + `t1`.`num`))) AS `num` from (((`{$prefix}cb2_view_sequence_num` `t1` join `{$prefix}cb2_view_sequence_num` `t2`) join `{$prefix}cb2_view_sequence_num` `t3`) join `{$prefix}cb2_view_sequence_num` `t4`) where (`t4`.`num` <= 2)",
+			'cb2_view_sequence_date'       => "select ((`t4`.`num` * 1000) + ((`t3`.`num` * 100) + ((`t2`.`num` * 10) + `t1`.`num`))) AS `num` from (((`{$prefix}cb2_view_sequence_num` `t1` join `{$prefix}cb2_view_sequence_num` `t2`) join `{$prefix}cb2_view_sequence_num` `t3`) join `{$prefix}cb2_view_sequence_num` `t4`)",
 			// TODO: cb2_view_periodinsts needs to calculate W,M,Y recurrences from datetime_start, like D
 			'cb2_view_periodinsts'         => "select `pr`.`period_id` AS `period_id`,0 AS `recurrence_index`,`pr`.`datetime_part_period_start` AS `datetime_period_inst_start`,`pr`.`datetime_part_period_end` AS `datetime_period_inst_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from (`{$prefix}cb2_periods` `pr` left join `{$prefix}cb2_periodinst_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = 0)))) where (isnull(`pr`.`recurrence_type`) and (`pr`.`datetime_from` <= `pr`.`datetime_part_period_start`) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= `pr`.`datetime_part_period_end`))) union all select `pr`.`period_id` AS `period_id`,`sq`.`num` AS `recurrence_index`,(`pr`.`datetime_part_period_start` + interval `sq`.`num` year) AS `datetime_period_inst_start`,(`pr`.`datetime_part_period_end` + interval `sq`.`num` year) AS `datetime_period_inst_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from ((`{$prefix}cb2_view_sequence_date` `sq` join `{$prefix}cb2_periods` `pr`) left join `{$prefix}cb2_periodinst_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = `sq`.`num`)))) where ((`pr`.`recurrence_type` = 'Y') and ((year(`pr`.`datetime_part_period_end`) + `sq`.`num`) < 9999) and (`pr`.`datetime_from` <= (`pr`.`datetime_part_period_start` + interval `sq`.`num` year)) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= (`pr`.`datetime_part_period_end` + interval `sq`.`num` year)))) union all select `pr`.`period_id` AS `period_id`,`sq`.`num` AS `recurrence_index`,(`pr`.`datetime_part_period_start` + interval `sq`.`num` month) AS `datetime_period_inst_start`,(`pr`.`datetime_part_period_end` + interval `sq`.`num` month) AS `datetime_period_inst_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from ((`{$prefix}cb2_view_sequence_date` `sq` join `{$prefix}cb2_periods` `pr`) left join `{$prefix}cb2_periodinst_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = `sq`.`num`)))) where ((`pr`.`recurrence_type` = 'M') and ((year(`pr`.`datetime_part_period_end`) + (`sq`.`num` / 12)) < 9999) and ((`pr`.`recurrence_sequence` = 0) or (`pr`.`recurrence_sequence` & (pow(2,month((`pr`.`datetime_part_period_start` + interval `sq`.`num` month))) - 1))) and (`pr`.`datetime_from` <= (`pr`.`datetime_part_period_start` + interval `sq`.`num` month)) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= (`pr`.`datetime_part_period_end` + interval `sq`.`num` month)))) union all select `pr`.`period_id` AS `period_id`,`sq`.`num` AS `recurrence_index`,(`pr`.`datetime_part_period_start` + interval `sq`.`num` week) AS `datetime_period_inst_start`,(`pr`.`datetime_part_period_end` + interval `sq`.`num` week) AS `datetime_period_inst_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from ((`{$prefix}cb2_view_sequence_date` `sq` join `{$prefix}cb2_periods` `pr`) left join `{$prefix}cb2_periodinst_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = `sq`.`num`)))) where ((`pr`.`recurrence_type` = 'W') and ((year(`pr`.`datetime_part_period_end`) + (`sq`.`num` / 52)) < 9999) and (`pr`.`datetime_from` <= (`pr`.`datetime_part_period_start` + interval `sq`.`num` week)) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= (`pr`.`datetime_part_period_end` + interval `sq`.`num` week)))) union all select `pr`.`period_id` AS `period_id`,`sq`.`num` AS `recurrence_index`,(addtime(cast(cast(`pr`.`datetime_from` as date) as datetime),cast(`pr`.`datetime_part_period_start` as time)) + interval `sq`.`num` day) AS `datetime_period_inst_start`,(addtime(cast(cast(`pr`.`datetime_from` as date) as datetime),cast(`pr`.`datetime_part_period_end` as time)) + interval `sq`.`num` day) AS `datetime_period_inst_end`,ifnull(`pis`.`blocked`,0) AS `blocked` from (((`{$prefix}cb2_view_sequence_date` `sq` join `{$prefix}cb2_periods` `pr`) left join `{$prefix}cb2_periodinst_settings` `pis` on(((`pis`.`period_id` = `pr`.`period_id`) and (`pis`.`recurrence_index` = `sq`.`num`)))) left join `{$prefix}options` `o` on((`o`.`option_name` = 'start_of_week'))) where ((`pr`.`recurrence_type` = 'D') and ((year(`pr`.`datetime_part_period_end`) + (`sq`.`num` / 356)) < 9999) and ((`pr`.`recurrence_sequence` = 0) or (`pr`.`recurrence_sequence` & pow(2,((((dayofweek((`pr`.`datetime_from` + interval `sq`.`num` day)) - 1) - cast(ifnull(`o`.`option_value`,'0') as signed)) + 7) % 7)))) and (isnull(`pr`.`datetime_to`) or (`pr`.`datetime_to` >= (addtime(cast(cast(`pr`.`datetime_from` as date) as datetime),cast(`pr`.`datetime_part_period_start` as time)) + interval `sq`.`num` day))))",
 			'cb2_view_periodinst_posts'    => "select ((((`ip`.`global_period_group_id` * `pt_pi`.`ID_multiplier`) + ((`po`.`period_id` - 1) * `pt_pd`.`ID_multiplier`)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_inst_start` AS `post_date`,`po`.`datetime_period_inst_start` AS `post_date_gmt`,'' AS `post_content`,`pst`.`name` AS `post_title`,'' AS `post_excerpt`,if(`ip`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,((((`ip`.`global_period_group_id` * `pt_pi`.`ID_multiplier`) + ((`po`.`period_id` - 1) * `pt_pd`.`ID_multiplier`)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_inst_end` AS `post_modified`,`po`.`datetime_period_inst_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pi`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`ip`.`global_period_group_id` AS `timeframe_id`,`pt_e`.`post_type_id` AS `post_type_id`,((`pgp`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,((`ip`.`global_period_group_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,0 AS `location_ID`,0 AS `item_ID`,0 AS `user_ID`,`pst`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_inst_start` AS `datetime_period_inst_start`,`po`.`datetime_period_inst_end` AS `datetime_period_inst_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`ip`.`enabled` as unsigned) AS `enabled` from ((((((((((`{$prefix}cb2_cache_periodinsts` `po` join `{$prefix}cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `{$prefix}cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `{$prefix}cb2_global_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `{$prefix}cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `{$prefix}cb2_post_types` `pt_pi`) join `{$prefix}cb2_post_types` `pt_pd`) join `{$prefix}cb2_post_types` `pt_p`) join `{$prefix}cb2_post_types` `pt_pg`) join `{$prefix}cb2_post_types` `pt_e`) join `{$prefix}cb2_post_types` `pt_pst`) where ((4 = `pt_pi`.`post_type_id`) and (1 = `pt_p`.`post_type_id`) and (101 = `pt_pd`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (12 = `pt_e`.`post_type_id`) and (8 = `pt_pst`.`post_type_id`) and (isnull(`ip`.`entity_datetime_from`) or (`po`.`datetime_period_inst_start` >= `ip`.`entity_datetime_from`)) and (isnull(`ip`.`entity_datetime_to`) or (`po`.`datetime_period_inst_end` <= `ip`.`entity_datetime_to`))) union all select ((((`ip`.`location_period_group_id` * `pt_pi`.`ID_multiplier`) + ((`po`.`period_id` - 1) * `pt_pd`.`ID_multiplier`)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_inst_start` AS `post_date`,`po`.`datetime_period_inst_start` AS `post_date_gmt`,'' AS `post_content`,`pst`.`name` AS `post_title`,'' AS `post_excerpt`,if(`ip`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,((((`ip`.`location_period_group_id` * `pt_pi`.`ID_multiplier`) + ((`po`.`period_id` - 1) * `pt_pd`.`ID_multiplier`)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_inst_end` AS `post_modified`,`po`.`datetime_period_inst_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pi`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`ip`.`location_period_group_id` AS `timeframe_id`,`pt_e`.`post_type_id` AS `post_type_id`,((`pgp`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,((`ip`.`location_period_group_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,`ip`.`location_ID` AS `location_ID`,0 AS `item_ID`,0 AS `user_ID`,`pst`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_inst_start` AS `datetime_period_inst_start`,`po`.`datetime_period_inst_end` AS `datetime_period_inst_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`ip`.`enabled` as unsigned) AS `enabled` from (((((((((((`{$prefix}cb2_cache_periodinsts` `po` join `{$prefix}cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `{$prefix}cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `{$prefix}cb2_location_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `{$prefix}posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `{$prefix}cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `{$prefix}cb2_post_types` `pt_pi`) join `{$prefix}cb2_post_types` `pt_pd`) join `{$prefix}cb2_post_types` `pt_p`) join `{$prefix}cb2_post_types` `pt_pg`) join `{$prefix}cb2_post_types` `pt_e`) join `{$prefix}cb2_post_types` `pt_pst`) where ((5 = `pt_pi`.`post_type_id`) and (1 = `pt_p`.`post_type_id`) and (101 = `pt_pd`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (13 = `pt_e`.`post_type_id`) and (8 = `pt_pst`.`post_type_id`) and (isnull(`ip`.`entity_datetime_from`) or (`po`.`datetime_period_inst_start` >= `ip`.`entity_datetime_from`)) and (isnull(`ip`.`entity_datetime_to`) or (`po`.`datetime_period_inst_end` <= `ip`.`entity_datetime_to`))) union all select ((((`ip`.`timeframe_period_group_id` * `pt_pi`.`ID_multiplier`) + ((`po`.`period_id` - 1) * `pt_pd`.`ID_multiplier`)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_inst_start` AS `post_date`,`po`.`datetime_period_inst_start` AS `post_date_gmt`,'' AS `post_content`,`pst`.`name` AS `post_title`,'' AS `post_excerpt`,if(`ip`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,((((`ip`.`timeframe_period_group_id` * `pt_pi`.`ID_multiplier`) + ((`po`.`period_id` - 1) * `pt_pd`.`ID_multiplier`)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_inst_end` AS `post_modified`,`po`.`datetime_period_inst_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pi`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`ip`.`timeframe_period_group_id` AS `timeframe_id`,`pt_e`.`post_type_id` AS `post_type_id`,((`pgp`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,((`ip`.`timeframe_period_group_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,0 AS `user_ID`,`pst`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_inst_start` AS `datetime_period_inst_start`,`po`.`datetime_period_inst_end` AS `datetime_period_inst_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`ip`.`enabled` as unsigned) AS `enabled` from ((((((((((((`{$prefix}cb2_cache_periodinsts` `po` join `{$prefix}cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `{$prefix}cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `{$prefix}cb2_timeframe_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `{$prefix}posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `{$prefix}posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) join `{$prefix}cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `{$prefix}cb2_post_types` `pt_pi`) join `{$prefix}cb2_post_types` `pt_pd`) join `{$prefix}cb2_post_types` `pt_p`) join `{$prefix}cb2_post_types` `pt_pg`) join `{$prefix}cb2_post_types` `pt_e`) join `{$prefix}cb2_post_types` `pt_pst`) where ((6 = `pt_pi`.`post_type_id`) and (1 = `pt_p`.`post_type_id`) and (101 = `pt_pd`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (14 = `pt_e`.`post_type_id`) and (8 = `pt_pst`.`post_type_id`) and (isnull(`ip`.`entity_datetime_from`) or (`po`.`datetime_period_inst_start` >= `ip`.`entity_datetime_from`)) and (isnull(`ip`.`entity_datetime_to`) or (`po`.`datetime_period_inst_end` <= `ip`.`entity_datetime_to`))) union all select ((((`ip`.`timeframe_user_period_group_id` * `pt_pi`.`ID_multiplier`) + ((`po`.`period_id` - 1) * `pt_pd`.`ID_multiplier`)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `ID`,1 AS `post_author`,`po`.`datetime_period_inst_start` AS `post_date`,`po`.`datetime_period_inst_start` AS `post_date_gmt`,'' AS `post_content`,`pst`.`name` AS `post_title`,'' AS `post_excerpt`,if(`ip`.`enabled`,'publish','trash') AS `post_status`,'closed' AS `comment_status`,'closed' AS `ping_status`,'' AS `post_password`,((((`ip`.`timeframe_user_period_group_id` * `pt_pi`.`ID_multiplier`) + ((`po`.`period_id` - 1) * `pt_pd`.`ID_multiplier`)) + `po`.`recurrence_index`) + `pt_pi`.`ID_base`) AS `post_name`,'' AS `to_ping`,'' AS `pinged`,`po`.`datetime_period_inst_end` AS `post_modified`,`po`.`datetime_period_inst_end` AS `post_modified_gmt`,'' AS `post_content_filtered`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `post_parent`,'' AS `guid`,0 AS `menu_order`,`pt_pi`.`post_type` AS `post_type`,'' AS `post_mime_type`,0 AS `comment_count`,`ip`.`timeframe_user_period_group_id` AS `timeframe_id`,`pt_e`.`post_type_id` AS `post_type_id`,((`pgp`.`period_group_id` * `pt_pg`.`ID_multiplier`) + `pt_pg`.`ID_base`) AS `period_group_ID`,((`po`.`period_id` * `pt_p`.`ID_multiplier`) + `pt_p`.`ID_base`) AS `period_ID`,((`ip`.`timeframe_user_period_group_id` * `pt_e`.`ID_multiplier`) + `pt_e`.`ID_base`) AS `period_entity_ID`,((`pst`.`period_status_type_id` * `pt_pst`.`ID_multiplier`) + `pt_pst`.`ID_base`) AS `period_status_type_ID`,`po`.`period_id` AS `period_native_id`,`po`.`recurrence_index` AS `recurrence_index`,`ip`.`location_ID` AS `location_ID`,`ip`.`item_ID` AS `item_ID`,`ip`.`user_ID` AS `user_ID`,`pst`.`period_status_type_id` AS `period_status_type_native_id`,`pst`.`name` AS `period_status_type_name`,`po`.`datetime_period_inst_start` AS `datetime_period_inst_start`,`po`.`datetime_period_inst_end` AS `datetime_period_inst_end`,cast(`po`.`blocked` as unsigned) AS `blocked`,cast(`ip`.`enabled` as unsigned) AS `enabled` from (((((((((((((`{$prefix}cb2_cache_periodinsts` `po` join `{$prefix}cb2_periods` `p` on((`po`.`period_id` = `p`.`period_id`))) join `{$prefix}cb2_period_group_period` `pgp` on((`pgp`.`period_id` = `p`.`period_id`))) join `{$prefix}cb2_timeframe_user_period_groups` `ip` on((`ip`.`period_group_id` = `pgp`.`period_group_id`))) join `{$prefix}posts` `loc` on((`ip`.`location_ID` = `loc`.`ID`))) join `{$prefix}posts` `itm` on((`ip`.`item_ID` = `itm`.`ID`))) join `{$prefix}users` `usr` on((`ip`.`user_ID` = `usr`.`ID`))) join `{$prefix}cb2_period_status_types` `pst` on((`ip`.`period_status_type_id` = `pst`.`period_status_type_id`))) join `{$prefix}cb2_post_types` `pt_pi`) join `{$prefix}cb2_post_types` `pt_pd`) join `{$prefix}cb2_post_types` `pt_p`) join `{$prefix}cb2_post_types` `pt_pg`) join `{$prefix}cb2_post_types` `pt_e`) join `{$prefix}cb2_post_types` `pt_pst`) where ((7 = `pt_pi`.`post_type_id`) and (1 = `pt_p`.`post_type_id`) and (101 = `pt_pd`.`post_type_id`) and (2 = `pt_pg`.`post_type_id`) and (15 = `pt_e`.`post_type_id`) and (8 = `pt_pst`.`post_type_id`) and (isnull(`ip`.`entity_datetime_from`) or (`po`.`datetime_period_inst_start` >= `ip`.`entity_datetime_from`)) and (isnull(`ip`.`entity_datetime_to`) or (`po`.`datetime_period_inst_end` <= `ip`.`entity_datetime_to`)))",
@@ -375,16 +375,16 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 		return $time_period;
 	}
 
-  function get_the_content( $more_link_text = null, $strip_teaser = false ) {
+  function get_the_content( String $content = '', Bool $is_single = TRUE ) {
     // Flags field
-    $html = "<td class='cb2-flags'><ul>";
+    $content .= "<td class='cb2-flags'><ul>";
     foreach ( $this->flags() as $flag ) {
 			$letter = ( substr( $flag, 0, 3 ) == 'no-' ? $flag[3] : $flag[0] );
-      $html  .= "<li class='cb2-indicator-$flag'>$letter</li>";
+      $content  .= "<li class='cb2-indicator-$flag'>$letter</li>";
     }
-    $html .= '</ul></td>';
+    $content .= '</ul></td>';
 
-    return $html;
+    return $content;
   }
 
   function get_the_title( $HTML = FALSE ) {
@@ -453,7 +453,7 @@ class CB2_PeriodInst_Global extends CB2_PeriodInst {
     );
   }
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
 			(int) $properties['ID'],
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Global' ),
@@ -468,7 +468,7 @@ class CB2_PeriodInst_Global extends CB2_PeriodInst {
 		return $object;
   }
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$period_entity,
     $period,     // CB2_Period
@@ -478,7 +478,8 @@ class CB2_PeriodInst_Global extends CB2_PeriodInst {
     $blocked,
     Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
 
  	static function metaboxes() {
@@ -522,7 +523,7 @@ class CB2_PeriodInst_Location extends CB2_PeriodInst {
     array_push( $this->posts, $this->period_entity->location );
   }
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
 			(int) $properties['ID'],
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Location' ),
@@ -537,7 +538,7 @@ class CB2_PeriodInst_Location extends CB2_PeriodInst {
 		return $object;
   }
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$period_entity,
     $period,     // CB2_Period
@@ -547,7 +548,8 @@ class CB2_PeriodInst_Location extends CB2_PeriodInst {
     $blocked,
     Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
 
   function jsonSerialize() {
@@ -622,7 +624,7 @@ class CB2_PeriodInst_Timeframe extends CB2_PeriodInst {
 		$this->period_entity->item->add_periodinst( $this );
   }
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
 			(int) $properties['ID'],
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe' ),
@@ -637,7 +639,7 @@ class CB2_PeriodInst_Timeframe extends CB2_PeriodInst {
 		return $object;
   }
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$period_entity, // CB2_PeriodEntity
     $period,        // CB2_Period
@@ -650,7 +652,8 @@ class CB2_PeriodInst_Timeframe extends CB2_PeriodInst {
     // Design Patterns: Factory Singleton with Multiton
     // $ID = period_ID * x + recurrence_index
     // TODO: if 2 different period_entities share the same period, then it will not __construct() twice
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
 
   function get_option( $option, $default = FALSE ) {
@@ -742,7 +745,7 @@ class CB2_PeriodInst_Location_User extends CB2_PeriodInst {
 		$this->period_entity->user->add_periodinst( $this );
   }
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
 			(int) $properties['ID'],
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe' ),
@@ -757,7 +760,7 @@ class CB2_PeriodInst_Location_User extends CB2_PeriodInst {
 		return $object;
   }
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$period_entity, // CB2_PeriodEntity
     $period,        // CB2_Period
@@ -770,7 +773,8 @@ class CB2_PeriodInst_Location_User extends CB2_PeriodInst {
     // Design Patterns: Factory Singleton with Multiton
     // $ID = period_ID * x + recurrence_index
     // TODO: if 2 different period_entities share the same period, then it will not __construct() twice
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
 
   function jsonSerialize() {
@@ -836,7 +840,7 @@ class CB2_PeriodInst_Timeframe_User extends CB2_PeriodInst {
     $this->period_entity->user->add_periodinst( $this );
   }
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		$object = self::factory(
 			(int) $properties['ID'],
 			CB2_PostNavigator::get_or_create_new( $properties, $force_properties, 'period_entity_ID', $instance_container, 'CB2_PeriodEntity_Timeframe_User' ),
@@ -851,7 +855,7 @@ class CB2_PeriodInst_Timeframe_User extends CB2_PeriodInst {
 		return $object;
   }
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$period_entity, // CB2_PeriodEntity
     $period,        // CB2_Period
@@ -861,7 +865,8 @@ class CB2_PeriodInst_Timeframe_User extends CB2_PeriodInst {
     $blocked,
     Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
 
   function jsonSerialize() {

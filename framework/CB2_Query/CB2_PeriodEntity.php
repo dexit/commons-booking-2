@@ -222,7 +222,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $tabs;
 	}
 
-  protected static function factory_from_to_periodinsts(
+  protected static function &factory_from_to_periodinsts(
 		CB2_PeriodInst $periodinst_from,
 		CB2_PeriodInst $periodinst_to,
 		$new_periodentity_Class,
@@ -277,7 +277,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $new_period_entity;
   }
 
-  protected static function factory_from_periodinst(
+  protected static function &factory_from_periodinst(
 		CB2_PeriodInst $periodinst,
 		$new_periodentity_Class,
 		$new_period_status_type_Class,
@@ -331,7 +331,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $new_period_entity;
   }
 
-  static function factory(
+  static function &factory(
 		$ID,
     $name,
 		$period_group,       // Can be NULL, indicating <create new>
@@ -346,10 +346,11 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$user     = NULL,
 		Array $properties = NULL, Bool $force_properties = FALSE
 	) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		return $object;
   }
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory_subclass(
 			(int) $properties['ID'], // Required. Set to CB2_CREATE_NEW if creating
 			( isset( $properties['post_title'] )
@@ -371,7 +372,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		return $object;
 	}
 
-  static function factory_subclass(
+  static function &factory_subclass(
 		$ID,
 		$name,
 		$period_group,       // CB2_PeriodGroup
@@ -561,11 +562,11 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
   }
 
   function templates_considered( $context = 'list', $type = NULL, &$templates = NULL ) {
-		$templates = parent::templates_considered( $context, $type, $templates );
-
 		$period_status_type_name = preg_replace( '/[^a-zA-Z0-9]/', '-', $this->period_status_type->name );
 		$period_status_type = ( $type ? "$type-$period_status_type_name" : $period_status_type_name );
 		$templates = parent::templates_considered( $context, $period_status_type, $templates );
+
+		$templates = parent::templates_considered( $context, $type, $templates );
 
 		return $templates;
   }
@@ -734,7 +735,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
+	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
 			(int) ( isset( $properties['global_period_group_ID'] ) ? $properties['global_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] ) ? $properties['post_title']           : $properties['name'] ),
@@ -753,7 +754,7 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 		return $object;
 	}
 
-  static function factory(
+  static function &factory(
 		$ID,
     $name,
 		$period_group,
@@ -768,7 +769,8 @@ class CB2_PeriodEntity_Global extends CB2_PeriodEntity {
 		$user     = NULL,
 		Array $properties = NULL, Bool $force_properties = FALSE
 	) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		return $object;
   }
 
   protected function __construct(
@@ -1009,7 +1011,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
+	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
 			(int) ( isset( $properties['location_period_group_ID'] ) ? $properties['location_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
@@ -1031,7 +1033,7 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 		return $object;
 	}
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$name,
 		$period_group,
@@ -1045,7 +1047,8 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 		$user     = NULL,
 		Array $properties = NULL, Bool $force_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		return $object;
   }
 
   protected function __construct(
@@ -1118,7 +1121,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
+	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
 			(int) ( isset( $properties['timeframe_period_group_ID'] ) ? $properties['timeframe_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
@@ -1140,7 +1143,7 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 		return $object;
 	}
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$name,
 		$period_group,
@@ -1154,7 +1157,8 @@ class CB2_PeriodEntity_Timeframe extends CB2_PeriodEntity {
 		$user     = NULL,
 		Array $properties = NULL, Bool $force_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		return $object;
   }
 
   protected function __construct(
@@ -1229,7 +1233,7 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
+	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
 			(int) ( isset( $properties['location_user_period_group_ID'] ) ? $properties['location_user_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
@@ -1251,7 +1255,7 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 		return $object;
 	}
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$name,
 		$period_group,
@@ -1266,7 +1270,8 @@ class CB2_PeriodEntity_Location_User extends CB2_PeriodEntity {
 		Array $properties = NULL,
 		Bool $force_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		return $object;
   }
 
   protected function __construct(
@@ -1346,7 +1351,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 
   function post_type() {return self::$static_post_type;}
 
-	static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
+	static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE ) {
 		$object = self::factory(
 			(int) ( isset( $properties['timeframe_user_period_group_ID'] ) ? $properties['timeframe_user_period_group_ID'] : $properties['ID'] ),
 			( isset( $properties['post_title'] )
@@ -1368,7 +1373,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 		return $object;
 	}
 
-  static function factory(
+  static function &factory(
 		$ID,
 		$name,
 		$period_group,
@@ -1383,10 +1388,11 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 		Array $properties = NULL,
 		Bool $force_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties );
+		return $object;
   }
 
-  static function factory_booked_from_available_timeframe_item_from_to( CB2_PeriodInst_Timeframe $periodinst_available_from, CB2_PeriodInst_Timeframe $periodinst_available_to, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
+  static function &factory_booked_from_available_timeframe_item_from_to( CB2_PeriodInst_Timeframe $periodinst_available_from, CB2_PeriodInst_Timeframe $periodinst_available_to, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
 		if ( ! $periodinst_available_from->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
 			throw new Exception( 'Tried to morph into periodinst-user from non-available status [' . $periodinst_available->period_status_type->name . ']' );
 		if ( ! $periodinst_available_to->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
@@ -1408,7 +1414,7 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
 		);
   }
 
-  static function factory_booked_from_available_timeframe_item( CB2_PeriodInst_Timeframe $periodinst_available, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
+  static function &factory_booked_from_available_timeframe_item( CB2_PeriodInst_Timeframe $periodinst_available, CB2_User $user, $name = 'booking', $copy_period_group = TRUE ) {
 		if ( ! $periodinst_available->period_entity->period_status_type instanceof CB2_PeriodStatusType_PickupReturn )
 			throw new Exception( 'Tried to morph into periodinst-user from non-available status [' . $periodinst_available->period_status_type->name . ']' );
 		if ( ! $user )
@@ -1459,11 +1465,6 @@ class CB2_PeriodEntity_Timeframe_User extends CB2_PeriodEntity {
     array_push( $this->posts, $this->item );
 		$this->user = $user;
     array_push( $this->posts, $this->user );
-  }
-
-  public function get_the_after_content() {
-		$templates = $this->templates( 'single' );
-		cb2_get_template_part( CB2_TEXTDOMAIN, $templates );
   }
 
 	function summary_actions() {

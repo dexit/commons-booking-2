@@ -104,6 +104,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 			'context'    => $context,
 			'classes'    => $classes,
 			'closed'     => $closed,
+			'show_on_cb' => array( 'CB2', 'is_not_published' ),
 			'fields'     => array(
 				array(
 					'name'    => __( 'Booking Slots', 'commons-booking-2' ),
@@ -195,7 +196,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		return $metaboxes;
 	}
 
-  static function factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+  static function &factory_from_properties( Array &$properties, &$instance_container = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		// This may not exist in post creation
 		// We do not create the CB2_PeriodGroup objects here
 		// because it could create a infinite circular creation
@@ -221,14 +222,15 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		return $object;
 	}
 
-  static function factory(
+  static function &factory(
 		Int $ID           = CB2_CREATE_NEW,
 		String $name      = 'period group',
 		Array $periods    = array(),
 		Array $period_entity_IDs = array(),
 		Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE
   ) {
-		return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		$object = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+		return $object;
   }
 
   protected function __construct(
@@ -241,7 +243,7 @@ class CB2_PeriodGroup extends CB2_DatabaseTable_PostNavigator implements JsonSer
 		parent::__construct( $ID, $this->periods );
   }
 
-  function add_period( $period ) {
+  function add_period( CB2_Period &$period ) {
 		array_push( $this->periods, $period );
   }
 

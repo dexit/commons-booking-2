@@ -131,7 +131,7 @@ class CB2_Item extends CB2_Post implements JsonSerializable
 				parent::__construct($ID);
     }
 
-    public static function factory_from_properties(&$properties, &$instance_container = null, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE)
+    public static function &factory_from_properties(&$properties, &$instance_container = null, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE)
     {
         $object = self::factory(
             (int) (isset($properties['item_ID']) ? $properties['item_ID'] : $properties['ID']),
@@ -141,14 +141,10 @@ class CB2_Item extends CB2_Post implements JsonSerializable
         return $object;
     }
 
-    public static function factory( Int $ID, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE )
+    public static function &factory( Int $ID, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE )
     {
-			return CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
-    }
-
-    public function get_the_after_content() {
-			$templates = $this->templates( 'single', 'booking' ); // single-item-booking.php
-			return cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', array(), TRUE );
+			$item = CB2_PostNavigator::createInstance( __class__, func_get_args(), $ID, $properties, $force_properties, $set_create_new_post_properties );
+			return $item;
     }
 
     public function do_action_book( CB2_User $user, array $values )

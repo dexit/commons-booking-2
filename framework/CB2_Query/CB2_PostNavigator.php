@@ -106,19 +106,33 @@ abstract class CB2_PostNavigator extends stdClass {
 		);
 	}
 
-  protected static function createInstance( String $Class, Array $args = array(), Int $ID = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
+	public static function clear_object_caches() {
+		$Classes = CB2_Query::subclasses();
+		foreach ( $Classes as $Class ) {
+			if ( property_exists( $Class, 'all' ) ) {
+				if ( WP_DEBUG && FALSE ) {
+					$count = count( $Class::$all );
+					print( "<div class='cb2-WP_DEBUG-small'>cleared $count objects from $Class::\$all cache</div>" );
+				}
+				$Class::$all = array();
+			}
+		}
+	}
+
+  protected static function &createInstance( String $Class, Array $args = array(), Int $ID = NULL, Array $properties = NULL, Bool $force_properties = FALSE, Bool $set_create_new_post_properties = FALSE ) {
 		// So derived factories can call
 		//   protected function __constructors(...)
 		// with variable $args
 		// Multition
 		$has_multition = property_exists( $Class, 'all' ) && is_array( $Class::$all );
+		$object = NULL;
 
 		if ( $has_multition
 			&& $ID != CB2_CREATE_NEW
 			&& ! $force_properties
 			&& isset( $Class::$all[$ID] ) // Ignore NULLs
 		) {
-			$object = $Class::$all[$ID];
+			$object = &$Class::$all[$ID];
 			//if ( WP_DEBUG ) print( "<div class='cb2-WP_DEBUG-small'><b>cache hit</b> [$Class/$ID]</div>" );
 		} else {
 			$reflection = new ReflectionClass( $Class );
@@ -249,11 +263,9 @@ abstract class CB2_PostNavigator extends stdClass {
 
 		if ( is_null( $schema_types ) ) {
 			$schema_types = array();
-			foreach ( get_declared_classes() as $Class ) { // PHP 4
-				$ReflectionClass = new ReflectionClass( $Class );
-				if ( $ReflectionClass->isSubclassOf( 'CB2_PostNavigator' ) // PHP 5
-					&& property_exists( $Class, 'static_post_type' )
-				) {
+			$Classes      = CB2_Query::subclasses();
+			foreach ( $Classes as $Class ) {
+				if ( property_exists( $Class, 'static_post_type' ) ) {
 					if ( strlen( $Class::$static_post_type ) > 20 )
 						throw new Exception( 'post_type [' . $Class::$static_post_type . '] is longer than the WordPress maximum of 20 characters' );
 					$schema_types[ $Class::$static_post_type ] = $Class;
@@ -291,7 +303,7 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $Class;
   }
 
-  protected static function get_or_create_new( Array &$properties, Bool $force_properties, String $ID_property_name, &$instance_container = NULL, $Class = FALSE, $required = TRUE, Bool $set_create_new_post_properties = FALSE ) {
+  protected static function &get_or_create_new( Array &$properties, Bool $force_properties, String $ID_property_name, &$instance_container = NULL, $Class = FALSE, $required = TRUE, Bool $set_create_new_post_properties = FALSE ) {
 		// "get":    the database record(s) exist already and we have their ID
 		// "create": create a placeholder object that will be saved to the database later, ID = 0
 		// If $ID_property_name is plural, an array will be returned
@@ -370,14 +382,14 @@ abstract class CB2_PostNavigator extends stdClass {
 			}
 
 			// Maybe plural = (array)
-			$properties[ $object_property_name ] = $object;
+			$properties[ $object_property_name ] = &$object;
 		}
 
 		// Maybe array
 		return $object;
 	}
 
-	private static function get_or_create_new_internal( String $ID_property_name, $property_ID_value, String $TargetClass, Array $properties, Bool $force_properties, Bool $set_create_new_post_properties = FALSE, Object $instance_container = NULL ) {
+	private static function &get_or_create_new_internal( String $ID_property_name, $property_ID_value, String $TargetClass, Array $properties, Bool $force_properties, Bool $set_create_new_post_properties = FALSE, Object $instance_container = NULL ) {
 		if ( is_array( $property_ID_value ) ) {
 			// Sub-properties defined in sub-associative array
 			$properties = $property_ID_value;
@@ -830,15 +842,6 @@ abstract class CB2_PostNavigator extends stdClass {
     wp_json_encode( $this, $options );
   }
 
-  function the_content( $more_link_text = null, $strip_teaser = false ) {
-		// Borrowed from wordpress
-		// https://developer.wordpress.org/reference/functions/the_content/
-    $content = $this->get_the_content( $more_link_text, $strip_teaser );
-    $content = apply_filters( 'the_content', $content );
-    $content = str_replace( ']]>', ']]&gt;', $content );
-    echo $content;
-  }
-
   protected function cache_set( Bool $set_global = FALSE, $new_post = NULL ) {
 		global $post;
 		if ( is_null( $new_post ) ) $new_post = $this;
@@ -861,6 +864,13 @@ abstract class CB2_PostNavigator extends stdClass {
 			if ( $set_global ) $post = $previous;
 		}
   }
+
+  public function get_the_permalink() {
+		$previous  = $this->cache_set();
+		$permalink = get_the_permalink( $this );
+		$this->cache_set_previous( $previous );
+		return $permalink;
+	}
 
   function get_the_edit_post_url( $context = 'display' ) {
 		$url  = NULL;
@@ -923,21 +933,37 @@ abstract class CB2_PostNavigator extends stdClass {
 		return $this->excerpt;
   }
 
-	function get_the_after_content() {
-		return '';
-	}
+  public function get_the_after_content_single() {
+		$templates = $this->templates( 'single' );
+		return cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', array(), TRUE );
+  }
 
-	function get_the_content() {
-		$content = '';
-		if ( property_exists( $this, 'post_content' ) ) $content .= $this->post_content;
-		if ( method_exists( $this, 'get_the_after_content' ) ) {
-			// TODO: this remove_filter wpautop is quite rude
-			// as it removes it for the entire remaining process
-			// and no content will br wpauto
-			remove_filter( 'the_content', 'wpautop' );
-			remove_filter( 'the_excerpt', 'wpautop' );
-			$content .= '<!--more-->';
-			$content .= $this->get_the_after_content();
+  public function get_the_after_content_list() {
+		$templates = $this->templates( 'archive' );
+		return cb2_get_template_part( CB2_TEXTDOMAIN, $templates, '', array(), TRUE );
+  }
+
+	function get_the_content( String $content = '', Bool $is_single = TRUE ) {
+		if ( $is_single ) {
+			if ( method_exists( $this, 'get_the_after_content_single' ) ) {
+				// TODO: this remove_filter wpautop is quite rude
+				// as it removes it for the entire remaining process
+				// and no content will br wpauto
+				remove_filter( 'the_content', 'wpautop' );
+				remove_filter( 'the_excerpt', 'wpautop' );
+				$content .= '<!--more-->';
+				$content .= $this->get_the_after_content_single();
+			}
+		} else {
+			if ( method_exists( $this, 'get_the_after_content_list' ) ) {
+				// TODO: this remove_filter wpautop is quite rude
+				// as it removes it for the entire remaining process
+				// and no content will br wpauto
+				remove_filter( 'the_content', 'wpautop' );
+				remove_filter( 'the_excerpt', 'wpautop' );
+				$content .= '<!--more-->';
+				$content .= $this->get_the_after_content_list();
+			}
 		}
 		return $content;
 	}

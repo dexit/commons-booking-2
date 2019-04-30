@@ -13,7 +13,7 @@
 ?>
 <div class="cb2-summary cb2-item-summary">
 	<h3><?php echo __('Item: ', 'commons-booking-2'); ?>
-		<?php CB2::the_link(); ?>
+		<?php CB2::the_html_permalink(); ?>
 	</h3>
 	<div class="cb2-item-thumb cb2-summary-image"><?php the_post_thumbnail( 'thumbnail' );?></div>
 	<p class="cb2-item-excerpt"><!--?php the_excerpt();?--></p>
