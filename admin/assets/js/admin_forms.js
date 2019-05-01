@@ -115,11 +115,13 @@ function cb2_process(){
 			var panel = $(href);
 
 			// Close other nexts
-			nexts.removeClass('selected');
+			nexts.removeClass('cb2-selected');
+			nexts.addClass('cb2-unselected');
 			panels.hide();
 
 			// Open target next
-			next.addClass('selected');
+			next.addClass('cb2-selected');
+			next.removeClass('cb2-unselected');
 			panel.focus();
 			panel.show();
 
@@ -141,7 +143,8 @@ function cb2_process(){
 			if (!next.length) next = nexts.eq(0);
 			var href  = next.find('a').attr( 'href' );
 			var panel = $(href);
-			next.addClass('selected');
+			next.addClass('cb2-selected');
+			next.removeClass('cb2-unselected');
 			panel.show();
 		}
 	});
@@ -169,7 +172,8 @@ function cb2_process(){
 			var panel = tab.parent().parent().parent().find(href);
 
 			// Close other tabs
-			tabs.removeClass('selected');
+			tabs.removeClass('cb2-selected');
+			tabs.addClass('cb2-unselected');
 			panels.hide();
 			tabs.each(function(){
 				var other_href = $(this).find('a').attr( 'href' );
@@ -180,7 +184,8 @@ function cb2_process(){
 			tab.closest('.cb2-popup,body').addClass('cb2-tabs-' + href + '-selected');
 
 			// Open target tab
-			tab.addClass('selected');
+			tab.addClass('cb2-selected');
+			tab.removeClass('cb2-unselected');
 			panel.focus();
 			panel.show();
 
@@ -193,7 +198,8 @@ function cb2_process(){
 			if (!tab.length) tab = tabs.eq(0);
 			var href  = tab.find('a').attr( 'href' );
 			var panel = $(href);
-			tab.addClass('selected');
+			tab.addClass('cb2-selected');
+			tab.removeClass('cb2-unselected');
 			href = href.replace(/^#/, '');
 			tab.closest('.cb2-popup,body').addClass('cb2-tabs-' + href + '-selected');
 			panel.show();
@@ -252,12 +258,6 @@ function cb2_process(){
 			}
 		});
 	});
-
-	$('.cb2-removable-item')
-		.append('<input type="button" value="x"/>')
-		.children('input').click(function(){
-			$(this).parent().remove();
-		});
 
 	$('.cb2-calendar-krumo-show').click(function(){
 		$(this).parent().find('.cb2-calendar-krumo').show();

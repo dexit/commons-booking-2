@@ -8,223 +8,201 @@
  * @link      http://www.wielebenwir.de
  * @copyright 2015 wielebenwir
  */
+.cb2-admin-page {
+	.metabox-holder {
+		.postbox {
+			max-width: 100%;
 
-.ui-state-default {
-	display: inline;
-	border-color: #cccccc;
-	border-width: 1px;
-	border-style: solid;
-	border-bottom-width: 0px;
-	padding: 12px 0px;
-	background: none repeat scroll 0% 0% #e4e4e4;
-}
-
-.ui-tabs-nav {
-	padding-bottom: 9px;
-	padding-left: 10px;
-	border-bottom: 1px solid #cccccc;
-}
-
-.ui-tabs-anchor {
-	text-decoration: none;
-	font-weight: 600;
-	font-size: 15px;
-	line-height: 24px;
-	color: #7f7f7f;
-	padding: 10px;
-}
-
-.ui-tabs-anchor:hover, .ui-state-active a {
-	color: black;
-}
-
-.ui-tabs-active, .ui-tabs-active:hover, .ui-tabs-active:active {
-	color: black;
-	background: #efefef !important;
-}
-
-.settings-tab {
-	float:left;
-}
-
-// Settings page
-.right-column-settings-page {
-	max-width:270px;
-	float:right;
-}
-
-.metabox-holder {
-	.postbox {
-		max-width: 100%;
-
-		h3 {
-			padding-left: 10px;
+			h3 {
+				padding-left: 10px;
+			}
 		}
 	}
-}
 
-/* ------------------------------------------------------------- nexts */
-.cb2-nexts {
-	padding-bottom:30px;
-	border-bottom: 1px dotted #888;
-}
-.cb2-nexts li {
-	float:left;
+	/* ------------------------------------------------------------- nexts */
+	.cb2-nexts {
+		padding-bottom:30px;
+		border-bottom: 1px dotted #888;
 
-}
-.cb2-nexts li.selected a {
-	text-decoration:none;
-	color:#888;
-	font-weight:bold;
-}
-.cb2-nexts li:after {
-	content: '>>';
-	clear:both;
-	margin:0px 5px;
-}
-.cb2-nexts li.cb2-last:after {
-	content: none;
-}
+		li {
+			float:left;
 
-/* ------------------------------------------------------------- tabs2 */
-.cb2-tabs {
-	border-bottom:1px solid #d7d7d7;
-	margin: 20px 0px 0px 0px;
-
-	li {
-		float:left;
-		border-top:1px solid #d7d7d7;
-		border-left:1px solid #d7d7d7;
-		border-right:1px solid #d7d7d7;
-		background:#f1f1f1;
-		margin-bottom:0px;
+		}
+		li.cb2-selected a {
+			text-decoration:none;
+			color:#888;
+			font-weight:bold;
+		}
+		li:after {
+			content: '>>';
+			clear:both;
+			margin:0px 5px;
+		}
+		li.cb2-last:after {
+			content: none;
+		}
 	}
-	&:after {
-		content: ' ';
-		clear:both;
-		display:table;
+
+	/* ------------------------------------------------------------- tabs2 */
+	.cb2-tabs {
+		border-bottom:1px solid #d7d7d7;
+		margin: 20px 0px 0px 0px;
+
+		li {
+			float:left;
+			border-top:1px solid #d7d7d7;
+			border-left:1px solid #d7d7d7;
+			border-right:1px solid #d7d7d7;
+			background-color:#f1f1f1;
+			margin-bottom:0px;
+		}
+		&:after {
+			content: ' ';
+			clear:both;
+			display:table;
+		}
+		li a {
+			padding:8px 44px;
+			display:block;
+			color:#666;
+			text-decoration:none;
+		}
+		li.cb2-selected {
+			background:#fff;
+			border-top:1px solid #a7a7a7;
+			border-left:1px solid #a7a7a7;
+			border-right:1px solid #a7a7a7;
+			box-shadow: 0px 0px 1px #aaa;
+			font-weight:bold;
+			margin:-1px -1px -1px -1px;
+			z-index:1000;
+			position:relative;
+		}
+		li.cb2-selected a {
+			color:#0073aa;
+		}
+		li.cb2-unselected:hover {
+			background-color:#fff;
+		}
 	}
-	li a {
-		padding:8px 44px;
-		display:block;
-		color:#666;
-		text-decoration:none;
-	}
-	li.selected {
-		background:#fff;
-		border-top:1px solid #a7a7a7;
-		border-left:1px solid #a7a7a7;
-		border-right:1px solid #a7a7a7;
-		box-shadow: 0px 0px 1px #aaa;
-		font-weight:bold;
-		margin:-1px -1px -1px -1px;
-		z-index:1000;
-		position:relative;
-	}
-	li.selected a {
-		color:#0073aa;
-	}
-}
-.cb2-with-tabs #submitdiv {
-	display:none;
-}
-.cb2-tabs-postbox-container-2-selected #submitdiv {
-	display:none;
-}
-.columns-2 .cb2-tabs {
-	/* hide tabs if sidebar available */
-	display:none;
-}
-
-/* ------------------------------------------------------------- object-summary-bar */
-body #post-body-content {
-	margin-bottom: 0px;
-}
-.cb2-object-summary-bar .cmb-td {
-	float:left;
-}
-
-.cb2-object-summary-bar .cmb-row:before {
-	float:left;
-	margin: 4px 0px 7px 2px;
-	color:#a7a7a7;
-
-	/* copied from WordPress */
-	display: inline-block;
-	width: 20px;
-	height: 20px;
-	font-size: 20px;
-	line-height: 1;
-	font-family: dashicons;
-	text-decoration: inherit;
-	font-weight: 400;
-	font-style: normal;
-	vertical-align: top;
-	text-align: center;
-	transition: color .1s ease-in 0;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
-
-.cb2-with-tabs #poststuff .cmb2-postbox.cb2-object-summary-bar {
-	float:left;
-	margin: 0px 0px 20px 0px;
-	clear:none;
-	border:none;
-	min-width:0px;
-
-	.handlediv,
-	h2 {
+	.cb2-tabs-postbox-container-2-selected #submitdiv {
 		display:none;
 	}
-	.inside,
-	h2 {
-		float:left;
-		border-bottom: none;
-		margin:0px;
+	&.columns-2 .cb2-tabs {
+		/* hide tabs if sidebar available */
+		display:none;
 	}
-	.inside {
-		padding:4px 10px;
+
+	/* ------------------------------------------------------------- object-summary-bar */
+	#post-body-content {
+		margin-bottom: 0px;
 	}
-	h2 {
-		padding: 7px 10px;
+
+	.cb2-object-summary-bar {
+		.cmb-td {
+			float:left;
+		}
+
+		.cmb-row:before {
+			float:left;
+			margin: 4px 0px 7px 2px;
+			color:#a7a7a7;
+
+			/* copied from WordPress */
+			display: inline-block;
+			width: 20px;
+			height: 20px;
+			font-size: 20px;
+			line-height: 1;
+			font-family: dashicons;
+			text-decoration: inherit;
+			font-weight: 400;
+			font-style: normal;
+			vertical-align: top;
+			text-align: center;
+			transition: color .1s ease-in 0;
+			-webkit-font-smoothing: antialiased;
+			-moz-osx-font-smoothing: grayscale;
+		}
 	}
-	.cmb2-wrap > .cmb-field-list > .cmb-row {
-		padding: 0px;
-		margin: 0px;
-	}
-	div.post_data {
-		padding: 5px 7px;
-	}
-	a {
-		padding: 5px 7px;
-		display: block;
-	}
-	select {
-		border:none;
-		margin: 0px;
-		box-shadow:none;
-		color:#0073aa;
-		cursor:pointer;
-	}
-	.cmb-type-post-link.cmb2-id-item-ID:before {
-		content: "\f115";
-	}
-	.cmb2-id-entity-post-data-post-date:before {
-		content: "\f108";
-	}
-	.cmb2-id-location-ID:before {
-		content: "\f107";
-	}
-	.cmb2-id-item-ID:before {
-		content: "\f108";
-	}
-	.cmb2-id-user-ID:before {
-		content: "\f109";
-	}
-	.cmb2-id-entity-post-data-post-date {
-		font-weight:bold;
-		padding:7px 7px;
-		font-size:10px;
+
+	&.cb2-with-tabs #poststuff {
+		.cb2-submit {
+			float:right;
+			display:block;
+			margin-top: 20px;
+		}
+
+		.cmb2-postbox {
+			clear:both;
+			margin: 20px 0px 0px 0px;
+		}
+
+		#submitdiv {
+			display:none;
+		}
+
+		.cmb2-postbox.cb2-object-summary-bar {
+			float:left;
+			margin: 0px 0px 20px 0px;
+			clear:none;
+			border:none;
+			min-width:0px;
+
+			.handlediv,
+			h2 {
+				display:none;
+			}
+			.inside,
+			h2 {
+				float:left;
+				border-bottom: none;
+				margin:0px;
+			}
+			.inside {
+				padding:4px 10px;
+			}
+			h2 {
+				padding: 7px 10px;
+			}
+			.cmb2-wrap > .cmb-field-list > .cmb-row {
+				padding: 0px;
+				margin: 0px;
+			}
+			div.post_data {
+				padding: 5px 7px;
+			}
+			a {
+				padding: 5px 7px;
+				display: block;
+			}
+			select {
+				border:none;
+				margin: 0px;
+				box-shadow:none;
+				color:#0073aa;
+				cursor:pointer;
+			}
+			.cmb-type-post-link.cmb2-id-item-ID:before {
+				content: "\f115";
+			}
+			.cmb2-id-entity-post-data-post-date:before {
+				content: "\f108";
+			}
+			.cmb2-id-location-ID:before {
+				content: "\f107";
+			}
+			.cmb2-id-item-ID:before {
+				content: "\f108";
+			}
+			.cmb2-id-user-ID:before {
+				content: "\f109";
+			}
+			.cmb2-id-entity-post-data-post-date {
+				font-weight:bold;
+				padding:7px 7px;
+				font-size:10px;
+			}
+		}
 	}
 }

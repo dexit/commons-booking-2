@@ -1,187 +1,189 @@
-.cb2-popup {
-	padding:15px;
-	background-color:#fff;
+.cb2-admin-page {
+	.cb2-popup {
+		padding:15px;
+		background-color:#fff;
 
-	.TB_window_classes,
-	.TB_window_styles,
-	.TB_title_actions {
-		display:none;
-	}
-
-	.postbox {
-		border:none;
-		box-shadow:none;
-	}
-	.postbox > button.handlediv,
-	.postbox > h2 {
-		display:none;
-	}
-	.postbox > h2,
-	.postbox > .inside,
-	.postbox .cmb-th,
-	.postbox .cmb-td {
-		margin:0px;
-		padding:0px;
-	}
-	.cb2-name label {
-		font-weight: bold;
-	}
-	.cb2-actions {
-		margin-top:10px;
-	}
-	.cb2-submit {
-		display:none;
-	}
-	.cb2-popup-form-save,
-	.cb2-popup-form-next,
-	.cb2-popup-form-trash {
-		float:right;
-		margin-left:6px;
-	}
-	.cb2-popup-form-trash {
-		color:red;
-	}
-
-	#cb2-save-types {
-		font-weight:bold;
-		padding:5px 10px;
-		border-top:1px solid #e7e7e7;
-		background-color:#f7f7f7;
-		text-align:right;
-
-		> * {
-			margin-left:4px;
-		}
-	}
-
-	.cmb2-metabox .cmb2-id-exceptions,
-	.cmb-type-paragraph {
-		display:none;
-	}
-	.cmb2-id-recurrence-type {
-		border-top:1px dotted #aaa;
-	}
-
-	&.cb2-saving {
-		opacity:0.7;
-		.cb2-popup-form-save {
-			color:#aaa;
-			cursor:no-drop;
-		}
-	}
-	&.cb2-refreshing {
-		opacity:0.3;
-		.cb2-popup-form-save {
-			color:#aaa;
-			cursor:no-drop;
-		}
-	}
-}
-
-#TB_window.cb2-no-recurrence #cb2-save-types {
-	display:none;
-}
-
-#TB_window {
-	background-color: #555;
-}
-
-body #TB_ajaxContent {
-	height:auto!important;
-	width:auto!important;
-	padding:0px;
-}
-body #TB_title {
-	background-color: Transparent;
-	color:#fff;
-	height:auto;
-	border-bottom:none;
-
-	a {
-		color:#fff;
-	}
-
-	.TB_title_actions {
-		float:right;
-		margin:8px;
-		margin-top: -20px;
-
-		> * {
-			float:right;
-		}
-	}
-
-	.cb2-do-action {
-		margin-left:4px;
-		/* TODO: remove .cb2-do-action ?
-		background-color: #fff;
-		border-radius: 16px;
-		border: 2px solid #fff;
-		color: #000088;
-		padding: 3px 14px;
-		cursor:pointer;
-
-		&:hover {
-			background-color: Transparent;
-		}
-		*/
-	}
-
-	#TB_ajaxWindowTitle {
-		line-height:inherit;
-		padding:8px;
-		min-height: 86px;
-
-		.cb2-action {
+		.TB_window_classes,
+		.TB_window_styles,
+		.TB_title_actions {
 			display:none;
 		}
 
-		.cb2-title > span {
-			display:block;
+		.postbox {
+			border:none;
+			box-shadow:none;
+		}
+		.postbox > button.handlediv,
+		.postbox > h2 {
+			display:none;
+		}
+		.postbox > h2,
+		.postbox > .inside,
+		.postbox .cmb-th,
+		.postbox .cmb-td {
+			margin:0px;
+			padding:0px;
+		}
+		.cb2-name label {
+			font-weight: bold;
+		}
+		.cb2-actions {
+			margin-top:10px;
+		}
+		.cb2-submit {
+			display:none;
+		}
+		.cb2-popup-form-save,
+		.cb2-popup-form-next,
+		.cb2-popup-form-trash {
+			float:right;
+			margin-left:6px;
+		}
+		.cb2-popup-form-trash {
+			color:red;
 		}
 
-		.cb2-periodstatustype-name {
-			position: absolute;
-			right: 36px;
-			top: 8px;
-			border: 2px solid #fff;
-			padding: 2px 12px;
-			line-height: 100%;
-			border-radius: 4px;
+		#cb2-save-types {
+			font-weight:bold;
+			padding:5px 10px;
+			border-top:1px solid #e7e7e7;
+			background-color:#f7f7f7;
+			text-align:right;
+
+			> * {
+				margin-left:4px;
+			}
 		}
 
-		.cb2-location-name:before {
-			content: "\f107";
-			font-family: dashicons;
-			vertical-align: bottom;
-			margin-right:2px;
+		.cmb2-metabox .cmb2-id-exceptions,
+		.cmb-type-paragraph {
+			display:none;
 		}
-		.cb2-item-name:before {
-			content: "\f108";
-			font-family: dashicons;
-			vertical-align: bottom;
-			margin-right:2px;
-		}
-		.cb2-user-name:before {
-			content: "\f109";
-			font-family: dashicons;
-			vertical-align: bottom;
-			margin-right:2px;
+		.cmb2-id-recurrence-type {
+			border-top:1px dotted #aaa;
 		}
 
-		.cb2-status-booked .cb2-title {
-			.cb2-time-period,
-			.cb2-location-name {
-				display:inline;
+		&.cb2-saving {
+			opacity:0.7;
+			.cb2-popup-form-save {
+				color:#aaa;
+				cursor:no-drop;
+			}
+		}
+		&.cb2-refreshing {
+			opacity:0.3;
+			.cb2-popup-form-save {
+				color:#aaa;
+				cursor:no-drop;
 			}
 		}
 	}
 
-	.tb-close-icon {
-		color:#fff;
+	#TB_window.cb2-no-recurrence #cb2-save-types {
+		display:none;
 	}
-	.tb-close-icon:hover {
-		color:#000;
-		background-color:#fff;
+
+	#TB_window {
+		background-color: #555;
+	}
+
+	#TB_ajaxContent {
+		height:auto!important;
+		width:auto!important;
+		padding:0px;
+	}
+	#TB_title {
+		background-color: Transparent;
+		color:#fff;
+		height:auto;
+		border-bottom:none;
+
+		a {
+			color:#fff;
+		}
+
+		.TB_title_actions {
+			float:right;
+			margin:8px;
+			margin-top: -20px;
+
+			> * {
+				float:right;
+			}
+		}
+
+		.cb2-do-action {
+			margin-left:4px;
+			/* TODO: remove .cb2-do-action ?
+			background-color: #fff;
+			border-radius: 16px;
+			border: 2px solid #fff;
+			color: #000088;
+			padding: 3px 14px;
+			cursor:pointer;
+
+			&:hover {
+				background-color: Transparent;
+			}
+			*/
+		}
+
+		#TB_ajaxWindowTitle {
+			line-height:inherit;
+			padding:8px;
+			min-height: 86px;
+
+			.cb2-action {
+				display:none;
+			}
+
+			.cb2-title > span {
+				display:block;
+			}
+
+			.cb2-periodstatustype-name {
+				position: absolute;
+				right: 36px;
+				top: 8px;
+				border: 2px solid #fff;
+				padding: 2px 12px;
+				line-height: 100%;
+				border-radius: 4px;
+			}
+
+			.cb2-location-name:before {
+				content: "\f107";
+				font-family: dashicons;
+				vertical-align: bottom;
+				margin-right:2px;
+			}
+			.cb2-item-name:before {
+				content: "\f108";
+				font-family: dashicons;
+				vertical-align: bottom;
+				margin-right:2px;
+			}
+			.cb2-user-name:before {
+				content: "\f109";
+				font-family: dashicons;
+				vertical-align: bottom;
+				margin-right:2px;
+			}
+
+			.cb2-status-booked .cb2-title {
+				.cb2-time-period,
+				.cb2-location-name {
+					display:inline;
+				}
+			}
+		}
+
+		.tb-close-icon {
+			color:#fff;
+		}
+		.tb-close-icon:hover {
+			color:#000;
+			background-color:#fff;
+		}
 	}
 }

@@ -622,8 +622,10 @@ class CB2 {
 			$tab_keys = array_keys( $tabs );
 			$last_tab = end( $tab_keys );
 			foreach ( $tabs as $id => $title ) {
-				$class = ( $last_tab == $id ? 'cb2-last' : '' );
-				if ( $selected == $id ) $class .= ' cb2-selected';
+				$classes = array();
+				if ( $last_tab == $id ) array_push( $classes, 'cb2-last' );
+				array_push( $classes, ( $selected == $id ? 'cb2-selected' : 'cb2-unselected' ) );
+				$class = implode( ' ', $classes );
 				switch ( $id ) {
 					case 'postdivrich':
 						if ( post_type_supports( $post->post_type, 'editor' ) )

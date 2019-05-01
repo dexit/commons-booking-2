@@ -10,168 +10,115 @@
  */
 
 /* ---------------------- admin screen */
-.admin_page_cb2-post-edit #preview-action,
-.admin_page_cb2-post-edit .misc-pub-visibility,
-.admin_page_cb2-post-edit #minor-publishing-actions,
-.admin_page_cb2-post-new #preview-action,
-.admin_page_cb2-post-new .misc-pub-visibility,
-.admin_page_cb2-post-new #minor-publishing-actions,
-#posts-filter .search-box,
-.cmb-type-multicheck-inline > .cmb-td > p,
-.cmb-type-multicheck > .cmb-td > p {
-	/* Select all */
-	display: none;
-}
-
-.cmb2-postbox,
-#submitdiv {
-	clear:both;
-	margin: 20px 0px 0px 0px;
-}
-
-.cb2-actions form,
-.cb2-actions form > div {
-	display: inline;
-}
-
-body #wpcontent .cmb2-wrap > .cmb-field-list > .cmb-row.cb2-cmb2-compact,
-body .cb2-popup .cmb2-wrap > .cmb-field-list > .cmb-row {
-	padding: 0px;
-	margin: 0px;
-	border: none !important;
-	box-shadow: none;
-}
-
-body .cmb2-id-recurrence-sequence li,
-body .cb2-calendar-grey .cb2-calendar > .entry-content > .cb2-subposts > li {
-	float:left;
-	margin-right:4px;
-	text-align: center;
-	border: 1px solid #c7c7c7;
-	background-color: #e7e7e7;
-	padding: 10px 5px;
-	min-width: 50px;
-}
-
-.cb2-form-wrapper {
-	float:left;
-	margin-right:5px;
-}
-.cb2-form:after {
-	content:' ';
-	display:table;
-	clear:both;
-}
-
-.cb2-time-guide {
-	position:absolute;
-	z-index:20002;
-	height:100%;
-	top:0px;
-	left:0px;
-	color:#fff;
-
-	li {
-		position:absolute;
-		font-size:10px;
-		line-height: 11px;
+.cb2-admin-page {
+	#preview-action,
+	.misc-pub-visibility,
+	#minor-publishing-actions,
+	.tablenav .actions,
+	#posts-filter .search-box,
+	.cmb-type-multicheck-inline > .cmb-td > p,
+	.cmb-type-multicheck > .cmb-td > p {
+		/* Select all */
+		display: none;
 	}
-}
 
-.cmb-type-calendar {
-	> .cmb-td {
-		width: 100%;
+	.cb2-actions form,
+	.cb2-actions form > div {
+		display: inline;
 	}
-}
 
-body .cmb2-id-datetime-from .cmb2-timepicker,
-body .cmb2-id-datetime-to .cmb2-timepicker {
-	display: none;
-}
-
-body .cmb2-id-recurrence-sequence input[type=checkbox],
-body .cb2-calendar-grey input[type=checkbox] {
-	display: block;
-	margin: 0px auto 3px auto;
-}
-
-body .cmb-type-group .cmb-th + .cmb-td,
-body .cmb2-postbox .cmb-th + .cmb-td {
-	/* TODO: this is probably not  good idea allow paragraph to wrap around fields better */
-	float: none;
-	width: auto;
-}
-
-.cb2-removable-item > input {
-	margin-left: 2px !important;
-}
-
-#poststuff .cb2-submit {
-	display:none;
-}
-.cb2-with-tabs #poststuff .cb2-submit {
-	float:right;
-	display:block;
-	margin-top: 20px;
-}
-
-.wrap #geo-hcard-map {
-	border:1px double #666;
-	padding:2px;
-	width:100%;
-	min-height:500px;
-}
-
-.cmb2-options-page {
-	.cmb2-metabox > .cmb-row {
+	#wpcontent .cmb2-wrap > .cmb-field-list > .cmb-row.cb2-cmb2-compact,
+	.cb2-popup .cmb2-wrap > .cmb-field-list > .cmb-row {
+		padding: 0px;
+		margin: 0px;
 		border: none !important;
 		box-shadow: none;
 	}
-	.cmb2-metabox > .cmb-row:not(:first-of-type) {
-		border-top: 1px solid #e9e9e9;
-		border-bottom: none !important;
-	}
-	dl.cb2-template_tags {
-		padding: 10px;
-		display: block;
-	}
-	dl.cb2-template_tags dt {
-		font-weight: bold;
-		margin: 5px;
-	}
-	dl.cb2-template_tags dd {
-		font-weight: normal;
-		display: inline-block;
-		padding: 3px;
-		margin: 0;
-	}
-}
 
-.right-column-settings-page {
-	max-width: 270px;
-	float: right;
-}
-
-.metabox-holder .postbox {
-	max-width: 100%;
-}
-.metabox-holder .postbox h3 {
-	padding-left: 10px;
-}
-
-#cmb2-metabox-CB2_PeriodEntity_Timeframe_booking_slots {
-	li {
+	.cmb2-id-recurrence-sequence li,
+	.cb2-calendar-grey .cb2-calendar > .entry-content > .cb2-subposts > li {
 		float:left;
-		width:33%;
-		border:1px solid #d7d7d7;
-		min-height:140px;
-		text-align:center;
-		margin-right:-1px;
-		padding: 20px;
+		margin-right:4px;
+		text-align: center;
+		border: 1px solid #c7c7c7;
+		background-color: #e7e7e7;
+		padding: 10px 5px;
+		min-width: 50px;
+	}
 
-		input {
-			display:block;
-			margin:0px auto 10px auto;
+	.cb2-form-wrapper {
+		float:left;
+		margin-right:5px;
+	}
+	.cb2-form:after {
+		content:' ';
+		display:table;
+		clear:both;
+	}
+
+	.cb2-time-guide {
+		position:absolute;
+		z-index:20002;
+		height:100%;
+		top:0px;
+		left:0px;
+		color:#fff;
+
+		li {
+			position:absolute;
+			font-size:10px;
+			line-height: 11px;
+		}
+	}
+
+	.cmb-type-calendar {
+		> .cmb-td {
+			width: 100%;
+		}
+	}
+
+	.cmb2-id-datetime-from .cmb2-timepicker,
+	.cmb2-id-datetime-to .cmb2-timepicker {
+		display: none;
+	}
+
+	.cmb2-id-recurrence-sequence input[type=checkbox],
+	.cb2-calendar-grey input[type=checkbox] {
+		display: block;
+		margin: 0px auto 3px auto;
+	}
+
+	.cmb-type-group .cmb-th + .cmb-td,
+	.cmb2-postbox .cmb-th + .cmb-td {
+		/* TODO: this is probably not  good idea allow paragraph to wrap around fields better */
+		float: none;
+		width: auto;
+	}
+
+	#poststuff .cb2-submit {
+		display:none;
+	}
+
+	.wrap #geo-hcard-map {
+		border:1px double #666;
+		padding:2px;
+		width:100%;
+		min-height:500px;
+	}
+	#cmb2-metabox-CB2_PeriodEntity_Timeframe_booking_slots {
+		li {
+			float:left;
+			width:33%;
+			border:1px solid #d7d7d7;
+			min-height:140px;
+			text-align:center;
+			margin-right:-1px;
+			padding: 20px;
+
+			input {
+				display:block;
+				margin:0px auto 10px auto;
+			}
 		}
 	}
 }

@@ -476,6 +476,20 @@ function cb2_edit_form_advanced_tab_extra( $post ) {
 }
 add_action( 'edit_form_advanced', 'cb2_edit_form_advanced_tab_extra' );
 
+function cb2_admin_body_class( $classes ) {
+	if ( isset( $_GET[ 'page' ] ) ) {
+		$page = $_GET[ 'page' ];
+		if ( isset( cb2_admin_pages()[$page] )
+			|| $page == 'cb2_settings'
+			|| $page == 'cb2-options'
+		) {
+			$classes .= 'cb2-admin-page';
+		}
+	}
+	return $classes;
+}
+add_filter( 'admin_body_class', 'cb2_admin_body_class' );
+
 // ---------------------------------------------------------- Pages
 function cb2_dashboard_page() {
 	require_once( 'dashboard.php' );

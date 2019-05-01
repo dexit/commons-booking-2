@@ -8,100 +8,110 @@
  * @link      http://www.wielebenwir.de
  * @copyright 2015 wielebenwir
  */
+.cb2-admin-page {
+	h1 a,
+	h2 a,
+	h3 a,
+	h1 span,
+	h2 span,
+	h3 span {
+		font-size:12px;
+		font-weight:normal;
+	}
 
-h1 a,
-h2 a,
-h3 a,
-h1 span,
-h2 span,
-h3 span {
-	font-size:12px;
-	font-weight:normal;
-}
+	.cb2-bald {
+		text-decoration: none;
+	}
 
-.cb2-bald {
-	text-decoration: none;
-}
+	.cb2-advanced-menu-item {
+		font-style: italic;
+	}
 
-.cb2-advanced-menu-item {
-	font-style: italic;
-}
+	.cb2-advanced {
+		float:right;
+		color:#aaa;
+	}
 
-.cb2-advanced {
-	float:right;
-	color:#aaa;
-}
+	.cb2-invalid {
+		color: #888;
+	}
 
-.cb2-invalid {
-	color: #888;
-}
+	.cb2-invalidity {
+		color: #d44;
+		font-weight: bold;
+	}
 
-.cb2-invalidity {
-	color: #d44;
-	font-weight: bold;
-}
+	.cb2-advanced-menu-item.cb2-first {
+		display: block;
+		border-top: 1px dotted #d7d7d7;
+		padding-top: 6px;
+	}
 
-.cb2-menu-invisible {
-	margin-bottom: -2em;
-}
+	.cb2-description {
+		margin: 0px 8px;
+		color: #888;
+	}
 
-body .cb2-advanced-menu-item.cb2-first {
-	display: block;
-	border-top: 1px dotted #d7d7d7;
-	padding-top: 6px;
-}
+	.cb2-column-pagination {
+		float: right;
+	}
 
-body .cb2-description {
-	margin: 0px 8px;
-	color: #888;
-}
+	.cb2-column-actions {
+		float: left;
+	}
 
-.cb2-column-pagination {
-	float: right;
-}
+	&.wp-admin .cb2-disabled,
+	&.wp-admin .cb2-disabled label,
+	&.wp-admin .cb2-disabled span {
+		text-decoration: none;
+		color: #888;
+		font-weight: normal;
+	}
+	.cb2-ajax-failed {
+		border:1px solid red;
+		color:red;
+	}
+	a.cb2-selected {
+		text-decoration: none;
+		color: #555;
+		font-weight: bold;
+	}
 
-.cb2-column-actions {
-	float: left;
-}
+	ul.cb2-admin-column-ul {
+		margin: 0px;
+	}
 
-body.wp-admin .cb2-disabled,
-body.wp-admin .cb2-disabled label,
-body.wp-admin .cb2-disabled span {
-	text-decoration: none;
-	color: #888;
-	font-weight: normal;
-}
-.cb2-ajax-failed {
-	border:1px solid red;
-	color:red;
-}
-a.cb2-selected {
-	text-decoration: none;
-	color: #555;
-	font-weight: bold;
-}
+	input.cb2-tick-only {
+		border: none;
+		background: Transparent;
+		box-shadow: none;
+		cursor: default;
+	}
 
-ul.cb2-admin-column-ul {
-	margin: 0px;
-}
+	input.cb2-tick-only:not([checked]):after {
+		content: '✘';
+		color: #ff5555;
+		position: relative;
+		top: 7px;
+	}
 
-body input.cb2-tick-only {
-	border: none;
-	background: Transparent;
-	box-shadow: none;
-	cursor: default;
-}
+	.cb2-colour-block {
+		height: 20px;
+		width: 80px;
+	}
 
-body input.cb2-tick-only:not([checked]):after {
-	content: '✘';
-	color: #ff5555;
-	position: relative;
-	top: 7px;
-}
+	.ui-widget {
+		background-color: #fff;
+		padding: 4px;
+		border: 1px solid #ddd;
+		box-shadow: 3px 3px #ddd;
+	}
 
-.cb2-colour-block {
-	height: 20px;
-	width: 80px;
+	.cb2-help {
+		color: #773333;
+		font-family: sans;
+		font-size: 11px;
+	}
 }
 
 .cb2-usage-count-warning {
@@ -150,16 +160,6 @@ body input.cb2-tick-only:not([checked]):after {
 	box-shadow: 0px 0px 1px #aaa;
 }
 
-.ui-widget {
-	background-color: #fff;
-	padding: 4px;
-	border: 1px solid #ddd;
-	box-shadow: 3px 3px #ddd;
+.cb2-menu-invisible {
+	margin-bottom: -2em;
 }
-
-.cb2-help {
-	color: #773333;
-	font-family: sans;
-	font-size: 11px;
-}
-
