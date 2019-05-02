@@ -482,6 +482,7 @@ function cb2_admin_body_class( $classes ) {
 		if ( isset( cb2_admin_pages()[$page] )
 			|| $page == 'cb2_settings'
 			|| $page == 'cb2-options'
+			|| $page == 'cb2-menu'
 		) {
 			$classes .= 'cb2-admin-page';
 		}
