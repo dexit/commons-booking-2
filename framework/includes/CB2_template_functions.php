@@ -161,9 +161,10 @@ class CB2 {
 
 	public static function the_validity_period() {
 		global $post;
+		$validity_period_not_stated_text = __( 'Validity period not stated' );
 		$validity_period = ( $post && method_exists( $post, 'validity_period' )
 			? $post->validity_period()
-			: __( 'Ongoing validity period' )
+			: "<span class='cb2-validity-period-not-stated'>$validity_period_not_stated_text</span>"
 		);
 		print( $validity_period );
 	}

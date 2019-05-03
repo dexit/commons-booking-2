@@ -9,7 +9,8 @@
 			<form class="align-right" action="<?php CB2::the_permalink(); ?>"><div>
 				<input class="cb-button" type="submit" value="<?php print( __( 'Book here' ) ); ?>"/>
 			</div></form>
-			<?php CB2::the_inner_loop( $template_args, NULL, 'list', $template_type ); ?>
+
+			<ul><?php CB2::the_inner_loop( $template_args, NULL, 'list', $template_type ); ?></ul>
     </div>
 	</div>
 </li>

@@ -459,6 +459,7 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$from_text        = __( 'From' );
 		$until_text       = __( 'until' );
 		$first_until_text = __( 'Until' );
+		$ongoing_validity_period_text = __( 'Ongoing validity period' );
 
 		if ( $this->entity_datetime_from ) {
 			if ( $this->entity_datetime_from->after( CB2_DateTime::now() ) ) {
@@ -472,6 +473,9 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 			else $validity_period .= "$first_until_text ";
 			$validity_period .= $entity_datetime_from->format( $format );
 		}
+
+		if ( ! $validity_period )
+			$validity_period = "<span class='cb2-ongoing-validity-period'>$ongoing_validity_period_text</span>";
 
 		return $validity_period;
   }

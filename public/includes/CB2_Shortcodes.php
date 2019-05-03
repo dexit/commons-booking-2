@@ -215,7 +215,7 @@ class CB2_Shortcodes {
 		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
 		$context          = CB2_Query::isset( $args, 'context' );
 		$template_type    = CB2_Query::isset( $args, 'template_type' );
-		if ( WP_DEBUG && TRUE ) krumo( $display_strategy );
+		if ( WP_DEBUG && FALSE ) krumo( $display_strategy );
 
 		// Query and display the list
 		$html  = self::container_element( $args );

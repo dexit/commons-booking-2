@@ -193,6 +193,10 @@ abstract class CB2_PeriodInst extends CB2_PostNavigator implements JsonSerializa
 			&& $periodinst->recurrence_index == $this->recurrence_index;
   }
 
+  function validity_period( String $format = 'wordpress' ) {
+		return $this->period_entity->validity_period( $format );
+  }
+
   function remove() {
 		foreach ( $this->days as $day )
 			$day->remove_post( $this );

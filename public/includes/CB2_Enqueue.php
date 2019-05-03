@@ -41,12 +41,30 @@ class CB2_Enqueue {
 	 * @return void
 	 */
 	public static function enqueue_styles() {
-		if ( !is_admin() ) { // prevent style from loading in admin
+		if ( ! is_admin() ) { // prevent style from loading in admin
 			wp_enqueue_style( CB2_TEXTDOMAIN . '-framework-styles', plugins_url( 'framework/assets/css/framework.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
-			wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles', plugins_url( 'public/assets/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+			wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-styles',    plugins_url( 'public/assets/css/public.css',       CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+			$queue_legacy_styles = get_option( CB2_TEXTDOMAIN . '-include-legacy-css', TRUE );
+			if ( $queue_legacy_styles ) {
+				// New list templates conform to CB1 classes and layout
+				// the calendar has been completely redesigned
+				$theme_name = self::get_legacy_setting( 'pages', 'theme_select');
+				if ( empty ( $theme_name ) ) $theme_name = 'standard';
+				$url = plugins_url( "public/assets/css/legacy/css/themes/$theme_name/$theme_name.css", CB2_PLUGIN_ABSOLUTE );
+				wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-legacy-themes', $url , array(), CB2_VERSION );
+				wp_enqueue_style( CB2_TEXTDOMAIN . '-plugin-legacy-styles', plugins_url( 'public/assets/css/legacy/css/public.css', CB2_PLUGIN_ABSOLUTE ), array(), CB2_VERSION );
+			}
 		}
 	}
-	/**
+
+  public static function get_legacy_setting( $setting_page, $setting_name = '' ) {
+		// Copied and rationalised from CB1
+		$prefix  = 'commons-booking';
+		$page    = get_option( "$prefix-settings-$setting_page" );
+		return CB2_Query::isset( $page, "{$prefix}_$setting_name", '' );
+  }
+
+  /**
 	 * Register and enqueues public-facing JavaScript files.
 	 *
 	 * @since 2.0.0
