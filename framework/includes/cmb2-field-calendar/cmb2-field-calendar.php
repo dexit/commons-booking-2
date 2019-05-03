@@ -75,11 +75,13 @@ class CMB2_Field_Calendar {
 							// post_modified_gmt is the end date of the period instance
 							'column' => 'post_modified_gmt',
 							'after'  => $startdate_string,
+							'inclusive' => TRUE,
 						),
 						array(
 							// post_gmt is the start date of the period instance
 							'column' => 'post_date_gmt',
 							'before' => $enddate_string,
+							'inclusive' => TRUE,
 						),
 						'compare' => $schema_type,
 					),

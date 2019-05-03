@@ -37,11 +37,21 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	}
 
 	static function set_moment( Array &$query ) {
-		$this_moment = CB2_DateTime::today();
-		if ( ! isset( $query['date_query']['after'] ) )
-			$query['date_query']['after']   = $this_moment->format();
-		if ( ! isset( $query['date_query']['before'] ) )
-			$query['date_query']['before']  = $this_moment->format();
+		if ( ! isset( $query['date_query'] ) ) {
+			$this_moment = CB2_DateTime::day_start()->format();
+			$query['date_query'] = array(
+				array(
+					'column'    => 'post_modified_gmt',
+					'after'     => $this_moment,
+					'inclusive' => TRUE,
+				),
+				array(
+					'column'    => 'post_date_gmt',
+					'before'    => $this_moment,
+					'inclusive' => TRUE,
+				),
+			);
+		}
 	}
 
 	protected function __construct( CB2_DateTime $startdate = NULL, CB2_DateTime $enddate = NULL, String $schema_type = NULL, Array &$query = NULL ) {
@@ -68,13 +78,15 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 		if ( ! isset( $query['date_query'] ) )     $query['date_query'] = array();
 		if ( ! CB2_Query::key_exists_recursive( $query['date_query'], 'after' ) )
 			array_push( $query['date_query'], array(
-				'column' => 'post_modified_gmt',
-				'after'  => $this->startdate->format( CB2_Query::$datetime_format )
+				'column'    => 'post_modified_gmt',
+				'after'     => $this->startdate->format( CB2_Query::$datetime_format ),
+				'inclusive' => TRUE,
 			) );
 		if ( ! CB2_Query::key_exists_recursive( $query['date_query'], 'before' ) )
 			array_push( $query['date_query'], array(
-				'column' => 'post_date_gmt',
-				'before' => $this->enddate->format( CB2_Query::$datetime_format )
+				'column'    => 'post_date_gmt',
+				'before'    => $this->enddate->format( CB2_Query::$datetime_format ),
+				'inclusive' => TRUE,
 			) );
 		// This sets which CB2_(ObjectType) is the resultant primary posts array
 		// e.g. CB2_Weeks generated from the CB2_PeriodInst records
@@ -205,11 +217,13 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 					// post_modified_gmt is the end date of the period instance
 					'column' => 'post_modified_gmt',
 					'after'  => $inputs['startdate'],
+					'inclusive' => TRUE, // >=
 				),
 				array(
 					// post_gmt is the start date of the period instance
 					'column' => 'post_date_gmt',
 					'before' => $inputs['enddate'],
+					'inclusive' => TRUE, // <=
 				),
 				'compare' => $inputs['schema_type'],
 			),
@@ -287,6 +301,14 @@ class CB2_PeriodInteractionStrategy extends CB2_PostNavigator implements JsonSer
 	}
 
 	function is_singular() {
+		return FALSE;
+	}
+
+	function is_home() {
+		return FALSE;
+	}
+
+	function is_front_page() {
 		return FALSE;
 	}
 

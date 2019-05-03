@@ -454,6 +454,28 @@ abstract class CB2_PeriodEntity extends CB2_DatabaseTable_PostNavigator implemen
 		$this->period_count = count( $this->period_group->periods );
   }
 
+  function validity_period( String $format = 'wordpress' ) {
+		$validity_period  = '';
+		$from_text        = __( 'From' );
+		$until_text       = __( 'until' );
+		$first_until_text = __( 'Until' );
+
+		if ( $this->entity_datetime_from ) {
+			if ( $this->entity_datetime_from->after( CB2_DateTime::now() ) ) {
+				$validity_period .= " $from_text";
+				$validity_period .= $entity_datetime_from->format( $format );
+			}
+		}
+
+		if ( $this->entity_datetime_to )   {
+			if ( $validity_period ) $validity_period .= " $until_text ";
+			else $validity_period .= "$first_until_text ";
+			$validity_period .= $entity_datetime_from->format( $format );
+		}
+
+		return $validity_period;
+  }
+
   function is_confirmed() {
 		return $this->confirmed_user_id;
   }
@@ -924,11 +946,13 @@ class CB2_PeriodEntity_Location extends CB2_PeriodEntity {
 										// post_modified_gmt is the end date of the period instance
 										'column' => 'post_modified_gmt',
 										'after'  => CB2_DateTime::next_week_start()->format( CB2_Query::$date_format ),
+										'inclusive' => TRUE,
 									),
 									array(
 										// post_gmt is the start date of the period instance
 										'column' => 'post_date_gmt',
 										'before' => CB2_DateTime::next_week_end()->format(   CB2_Query::$date_format ),
+										'inclusive' => TRUE,
 									),
 									'compare' => CB2_Week::$static_post_type,
 								),

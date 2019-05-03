@@ -91,3 +91,14 @@ function cb2_body_class_WP_DEBUG( $classes ) {
 }
 add_filter( 'body_class',       'cb2_body_class_WP_DEBUG' );
 add_filter( 'admin_body_class', 'cb2_body_class_WP_DEBUG' );
+
+if ( WP_DEBUG && $_SERVER['HTTP_HOST'] == 'kozteherbringa.hu' ) {
+	function cb2_wp_get_attachment_image_src( $image, Int $attachment_id, $size, Bool $icon ) {
+		// TODO: remove kozteherbringa specific thing wp_get_attachment_image_src
+		if ( is_array( $image ) && count( $image ) ) {
+			$image[0] = str_replace( '.localhost', '.hu', $image[0] );
+		}
+		return $image;
+	}
+	add_filter( 'wp_get_attachment_image_src', 'cb2_wp_get_attachment_image_src', 10, 4 );
+}

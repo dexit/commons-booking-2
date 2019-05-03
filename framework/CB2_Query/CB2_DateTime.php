@@ -93,6 +93,11 @@ class CB2_DateTime {
   }
 
 	function format( String $format = 'c' ) {
+		switch ( $format ) {
+			case 'wordpress':
+				$format = get_option( 'date_format' );
+				break;
+		}
 		return $this->datetime->format( $format );
 	}
 

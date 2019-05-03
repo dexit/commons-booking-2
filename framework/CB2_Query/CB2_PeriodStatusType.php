@@ -509,11 +509,13 @@ class CB2_PeriodStatusType_Open      extends CB2_SystemPeriodStatusType {
 						// post_modified_gmt is the end date of the period instance
 						'column' => 'post_modified_gmt',
 						'after'  => (string) CB2_DateTime::next_week_start(),
+						'inclusive' => TRUE,
 					),
 					array(
 						// post_gmt is the start date of the period instance
 						'column' => 'post_date_gmt',
 						'before' => (string) CB2_DateTime::next_week_end(),
+						'inclusive' => TRUE,
 					),
 					'compare' => CB2_Week::$static_post_type,
 				),

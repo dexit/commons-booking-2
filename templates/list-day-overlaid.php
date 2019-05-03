@@ -49,7 +49,7 @@
 	}
 ?>
 <li id="post-<?php the_ID(); ?>" <?php CB2::post_class( $classes ); ?>>
-	<?php CB2::the_title( '<div class="day-title">', '</div>' ); ?>
+	<?php CB2::the_title( '<div class="cb2-day-title">', '</div>' ); ?>
 	<div class="cb2-overlaid-inner">
 		<ul class="cb2-time-guide">
 			<?php

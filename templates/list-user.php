@@ -1,6 +1,6 @@
 <li id="post-<?php the_ID(); ?>" <?php CB2::post_class(); ?>>
 	<header class="entry-header">
-		<?php CB2::the_title( '<div class="day-title">', '</div>' ); ?>
+		<?php CB2::the_title( '<div class="cb2-day-title">', '</div>' ); ?>
 	</header>
 
 	<footer class="entry-footer">

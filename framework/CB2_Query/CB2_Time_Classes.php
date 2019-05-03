@@ -23,6 +23,10 @@ class CB2_TimePostNavigator extends CB2_PostNavigator implements JsonSerializabl
 		return $max_days;
 	}
 
+	function get_the_title() {
+		return preg_replace( '/\s+/', '<span class="cb2-space">$0</span>', $this->post_title );
+	}
+
   function classes() {
     $classes = array();
     if ( $this->is_current ) array_push( $classes, 'cb2-current' );

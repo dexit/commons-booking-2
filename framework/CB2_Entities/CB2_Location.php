@@ -136,11 +136,13 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 										// post_modified_gmt is the end date of the period instance
 										'column' => 'post_modified_gmt',
 										'after'  => $startdate,
+										'inclusive' => TRUE,
 									),
 									array(
 										// post_gmt is the start date of the period instance
 										'column' => 'post_date_gmt',
 										'before' => $enddate,
+										'inclusive' => TRUE,
 									),
 									'compare' => CB2_Week::$static_post_type,
 								),
@@ -431,6 +433,18 @@ class CB2_Location extends CB2_Post implements JsonSerializable {
 				'format'       => "?$wp_query_page_name=%#%",
 			) ) . '</div>' );
 		}
+	}
+
+	function opening_hours() {
+		$opening_hours   = __( 'No opening hours defined' );
+
+		$period_group_ID = $this->last_opening_hours_period_group_set();
+		if ( $period_group_ID ) {
+			$period_group  = CB2_Query::get_post_with_type( CB2_PeriodGroup::$static_post_type, $period_group_ID );
+			$opening_hours = $period_group->summary_periods();
+		}
+
+		return $opening_hours;
 	}
 
 	function last_opening_hours_period_group_set() {

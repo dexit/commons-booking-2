@@ -108,11 +108,27 @@ class CB2 {
 		print( $post && property_exists( $post, 'geo_longitude' ) ? $post->geo_longitude : NULL );
 	}
 
-	public static function the_post_template( $the_post, Array $template_args = array(), String $context = 'list', String $template_type = NULL, String $before = '', String $after = '' ) {
+	public static function the_meta( String $name, Bool $single = TRUE ) {
+		print( get_post_meta( get_the_ID(), $name, $single ) );
+	}
+
+	public static function the_icon() {
+		self::the_meta( 'icon' );
+	}
+
+	public static function the_icon_shadow() {
+		self::the_meta( 'icon_shadow' );
+	}
+
+	public static function the_title_attribute() {
+		print( the_title_attribute() );
+	}
+
+	public static function the_post_template( $the_post, Array $template_args = array(), String $context = 'list', String $template_type = NULL, String $before = '<ul>', String $after = '</ul>' ) {
 		echo self::get_the_post_template( $the_post, $template_args, $context, $template_type, $before, $after );
 	}
 
-	public static function get_the_post_template( $the_post, Array $template_args = NULL, String $context = 'list', String $template_type = NULL, String $before = '', String $after = '' ) {
+	public static function get_the_post_template( $the_post, Array $template_args = NULL, String $context = 'list', String $template_type = NULL, String $before = '<ul>', String $after = '</ul>' ) {
 		global $post;
 		$html       = '';
 
@@ -141,6 +157,24 @@ class CB2 {
 		if ( $post ) wp_cache_set( $post->ID, $post, 'posts' );
 
 		return $html;
+	}
+
+	public static function the_validity_period() {
+		global $post;
+		$validity_period = ( $post && method_exists( $post, 'validity_period' )
+			? $post->validity_period()
+			: __( 'Ongoing validity period' )
+		);
+		print( $validity_period );
+	}
+
+	public static function the_opening_hours() {
+		global $post;
+		$opening_hours = ( $post && method_exists( $post, 'opening_hours' )
+			? $post->opening_hours()
+			: __( 'No opening hours defined' )
+		);
+		print( $opening_hours );
 	}
 
 	public static function the_inner_loop( Array $template_args = NULL, $post_navigator = NULL, $context = 'list', $template_type = NULL, $before = '', $after = '', $reorder_function = NULL ) {
@@ -640,13 +674,13 @@ class CB2 {
 	}
 
 
-	public static function post_class( $class = NULL, $post_id = null ) {
+	public static function post_class( $class = '', Int $post_id = NULL ) {
 		// Copied from post-template.php
 		// Separates classes with a single space, collates classes for post DIV
 		echo 'class="' . join( ' ', self::get_post_class( $class, $post_id ) ) . '"';
 	}
 
-	public static function get_post_class( $class = '', $post_id = null ) {
+	public static function get_post_class( $class = '', Int $post_id = NULL ) {
 		// Replaces the normal get_post_class()
 		// normal get_post_class() will get wrong data and not be cached
 		// because it requests meta-data with 'post' meta-type
@@ -1102,7 +1136,7 @@ HTML;
 		global $post;
 
 		// Unlike the_content() above, this is not a filter call
-		$title = ( property_exists( $post, 'post_title' ) ? $post->post_title : 'no title' );
+		$title = ( $post && property_exists( $post, 'post_title' ) ? $post->post_title : 'no title' );
 
 		if ( $post ) {
 			$post_type = $post->post_type;
@@ -1113,7 +1147,7 @@ HTML;
 					$title = $post->get_the_title( $HTML );
 			}
 		}
-		return $before . $title . $after;
+		return "$before$title$after";
 	}
 
 	public static function template_path() {

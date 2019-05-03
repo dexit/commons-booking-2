@@ -4,9 +4,13 @@
 	width:100%;
 	min-height:400px;
 }
-.cb-popup {
+.cb2-popup,      /* whole popup */
+.cb-popup-only { /* popup fields */
 	display:none;
 }
-#geo-hcard-map .cb-popup {
-	display:block;
+#geo-hcard-map {
+	.cb2-popup,
+	.cb-popup-only {
+		display:block;
+	}
 }

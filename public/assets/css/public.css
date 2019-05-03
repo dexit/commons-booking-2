@@ -199,12 +199,15 @@ article.type-item .cb2-calendar-pager {
 }
 
 @media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_map-leaflet\.scss}line{font-family:\000037}}
-.cb-popup {
+.cb2-popup,
+.cb-popup-only {
+  /* popup fields */
   display: none;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_map-leaflet\.scss}line{font-family:\0000310}}
-#geo-hcard-map .cb-popup {
+@media -sass-debug-info{filename{font-family:file\:\/\/\/var\/www\/wordpress\/commons_booking\/wp-content\/plugins\/commons-booking-2\/public\/assets\/sass\/partials\/_map-leaflet\.scss}line{font-family:\0000312}}
+#geo-hcard-map .cb2-popup,
+#geo-hcard-map .cb-popup-only {
   display: block;
 }
 

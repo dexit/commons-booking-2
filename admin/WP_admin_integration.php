@@ -53,6 +53,15 @@ function cb2_wp_redirect( $location, $status, $javascript = FALSE ) {
 }
 add_filter( 'wp_redirect', 'cb2_wp_redirect', 10, 2 );
 
+function cb2_fixed_admin_pages() {
+	// Defined in the code
+	return array(
+		'cb2_settings' => array(),
+		'cb2-options'  => array(),
+		'cb2-menu'     => array(),
+	);
+}
+
 function cb2_admin_pages() {
 	// %token% replacement happens on ALL parameters.
 	// If any tokens are replaced then %(x)% => x texts are included.
@@ -222,14 +231,16 @@ function cb2_admin_views( $views ) {
 	$page          = $_GET['page'];
 	$all_text      = __( 'All' );
 	$trash_text    = __( 'Trash' );
-	$calendar_text = '<span class="cb2-todo">' . __( 'Calendar' ) . '</span>';
-	$map_text      = '<span class="cb2-todo">' . __( 'Map' ) . '</span>';
 	$views = array(
 		'all'      => "<a href='admin.php?page=$page&post_status=publish'>$all_text</span></a>",
 		'trash'    => "<a href='admin.php?page=$page&post_status=trash'>$trash_text</span></a>",
-		'calendar' => "<a href='admin.php?page=$page&view=calendar'>$calendar_text</span></a>",
-		'map'      => "<a href='admin.php?page=$page&view=map'>$map_text</span></a>",
 	);
+	if ( WP_DEBUG ) {
+		$calendar_text = '<span class="cb2-todo">' . __( 'Calendar' ) . '</span>';
+		$map_text      = '<span class="cb2-todo">' . __( 'Map' ) . '</span>';
+		$views[ 'calendar' ] = "<a href='admin.php?page=$page&view=calendar'>$calendar_text</span></a>";
+		$views[ 'map' ]      = "<a href='admin.php?page=$page&view=map'>$map_text</span></a>";
+	}
 	return $views;
 }
 
@@ -479,11 +490,7 @@ add_action( 'edit_form_advanced', 'cb2_edit_form_advanced_tab_extra' );
 function cb2_admin_body_class( $classes ) {
 	if ( isset( $_GET[ 'page' ] ) ) {
 		$page = $_GET[ 'page' ];
-		if ( isset( cb2_admin_pages()[$page] )
-			|| $page == 'cb2_settings'
-			|| $page == 'cb2-options'
-			|| $page == 'cb2-menu'
-		) {
+		if ( isset( cb2_admin_pages()[$page] ) || isset( cb2_fixed_admin_pages()[$page] ) ) {
 			$classes .= 'cb2-admin-page';
 		}
 	}

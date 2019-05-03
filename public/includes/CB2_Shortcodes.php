@@ -23,6 +23,26 @@ class CB2_Shortcodes {
 	// ------------------------------------------------------------------------------------
 	// Private helpers
 	// ------------------------------------------------------------------------------------
+	protected static function attribute_is_true( Array $args, String $name ) {
+		$value = ( isset( $args[$name] ) ? $args[$name] : NULL );
+		return ( $value == '1'
+					|| $value == 'yes'
+					|| $value == 'true'
+					|| $value == 'on'
+					|| $value == 'enable'
+		);
+	}
+
+	protected static function attribute_is_false( Array $args, String $name ) {
+		$value = ( isset( $args[$name] ) ? $args[$name] : NULL );
+		return ( $value == '0'
+					|| $value == 'no'
+					|| $value == 'false'
+					|| $value == 'off'
+					|| $value == 'disable'
+		);
+	}
+
 	protected static function json_args( &$value, String $key ) {
 		if ( is_object( $value ) && ! method_exists( $value, '__toString' ) )
 			$value = get_class( $value );
@@ -44,9 +64,17 @@ class CB2_Shortcodes {
 
 		// ------------------------------------- CSS and INPUT all args
 		foreach ( $args as $name => $value ) {
-			$name = str_replace( '_', '-', $name );
-			if ( $value )
-				array_push( $css_classes, "cb2-$name-$value" ); // cb2-selection-mode-range ...
+			switch ( $name ) {
+				case 'startdate':
+				case 'enddate':
+					break;
+				default:
+					if ( is_null( $value ) )    $value = 'null';
+					else if ( empty( $value ) ) $value = 'empty';
+					$name  = preg_replace( '/[^a-z0-9]/', '-', strtolower( $name  ) );
+					$value = preg_replace( '/[^a-z0-9]/', '-', strtolower( $value ) );
+					array_push( $css_classes, "cb2-$name-$value" ); // cb2-selection-mode-range ...
+			}
 		}
 		$css_classes_string = implode( ' ', $css_classes );
 		$html = "<$element class='cb2-selection-container cb2-content $css_classes_string $calendar_name_js'>";
@@ -55,8 +83,9 @@ class CB2_Shortcodes {
 		// namespace these in case their are multiple calendars in 1 page?
 		$namespace_args   = CB2_Query::isset( $args, 'namespace_args' );
 		foreach ( $args as $name => $value ) {
-			$name = str_replace( '-', '_', $name );
+			$name  = preg_replace( '/[^a-z0-9]/', '-', strtolower( $name  ) );
 			if ( $namespace_args ) $name = "$namespace_args-$name";
+			$value = str_replace( "'", '&apos;', $value );
 			$html .= "<input type='hidden' name='$name' value='$value'/>";
 		}
 		return $html;
@@ -110,22 +139,27 @@ class CB2_Shortcodes {
 			'display-strategy' => 'CB2_AllItemAvailability',
 			'schema-type'      => CB2_Location::$static_post_type,
 			'context'          => 'hcard',
+			'date'             => 'day_start',
 		);
 
 		// ------------------------------------- Query
 		$args = shortcode_atts( array_merge( $default_atts, $passed_default_atts ), $atts, 'cb2_map' );
 		if ( ! is_array( $atts ) ) $atts = array( $atts );
 		$args             = array_merge( $atts, $args, $_REQUEST );
-		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
+		$make_request_off = self::attribute_is_false( $args, 'make-request' );
 		$context          = CB2_Query::isset( $args, 'context' );
 		$template_type    = CB2_Query::isset( $args, 'template_type' );
-		if ( WP_DEBUG ) krumo( $display_strategy );
+		$display_strategy = NULL;
+		if ( ! $make_request_off )
+			$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
 
 		// Query and display the map
 		$html  = self::container_element( $args );
-		$html .= '<ul class="cb2-subposts">';
-		$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
-		$html .= '</ul>';
+		if ( $display_strategy ) {
+			$html .= '<ul class="cb2-subposts">';
+			$html .= CB2::get_the_inner_loop( $args, $display_strategy, $context, $template_type );
+			$html .= '</ul>';
+		}
 		$html .= geo_hcard_map_shortcode_handler( NULL );
 		$html .= '</div>';
 
@@ -170,7 +204,7 @@ class CB2_Shortcodes {
 		$default_atts = array(
 			'display-strategy' => 'CB2_AllItemAvailability',
 			'schema-type'      => CB2_Item::$static_post_type,
-			'date'             => 'now',
+			'date'             => 'day_start',
 			'template-type'    => 'withlocation',
 		);
 
@@ -181,6 +215,7 @@ class CB2_Shortcodes {
 		$display_strategy = CB2_PeriodInteractionStrategy::factory_from_args( $args, $post );
 		$context          = CB2_Query::isset( $args, 'context' );
 		$template_type    = CB2_Query::isset( $args, 'template_type' );
+		if ( WP_DEBUG && TRUE ) krumo( $display_strategy );
 
 		// Query and display the list
 		$html  = self::container_element( $args );
@@ -199,7 +234,7 @@ class CB2_Shortcodes {
 		$default_atts = array(
 			'display-strategy' => 'CB2_AllItemAvailability',
 			'schema-type'      => CB2_Location::$static_post_type,
-			'date'             => 'now',
+			'date'             => 'day_start',
 			'template-type'    => 'withitems',
 		);
 

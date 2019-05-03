@@ -92,7 +92,7 @@ class CB2_Settings {
     }
 
     public static function localize( Array $options_mask = array() ) {
-			$option_array     = get_option( self::$settings_prefix );
+			$option_array     = (array) get_option( self::$settings_prefix );
 			$new_option_array = array();
 			$keys             = array_keys( $option_array );
 			$has_mask         = count( $options_mask );
